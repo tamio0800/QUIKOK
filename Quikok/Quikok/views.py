@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 #首頁
 #@login_required(login_url = '/accounts/login/')
 def homepage(request):
+    return render(request, 'homepage.html')
     # 指定某些帳號群組才能看到網頁部分內容
     #user = request.user # 當前登入的user
     #g_val = request.user.groups.values_list('name',flat = True) # QuerySet Object
@@ -18,4 +19,4 @@ def homepage(request):
     #    {'title':'首頁',
     #    'Auth':'happy_manager'})
     #else:
-    return render(request, 'homepage.html')
+    #return render(request, 'homepage.html')
