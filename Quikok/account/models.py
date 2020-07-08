@@ -30,12 +30,8 @@ class vendor_profile(models.Model):
     mobile = models.CharField(max_length = 12)
     picture_folder = models.CharField(max_length = 150)
 
+    tutor_exp_in_years = models.FloatField(default=0.0)
 
-    
-    tracking_mobile = models.CharField(max_length = 130)
-    update_someone_by_email = models.CharField(max_length = 405)
-    update_someone_by_mobile = models.CharField(max_length = 65)
-     
-    # 為了使回傳platform名稱而不是object
+
     def __str__(self):
         return self.username
