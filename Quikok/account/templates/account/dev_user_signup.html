@@ -1,0 +1,86 @@
+{% load static %}
+
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
+    <meta name="generator" content="Jekyll v3.8.5">
+    <title>會員註冊</title>
+
+    <!-- Bootstrap core CSS -->
+<link href="https://bootstrap.hexschool.com/docs/4.2/dist/css/bootstrap.css" rel="stylesheet">
+
+
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+      }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+    </style>
+    <!-- Custom styles for this template -->
+    <link href="https://bootstrap.hexschool.com/docs/4.2/examples/checkout/form-validation.css" rel="stylesheet">
+  </head>
+  <body class="bg-light" style="font-family:Microsoft JhengHei;">
+    <div class="container">
+  <div class="py-5 text-center">
+    <!--<img class="d-block mx-auto mb-4" src="https://bootstrap.hexschool.com/docs/4.2/assets/brand/bootstrap-solid.svg" alt="" width="72" height="72">-->
+    <img class="d-block mx-auto mb-4" src="{% static 'account/Quikok_Logo-02.png' %}" alt="" width="245" height="108">
+    <hr>
+    <!--<h2>會員註冊</h2>-->
+    <p class="lead">謝謝您使用我們的服務, <strong>「開課！Quikok」</strong>是國內第一家利用人工智慧審核教師履歷、優化上課品質的教學平台, 我們也打造了傑出的視訊系統來帶給您最優異的學習體驗, 趕快來看看我們精彩的課程吧！</p>
+  </div>
+
+  <div class="row">
+    
+    <div class="col-md-12 order-md-1">
+      <h4 class="mb-3">會員註冊</h4>
+      <!--<form class="needs-validation" novalidate> was-validated-->
+      <form class="was-validated">
+        <div class="mb-3">
+          <label for="username">請輸入您的Email做為帳號<span class="text-muted"> (我們透過它來寄送您的學習報告及帳戶資訊。)</span></label>
+          <input type="email" class="form-control" id="username" placeholder="you@example.com" required>
+          <div class="invalid-feedback">
+            糟糕, 您的格式好像寫錯囉>__<
+          </div>
+        </div>
+
+
+        <div class="mb-3">
+          <label for="username">請輸入密碼<span class="text-muted"> (8-12位數)</span></label>
+          <input type="password" class="form-control" id="password" pattern=".{8,12}" placeholder="密碼" required>
+          <label for="username">請再次輸入密碼</label>
+          <input type="password" class="form-control" id="password" pattern=".{8,12}" placeholder="密碼確認" required>
+            <div class="invalid-feedback" style="width: 100%;">
+              咦, 兩次輸入的密碼好像不同呢>__<
+            </div>
+        </div>
+
+        <hr class="mb-4">
+        <button class="btn btn-primary btn-lg btn-block" type="submit">Continue to checkout</button>
+      </form>
+    </div>
+  </div>
+
+  <footer class="my-5 pt-5 text-muted text-center text-small">
+    <p class="mb-1">&copy; 2017-2018 Company Name</p>
+    <ul class="list-inline">
+      <li class="list-inline-item"><a href="#">Privacy</a></li>
+      <li class="list-inline-item"><a href="#">Terms</a></li>
+      <li class="list-inline-item"><a href="#">Support</a></li>
+    </ul>
+  </footer>
+</div>
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+      <script>window.jQuery || document.write('<script src="/docs/4.2/assets/js/vendor/jquery-slim.min.js"><\/script>')</script><script src="https://bootstrap.hexschool.com/docs/4.2/dist/js/bootstrap.bundle.js"></script>
+        <script src="https://bootstrap.hexschool.com/docs/4.2/examples/checkout/form-validation.js"></script></body>
+</html>
