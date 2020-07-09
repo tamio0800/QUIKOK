@@ -13,6 +13,7 @@
 
     <!-- Bootstrap core CSS -->
 <link href="https://bootstrap.hexschool.com/docs/4.2/dist/css/bootstrap.css" rel="stylesheet">
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 
 
     <style>
@@ -43,41 +44,234 @@
   <div class="row">
     
     <div class="col-md-12 order-md-1">
-      <h4 class="mb-3">會員註冊</h4>
-      <!--<form class="needs-validation" novalidate> was-validated-->
-      <form class="was-validated">
+      <!--<h4 class="mb-3"><b>會員註冊</b></h4>
+      <hr class="mb-4">-->
+      <form class="needs-validation" method="POST" id="signup_form"> 
+      <!--<form class="was-validated" method="POST" id="signup_form">was-validated-->
+        {% csrf_token %}
+        <div class="row">
+          <h4 class="mb-3"><b>帳號與密碼設定</b></h4>
+        </div>
         <div class="mb-3">
-          <label for="username">請輸入您的Email做為帳號<span class="text-muted"> (我們透過它來寄送您的學習報告及帳戶資訊。)</span></label>
-          <input type="email" class="form-control" id="username" placeholder="you@example.com" required>
+          <label for="username"><strong>請輸入您的Email做為帳號</strong><span class="text-muted" style="font-size: 16px;"> (我們透過它來寄送您的學習報告及帳戶資訊。)</span></label>
+          <input type="email" class="form-control" id="username" name="username" placeholder="hakuna@matata.com" required>
           <div class="invalid-feedback">
             糟糕, 您的格式好像寫錯囉>__<
           </div>
         </div>
 
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="username"><strong>請輸入密碼</strong><span class="text-muted" style="font-size: 16px;"> (至少8位數)</span></label>
+            <input type="password" class="form-control" id="password" name="password" pattern=".{8,}" placeholder="密碼" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="username"><strong>請再次輸入密碼</strong></label>
+            <input type="password" class="form-control" id="re_password" name="re_password" pattern=".{8,}" placeholder="密碼確認" required>
+              <!--<div class="invalid-feedback" style="width: 100%;">-->
+              <div class="invalid-feedback" id="password_input_info"> 
+                咦, 兩次輸入的密碼好像不同呢>__<
+              </div>
+          </div>
+        </div>
+        <script>
+          // 用來體貼user，幫助他們確認密碼輸入是否正確無誤
+          $('#re_password').keyup(function() {
+            if ($('#password').val() == $('#re_password').val()) {
+              $('#password_input_info').html('兩次密碼輸入符合！').css('color', 'green');
+            } else {
+              $('#password_input_info').removeClass("invalid-feedback").addClass("valid-feedback d-block");
+              $('#password_input_info').html('咦, 兩次輸入的密碼好像不同呢>__<').css('color', 'red');
+          }});
+        </script>
 
-        <div class="mb-3">
-          <label for="username">請輸入密碼<span class="text-muted"> (8-12位數)</span></label>
-          <input type="password" class="form-control" id="password" pattern=".{8,12}" placeholder="密碼" required>
-          <label for="username">請再次輸入密碼</label>
-          <input type="password" class="form-control" id="password" pattern=".{8,12}" placeholder="密碼確認" required>
-            <div class="invalid-feedback" style="width: 100%;">
-              咦, 兩次輸入的密碼好像不同呢>__<
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="mobile"><strong>您的手機號碼</strong><span class="text-muted" style="font-size: 16px;"> (當您忘記密碼時, 我們會以手機通知您。)</span></label>
+            <input type="text" class="form-control" id="mobile" name="mobile" placeholder="0912345678" required>
+            <div class="invalid-feedback" id="mobile_info"> 
+              哎呀, 您的手機號碼格式似乎錯囉！
             </div>
+          </div>
+        </div>
+        <script>
+          //檢查手機號碼格式是否正確
+          $("#mobile").blur(function(){
+            var mobile_pattern = /09[0-9]{8}/;
+            var mobile=$.trim($("#mobile").val().replace(/[- ]/g, ""));
+            if (mobile_pattern.test(mobile)){
+              $("#mobile").val(clean_mobile(mobile));
+              $('#mobile_info').removeClass("valid-feedback d-block").addClass("invalid-feedback");
+            }else{
+              $('#mobile_info').removeClass("invalid-feedback").addClass("valid-feedback d-block");
+              $('#mobile_info').html('哎呀, 您的手機號碼格式似乎錯囉@__@').css('color', 'red');
+            }
+          });
+          function clean_mobile(target){
+            return target.slice(0,4) + "-" + target.slice(4,7) + "-" + target.slice(7,10);
+          }
+        </script>
+        <hr class="mb-4">
+        <div class="row">
+          <h4 class="mb-3"><b>個人資訊</b></h4>
+        </div>
+        <div class="row">
+          <div class="col-md-5 mb-3">
+            <label for="username"><strong>您的姓名</strong></label>
+            <input type="text" class="form-control" id="name" name="name" placeholder="姓名" required>
+          </div>
+          <div class="col-md-5 mb-3">
+            <label for="nickname""><strong>您的暱稱</strong><span class="text-muted" style="font-size: 16px;"> (選填)</span></label>
+            <input type="password" class="form-control" id="nickname" name="nickname" placeholder="您希望我們怎麼稱呼您呢">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="role"><strong>您的角色</strong></label>
+            <select class="custom-select d-block w-100" id="role" required>
+              <option value="">請選擇...</option>
+              <option value="mother">我是家人 - 媽媽</option>
+              <option value="father">我是家人 - 爸爸</option>
+              <option value="sister">我是家人 - 姐姐</option>
+              <option value="brother">我是家人 - 哥哥</option>
+              <option value="myself">我是本人！</option>
+              <option value="others">其他</option>
+            </select>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="is_male"><strong>您的生理性別</strong></label>
+            <select class="custom-select d-block w-100" id="is_male" required>
+              <option value="">請選擇...</option>
+              <option value="0">女性 ♀</option>
+              <option value="1">男性 ♂</option>
+            </select>
+          </div>
+
+          <script>
+            // 用來體貼user點選一些特定角色後會自動幫助他們選擇性別，但他們依舊可以改變預設選擇
+            $('#role').change(function() {
+              var selection = $('#role option:selected').val();
+              if ($.inArray(selection, ['mother', 'sister']) > -1){
+                $('#is_male').val('0');
+              }else if($.inArray(selection, ['father', 'brother']) > -1){
+                $('#is_male').val('1');
+              }else{
+                $('#is_male').val('');
+              }
+            });
+          </script>
+
+          <div class="col-md-4 mb-3">
+            <label for="birth_date"><strong>您的生日</strong><span class="text-muted" style="font-size: 15px;"> (YYYY/MM/DD)</span></label>
+            <input class="form-control" id="birth_date" name="birth_date" type="date" value="date" required>
+          </div>
         </div>
 
         <hr class="mb-4">
-        <button class="btn btn-primary btn-lg btn-block" type="submit">Continue to checkout</button>
+
+        <div class="row">
+          <h4 class="mb-3"><b>學習績效通知</b></h4><span class="text-muted">(選填)</span>
+        </div>
+        <div class="mb-3">
+          <label for="tracking_mobile"><strong>新增您想追蹤學習績效對象的手機號碼</strong><span class="text-muted" style="font-size: 16px;"> (如果對方同意, 我們會向您更新學習報告, 最多10位。)</span></label>
+          <input type="text" class="form-control" id="tracking_mobile" name="tracking_mobile" placeholder="0912345678" required>
+          <span style="font-size: 15px; color: green;">請用分號『;』隔開電話號碼, 如: 0912345678; 0923456789</span>
+        </div>
+
+
+        <div class="mb-3">
+          <label for="update_someone_by_email"><strong>新增您想主動通知學習績效對象的Email</strong><span class="text-muted" style="font-size: 16px;"> (我們會主動向對方更新您的學習狀況)</span></label>
+          <input type="email" class="form-control" id="update_someone_by_email" name="update_someone_by_email" placeholder="hakuna@matata.com">
+          <span style="font-size: 15px; color: green;">請用分號『;』隔開Email, 如: you@cool.com; we@awesome.com</span>
+        </div>
+        <hr class="mb-4">
+
+
+        <script>
+          //整理「追蹤」跟「通知」的資料清理
+          $("#mobile").blur(function(){
+            var mobile_pattern = /09[0-9]{8}/;
+            var mobile=$.trim($("#mobile").val().replace(/[- ]/g, ""));
+            if (mobile_pattern.test(mobile)){
+              $("#mobile").val(clean_mobile(mobile));
+              $('#mobile_info').removeClass("valid-feedback d-block").addClass("invalid-feedback");
+            }else{
+              $('#mobile_info').removeClass("invalid-feedback").addClass("valid-feedback d-block");
+              $('#mobile_info').html('哎呀, 您的手機號碼格式似乎錯囉@__@').css('color', 'red');
+            }
+          });
+          function clean_mobile(target){
+            return target.slice(0,4) + "-" + target.slice(4,7) + "-" + target.slice(7,10);
+          }
+        </script>
+
+
+        <div class="row">
+          <h4 class="mb-3"><b>我們的承諾</b></h4>
+        </div>
+        <p>我們不會將您的註冊資料外洩或是轉交其他業者, 您的資訊將與我們的個資一起妥善保管在工業等級的伺服器中。</p>
+
+        <div class="mb-3 row">
+          <div class="col-md-12">
+            <input id="agreement_info" class="col-4 btn btn-info" value="用戶協議 ▼" type="button" data-toggle="collapse" 
+            style="font-weight:bold;"
+            data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+              <!--<strong>用戶協議 ▼</strong>-->
+            </input>
+          </div>
+        </div>
+        <script>
+          // 用來展開, 收合出師表(誤 的動畫功能
+          $("#agreement_info").mousedown(function(){
+            //alert($.trim($("#agreement_info").val()));
+            if ($.trim($("#agreement_info").val()) == "用戶協議 ▼"){
+              $("#agreement_info").val("用戶協議 ▲");
+              $("#agreement_info").attr("aria-expanded", "true"); 
+              $("#agreement_info").removeClass("col-4 btn btn-info collapsed").addClass("col-4 btn btn-info");
+            }else if ($.trim($("#agreement_info").val()) == "用戶協議 ▲"){
+              $("#agreement_info").val("用戶協議 ▼");
+              $("#agreement_info").attr("aria-expanded", "false"); 
+              $("#agreement_info").removeClass("col-4 btn btn-info").addClass("col-4 btn btn-info collapsed");
+            }
+          });
+        </script>
+        <div class="collapse" id="collapseExample">
+          <div class="card card-body">
+            臣亮言：先帝創業未半，而中道崩殂。今天下三分，益州
+          疲弊，此誠危急存亡之秋也。然侍衛之臣，不懈於內；忠志之
+          士，忘身於外者，蓋追先帝之殊遇，欲報之於陛下也。誠宜開
+          張聖聽，以光先帝遺德，恢弘志士之氣；不宜妄自菲薄，引喻
+          失義，以塞忠諫之路也。宮中府中，俱為一體，陟罰臧否，不
+          宜異同。若有作姦犯科，及為忠善者，宜付有司，論其刑賞，
+          以昭陛下平明之治，不宜篇私，使內外異法也。
+          </div>
+        </div>
+
+
+        <div class="mb-3">
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="is_agree">
+            <label class="form-check-label" for="exampleCheck1">我同意這份用戶協議</label>
+          </div>          
+        </div>
+
+        
+
+        <hr class="mb-4">
+        
+        <button class="btn btn-primary btn-lg btn-block" type="submit">註 冊</button>
       </form>
     </div>
   </div>
 
   <footer class="my-5 pt-5 text-muted text-center text-small">
-    <p class="mb-1">&copy; 2017-2018 Company Name</p>
-    <ul class="list-inline">
+    <p class="mb-1">&copy; 2020 開課！Quikok</p>
+    <!--<ul class="list-inline">
       <li class="list-inline-item"><a href="#">Privacy</a></li>
       <li class="list-inline-item"><a href="#">Terms</a></li>
       <li class="list-inline-item"><a href="#">Support</a></li>
-    </ul>
+    </ul>-->
   </footer>
 </div>
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
