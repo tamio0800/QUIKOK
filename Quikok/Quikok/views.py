@@ -7,7 +7,8 @@ from django.contrib.auth.models import User
 
 # Create your views here.
 def homepage(request):
-    return render(request, 'homepage.html')
+    title = '開課! Quikok'
+    return render(request, 'homepage.html', locals())
 
 def base_layout(request):
     return render(request, 'base_layout.html')
