@@ -1,0 +1,16 @@
+{% extends 'base_layout.html' %} {% block content %}{% load static %}
+
+
+</br></br></br>
+    <form method="POST" action="">
+        {% csrf_token %}
+        <label for="pw_test">password_test</label>
+        <input type="text" name='pw' id='pw'>
+        <button type="submit">submit</button>
+    </form>
+    {% if origin_pw %}
+        <h3>origin pw: {{origin_pw}}</h3>
+        <hr>
+        <h3>new pw: {{new_pw}}</h3>
+    {% endif %}
+{% endblock %}
