@@ -4,7 +4,9 @@ from django.contrib.auth.models import User
 
 class user_profile(models.Model):
     # 這是for存放一般會員/學生的額外資訊
-    username = models.CharField(max_length = 191)  # 這個是要跟user table做join的key值
+    username = models.CharField(max_length = 120)
+    password = models.CharField(max_length = 100)
+    name = models.CharField(max_length = 40)
     nickname = models.CharField(max_length = 40)
     birth_date = models.DateField()
     is_male = models.BooleanField()
@@ -14,6 +16,7 @@ class user_profile(models.Model):
     tracking_mobile = models.CharField(max_length = 130)  
     update_someone_by_email = models.CharField(max_length = 405)
     update_someone_by_mobile = models.CharField(max_length = 65)
+    date_join = models.DateTimeField(auto_now_add=True)
 
     # 為了使回傳platform名稱而不是object
     def __str__(self):
@@ -22,7 +25,9 @@ class user_profile(models.Model):
 
 class vendor_profile(models.Model):
     # 這是for存放老師的額外資訊
-    username = models.CharField(max_length = 191)  # 這個是要跟user table做join的key值
+    username = models.CharField(max_length = 120)
+    password = models.CharField(max_length = 100)
+    name = models.CharField(max_length = 40)
     nickname = models.CharField(max_length = 40)
     birth_date = models.DateField()
     is_male = models.BooleanField()
@@ -42,6 +47,7 @@ class vendor_profile(models.Model):
     occupation = models.CharField(max_length = 60)
     company = models.CharField(max_length = 60)
     occupation_cert = models.CharField(max_length = 150)
+    date_join = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.username
@@ -52,5 +58,15 @@ class connects(models.Model):
     username = models.CharField(max_length = 191)
     connected_user = models.CharField(max_length = 191)
     
+    def __str__(self):
+        return self.username
+
+class dev_db(models.Model):
+    username = models.CharField(max_length = 120)
+    password = models.CharField(max_length = 100)
+    name = models.CharField(max_length = 40)
+    birth_date = models.DateField()
+    is_male = models.BooleanField()
+
     def __str__(self):
         return self.username

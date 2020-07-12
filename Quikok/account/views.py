@@ -1,7 +1,7 @@
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
 from django.shortcuts import render, redirect
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import make_password  # 這一行用來加密密碼的
 
 
 # Create your views here.
