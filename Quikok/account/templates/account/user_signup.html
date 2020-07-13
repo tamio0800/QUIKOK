@@ -99,11 +99,11 @@
             <label for="role"><strong>您的角色</strong></label>
             <select class="custom-select d-block w-100" id="role" required>
               <option value="">請選擇...</option>
+              <option value="myself">我是本人！</option>
               <option value="mother">我是家人 - 媽媽</option>
               <option value="father">我是家人 - 爸爸</option>
               <option value="sister">我是家人 - 姐姐</option>
               <option value="brother">我是家人 - 哥哥</option>
-              <option value="myself">我是本人！</option>
               <option value="others">其他</option>
             </select>
           </div>
@@ -140,20 +140,15 @@
         <hr class="mb-4">
 
         <div class="row">
-          <h4 class="mb-3"><b>學習績效通知</b></h4><span class="text-muted">(選填)</span>
+          <h4 class="mb-3"><b>學習成效通知</b></h4>
         </div>
-        <!--<div class="mb-3">
-          <label for="tracking_mobile"><strong>新增您想追蹤學習績效對象的手機號碼</strong><span class="text-muted" style="font-size: 16px;"> (如果對方同意, 我們會向您更新學習報告。)</span></label>
-          <div class="row">
-              <div class="col">
-                <input type="text" class="form-control" id="tracking_mobile1" name="tracking_mobile" placeholder="請輸入手機號碼">
-              </div>
-          </div>
-          <span style="font-size: 15px; color: green;">請用分號『;』隔開電話號碼, 如: 0912345678; 0923456789</span>
-        </div>-->
 
         <div class="mb-3">
-          <label for="update_someone_by_email"><strong>新增您想主動通知學習績效對象的Email</strong><span class="text-muted" style="font-size: 16px;"> (我們會主動向對方更新您的學習狀況)</span></label>
+          <label for="update_someone_by_email"><strong>要將您的學習報告、成績單等資訊一併寄給誰呢</strong><span class="text-muted" style="font-size: 16px;"> (選填)</span></label>
+          <div class="mb-3 ml-3 ul" style="font-size: 17px;">
+            <div class="ui">• 除了您會收到學習報告以外, 我們也會主動向您填入的Email信箱寄送報告。</div>
+            <div class="ui">• 除了學習紀錄、歷程以外, 我們也會提供線上測驗結果及落點分析報告。</div>
+          </div>
           <input type="email" class="form-control" id="update_someone_by_email" name="update_someone_by_email" placeholder="hakuna@matata.com">
           <span style="font-size: 15px; color: green;">請用分號『;』隔開Email, 如: you@cool.com; we@awesome.com</span>
         </div>
