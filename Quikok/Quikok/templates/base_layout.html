@@ -16,10 +16,10 @@
     
 
     <!-- Bootstrap core CSS -->
-    <link rel="stylesheet" href="{% static 'CSS/bootstrap.min.css' %}">
-    <link href="https://bootstrap.hexschool.com/docs/4.2/dist/css/bootstrap.css" rel="stylesheet">
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <link href="https://bootstrap.hexschool.com/docs/4.2/examples/checkout/form-validation.css" rel="stylesheet">
+    <link rel = "stylesheet" href="{% static 'CSS/bootstrap.min.css' %}">
+    <link href = "{% static 'CSS/bootstrap.css' %}" rel="stylesheet">
+    <script src ="{% static 'JS/jquery-3.5.1.min.js'%}"></script>
+    <link href ="{% static 'JS/form-validation.js' %}" rel="stylesheet">
     <style>
         .bd-placeholder-img {
           font-size: 1.125rem;
@@ -80,6 +80,7 @@
 <body>
     <nav class="navbar navbar-dark navbar-expand-md fixed-top" style="background-color: #29ABE2;">
         <a class="navbar-brand" href="#">Quikok!</a>
+        
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse"
             aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -99,7 +100,7 @@
             <form class="form-inline">
                 <input class="form-control mr-sm-2" type="text" placeholder="課程、老師搜尋" aria-label="Search">
                 <button class="ml-2 btn btn-outline-light" type="submit">搜尋</button>
-                <button class="ml-4 btn btn-outline-light" type="submit">登入</button>
+                <button class="ml-2 btn btn-outline-light" type="submit">登入</button>
                 <button class="ml-2 btn btn-outline-light" 
                 type="button" onclick="location.href='http://127.0.0.1:8000/account/user_signup'">註冊</button>
             </form>
@@ -110,8 +111,6 @@
     <div class="wrapper">
         {% block content %} {% endblock %}
     </div>
-
-
 
     <!-- FOOTER -->
     </br></br></br></br>
