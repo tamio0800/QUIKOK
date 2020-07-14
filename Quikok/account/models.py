@@ -13,9 +13,7 @@ class user_profile(models.Model):
     role = models.CharField(max_length = 40)
     mobile = models.CharField(max_length = 12)
     picture_folder = models.CharField(max_length = 150)
-    tracking_mobile = models.CharField(max_length = 130)  
     update_someone_by_email = models.CharField(max_length = 405)
-    update_someone_by_mobile = models.CharField(max_length = 65)
     date_join = models.DateTimeField(auto_now_add=True)
 
     # 為了使回傳platform名稱而不是object
@@ -67,6 +65,7 @@ class dev_db(models.Model):
     name = models.CharField(max_length = 40)
     birth_date = models.DateField()
     is_male = models.BooleanField()
+    date_join = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.username

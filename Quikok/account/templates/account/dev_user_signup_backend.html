@@ -8,7 +8,7 @@
                 <label for="username">username</label>
             </div> 
             <div class="col-2">
-                <input type="text" name='username' id='username'>
+                <input type="text" name='username' id='username' value="{{username}}">
             </div>
         </div>
         <div class="row">
@@ -24,7 +24,7 @@
                 <label for="name">name</label>
             </div>
             <div class="col-2">
-                <input type="text" name='name' id='name'>
+                <input type="text" name='name' id='name' value="{{name}}">
             </div>
         </div>
         <div class="row">
@@ -32,7 +32,7 @@
                 <label for="birth_date">birth_date</label>
             </div>
             <div class="col-2">
-                <input type="date" name='birth_date' id='birth_date'>
+                <input type="date" name='birth_date' id='birth_date' value="{{birth_date}}">
             </div>
         </div>
         <div class="row">
@@ -53,6 +53,7 @@
     </form>
     {% if username %}
         <hr class="mt-5 mb-3">
+        <h2 class="mt-1 mb-1">{{info}}</h2>
         <div class="row">
             <div class="col-1">
                 username:
