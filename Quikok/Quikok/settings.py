@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'Quikok',
     'account',   # 用來進行開發  註冊/個人訊息的呈現app
+    'lesson', # 課程商品頁
 ]
 
 MIDDLEWARE = [
