@@ -2,89 +2,91 @@
 <!--搜尋區塊-->
 
 <body>
-<div class="container ">
-    <form class="form-inline mt-5">
+    <div class="container">
 
-        <input class="form-control mr-sm-2" type="text" placeholder="課程、老師搜尋" aria-label="Search">
-        <button class="ml-2 btn btn-outline-light" type="submit">搜尋</button>
-    </form>
-</div>
-
-<!--條件區塊-->
-<div class="container ">
-    <!--排列順序-->
-    <button type="button" class="btn btn-outline-info">Info</button>
-    <button type="button" class="btn btn-outline-info">Info</button>
-    <button type="button" class="btn btn-outline-info">Info</button>
-    <button type="button" class="btn btn-outline-info">Info</button>
-    <button type="button" class="btn btn-outline-info">Info</button>
-
-    
-    <div class="mt-5 mb-5 ml-5 mr-5 btn-group btn-group-toggle" data-toggle="buttons">
-        <label class="btn btn-primary ml-2 mr-2" id="btn1">
-          <input type="checkbox" name="options" id="option1" autocomplete="off"> Active
-        </label>
-        <label class="btn btn-primary ml-2 mr-2" id="btn2">
-          <input type="checkbox" name="options" id="option2" autocomplete="off"> Radio
-        </label>
-        <label class="btn btn-primary ml-2 mr-2" id="btn3">
-          <input type="checkbox" name="options" id="option3" autocomplete="off"> Radio
-        </label>
     </div>
-</div>
-
-
-<!--熱門老師區塊-->
-<div class="mt-5 container" id="fabulous_teachers">
-    <div class="row">
-        <div class="col-sm-3 mb-4">
-            <div class="card">
-                <img src="{% static 'IMG/1267.jpg' %}" class=" card-img-top" alt="card-img-top">
-                <div class="card-body">
-                    <h5 class="card-title">老師名稱</h5>
-                    <h5 class="card-title">專業科目</h5>
-                    <p class="card-text">老師介紹等等This is a longer card with supporting text below as a natural lead-in
-                        to additional content. This content is a little bit longer.</p>
-                    <a href="#" class="card-link">預約試教</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-3 mb-4">
-            <div class="card">
-                <img src="{% static 'IMG/OEKDFF0.jpg' %}" class="card-img-top" alt="...">
-                <div class="card-body">
-                    <h5 class="card-title">番茄姐姐英文救星陽光正面教學活潑</h5>
-                    <p class="card-text">建議固定這些區域字數設定This is a longer card with supporting text below as a natural
-                        lead-in
-                        to additional content. This content is a little bit longer.</p>
-                    <a href="#" class="card-link">預約試教</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-3 mb-4">
-            <div class="card">
-                <img src="{% static 'IMG/1267.jpg' %}" class="card-img-top" alt="...">
-                <div class="card-body">
-                    <h5 class="card-title">Card title</h5>
-                    <p class="card-text">This is a longer card with supporting text below as a natural lead-in
-                        to additional content.</p>
-                    <a href="#" class="card-link">預約試教</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-3 mb-4">
-            <div class="card">
-                <img src="{% static 'IMG/OEKDFF0.jpg' %}" class="card-img-top" alt="...">
-                <div class="card-body">
-                    <h5 class="card-title">Card title</h5>
-                    <p class="card-text">This is a longer card with supporting text below as a natural lead-in
-                        to additional content. This content is a little bit longer.</p>
-                    <a href="#" class="card-link">預約試教</a>
-                </div>
+    <div class="container mt-5">
+        <div class="input-group input-group-lg mt-6">
+            <input type="text" class="form-control" placeholder="科目或老師名稱" aria-label="subject or teacher""
+                aria-describedby="button-addon2">
+            <div class="input-group-append">
+                <button class="btn btn-outline-secondary" type="button" id="button-addon2">搜尋</button>
             </div>
         </div>
     </div>
-</div>
+
+    <!--條件區塊-->
+    <div class="container ">
+        <!--排列順序-->
+
+        <div class="mt-5 mb-5 ml-5 mr-5 btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-outline-info ml-2 mr-2" id="btn1">
+                <input type="checkbox" name="options" id="option1" autocomplete="off"> 熱門優先
+            </label>
+            <label class="btn btn-outline-info ml-2 mr-2" id="btn2">
+                <input type="checkbox" name="options" id="option2" autocomplete="off"> 高完客量優先
+            </label>
+            <label class="btn btn-outline-info ml-2 mr-2" id="btn3">
+                <input type="checkbox" name="options" id="option3" autocomplete="off"> 高評價優先
+            </label>
+            <label class="btn btn-outline-info ml-2 mr-2" id="btn3">
+                <input type="checkbox" name="options" id="option3" autocomplete="off"> 低價優先
+            </label>
+        </div>
+    </div>
 
 
-{% endblock %}
+    <!--熱門老師區塊-->
+    <div class="mt-5 container" id="fabulous_teachers">
+        <div class="row">
+            <div class="col-sm-3 mb-4">
+                <div class="card">
+                    <img src="{% static 'IMG/1267.jpg' %}" class=" card-img-top" alt="card-img-top">
+                    <div class="card-body">
+                        <h5 class="card-title">老師名稱</h5>
+                        <h5 class="card-title">專業科目</h5>
+                        <p class="card-text">老師介紹等等This is a longer card with supporting text below as a natural lead-in
+                            to additional content. This content is a little bit longer.</p>
+                        <a href="#" class="card-link">預約試教</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3 mb-4">
+                <div class="card">
+                    <img src="{% static 'IMG/OEKDFF0.jpg' %}" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">番茄姐姐英文救星陽光正面教學活潑</h5>
+                        <p class="card-text">建議固定這些區域字數設定This is a longer card with supporting text below as a natural
+                            lead-in
+                            to additional content. This content is a little bit longer.</p>
+                        <a href="#" class="card-link">預約試教</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3 mb-4">
+                <div class="card">
+                    <img src="{% static 'IMG/1267.jpg' %}" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">Card title</h5>
+                        <p class="card-text">This is a longer card with supporting text below as a natural lead-in
+                            to additional content.</p>
+                        <a href="#" class="card-link">預約試教</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3 mb-4">
+                <div class="card">
+                    <img src="{% static 'IMG/OEKDFF0.jpg' %}" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">Card title</h5>
+                        <p class="card-text">This is a longer card with supporting text below as a natural lead-in
+                            to additional content. This content is a little bit longer.</p>
+                        <a href="#" class="card-link">預約試教</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    {% endblock %}
