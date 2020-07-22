@@ -1,0 +1,50 @@
+
+/* 星星的形狀 */
+
+
+
+/* 可以隱藏核取方塊 */
+.rating_star{
+    
+    display: flex;
+}
+.rating_star input
+{
+    display: none; 
+}
+
+.rating_star label{
+display: block;
+cursor: pointer;
+width: 50px;
+color: #ffd856;
+}
+
+.rating_star label:before
+{
+    content: '\f005';
+    font-family: fontAwesome;
+    position: relative;
+    display: block;
+    font-size: 50px;
+}
+
+/*愛心*/
+
+.like_heart input
+{
+    display: none; 
+}
+
+.like_heart label{
+display: block;
+cursor: pointer;
+width: 50px;
+background-color: blueviolet;
+}
+
+.like_heart label:before
+{
+    content: '\f004';
+    font-family: fontAwesome;
+}
