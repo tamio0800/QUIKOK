@@ -12,3 +12,6 @@ def homepage(request):
 
 def base_layout(request):
     return render(request, 'base_layout.html')
+
+def test_page(request):
+    return render(request, 'test.html')

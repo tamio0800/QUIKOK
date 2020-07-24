@@ -1,32 +1,53 @@
 
 /* 星星的形狀 */
-
-
-
-/* 可以隱藏核取方塊 */
-.rating_star{
-    
+.rating_star
+{
+    position: absolute;
+    top: 50%;
     display: flex;
+    flex-direction: row-reverse;
 }
+/* 隱藏核取方塊 */
 .rating_star input
 {
     display: none; 
 }
 
 .rating_star label{
-display: block;
-cursor: pointer;
-width: 50px;
-color: #ffd856;
+    display: block;
+    cursor: pointer;
+    width: 50px;
 }
 
-.rating_star label:before
+.rating_star label::before
 {
     content: '\f005';
     font-family: fontAwesome;
     position: relative;
     display: block;
     font-size: 50px;
+    color: #666666;
+}
+
+.rating_star label::after
+{
+    content: '\f005';
+    font-family: fontAwesome;
+    position: absolute;
+    display: block;
+    font-size: 50px;
+    color: #ffd856;
+    top: 0;
+    opacity: 0;
+    transition: .3s;
+    text-shadow: 0 2px 5px rgba(63, 63, 63, 0.5) ;
+}
+
+.rating_star label:hover::after, 
+.rating_star label:hover ~ label::after,
+.rating_star input:checked ~ label::after
+{
+    opacity: 1;
 }
 
 /*愛心*/
@@ -47,4 +68,53 @@ background-color: blueviolet;
 {
     content: '\f004';
     font-family: fontAwesome;
+}
+
+.like_heart
+{
+    position: absolute;
+    top: 50%;
+    display: flex;
+    flex-direction: row-reverse;
+}
+/* 隱藏核取方塊 */
+.like_heart input
+{
+    display: none; 
+}
+
+.like_heart label{
+    display: block;
+    cursor: pointer;
+    width: 50px;
+}
+
+.like_heart label::before
+{
+    content: '\f005';
+    font-family: fontAwesome;
+    position: relative;
+    display: block;
+    font-size: 50px;
+    color: #666666;
+}
+
+.like_heart label::after
+{
+    content: '\f005';
+    font-family: fontAwesome;
+    position: absolute;
+    display: block;
+    font-size: 50px;
+    color: #ffd856;
+    top: 0;
+    opacity: 0;
+    transition: .3s;
+    text-shadow: 0 2px 5px rgba(63, 63, 63, 0.5) ;
+}
+
+.rating_star label:hover::after, 
+.rating_star input:checked ~ label::after
+{
+    opacity: 1;
 }
