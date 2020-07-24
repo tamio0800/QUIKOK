@@ -5,7 +5,7 @@
 <link href="{% static 'CSS/font-awesome.min.css' %}" rel="stylesheet">
 
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
-
+<link href="{% static 'CSS/star-rate-and-heart.css' %}" rel="stylesheet">
 <style>
  
  .search_yellow_bn {
@@ -65,13 +65,23 @@
   box-shadow: 0 0 0 0.2rem rgba(38, 143, 255, 0.5);
 }
 
-.test-heart:hover{
-    color: aqua;
-    background-color: brown;
-    font-size: 50px;
-}
+.red-heart{
+    color: #f44336;
+    cursor: pointer;}
 
+.heart{
+    color: #61616130; 
+    cursor: pointer;}
+.heart:hover{ color: #f44336;}
 </style>
+
+<script>
+    $(document).ready(function(){
+        $(".heart").click(function(){
+             $(this).toggleClass("heart red-heart");
+        });
+    });
+</script>
 <!--搜尋區塊-->
 <div style="background-color: #e9e9e9 ; box-shadow:3px 3px 5px 1px #b3b3b3;">
     <div class="container">
@@ -218,7 +228,6 @@
     </div>
 </div>
 
-
 <!--熱門老師區塊-->
 <div class="mt-5 container" id="fabulous_teachers">
     <div class="row">
@@ -226,12 +235,27 @@
             <div class="card">
                 <img src="{% static 'IMG/1267.jpg' %}" class=" card-img-top" alt="card-img-top">
                 <div class="card-body">
-                    <h5 class="card-title">老師名稱</h5>
+                    <p class="card-title">多益衝刺班</p>
+                    <div>
+                    <a  class="star">
+                        <i class ="fa fa-star"></i>
+                        <i class ="fa fa-star"></i>
+                        <i class ="fa fa-star"></i>
+                        <i class ="fa fa-star"></i>
+                        <i class ="fa fa-star"></i>
+                        <p>(18)</p>
+                    </a>
+                    <a  class="heart">
+                        <i class ="fa fa-heart heart"></i>
+                    </a>
+                </div>
                     <h5 class="card-title">專業科目</h5>
                     <p class="card-text">老師介紹等等This is a longer card with supporting text below as a natural
                         lead-in
                         to additional content. This content is a little bit longer.</p>
                     <a href="#" class="card-link">預約試教</a>
+
+
                 </div>
             </div>
         </div>
