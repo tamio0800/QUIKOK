@@ -3,82 +3,98 @@
 <link href="{% static 'CSS/checkbox.css' %}" rel="stylesheet">
 
 <link href="{% static 'CSS/font-awesome.min.css' %}" rel="stylesheet">
-
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+<!--icon CDN-->
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
+    integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
 <link href="{% static 'CSS/star-rate-and-heart.css' %}" rel="stylesheet">
 <style>
- 
- .search_yellow_bn {
-     color: #ffffff;
-     
-     background-color:#f8b763;
-     border:  #b8b8b8;
-     border-bottom-width:2px;
-     border-bottom-style: solid;
-     border-right-width:2px;
-     border-right-style: solid;
-     
- }
+    .search_yellow_bn {
+        color: #ffffff;
 
- .filter_border{
-    border-bottom-color:  #f8b763;
-    border-bottom-width:1px;
-    border-bottom-style: solid;
- }
+        background-color: #f8b763;
+        border: #b8b8b8;
+        border-bottom-width: 2px;
+        border-bottom-style: solid;
+        border-right-width: 2px;
+        border-right-style: solid;
 
-.filter_btn{
-    color: #29ABE2;
-    border-color:  #29ABE2;
-    border-width:1px;
-    border-style: solid;
-    
-}
+    }
 
-.filter_btn:hover {
-  color: #ffffff;
-  text-decoration: none;
-  background-color: #29ABE2;
-}
+    .filter_border {
+        border-bottom-color: #f8b763;
+        border-bottom-width: 1px;
+        border-bottom-style: solid;
+    }
 
-.filter_btn:focus, .filter_btn.focus {
-  color: #fff;
-  background-color: #29ABE2;
-  border-color: #0062cc;
-  box-shadow: 0 0 0 0.2rem rgba(38, 143, 255, 0.5);
-}
+    .filter_btn {
+        color: #29ABE2;
+        border-color: #29ABE2;
+        border-width: 1px;
+        border-style: solid;
 
-.filter_btn.disabled, .filter_btn:disabled {
-  color: #fff;
-  background-color: #29ABE2;
-  border-color: #29ABE2;
-}
+    }
 
-.filter_btn:not(:disabled):not(.disabled):active, .filter_btn:not(:disabled):not(.disabled).active,
-.show > .filter_btn.dropdown-toggle {
-  color: #fff;
-  background-color: #29ABE2;
-  border-color: #29ABE2;
-}
+    .filter_btn:hover {
+        color: #ffffff;
+        text-decoration: none;
+        background-color: #29ABE2;
+    }
 
-.filter_btn:not(:disabled):not(.disabled):active:focus, .filter_btn:not(:disabled):not(.disabled).active:focus,
-.show > .filter_btn.dropdown-toggle:focus {
-  box-shadow: 0 0 0 0.2rem rgba(38, 143, 255, 0.5);
-}
+    .filter_btn:focus,
+    .filter_btn.focus {
+        color: #fff;
+        background-color: #29ABE2;
+        border-color: #0062cc;
+        box-shadow: 0 0 0 0.2rem rgba(38, 143, 255, 0.5);
+    }
 
-.red-heart{
-    color: #f44336;
-    cursor: pointer;}
+    .filter_btn.disabled,
+    .filter_btn:disabled {
+        color: #fff;
+        background-color: #29ABE2;
+        border-color: #29ABE2;
+    }
 
-.heart{
-    color: #61616130; 
-    cursor: pointer;}
-.heart:hover{ color: #f44336;}
+    .filter_btn:not(:disabled):not(.disabled):active,
+    .filter_btn:not(:disabled):not(.disabled).active,
+    .show>.filter_btn.dropdown-toggle {
+        color: #fff;
+        background-color: #29ABE2;
+        border-color: #29ABE2;
+    }
+
+    .filter_btn:not(:disabled):not(.disabled):active:focus,
+    .filter_btn:not(:disabled):not(.disabled).active:focus,
+    .show>.filter_btn.dropdown-toggle:focus {
+        box-shadow: 0 0 0 0.2rem rgba(38, 143, 255, 0.5);
+    }
+
+    .red-heart {
+        color: #f44336;
+        cursor: pointer;
+        font-size: 25px;
+    }
+
+    .heart {
+        color: #61616130;
+        cursor: pointer;
+        font-size: 25px;
+    }
+
+    .heart:hover {
+        color: #f44336;
+        font-size: 25px;
+    }
+
+    .fa-star {
+        font-size: 20px;
+    }
 </style>
 
 <script>
-    $(document).ready(function(){
-        $(".heart").click(function(){
-             $(this).toggleClass("heart red-heart");
+    $(document).ready(function () {
+        $(".heart").click(function () {
+            $(this).toggleClass("heart red-heart");
         });
     });
 </script>
@@ -95,7 +111,7 @@
     </div>
 </div>
 <!--很多filter的區塊-->
-    <div class="container filter_border mt-3">
+<div class="container filter_border mt-3">
     <!--排列順序-->
     <div class="row">
         <strong class="col-2 mt-4 align-text-top " style="text-align: center;">科目</strong>
@@ -234,31 +250,70 @@
         <div class="col-sm-3 mb-4">
             <div class="card">
                 <img src="{% static 'IMG/1267.jpg' %}" class=" card-img-top" alt="card-img-top">
+
                 <div class="card-body">
-                    <p class="card-title">多益衝刺班</p>
-                    <div>
-                    <a  class="star">
-                        <i class ="fa fa-star"></i>
-                        <i class ="fa fa-star"></i>
-                        <i class ="fa fa-star"></i>
-                        <i class ="fa fa-star"></i>
-                        <i class ="fa fa-star"></i>
-                        <p>(18)</p>
-                    </a>
-                    <a  class="heart">
-                        <i class ="fa fa-heart heart"></i>
-                    </a>
-                </div>
-                    <h5 class="card-title">專業科目</h5>
-                    <p class="card-text">老師介紹等等This is a longer card with supporting text below as a natural
-                        lead-in
-                        to additional content. This content is a little bit longer.</p>
-                    <a href="#" class="card-link">預約試教</a>
+                    <h4 class="card-title" style="text-align: center;">多益衝刺班</h4>
+                    <!--星星, 評價數, LIKE區-->
+                    <span class="d-flex justify-content-center ">
+                        <a class="star star-area align-self-start">
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                        </a>
+                        <p class="rate-count"> &nbsp&nbsp(18)&nbsp&nbsp </p>
+                        <i class="fa fa-heart heart align-self-start"></i>
+                    </span>
+                    
+                    <!--時間資訊-->
+                    <!-- css-->
+                    <style>
+                        .p-inline{
+
+                        }
+                        </style>
+                    <div class = "mt-2">
+                        <p class = "mt-1">開課時間：<span>每周一</span></p>
+                        <p class = "mt-1">早上十點</p>
+                        <p class = "mt-1"><span>NTD&nbsp</span>
+                            <span>500</span>
+                            <span>/hr</span>
+                        </p>
+                    </div>
 
 
+                    <!--老師自介優點區-->
+                    <!-- css-->
+                    <style>
+                        .teacher-info{
+                            color: #fafafa;
+                            font-size: 15px;
+                            background-color: #278857;
+                            border-color: #278857;
+                            border-width: 1px;
+                            border-style: solid;
+                            padding-top: 2px;
+                            padding-bottom: 2px;
+                            padding-right: 5px;
+                            padding-left: 5px;
+                            text-align: center;
+                            border-radius: 3px;
+                        }
+
+                    </style>
+                    
+                    <div class="mt-2">
+                        <label class="teacher-info" style="text-align: center;">台大外文系碩士</label>
+                        <label class="teacher-info">十年、700位學生教學經驗</label>
+                        <label class="teacher-info">托福專班</label>
+
+                    </div>
                 </div>
             </div>
         </div>
+
+
         <div class="col-sm-3 mb-4">
             <div class="card">
                 <img src="{% static 'IMG/OEKDFF0.jpg' %}" class="card-img-top" alt="...">
