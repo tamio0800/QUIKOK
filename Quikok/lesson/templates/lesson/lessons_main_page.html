@@ -40,32 +40,17 @@
         background-color: #29ABE2;
     }
 
-    .filter_btn:focus,
-    .filter_btn.focus {
+
+    .filter_btn_focus {
         color: #fff;
         background-color: #29ABE2;
         border-color: #0062cc;
         box-shadow: 0 0 0 0.2rem rgba(38, 143, 255, 0.5);
     }
-
-    .filter_btn.disabled,
-    .filter_btn:disabled {
+    .filter_btn_focus:hover {
         color: #fff;
         background-color: #29ABE2;
-        border-color: #29ABE2;
-    }
-
-    .filter_btn:not(:disabled):not(.disabled):active,
-    .filter_btn:not(:disabled):not(.disabled).active,
-    .show>.filter_btn.dropdown-toggle {
-        color: #fff;
-        background-color: #29ABE2;
-        border-color: #29ABE2;
-    }
-
-    .filter_btn:not(:disabled):not(.disabled):active:focus,
-    .filter_btn:not(:disabled):not(.disabled).active:focus,
-    .show>.filter_btn.dropdown-toggle:focus {
+        border-color: #0062cc;
         box-shadow: 0 0 0 0.2rem rgba(38, 143, 255, 0.5);
     }
 
@@ -98,6 +83,7 @@
         });
     });
 </script>
+
 <!--搜尋區塊-->
 <div style="background-color: #e9e9e9 ; box-shadow:3px 3px 5px 1px #b3b3b3;">
     <div class="container">
@@ -111,6 +97,14 @@
     </div>
 </div>
 <!--很多filter的區塊-->
+<script>
+    $(document).ready(function () {
+        $(".filter_btn").click(function () {
+            $(this).toggleClass("filter_btn filter_btn_focus");
+        });
+    });
+</script>
+
 <div class="container filter_border mt-3">
     <!--排列順序-->
     <div class="row">
@@ -265,18 +259,16 @@
                         <p class="rate-count"> &nbsp&nbsp(18)&nbsp&nbsp </p>
                         <i class="fa fa-heart heart align-self-start"></i>
                     </span>
-                    
+
                     <!--時間資訊-->
                     <!-- css-->
                     <style>
-                        .p-inline{
-
-                        }
-                        </style>
-                    <div class = "mt-2">
-                        <p class = "mt-1">開課時間：<span>每周一</span></p>
-                        <p class = "mt-1">早上十點</p>
-                        <p class = "mt-1"><span>NTD&nbsp</span>
+                        .p-inline {}
+                    </style>
+                    <div class="mt-2">
+                        <p class="mt-1">開課時間：<span>每周一</span></p>
+                        <p class="mt-1">早上十點</p>
+                        <p class="mt-1"><span>NTD&nbsp</span>
                             <span>500</span>
                             <span>/hr</span>
                         </p>
@@ -286,7 +278,7 @@
                     <!--老師自介優點區-->
                     <!-- css-->
                     <style>
-                        .teacher-info{
+                        .teacher-info {
                             color: #fafafa;
                             font-size: 15px;
                             background-color: #278857;
@@ -300,15 +292,27 @@
                             text-align: center;
                             border-radius: 3px;
                         }
-
                     </style>
-                    
+
                     <div class="mt-2">
                         <label class="teacher-info" style="text-align: center;">台大外文系碩士</label>
                         <label class="teacher-info">十年、700位學生教學經驗</label>
                         <label class="teacher-info">托福專班</label>
-
                     </div>
+                    <!--學經certify img-->
+                    <style>
+                        .certify_img{
+                            height: 15%;
+                            width: 15%;
+                        }
+                    </style>
+                    <div class="row mt-2">
+                        <img class ="certify_img" src="{% static 'IMG/bachelor-02.png' %}"
+                        title="學士證明">
+                        <img class ="certify_img" src="{% static 'IMG/bachelor-03.png' %}"
+                        title="碩士證明" >
+                    </div>
+
                 </div>
             </div>
         </div>
