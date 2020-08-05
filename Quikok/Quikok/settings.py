@@ -25,7 +25,7 @@ SECRET_KEY = 'dhu80odw8@*7*o*oxznv+bkjsho1y@6#+6sodf*##d-cg9$o&r'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -37,6 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
+    'chatroom',
+    
 ]
 
 MIDDLEWARE = [
@@ -81,6 +84,17 @@ DATABASES = {
         'PASSWORD': 'admin',
         'HOST': 'localhost',
         'PORT': '3306',
+    }
+}
+
+# channel settings
+ASGI_APPLICATION = "Quikok.routing.application"
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('127.0.0.1', 6379)],
+        },
     }
 }
 
