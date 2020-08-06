@@ -1,0 +1,90 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+
+    
+
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+<link href="{% static 'CSS/star-rate-and-heart.css' %}" rel="stylesheet">
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+<img src="{% static 'IMG/Quikok_Logo_s.png' %}">
+<script src="{% static 'JS/jquery-3.5.1.min.js' %}"></script>
+</head>
+<body>
+<!--jquery 測試  要先給他一個id -->
+
+<input type="button" name="test_btn" id="test_btn" value="this is a test" style="height: 60px; width: 250px;">
+<script>
+    $("#test_btn").click(function(){
+        $("#test_btn").css("background-color","blue");
+    });
+</script>
+
+<h1>12345</h1>
+<h1 class='title'>12345</h1>
+<div class= 'header'>
+    <h1 id='wanna_hide'>12345</h1>
+</div>
+<h2 id='wanna_hide'>12345</h2>
+
+
+<!--愛心-->
+<style>
+    .red-heart{
+        color: #f44336;
+        cursor: pointer;
+    }
+
+    .heart{
+        color: #61616130; 
+        cursor: pointer;
+    }
+    .heart:hover{ color: #f44336;}
+
+</style>
+
+<a  class="heart">
+    <i class ="fa fa-heart "></i>
+</a>
+<a class="heart" >
+    <i class ="fa fa-heart "></i>
+</a>
+<a class="heart">
+    <i class ="fa fa-heart "></i>
+</a>
+<script>
+    $(document).ready(function(){
+        $(".heart").click(function(){
+             $(this).toggleClass("heart red-heart");
+        });
+    });
+</script>
+
+
+
+
+
+<!--評分星星
+
+
+<div class="rating_star">
+   
+    <input type="radio" name="star" id = "star1"><label for ="star1"></label>
+    <input type="radio" name="star" id = "star2"><label for ="star2"></label>
+    <input type="radio" name="star" id = "star3"><label for ="star3"></label>
+    <input type="radio" name="star" id = "star4"><label for ="star4"></label>
+    <input type="radio" name="star" id = "star5"><label for ="star5"></label>
+</div>
+-->
+
+
+
+</body>
+</html>
