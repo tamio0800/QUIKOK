@@ -2,8 +2,8 @@ from django.db import models
 
 class user_profile(models.Model):
     # 這是for存放一般會員/學生的額外資訊
-    username = models.CharField(max_length = 120)
-    password = models.CharField(max_length = 100)
+    username = models.CharField(max_length = 150)
+    password = models.CharField(max_length = 128)
     name = models.CharField(max_length = 40)
     nickname = models.CharField(max_length = 40)
     birth_date = models.DateField()
@@ -21,8 +21,8 @@ class user_profile(models.Model):
 
 class vendor_profile(models.Model):
     # 這是for存放老師的額外資訊
-    username = models.CharField(max_length = 120)
-    password = models.CharField(max_length = 100)
+    username = models.CharField(max_length = 150)
+    password = models.CharField(max_length = 128)
     name = models.CharField(max_length = 40)
     nickname = models.CharField(max_length = 40)
     birth_date = models.DateField()

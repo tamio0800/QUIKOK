@@ -1,10 +1,13 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth.hashers import make_password  # 這一行用來加密密碼的
+from django.contrib import auth
+from django.contrib.auth.hashers import make_password, check_password  # 這一行用來加密密碼的
 from .model_tools import user_db_manager
+from django.contrib.auth.models import User
+from django.http import HttpResponse, HttpResponseRedirect
 
 # Create your views here.
 def signup(request):
-    title = '開課! Quikok - 會員註冊'
+    title = '會員註冊'
     
     if request.method == 'POST':
         username = request.POST['username'].strip()
@@ -41,7 +44,24 @@ def signup(request):
     return render(request, 'account/user_signup.html', locals())
 
 def dev_signin(request):
-    title = '開課! Quikok - 會員登入'
-    return render(request, 'account/dev_user_signin.html', locals())
+    title = '會員登入'
+    if request.method == 'POST':
+        username = request.POST['username']
+        if len(User.objects.filter(username = username)) == 1:
+            # 代表有這個username
+            user = User.objects.filter(username=username)[0]
+            real_password_hash = User.objects.filter(username=username)[0].password
+            password_match = check_password(request.POST['password'], real_password_hash)
+            if password_match:
+                auth.login(request, user)  # 將用戶登入
+                return HttpResponseRedirect('/homepage/')
+            else:
+                password_not_match = True
+                render(request, 'account/dev_user_signin.html', locals())
+        else:
+            pass
+        return render(request, 'account/dev_user_signin.html', locals())
+    else:
+        return render(request, 'account/dev_user_signin.html', locals())
 
 

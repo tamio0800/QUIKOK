@@ -4,7 +4,7 @@
     <div class="container">
   <div class="py-5 text-center">
     <!--<img class="d-block mx-auto mb-4" src="https://bootstrap.hexschool.com/docs/4.2/assets/brand/bootstrap-solid.svg" alt="" width="72" height="72">-->
-    <img class="d-block mx-auto mb-4" src="{% static 'account/Quikok_Logo-02.png' %}" alt="" width="245" height="108">
+    <img class="img-fluid mb-4 mt-5" src="{%static 'IMG/Quikok_Logo_s.png'%}" alt="" width="245">
     <hr>
     <!--<h2>會員註冊</h2>-->
     <p class="lead">謝謝您使用我們的服務, <strong>「開課！Quikok」</strong>是國內第一家利用人工智慧審核教師履歷、優化上課品質的教學平台, 我們也打造了傑出的視訊系統來帶給您最優異的學習體驗, 趕快來看看我們精彩的課程吧！</p>
@@ -56,10 +56,10 @@
 
         <div class="row">
           <div class="col-md-6 mb-3">
-            <label for="mobile"><strong>您的手機號碼</strong><span class="text-muted" style="font-size: 16px;"> (當您忘記密碼時, 我們會以手機通知您。)</span></label>
+            <label for="mobile"><strong>您的手機號碼</strong><span class="text-muted" style="font-size: 16px;"> (當您忘記密碼時, 我們會以手機做確認。)</span></label>
             <input type="text" class="form-control" id="mobile" name="mobile" placeholder="0912345678" required>
             <div class="invalid-feedback" id="mobile_info"> 
-              哎呀, 您的手機號碼格式似乎錯囉！
+              請輸入如「0912-345-678」或「0912345678」的格式> <
             </div>
           </div>
         </div>
@@ -73,7 +73,7 @@
               $('#mobile_info').removeClass("valid-feedback d-block").addClass("invalid-feedback");
             }else{
               $('#mobile_info').removeClass("invalid-feedback").addClass("valid-feedback d-block");
-              $('#mobile_info').html('哎呀, 您的手機號碼格式似乎錯囉@__@').css('color', 'red');
+              $('#mobile_info').html('請輸入如「0912-345-678」或「0912345678」的格式> <').css('color', 'red');
             }
           });
           function clean_mobile(target){
@@ -154,23 +154,7 @@
         </div>
         <hr class="mb-4">
 
-        <script>
-          //整理「追蹤」跟「通知」的資料清理
-          $("#mobile").blur(function(){
-            var mobile_pattern = /09[0-9]{8}/;
-            var mobile=$.trim($("#mobile").val().replace(/[- ]/g, ""));
-            if (mobile_pattern.test(mobile)){
-              $("#mobile").val(clean_mobile(mobile));
-              $('#mobile_info').removeClass("valid-feedback d-block").addClass("invalid-feedback");
-            }else{
-              $('#mobile_info').removeClass("invalid-feedback").addClass("valid-feedback d-block");
-              $('#mobile_info').html('哎呀, 您的手機號碼格式似乎錯囉@__@').css('color', 'red');
-            }
-          });
-          function clean_mobile(target){
-            return target.slice(0,4) + "-" + target.slice(4,7) + "-" + target.slice(7,10);
-          }
-        </script>
+
 
 
         <div class="row">
