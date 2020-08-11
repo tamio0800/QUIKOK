@@ -31,13 +31,13 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'channels',
     'chatroom',
     'Quikok',
     'account',   # 用來進行開發  註冊/個人訊息的呈現app
@@ -82,9 +82,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',  
         'NAME': 'quikok_db',  # 資料庫/schema的名稱
-        'USER': 'admin',
         'USER': 'root',
         'PASSWORD': '0800',
+        'HOST': 'localhost',
         'PORT': '3306',
     }
 }
