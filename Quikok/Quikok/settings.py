@@ -83,8 +83,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',  
         'NAME': 'quikok_db',  # 資料庫/schema的名稱
         'USER': 'admin',
-        'USER': 'root',
-        'PASSWORD': '0800',
+        'PASSWORD': 'admin',
         'PORT': '3306',
     }
 }
