@@ -1,6 +1,4 @@
 from django.db import models
-from django.contrib.auth.models import User
-
 
 class user_profile(models.Model):
     # 這是for存放一般會員/學生的額外資訊

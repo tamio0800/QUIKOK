@@ -1,4 +1,6 @@
-from .models import dev_db, user_profile
+from account.models import dev_db, user_profile
+from django.contrib.auth.models import User
+
 
 class user_db_manager:
     def __init__(self):
@@ -21,6 +23,18 @@ class user_db_manager:
                     update_someone_by_email = kwargs['update_someone_by_email'],
                 ).save()
                 print(kwargs['username'], 'has been created.')
+
+                # 複寫到auth User中
+                User(
+                    username = kwargs['username'],
+                    password = kwargs['password_hash'],
+                    is_superuser = 0,
+                    first_name = '',
+                    last_name = '',
+                    email = '',
+                    is_staff = 0,
+                    is_active = 1,
+                ).save()
                 return True
             else:
                 return False
@@ -44,3 +58,4 @@ class user_db_manager:
                 return False
         elif kwargs['user_type'] == 'vendor':
             pass
+    

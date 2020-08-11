@@ -5,13 +5,8 @@ from .model_tools import user_db_manager
 # Create your views here.
 def signup(request):
     title = '開課! Quikok - 會員註冊'
-    return render(request, 'account/user_signup.html', locals())
-
-def dev_signup(request):
-    title = '開課! Quikok - 會員註冊'
     
     if request.method == 'POST':
-
         username = request.POST['username'].strip()
         password_hash = make_password(request.POST['password'])
         name = request.POST['name'].strip()
@@ -40,8 +35,13 @@ def dev_signup(request):
             )
         if not ret:
             already_taken_username = username
+        
 
-        return render(request, 'account/dev_user_signup.html', locals())
-    return render(request, 'account/dev_user_signup.html', locals())
+        return render(request, 'account/user_signup.html', locals())
+    return render(request, 'account/user_signup.html', locals())
+
+def dev_signin(request):
+    title = '開課! Quikok - 會員登入'
+    return render(request, 'account/dev_user_signin.html', locals())
 
 
