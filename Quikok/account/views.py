@@ -14,7 +14,6 @@ from datetime import date
 # Create your views here.
 def signup(request):
     title = '會員註冊'
-    
     if request.method == 'POST':
         username = request.POST['username'].strip()
         password_hash = make_password(request.POST['password'])
@@ -44,29 +43,34 @@ def signup(request):
             )
         if not ret:
             already_taken_username = True        
-        return render(request, 'account/user_signup.html', locals())
-    return render(request, 'account/user_signup.html', locals())
+        return render(request, 'account/signup.html', locals())
+    return render(request, 'account/signup.html', locals())
 
-def dev_signin(request):
+def signin(request):
     title = '會員登入'
     if request.method == 'POST':
-        username = request.POST['username']
-        if User.objects.filter(username = username).count() == 1:
+        username = request.POST.get('username', False)
+        password = request.POST.get('password', False)
+        user = auth.authenticate(username=username, password=password)
+        if user is not None:
+            print(user)
+        # if User.objects.filter(username = username).count() == 1:
             # 代表有這個username
-            user = User.objects.filter(username=username)[0]
-            real_password_hash = User.objects.filter(username=username)[0].password
-            password_match = check_password(request.POST['password'], real_password_hash)
-            if password_match:
-                auth.login(request, user)  # 將用戶登入
-                return HttpResponseRedirect('/homepage/')
-            else:
-                password_not_match = True
-                return render(request, 'account/dev_user_signin.html', locals())
+            # user = User.objects.filter(username=username)[0]
+            # real_password_hash = User.objects.filter(username=username)[0].password
+            # password_match = check_password(request.POST['password'], real_password_hash)
+            # user = auth.authenticate(username=username, password=password)
+            # if password_match:
+            auth.login(request, user)  # 將用戶登入
+            return HttpResponseRedirect('/homepage/')
+            # else:
+            #    password_not_match = True
         else:
             user_not_match = True
-            render(request, 'account/dev_user_signin.html', locals())
+
+        return render(request, 'account/signin.html', locals())
     else:
-        return render(request, 'account/dev_user_signin.html', locals())
+        return render(request, 'account/signin.html', locals())
 
 
 def dev_forgot_password_1_check_username(request):
