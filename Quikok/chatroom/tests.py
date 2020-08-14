@@ -13,3 +13,12 @@ if __name__ == '__main__':
     user2=User.objects.get(id = 2)
     
     chat_room.objects.create(member1 = user1, member2 =user2)
+
+
+    for room in room_list:
+        print(room.member2_id)
+
+    for room in room_list:
+        print(room.member1.username)
+# 
+

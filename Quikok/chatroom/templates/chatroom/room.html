@@ -13,72 +13,85 @@
 
 
 <style>
-    .box{
+    .box {
         height: 100px;
         background-color: rebeccapurple;
-        border:1px solid rosybrown;
+        border: 1px solid rosybrown;
     }
-    .friends_list{
-        background-color:#B2C8CE;
+
+    .friends_list {
+        background-color: #B2C8CE;
         color: snow;
-        
+
     }
-    .friends_list:hover{
-        background-color:#778488;
+
+    .friends_list:hover {
+        background-color: #778488;
     }
 </style>
 
 <div></div>
 
-<div class="container mt-4" id="排版2" >
+<div class="container mt-4" id="排版2">
     <div class="row">
         <div class="col-3" style="background-color:#B2C8CE;" id="左側好友">
-                <ul class="list-group">
-                    {% for room in room_list %}
-                    <li class = "list-group-item friends_list">
-                        {% if room.member1.username == current_user.username %}
-                        <a href="/chat/{{current_user.username}}/?room_id={{room.id}}">
-                            <img src="{% static 'IMG/1267.jpg' %}" style = "width: 35px;height: 35px;" />{{room.member2.username}}
-                        </a>
-                        {% else %}
-                        <a href="/chat/{{current_user.username}}/?room_id={{room.id}}">
-                            <i class="fa fa-user-circle" aria-hidden="true">{{room.member1.username}}</i>
-                        </a>
-                        {% endif %}
-                    </li>
-                    {% endfor %}
+            <ul class="list-group">
 
-                </ul>
+                {% for item in roomid_and_friend) %}
+                <li class="list-group-item friends_list">
+
+                    <a href="/chat/{{current_user.username}}/?room_id={{item[0]}}">
+                        <img src="{% static 'IMG/1267.jpg' %}" style="width: 35px;height: 35px;" />{{item[1]}}
+                    </a>
+
+
+                <!--{% for room in room_list %}
+                <li>
+                    {% if room.member1.username == current_user.username %}
+                    <a href="/chat/{{current_user.username}}/?room_id={{room.id}}">
+                        <i class="fa fa-user-circle" aria-hidden="true">{{room.member2.username}}</i>
+                    </a>
+                    {% else %}
+                    <a href="/chat/{{current_user.username}}/?room_id={{room.id}}">
+                        <i class="fa fa-user-circle" aria-hidden="true">{{room.member1.username}}</i>
+                    </a>
+                    {% endif %}
+                </li>
+                {% endfor %}-->
+                </li>
+                {% endfor %}
+
+            </ul>
         </div>
 
 
         <div class="col-6" id="中間對話區">
             <div class="panel panel-info">
-                    {# Messages go here #}
-                    <ul id="messages" class="messages">
+                {# Messages go here #}
+                <ul id="messages" class="messages">
 
-                        {% for message in chat_messages %}
-                        {% if message.sender.username == current_user.username %}
-                        <li class="message right">
-                            <div class="avatar">{{message.sender.username}}</div>
-                            <div class="text_wrapper">
-                                <div class="text">{{message.message}}<br>
-                                    <span class="small">{{message.timestamp}}</span>
-                                </div>
+                    {% for message in chat_messages %}
+                    {% if message.sender.username == current_user.username %}
+                    <li class="message right">
+                        <div class="avatar">{{message.sender.username}}</div>
+                        <div class="text_wrapper">
+                            <div class="text">{{message.message}}<br>
+                                <span class="small">{{message.timestamp}}</span>
                             </div>
-                        </li>
+                        </div>
+                    </li>
 
-                        {% else %}
-                        <li class="message left">
-                            <div class="avatar">{{message.sender.username}}</div>
-                            <div class="text_wrapper">
-                                <div class="text">{{message.message}}<br>
-                                    <span class="small">{{message.timestamp}}</span>
-                                </div>
+                    {% else %}
+                    <li class="message left">
+                        <div class="avatar">{{message.sender.username}}</div>
+                        <div class="text_wrapper">
+                            <div class="text">{{message.message}}<br>
+                                <span class="small">{{message.timestamp}}</span>
                             </div>
-                        </li>
-                        {% endif %} {% endfor %}
-                    </ul>
+                        </div>
+                    </li>
+                    {% endif %} {% endfor %}
+                </ul>
                 <!--發送訊息處-->
                 <div class="panel-footer">
                     <div class="input-group">
@@ -90,20 +103,22 @@
                     </div>
                 </div>
             </div>
-        </div> <!--col--> 
+        </div>
+        <!--col-->
         <div class="col-3 box" id="右側資訊">
 
 
         </div>
     </div>
-</div> <!--排版-->
+</div>
+<!--排版-->
 
 
 <!--整個聊天室範圍做為一個容器-->
 <div class="container" id="whole">
     <!--這邊是好友列表，我要想辦法讓他變成左邊區塊-->
-        <div class = "row" id ="friends_left">
-            <div class="col-3">
+    <div class="row" id="friends_left">
+        <div class="col-3">
             <!--
                 <a class="navbar-brand" href="#">
                     <i class="fa fa-comments"></i> {{current_user.username}}
@@ -116,7 +131,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-        
+
 
             <div id="navbar" class="navbar-collapse collapse">
                 <ul class="nav navbar-nav navbar-right">
@@ -137,8 +152,8 @@
                 </ul>
 
             </div>
-       
-        </div>    
+
+        </div>
     </div>
 
 
@@ -157,35 +172,35 @@
                         {% endif %}
                     </div>
                 -->
-                
-                    {# Messages go here #}
-                    <ul id="messages" class="messages">
 
-                        {% for message in chat_messages %}
-                        {% if message.sender.username == current_user.username %}
-                        <li class="message right">
-                            <div class="avatar">{{message.sender.username}}</div>
-                            <div class="text_wrapper">
-                                <div class="text">{{message.message}}<br>
-                                    <span class="small">{{message.timestamp}}</span>
-                                </div>
+                {# Messages go here #}
+                <ul id="messages" class="messages">
+
+                    {% for message in chat_messages %}
+                    {% if message.sender.username == current_user.username %}
+                    <li class="message right">
+                        <div class="avatar">{{message.sender.username}}</div>
+                        <div class="text_wrapper">
+                            <div class="text">{{message.message}}<br>
+                                <span class="small">{{message.timestamp}}</span>
                             </div>
-                        </li>
+                        </div>
+                    </li>
 
-                        {% else %}
-                        <li class="message left">
-                            <div class="avatar">{{message.sender.username}}</div>
-                            <div class="text_wrapper">
-                                <div class="text">{{message.message}}<br>
-                                    <span class="small">{{message.timestamp}}</span>
-                                </div>
+                    {% else %}
+                    <li class="message left">
+                        <div class="avatar">{{message.sender.username}}</div>
+                        <div class="text_wrapper">
+                            <div class="text">{{message.message}}<br>
+                                <span class="small">{{message.timestamp}}</span>
                             </div>
-                        </li>
+                        </div>
+                    </li>
 
-                        {% endif %} {% endfor %}
+                    {% endif %} {% endfor %}
 
-                    </ul>
-                
+                </ul>
+
                 <!--發送訊息處-->
                 <div class="panel-footer">
                     <div class="input-group">
@@ -197,37 +212,38 @@
                     </div>
                 </div>
             </div>
-        </div> <!--col-->    
+        </div>
+        <!--col-->
         <!--row-6-->
     </div>
 
 
-    </div>
-    <!--container whole-->
+</div>
+<!--container whole-->
 
 
-    <script>
-        $('#messages').animate({
-            scrollTop: $('#messages').prop('scrollHeight')
-        });
-        var room_url = '{{current_user.id}}_chatroom_{{chatroom.id}}/';
-        var ws_scheme = window.location.protocol == "https:" ? "wss" : "ws";
-        var websocket_str = ws_scheme + '://' + window.location.host + '/ws/chat/' + room_url;
-        var chatSocket = new WebSocket(websocket_str);
+<script>
+    $('#messages').animate({
+        scrollTop: $('#messages').prop('scrollHeight')
+    });
+    var room_url = '{{current_user.id}}_chatroom_{{chatroom.id}}/';
+    var ws_scheme = window.location.protocol == "https:" ? "wss" : "ws";
+    var websocket_str = ws_scheme + '://' + window.location.host + '/ws/chat/' + room_url;
+    var chatSocket = new WebSocket(websocket_str);
 
-        chatSocket.onopen = function (e) {
-            console.log("Connection success");
-        };
+    chatSocket.onopen = function (e) {
+        console.log("Connection success");
+    };
 
-        chatSocket.onmessage = function (e) {
-            var data = JSON.parse(e.data);
-            var message = data['message'];
-            var now_time = data['now_time'];
-            var sender_user = data['user'];
-            var user = "{{current_user.username}}";
-            let position = 'left';
-            if (sender_user === user) position = 'right';
-            const messageItem = `
+    chatSocket.onmessage = function (e) {
+        var data = JSON.parse(e.data);
+        var message = data['message'];
+        var now_time = data['now_time'];
+        var sender_user = data['user'];
+        var user = "{{current_user.username}}";
+        let position = 'left';
+        if (sender_user === user) position = 'right';
+        const messageItem = `
             <li class="message ${position}">
                 <div class="avatar">${sender_user}</div>
                     <div class="text_wrapper">
@@ -236,37 +252,37 @@
                     </div>
                 </div>
             </li>`;
-            $(messageItem).appendTo('#messages');
+        $(messageItem).appendTo('#messages');
 
 
-            $('#messages').animate({
-                scrollTop: $('#messages').prop('scrollHeight')
-            });
-        };
-
-
-        chatSocket.onclose = function (e) {
-            console.error('Chat socket closed unexpectedly');
-            console.log(e)
-        };
-
-
-        $("#chat-input").focus();
-        $("#chat-input").keyup(function (e) {
-            if (e.keyCode === 13) { // enter, return
-                $("#btn-send").click();
-            }
+        $('#messages').animate({
+            scrollTop: $('#messages').prop('scrollHeight')
         });
+    };
 
-        $("#btn-send").click(function () {
-            var message = $('#chat-input').val();
-            chatSocket.send(JSON.stringify({
-                'message': message
-            }));
 
-            $('#chat-input').val('');
-            console.log(message)
-        });
-    </script>
+    chatSocket.onclose = function (e) {
+        console.error('Chat socket closed unexpectedly');
+        console.log(e)
+    };
 
-    {% endblock %}
+
+    $("#chat-input").focus();
+    $("#chat-input").keyup(function (e) {
+        if (e.keyCode === 13) { // enter, return
+            $("#btn-send").click();
+        }
+    });
+
+    $("#btn-send").click(function () {
+        var message = $('#chat-input').val();
+        chatSocket.send(JSON.stringify({
+            'message': message
+        }));
+
+        $('#chat-input').val('');
+        console.log(message)
+    });
+</script>
+
+{% endblock %}
