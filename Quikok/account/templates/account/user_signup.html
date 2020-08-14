@@ -154,9 +154,6 @@
         </div>
         <hr class="mb-4">
 
-
-
-
         <div class="row">
           <h4 class="mb-3"><b>我們的承諾</b></h4>
         </div>
@@ -255,7 +252,6 @@
               $("#is_agree").prop("checked", true);
               $("#submit_btn").prop("disabled", false);
           }});
-
         </script>
 
         <hr class="mb-4">
@@ -268,4 +264,38 @@
     </div>
   </div>
 
-  {% endblock %}
+  <!--
+    在下面這邊進行「帳號重複註冊」以及「註冊成功」的機制處理
+  -->
+  <div class="modal fade" id="username_taken_warning" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">帳號重複</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          不好意思，這個帳號已經被註冊了> <，如果您忘記密碼了，您可以在下方重設密碼，或者重新確認帳號後再進行註冊。
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" 
+          onclick="location.href='http://127.0.0.1:8000/account/dev_forgot_password_1/';">重新設定密碼</button>
+          <button type="button" class="btn btn-primary" data-dismiss="modal">關閉並繼續註冊</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% if already_taken_username %}
+  <script>
+    $(document).ready(function(){
+      $("#is_agree").prop("checked", false);
+      $("#username_taken_warning").modal('show');
+    });
+  </script>
+{% endif %}
+
+
+{% endblock %}

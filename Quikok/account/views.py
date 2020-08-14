@@ -43,9 +43,7 @@ def signup(request):
                 update_someone_by_email = request.POST['update_someone_by_email'],
             )
         if not ret:
-            already_taken_username = username
-        
-
+            already_taken_username = True        
         return render(request, 'account/user_signup.html', locals())
     return render(request, 'account/user_signup.html', locals())
 
@@ -122,6 +120,7 @@ def dev_forgot_password_2_verification(request):
     else:
         return render(request, 'account/dev_forgot_password_2_verification.html', locals())
 
+
 def dev_forgot_password_3_reset_password(request):
     title = '忘記密碼-重設'
     username = request.session['username']
@@ -150,6 +149,7 @@ def dev_forgot_password_3_reset_password(request):
             return render(request, 'account/dev_forgot_password_3_reset_password.html', locals())
     else:
         return render(request, 'account/dev_forgot_password_3_reset_password.html', locals())
+
 
 def dev_forgot_password_4_update_successfully(request):
     title = '密碼設定成功'
@@ -180,3 +180,6 @@ def dev_import_vendor(request):
         return render(request, 'account/dev_import_vendor.html', locals())
             
 
+def for_test(request):
+    title = '測試用分頁'
+    return render(request, 'account/for_test.html', locals())
