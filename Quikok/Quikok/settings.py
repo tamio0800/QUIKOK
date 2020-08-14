@@ -81,6 +81,7 @@ WSGI_APPLICATION = 'Quikok.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',  
+        # 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         'NAME': 'quikok_db',  # 資料庫/schema的名稱
         'USER': 'root',
         'PASSWORD': '0800',

@@ -1,0 +1,62 @@
+{% extends 'base_layout.html' %} {% block content %}{% load static %}
+
+<!-- Button trigger modal -->
+<button type="button" class="btn btn-primary mt-5" data-toggle="modal" data-target="#exampleModal">
+  Launch demo modal
+</button>
+
+<button id="another">XXX</button>
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">註冊成功</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        謝謝您的註冊，預祝您學習順利，如果有任何需要協助的地方請不吝於告訴我們Y(^___^)Y
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" 
+        onclick="location.href='http://127.0.0.1:8000/homepage';">登入並回到首頁</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="exampleModal2" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">帳號重複</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        不好意思，這個帳號已經被註冊了> <，如果您忘記密碼了，您可以在下方重設密碼，或者重新確認帳號後再進行註冊。
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" 
+        onclick="location.href='http://127.0.0.1:8000/account/dev_forgot_password_1/';">重新設定密碼</button>
+        <button type="button" class="btn btn-primary" data-dismiss="modal">關閉並繼續註冊</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  $("#another").click(function(){
+    $("#exampleModal2").modal('show');
+
+  })
+</script>
+
+
+  {% endblock %}
+
