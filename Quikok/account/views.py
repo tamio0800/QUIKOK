@@ -184,6 +184,46 @@ def dev_import_vendor(request):
         return render(request, 'account/dev_import_vendor.html', locals())
             
 
+def logout(request):
+    auth.logout(request)
+    return HttpResponseRedirect('/homepage/')
+
 def for_test(request):
-    title = '測試用分頁'
-    return render(request, 'account/for_test.html', locals())
+    title = '測試-會員登入'
+    print('BEFORE')
+    print(request.user.id)
+
+    if request.method == 'POST':
+        if request.POST.get('logout', False) != 'to_logout':
+            username = request.POST.get('username', False)
+            password = request.POST.get('password', False)
+            user = auth.authenticate(username=username, password=password)
+            if user is not None:
+                print('AFTER')
+                print(user)
+                print(user.username)
+                print(user.last_login)
+                print(user.date_joined)
+                print(request.user.id)
+                print(request.user.is_anonymous)
+                print(request.user.is_authenticated)
+
+            # if User.objects.filter(username = username).count() == 1:
+                # 代表有這個username
+                # user = User.objects.filter(username=username)[0]
+                # real_password_hash = User.objects.filter(username=username)[0].password
+                # password_match = check_password(request.POST['password'], real_password_hash)
+                # user = auth.authenticate(username=username, password=password)
+                # if password_match:
+                auth.login(request, user)  # 將用戶登入
+                return render(request, 'account/for_test.html', locals())
+                # else:
+                #    password_not_match = True
+            else:
+                user_not_match = True
+        else:
+            auth.logout(request)
+
+        return render(request, 'account/for_test.html', locals())
+    else:
+        return render(request, 'account/for_test.html', locals())
