@@ -9,11 +9,12 @@ class user_db_manager:
         if kwargs['user_type'] == 'user':
             if user_profile.objects.filter(username=kwargs['username']).count() == 0:
                 # 沒有重複的username
+                nickname = kwargs['name'] if (kwargs['nickname'] is None or kwargs['nickname'] == '') else kwargs['nickname']
                 user_profile(
                     username = kwargs['username'],
                     password = kwargs['password_hash'],
                     name = kwargs['name'],
-                    nickname = kwargs['nickname'],
+                    nickname = nickname,
                     birth_date = kwargs['birth_date'],
                     is_male = kwargs['is_male'],
                     role = kwargs['role'],
@@ -28,8 +29,8 @@ class user_db_manager:
                     username = kwargs['username'],
                     password = kwargs['password_hash'],
                     is_superuser = 0,
-                    first_name = '',
-                    last_name = '',
+                    first_name = kwargs['name'],
+                    last_name = nickname,
                     email = '',
                     is_staff = 0,
                     is_active = 1,
@@ -60,6 +61,8 @@ class user_db_manager:
     
     def dev_import_vendor(self, **kwargs):
         _df_tobe_imported = kwargs['dataframe']
+        _df_tobe_imported['暱稱'][pd.isnull(_df_tobe_imported['暱稱']) | _df_tobe_imported['暱稱'] == ''] = \
+            _df_tobe_imported['名字（本名）'][pd.isnull(_df_tobe_imported['暱稱']) | _df_tobe_imported['暱稱'] == '']
         try:
             for i in range(_df_tobe_imported.shape[0]):
                 if vendor_profile.objects.filter(username=_df_tobe_imported.loc[i, '電子郵件地址']).count() == 0:
@@ -93,8 +96,8 @@ class user_db_manager:
                         username = _df_tobe_imported.loc[i, '電子郵件地址'],
                         password = _df_tobe_imported.loc[i, 'password_hash'],
                         is_superuser = 0,
-                        first_name = '',
-                        last_name = '',
+                        first_name = _df_tobe_imported.loc[i, '名字（本名）'],
+                        last_name = _df_tobe_imported.loc[i, '暱稱'],
                         email = '',
                         is_staff = 0,
                         is_active = 1,
