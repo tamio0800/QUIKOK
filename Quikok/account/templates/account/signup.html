@@ -128,14 +128,36 @@
               }else{
                 $('#is_male').val('');
               }
-            });
+            }); 
           </script>
 
           <div class="col-md-4 mb-3">
-            <label for="birth_date"><strong>您的生日</strong><span class="text-muted" style="font-size: 15px;"> (YYYY/MM/DD)</span></label>
-            <input class="form-control" id="birth_date" name="birth_date" type="date" value="date" required>
+            <label for="birth_date"><strong>您的生日</strong>
+              <!--<span class="text-muted" style="font-size: 12px;"> (選填, 輸入後可以啟用與同齡生比較PR值功能。)</span>--></label>
+              <a id="why_bdate" class="text-muted" style="font-size: 15px;" data-container="body" data-toggle="popover" data-placement="right" 
+              data-content="如果您有填寫生日資訊，將可以看到您在同齡學員中各科目的比較及落點資訊，也能更清楚知道自己的優勢跟缺點為何唷。">
+                (*選填, 點我看更多)
+              </a>
+            <!--<input class="form-control" id="birth_date" name="birth_date" type="date" value="date">-->
+            <input class="form-control" id="birth_date" name="birth_date" type="number" placeholder="ex. 19970101">
           </div>
         </div>
+
+        <script>
+          // 下面這一行是為了運行popover元件
+          $(function () {
+              $('[data-toggle="popover"]').popover()
+          }) 
+          $("#why_bdate").mouseenter(function(){
+            $("#why_bdate").removeClass("text-muted");
+            $("#why_bdate").css({"font-weight":"bold", "color":"green"});
+          });
+          $("#why_bdate").mouseleave(function(){
+            $("#why_bdate").addClass("text-muted");
+            $("#why_bdate").css({"font-weight":"normal", "color":"gray"});
+          });
+
+        </script>
 
         <hr class="mb-4">
 
@@ -280,21 +302,50 @@
           不好意思，這個帳號已經被註冊了> <，如果您忘記密碼了，您可以在下方重設密碼，或者重新確認帳號後再進行註冊。
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" 
-          onclick="location.href='http://127.0.0.1:8000/account/dev_forgot_password_1/';">重新設定密碼</button>
+          <!--<button type="button" class="btn btn-secondary" 
+          onclick="location.href='http://127.0.0.1:8000/account/dev_forgot_password_1/';">重新設定密碼</button>-->
+          
+          <a class="btn btn-secondary" href="{% url 'forgot_pw_1' %}">重新設定密碼</a>
           <button type="button" class="btn btn-primary" data-dismiss="modal">關閉並繼續註冊</button>
+          <!--<a class="btn btn-primary" href="{% url 'to_signup' %}">關閉並繼續註冊</a>-->
         </div>
       </div>
     </div>
   </div>
 
-{% if already_taken_username %}
+  <div class="modal fade" id="sighup_successfully" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">註冊成功</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          謝謝您的註冊，如果有任何需要協助的地方請不吝告訴我們，請點擊下方的按鈕，我們將為您登入後跳轉至首頁。
+        </div>
+        <div class="modal-footer">
+          <a class="btn btn-primary" href="{% url 'home' %}">登入並跳轉到首頁</a>
+          <!--<button type="button" class="btn btn-primary" data-dismiss="modal">登入並跳轉到首頁</button>-->
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% if username_taken %}
   <script>
     $(document).ready(function(){
       $("#is_agree").prop("checked", false);
       $("#username_taken_warning").modal('show');
     });
   </script>
+{% elif is_successful %}
+  <script>
+    $(document).ready(function(){
+      $("#sighup_successfully").modal('show');
+    });
+  </script>   
 {% endif %}
 
 

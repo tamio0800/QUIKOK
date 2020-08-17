@@ -61,8 +61,8 @@ class user_db_manager:
     
     def dev_import_vendor(self, **kwargs):
         _df_tobe_imported = kwargs['dataframe']
-        _df_tobe_imported['暱稱'][pd.isnull(_df_tobe_imported['暱稱']) | _df_tobe_imported['暱稱'] == ''] = \
-            _df_tobe_imported['名字（本名）'][pd.isnull(_df_tobe_imported['暱稱']) | _df_tobe_imported['暱稱'] == '']
+        _df_tobe_imported['暱稱'][pd.isnull(_df_tobe_imported['暱稱'])] = \
+            _df_tobe_imported['名字（本名）'][pd.isnull(_df_tobe_imported['暱稱'])]
         try:
             for i in range(_df_tobe_imported.shape[0]):
                 if vendor_profile.objects.filter(username=_df_tobe_imported.loc[i, '電子郵件地址']).count() == 0:
