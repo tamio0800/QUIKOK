@@ -3,7 +3,7 @@ from django.contrib import auth
 from django.contrib.auth.hashers import make_password, check_password  # 這一行用來加密密碼的
 from .model_tools import user_db_manager
 from django.contrib.auth.models import User
-from account.models import user_profile, vendor_profile
+from account.models import student_profile, teacher_profile
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.core.files.storage import FileSystemStorage
 
@@ -114,7 +114,7 @@ def dev_forgot_password_1_check_username(request):
     title = '忘記密碼'
     if request.method == 'POST':
         username = request.POST.get('username', False)
-        if user_profile.objects.filter(username = username).count() == 1:
+        if student_profile.objects.filter(username = username).count() == 1:
             # 代表有這個username
             # 儲存在session中
             request.session['username'] = username
@@ -139,16 +139,16 @@ def dev_forgot_password_2_verification(request):
         # birth_date = request.POST.get('birth_date', False)
         # birth_date = date(int(birth_date.split('-')[0]), int(birth_date.split('-')[1]), int(birth_date.split('-')[2]))
         # print(birth_date)
-        if user_profile.objects.filter(username = username, name = name).count() == 1:
-            t_user = user_profile.objects.get(username = username, name = name)
+        if student_profile.objects.filter(username = username, name = name).count() == 1:
+            t_user = student_profile.objects.get(username = username, name = name)
             if t_user.mobile.replace('-', '')[-4:] == mobile_last4:
                 # 認證成功
                 request.session['user_type'] = 'user'
                 print(request.session['user_type'])
                 return redirect('forgot_pw_3')
 
-        elif vendor_profile.objects.filter(username = username, name = name).count() == 1:
-            t_user = vendor_profile.objects.get(username = username, name = name)
+        elif teacher_profile.objects.filter(username = username, name = name).count() == 1:
+            t_user = teacher_profile.objects.get(username = username, name = name)
             if t_user.mobile.replace('-', '')[-4:] == mobile_last4:
                 # 認證成功
                 request.session['user_type'] = 'vendor'
@@ -170,14 +170,14 @@ def dev_forgot_password_3_reset_password(request):
         re_password = request.POST.get('re_password', False)
         if password == re_password:
             if user_type == 'user':
-                temp_user_profile = user_profile.objects.get(username=username)
+                temp_user_profile = student_profile.objects.get(username=username)
                 temp_user_profile.password = make_password(password)
                 temp_user_profile.save()
                 temp_user = User.objects.get(username=username)
                 temp_user.password = make_password(password)
                 temp_user.save()
             elif user_type == 'vendor':
-                temp_vendor_profile = vendor_profile.objects.get(username=username)
+                temp_vendor_profile = teacher_profile.objects.get(username=username)
                 temp_vendor_profile.password = make_password(password)
                 temp_vendor_profile.save()
                 temp_user = User.objects.get(username=username)

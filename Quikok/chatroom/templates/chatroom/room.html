@@ -37,28 +37,13 @@
         <div class="col-3" style="background-color:#B2C8CE;" id="左側好友">
             <ul class="list-group">
 
-                {% for item in roomid_and_friend) %}
-                <li class="list-group-item friends_list">
 
-                    <a href="/chat/{{current_user.username}}/?room_id={{item[0]}}">
-                        <img src="{% static 'IMG/1267.jpg' %}" style="width: 35px;height: 35px;" />{{item[1]}}
-                    </a>
-
-
-                <!--{% for room in room_list %}
+                {% for room_id, friend_name in roomid_and_friend_list %}
                 <li>
-                    {% if room.member1.username == current_user.username %}
-                    <a href="/chat/{{current_user.username}}/?room_id={{room.id}}">
-                        <i class="fa fa-user-circle" aria-hidden="true">{{room.member2.username}}</i>
+                
+                    <a href="/chat/{{current_user.username}}/?room_id={{room_id}}">
+                        <i class="fa fa-user-circle" aria-hidden="true">{{friend_name}}</i>
                     </a>
-                    {% else %}
-                    <a href="/chat/{{current_user.username}}/?room_id={{room.id}}">
-                        <i class="fa fa-user-circle" aria-hidden="true">{{room.member1.username}}</i>
-                    </a>
-                    {% endif %}
-                </li>
-                {% endfor %}-->
-                </li>
                 {% endfor %}
 
             </ul>
