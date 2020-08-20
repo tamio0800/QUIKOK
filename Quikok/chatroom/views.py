@@ -11,8 +11,8 @@ from account.models import user_profile, vendor_profile
 
 
 def chat(request, user_url):
-    user=User.objects.get(username= user_url)
-    username=user.username
+    user = User.objects.get(username= user_url)
+    username = user.username
 
     # 畫面上要顯示的是暱稱，先找看看user是不是老師
     user_nick_temp = vendor_profile.objects.filter(username= username)
