@@ -1,17 +1,17 @@
 # Create your models here.
 from django.contrib.auth.models import User
 from django.db import models
-from account.models import user_profile
+from account.models import student_profile, teacher_profile
 
 
 class chat_room(models.Model):
-    member1= models.ForeignKey(User, on_delete=models.CASCADE,related_name='member1')
-    member2= models.ForeignKey(User, on_delete=models.CASCADE,related_name='member2')
+    student = models.ForeignKey(User, on_delete=models.CASCADE,related_name='student_set')
+    teacher = models.ForeignKey(User, on_delete=models.CASCADE,related_name='teacher_set')
     date= models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
       
-        return 'member:{},{}'.format(self.member1,self.member2)
+        return 'member:{},{}'.format(self.student,self.teacher)
 
 
 class Messages(models.Model):

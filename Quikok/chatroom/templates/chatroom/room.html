@@ -38,23 +38,20 @@
             <ul class="list-group">
 
 
+
                 
 
                 {% for room in room_list %}
+
                 <li>
-                    {% if room.member1.username == current_user.username %}
-                    <a href="/chat/{{current_user.username}}/?room_id={{room.id}}">
-                        <i class="fa fa-user-circle" aria-hidden="true">{{room.member2.username}}</i>
+                
+                    <a href="/chat/{{current_user.username}}/?room_id={{room_id}}">
+                        <i class="fa fa-user-circle" aria-hidden="true">{{friend_name}}</i>
                     </a>
-                    {% else %}
-                    <a href="/chat/{{current_user.username}}/?room_id={{room.id}}">
-                        <i class="fa fa-user-circle" aria-hidden="true">{{room.member1.username}}</i>
-                    </a>
-                    {% endif %}
+
+                
                 </li>
-                {% endfor %}
-                </li>
-               
+               {% endfor %}
 
             </ul>
         </div>

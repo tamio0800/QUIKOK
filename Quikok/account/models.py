@@ -1,12 +1,12 @@
 from django.db import models
 
-class user_profile(models.Model):
+class student_profile(models.Model):
     # 這是for存放一般會員/學生的額外資訊
     username = models.CharField(max_length = 150)
     password = models.CharField(max_length = 128)
     name = models.CharField(max_length = 40)
     nickname = models.CharField(max_length = 40)
-    birth_date = models.DateField()
+    birth_date = models.DateField(null=True)
     is_male = models.BooleanField()
     role = models.CharField(max_length = 40)
     mobile = models.CharField(max_length = 12)
@@ -19,13 +19,13 @@ class user_profile(models.Model):
         return self.username
 
 
-class vendor_profile(models.Model):
+class teacher_profile(models.Model):
     # 這是for存放老師的額外資訊
     username = models.CharField(max_length = 150)
     password = models.CharField(max_length = 128)
     name = models.CharField(max_length = 40)
     nickname = models.CharField(max_length = 40)
-    birth_date = models.DateField()
+    birth_date = models.DateField(null=True)
     is_male = models.BooleanField()
     intro = models.CharField(max_length = 300)  # 簡短介紹，不要超過300個字元長(2/漢字)
     mobile = models.CharField(max_length = 12)
