@@ -14,7 +14,7 @@ class user_db_manager:
                     username = kwargs['username'],
                     password = kwargs['password_hash'],
                     name = kwargs['name'],
-                    nickname = kwargs['nickname'],
+                    nickname = nickname,
                     birth_date = kwargs['birth_date'],
                     is_male = kwargs['is_male'],
                     role = kwargs['role'],
@@ -61,6 +61,8 @@ class user_db_manager:
     
     def dev_import_vendor(self, **kwargs):
         _df_tobe_imported = kwargs['dataframe']
+        _df_tobe_imported['暱稱'][pd.isnull(_df_tobe_imported['暱稱'])] = \
+            _df_tobe_imported['名字（本名）'][pd.isnull(_df_tobe_imported['暱稱'])]
         try:
             for i in range(_df_tobe_imported.shape[0]):
                 if teacher_profile.objects.filter(username=_df_tobe_imported.loc[i, '電子郵件地址']).count() == 0:

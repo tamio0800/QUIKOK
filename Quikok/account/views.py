@@ -11,15 +11,38 @@ import pandas as pd
 import os
 from datetime import date
 
+def is_num(target):
+    try:
+        int(target)
+        if int(target) == float(target):
+            return True
+        else:
+            return False
+    except:
+        return False
+
 # Create your views here.
 def signup(request):
     title = '會員註冊'
     if request.method == 'POST':
         username = request.POST['username'].strip()
-        password_hash = make_password(request.POST['password'])
+        password = request.POST.get('password', False)
+        password_hash = make_password(password)
         name = request.POST['name'].strip()
         nickname = request.POST['nickname'].strip()
-        birth_date = request.POST['birth_date']
+        birth_date = request.POST.get('birth_date', False)
+        if birth_date != False and is_num(birth_date):
+            if len(str(birth_date)) == 8:
+                birth_date = date(
+                    int(str(birth_date)[:4]),
+                    int(str(birth_date)[4:6]),
+                    int(str(birth_date)[-2:])
+                    )
+            else:
+               birth_date = None
+        else:
+            birth_date = None 
+        # birth_date = '1990-12-25' # request.POST['birth_date']
         is_male = request.POST['is_male']
         role = request.POST['role']
         mobile = request.POST['mobile'].strip()
@@ -27,7 +50,7 @@ def signup(request):
         update_someone_by_email = request.POST['update_someone_by_email'].strip()
 
         db_manager = user_db_manager()        
-        ret = \
+        is_successful = \
             db_manager.create_user(
                 user_type = 'user',
                 username = username,
@@ -41,19 +64,32 @@ def signup(request):
                 picture_folder = 'to_be_deleted',
                 update_someone_by_email = request.POST['update_someone_by_email'],
             )
-        if not ret:
-            already_taken_username = True        
+        if is_successful:
+            user = auth.authenticate(username=username, password=password)
+            auth.login(request, user)
+        else:
+            username_taken = True
         return render(request, 'account/signup.html', locals())
-    return render(request, 'account/signup.html', locals())
+    else:
+        return render(request, 'account/signup.html', locals())
+
 
 def signin(request):
     title = '會員登入'
     if request.method == 'POST':
         username = request.POST.get('username', False)
         password = request.POST.get('password', False)
+        remember_me = request.POST.get('remember_me', False)
+        if remember_me != 1:
+            request.session.set_expiry(0)
+            # 不留存cookies
+        else:
+            request.session.set_expiry(None)
+            # 如果value等于0，那么session将在web浏览器关闭后就直接过期。
+            # 如果value等于None，那么session将用settings.py中设置的全局过期字段SESSION_COOKIE_AGE，这个字段默认是14天，也就是2个礼拜。
         user = auth.authenticate(username=username, password=password)
         if user is not None:
-            print(user)
+            # print(user)
         # if User.objects.filter(username = username).count() == 1:
             # 代表有這個username
             # user = User.objects.filter(username=username)[0]
@@ -84,7 +120,7 @@ def dev_forgot_password_1_check_username(request):
             request.session['username'] = username
             # print('request', request)
             # print('request.session', request.session.items())
-            return redirect('http://127.0.0.1:8000/account/dev_forgot_password_2/')
+            return redirect('forgot_pw_2')  # 原來可以直接輸入url name
 
         else:
             user_not_match = True
@@ -95,7 +131,7 @@ def dev_forgot_password_1_check_username(request):
 
 def dev_forgot_password_2_verification(request):
     title = '忘記密碼-認證'
-    username = request.session['username']
+    username = request.session.get('username', False)
     #print(username)
     if request.method == 'POST':
         name = request.POST.get('name', False)
@@ -109,7 +145,7 @@ def dev_forgot_password_2_verification(request):
                 # 認證成功
                 request.session['user_type'] = 'user'
                 print(request.session['user_type'])
-                return redirect('http://127.0.0.1:8000/account/dev_forgot_password_3/')
+                return redirect('forgot_pw_3')
 
         elif teacher_profile.objects.filter(username = username, name = name).count() == 1:
             t_user = teacher_profile.objects.get(username = username, name = name)
@@ -117,7 +153,7 @@ def dev_forgot_password_2_verification(request):
                 # 認證成功
                 request.session['user_type'] = 'vendor'
                 print(request.session['user_type'])
-                return redirect('http://127.0.0.1:8000/account/dev_forgot_password_3/')
+                return redirect('forgot_pw_3')
         else:
             verify_fails = True
             return render(request, 'account/dev_forgot_password_2_verification.html', locals())
@@ -127,8 +163,8 @@ def dev_forgot_password_2_verification(request):
 
 def dev_forgot_password_3_reset_password(request):
     title = '忘記密碼-重設'
-    username = request.session['username']
-    user_type = request.session['user_type']
+    username = request.session.get('username', False)
+    user_type = request.session.get('user_type', False)
     if request.method == 'POST':
         password = request.POST.get('password', False)
         re_password = request.POST.get('re_password', False)
@@ -147,7 +183,9 @@ def dev_forgot_password_3_reset_password(request):
                 temp_user = User.objects.get(username=username)
                 temp_user.password = make_password(password)
                 temp_user.save()
-            return redirect('http://127.0.0.1:8000/account/dev_forgot_password_4/')
+            user = auth.authenticate(username=username, password=password)
+            auth.login(request, user)
+            return redirect('forgot_pw_4')
         else:
             passwords_not_match = True
             return render(request, 'account/dev_forgot_password_3_reset_password.html', locals())
