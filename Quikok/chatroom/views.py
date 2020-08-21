@@ -78,8 +78,9 @@ def chat(request, user_url):
         print('這是好友名單:'+ friend)
     
     roomid_and_friend_list = zip(roomid_list, friend_list)
+    ### 顯示大頭貼 ###
+    
 
-        
 
     room=''
     chat_messages=''

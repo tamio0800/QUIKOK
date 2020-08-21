@@ -10,7 +10,7 @@ class student_profile(models.Model):
     is_male = models.BooleanField()
     role = models.CharField(max_length = 40)
     mobile = models.CharField(max_length = 12)
-    picture_folder = models.CharField(max_length = 150)
+    picture_folder = models.ImageField(default = 'default.png', blank =True)
     update_someone_by_email = models.CharField(max_length = 405)
     date_join = models.DateTimeField(auto_now_add=True)
 
