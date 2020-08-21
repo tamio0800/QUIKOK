@@ -11,8 +11,8 @@ from account.models import student_profile, teacher_profile
 
 
 def chat(request, user_url):
-    user=User.objects.get(username= user_url)
-    username=user.username
+    user = User.objects.get(username= user_url)
+    username = user.username
 
     # 畫面上要顯示的是暱稱，先找看看user是不是老師
     user_nick_temp = teacher_profile.objects.filter(username= username)
@@ -78,8 +78,9 @@ def chat(request, user_url):
         print('這是好友名單:'+ friend)
     
     roomid_and_friend_list = zip(roomid_list, friend_list)
+    ### 顯示大頭貼 ###
+    
 
-        
 
     room=''
     chat_messages=''
