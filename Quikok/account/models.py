@@ -1,6 +1,6 @@
 from django.db import models
 
-class user_profile(models.Model):
+class student_profile(models.Model):
     # 這是for存放一般會員/學生的額外資訊
     username = models.CharField(max_length = 150)
     password = models.CharField(max_length = 128)
@@ -19,7 +19,7 @@ class user_profile(models.Model):
         return self.username
 
 
-class vendor_profile(models.Model):
+class teacher_profile(models.Model):
     # 這是for存放老師的額外資訊
     username = models.CharField(max_length = 150)
     password = models.CharField(max_length = 128)
