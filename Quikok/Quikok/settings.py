@@ -145,5 +145,5 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR, 'assets'),)
 #MEDIA_ROOT = os.path.join(BASE_DIR, 'temp_files')  # 增加這行做為上傳資料時的暫存位置
 
 # 存放使用者上傳的大頭照
-MEDIA_URL = '/user_upload/'  
+MEDIA_URL = '/user_upload/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'user_upload')  

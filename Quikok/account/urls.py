@@ -12,4 +12,6 @@ urlpatterns = [
     path('dev_forgot_password_2/', views.dev_forgot_password_2_verification, name='forgot_pw_2'),
     path('dev_forgot_password_3/', views.dev_forgot_password_3_reset_password, name='forgot_pw_3'),
     path('dev_forgot_password_4/', views.dev_forgot_password_4_update_successfully, name='forgot_pw_4'),
+    path('teacher_info/', views.teacher_info_show, name='teacher_info'),
+    # teacher_info之後要改成動態的 >> teacher_info/teacher_id
 ]

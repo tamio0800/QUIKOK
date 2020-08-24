@@ -265,3 +265,7 @@ def for_test(request):
         return render(request, 'account/for_test.html', locals())
     else:
         return render(request, 'account/for_test.html', locals())
+
+
+def teacher_info_show(request):
+    return render(request, 'account/teacher_member_page.html', locals())
