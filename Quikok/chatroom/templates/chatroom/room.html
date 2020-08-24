@@ -38,12 +38,12 @@
             <ul class="list-group">
 
 
-                {% for room_id, friend_name in roomid_and_friend_list %}
+                {% for room_id, friend_name, thumbnail in roomid_and_friend_list %}
                 <li>
                 
                     <a href="/chat/{{current_user.username}}/?room_id={{room_id}}">
                         <i class="fa fa-user-circle" aria-hidden="true">{{friend_name}}</i>
-                        <img src="{{account.picture_folder.url}}">
+                        <img src="{{thumbnail.png}}">
                     </a>
                 {% endfor %}
 

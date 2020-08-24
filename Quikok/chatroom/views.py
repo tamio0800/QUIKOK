@@ -34,50 +34,58 @@ def chat(request, user_url):
 # 以下為左邊好友列表顯示暱稱用
 # 用room_list的member id 找到對應的 auth_username
 # 再用 auth_username 去 account的兩個table找 nickname
-    friend_list = []
-    roomid_list = []
+    friend_nick_list = [] #好友暱稱表
+    roomid_list = [] # 聊天室 id
+    thumb_nail_list = [] # 大頭貼
 
     for room in room_list:
         if room.student.username == username:
-            # student是user, teacher就一定不是, 找teacher 的nick name
+            # user是student, 聊天對象就是teacher, 找teacher 的nick name
             friend_nick_temp = teacher_profile.objects.filter(username= room.teacher.username)
-            if len(friend_nick_temp)<1:
-                friend_nick_temp = student_profile.objects.filter(username= room.teacher.username)
-                if len(friend_nick_temp)<1:
-                    print("好友:"+ room.teacher.username + "不是老師也不是學生，可能是測試帳號或漏加帳號")
-                else:
-                    friend_nick_temp = student_profile.objects.get(username= room.teacher.username)
-                    friend_nickname = friend_nick_temp.nickname
-                    friend_list.append(friend_nickname)
-                    roomid_list.append(room.id)
-            else:
-                friend_nick_temp = teacher_profile.objects.get(username= room.teacher.username)
-                friend_nickname = friend_nick_temp.nickname
-                friend_list.append(friend_nickname)
+            #if len(friend_nick_temp)<1:
+            #    friend_nick_temp = student_profile.objects.filter(username= room.teacher.username)
+            #    if len(friend_nick_temp)<1:
+            #        print("好友:"+ room.teacher.username + "不是老師也不是學生，可能是測試帳號或漏加帳號")
+                    # 測試中會加一些帳號
+            #    else:
+            #        friend_temp = student_profile.objects.get(username= room.teacher.username)
+            #        friend_list.append(friend_temp.nickname)
+            #        roomid_list.append(room.id)
+            #        thumb_nail.append(friend_temp.picture_folder)
+            if len(friend_nick_temp) >= 1: 
+                friend_temp = teacher_profile.objects.get(username= room.teacher.username)
+                friend_nick_list.append(friend_temp.nickname)
                 roomid_list.append(room.id)
+                print(friend_temp.picture_folder)
+                #thumb_nail_list.append(friend_temp.picture_folder.url)
+                
+            else:    
+                print("好友:"+ room.teacher.username + "不是老師也不是學生，可能是測試帳號或漏加帳號")    
 
-            
+            # user是老師,聊天對象是學生
         else:
-            friend_nick_temp = teacher_profile.objects.filter(username= room.student.username)
-            if len(friend_nick_temp)<1:
-                friend_nick_temp = student_profile.objects.filter(username= room.student.username)
-                if len(friend_nick_temp)<1:
-                    print("好友:"+ room.student.username + "不是老師也不是學生，可能是測試帳號或漏加帳號")
-                else:
-                    friend_nick_temp = student_profile.objects.get(username= room.student.username)
-                    friend_nickname = friend_nick_temp.nickname
-                    friend_list.append(friend_nickname)
-                    roomid_list.append(room.id)
-            else:
-                friend_nick_temp = teacher_profile.objects.get(username= room.student.username)
-                friend_nickname = friend_nick_temp.nickname
-                friend_list.append(friend_nickname)
+            friend_nick_temp = student_profile.objects.filter(username= room.student.username)
+            #if len(friend_nick_temp)<1:
+            #    friend_nick_temp = student_profile.objects.filter(username= room.student.username)
+            #    if len(friend_nick_temp)<1:
+            #        print("好友:"+ room.student.username + "不是老師也不是學生，可能是測試帳號或漏加帳號")
+            if len(friend_nick_temp) >= 1:
+                friend_temp = student_profile.objects.get(username= room.student.username)
+                friend_nick_list.append(friend_temp.nickname)
                 roomid_list.append(room.id)
+                thumb_nail_list.append(friend_temp.picture_folder)
+            else:    
+                print("好友:"+ room.student.username + "不是老師也不是學生，可能是測試帳號或漏加帳號")    
+            #else:
+            #    friend_nick_temp = teacher_profile.objects.get(username= room.student.username)
+            #    friend_nickname = friend_nick_temp.nickname
+            #    friend_list.append(friend_nickname)
+            #    roomid_list.append(room.id)
 
-    for friend in friend_list:
-        print('這是好友名單:'+ friend)
-    
-    roomid_and_friend_list = zip(roomid_list, friend_list)
+    for friend in friend_nick_list:
+        print('好友暱稱表:'+ friend)
+    print(thumb_nail_list)
+    roomid_and_friend_list = zip(roomid_list, friend_nick_list, thumb_nail_list)
     ### 顯示大頭貼 ###
     
 
@@ -104,7 +112,7 @@ def chat(request, user_url):
         'chatroom':room,
         #'is_teacher': user_is_teacher,
         #'friend_nickname':friend_nickname,
-        'friend_list' : friend_list,
-        'roomid_list':roomid_list,
+        #'friend_list' : friend_list,
+        #'roomid_list':roomid_list,
         'roomid_and_friend_list':roomid_and_friend_list,
     })

@@ -244,18 +244,18 @@
           </div>
 
         </div>
-
+        
         <div class="mb-3">
           <div class="form-check">
             <input type="checkbox" class="form-check-input" id="is_agree" style="width: 15px; height: 15px;">
-            <label class="form-check-label" id='agree_term' for="exampleCheck1"">我同意用戶協議</label>
+            <label class="form-check-label" id='agree_term' for="exampleCheck1">我同意用戶協議</label>
           </div>          
         </div>
         <script>
           //這裏主要是在做當滑鼠掃過“我同意”時會有一些特效幫助用戶注意到，
           //同時需要勾選同意後才能夠點選註冊按鈕
           $("#agree_term, #is_agree").mouseenter(function(){
-            $("#agree_term").css({"font-weight":"bold", "color":"green"});
+            $("#agree_term").css({"font-weight":"normal", "color":"green"});
           });
           $("#agree_term , #is_agree").mouseleave(function(){
             $("#agree_term").css({"font-weight":"normal", "color":"black"});
