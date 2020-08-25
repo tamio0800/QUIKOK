@@ -7,7 +7,7 @@ urlpatterns = [
     path('signin/', views.signin, name='to_signin'),
     path('logout/', views.logout, name='to_logout'),
     path('test/', views.for_test),
-    path('dev_import_vendor/', views.dev_import_vendor),
+    path('admin_import_user/', views.admin_import_user, name='admin_import_user'),
     path('dev_forgot_password_1/', views.dev_forgot_password_1_check_username, name='forgot_pw_1'),
     path('dev_forgot_password_2/', views.dev_forgot_password_2_verification, name='forgot_pw_2'),
     path('dev_forgot_password_3/', views.dev_forgot_password_3_reset_password, name='forgot_pw_3'),
