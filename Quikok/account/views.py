@@ -219,7 +219,9 @@ def admin_import_user(request):
                 print(each_file.name, e)
                 pass
             os.unlink(os.path.join(folder_where_are_uploaded_files_be, each_file.name))
-            return render(request, 'account/import_users.html', locals())
+            
+        db_manager.admin_create_chatrooms()
+        return render(request, 'account/import_users.html', locals())
     else:
         return render(request, 'account/import_users.html', locals())
             
