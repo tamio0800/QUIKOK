@@ -29,7 +29,7 @@ class teacher_profile(models.Model):
     is_male = models.BooleanField()
     intro = models.CharField(max_length = 300)  # 簡短介紹，不要超過300個字元長(2/漢字)
     mobile = models.CharField(max_length = 12)
-    picture_folder = models.CharField(max_length = 150)
+    picture_folder = models.ImageField(default = 'default.png', blank =True)
     tutor_exp_in_years = models.FloatField(default=0.0)
     student_type = models.CharField(max_length = 400)
     subject_type = models.CharField(max_length = 400)
