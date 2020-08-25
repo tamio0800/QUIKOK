@@ -198,28 +198,30 @@ def dev_forgot_password_4_update_successfully(request):
     return render(request, 'account/dev_forgot_password_4_update_successfully.html', locals())
 
 
-def dev_import_vendor(request):
-    title = '批次上傳老師資料'
-
+def admin_import_user(request):
+    title = '匯入用戶資訊'
     db_manager = user_db_manager()
     folder_where_are_uploaded_files_be = 'temp'
     if request.method == 'POST':
-        fs = FileSystemStorage(location = "temp")
+        fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
         for each_file in request.FILES.getlist("files"):
             fs.save(each_file.name, each_file)
             if each_file.name.endswith(('xlsx', 'xls')):
                 df = pd.read_excel(os.path.join(folder_where_are_uploaded_files_be, each_file.name))
-                df.loc[:, 'password_hash'] = make_password('00000000')
-                try:
-                    is_imported = db_manager.dev_import_vendor(dataframe = df)
-                    print(each_file.name, 'has been imported.')
-                except Exception as e:
-                    print(each_file.name, e)
-                    pass
+            elif each_file.name.endswith(('txt', 'csv')):
+                df = pd.read_csv(os.path.join(folder_where_are_uploaded_files_be, each_file.name))
+
+            df.loc[:, 'password_hash'] = make_password('00000000')
+            try:
+                is_imported = db_manager.admin_import_user(dataframe = df)
+                print(each_file.name, 'has been imported.')
+            except Exception as e:
+                print(each_file.name, e)
+                pass
             os.unlink(os.path.join(folder_where_are_uploaded_files_be, each_file.name))
-            return render(request, 'account/dev_import_vendor.html', locals())
+            return render(request, 'account/import_users.html', locals())
     else:
-        return render(request, 'account/dev_import_vendor.html', locals())
+        return render(request, 'account/import_users.html', locals())
             
 
 def logout(request):
@@ -265,3 +267,7 @@ def for_test(request):
         return render(request, 'account/for_test.html', locals())
     else:
         return render(request, 'account/for_test.html', locals())
+
+
+def teacher_info_show(request):
+    return render(request, 'account/teacher_member_page.html', locals())
