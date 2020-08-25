@@ -202,9 +202,9 @@ def dev_import_vendor(request):
     title = '批次上傳老師資料'
 
     db_manager = user_db_manager()
-    folder_where_are_uploaded_files_be = 'temp_files'
+    folder_where_are_uploaded_files_be = 'temp'
     if request.method == 'POST':
-        fs = FileSystemStorage()
+        fs = FileSystemStorage(location = "temp")
         for each_file in request.FILES.getlist("files"):
             fs.save(each_file.name, each_file)
             if each_file.name.endswith(('xlsx', 'xls')):
