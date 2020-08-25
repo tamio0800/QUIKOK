@@ -1,0 +1,99 @@
+{% extends 'base_layout.html' %} {% block content %}{% load static %}
+<link rel="stylesheet" href="{% static 'CSS/font-awesome.min.css' %}" />
+
+<style>
+    .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+
+    .col-centered {
+        float: none;
+        margin: 0 auto;
+    }
+
+    .middle {
+        float: none;
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+    @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+            font-size: 3.5rem;
+        }
+    }
+
+    .light_blue_bg {
+        height: 600px;
+        width: 100%;
+        background-image: linear-gradient(62deg, #8EC5FC 0%, #E0C3FC 100%);
+        color: rgb(88, 87, 87);
+
+    }
+
+    .divider-custom .divider-custom-line {
+        width: 100%;
+        max-width: 7rem;
+        height: 0.25rem;
+        background-color: #2c3e50;
+        border-radius: 1rem;
+        border-color: #2c3e50 !important;
+    }
+
+    .divider-custom .divider-custom-line:first-child {
+        margin-right: 1rem;
+    }
+
+    .divider-custom .divider-custom-line:last-child {
+        margin-left: 1rem;
+    }
+
+    .divider-custom .divider-custom-icon {
+        color: #2c3e50 !important;
+        font-size: 2rem;
+    }
+</style>
+
+<body style="font-family: Microsoft Yahei;">
+
+    <div class="text-center light_blue_bg teacher_short">
+        <div class="row mt-2">
+            <div class="col">
+                <img src="https://i1.pngguru.com/preview/280/594/344/kpop-meme-episode-4-red-velvet-woman-shock-face-png-clipart-thumbnail.jpg"
+                    alt="..." class="mt-5 bd-placeholder-img rounded-circle" height="250" width="250">
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col">
+                <strong style="font-size: 28px;">我是獨一無二的番茄老師</strong>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <hr class="divider" style="width: 10%; border-top: 3px solid; color: white;">
+                
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col">
+                <a style="color: white; font-size: 22px;"><strong>#托福全科滿分 #哈佛醫學院第一名畢業 #2019年美國大學畢業生致詞代表</strong></a>
+            </div>
+        </div>
+    </div>
+
+    <i class="fas fa-graduation-cap"></i>
+    <i class="fa fa-star"></i>
+
+
+
+
+
+</body>
+
+</html>
+{% endblock %}

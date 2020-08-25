@@ -8,6 +8,7 @@ class student_profile(models.Model):
     nickname = models.CharField(max_length = 40)
     birth_date = models.DateField(null=True)
     is_male = models.BooleanField()
+    intro = models.CharField(max_length = 150)  # 簡短介紹，不要超過150個字元長
     role = models.CharField(max_length = 40)
     mobile = models.CharField(max_length = 12)
     picture_folder = models.ImageField(default = 'default.png', blank =True)
@@ -27,7 +28,10 @@ class teacher_profile(models.Model):
     nickname = models.CharField(max_length = 40)
     birth_date = models.DateField(null=True)
     is_male = models.BooleanField()
-    intro = models.CharField(max_length = 300)  # 簡短介紹，不要超過300個字元長(2/漢字)
+    intro = models.CharField(max_length = 150)  # 簡短介紹，不要超過150個字元長
+    highlight_1 = models.CharField(max_length = 10)  # 亮點介紹，不要超過10個字元長
+    highlight_2 = models.CharField(max_length = 10)  # 亮點介紹，不要超過10個字元長
+    highlight_3 = models.CharField(max_length = 10)  # 亮點介紹，不要超過10個字元長
     mobile = models.CharField(max_length = 12)
     picture_folder = models.ImageField(default = 'default.png', blank =True)
     tutor_exp_in_years = models.FloatField(default=0.0)

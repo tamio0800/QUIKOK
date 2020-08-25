@@ -4,7 +4,10 @@
     <div class="container">
   <div class="py-5 text-center">
     <!--<img class="d-block mx-auto mb-4" src="https://bootstrap.hexschool.com/docs/4.2/assets/brand/bootstrap-solid.svg" alt="" width="72" height="72">-->
-    <img class="img-fluid mb-4 mt-5" src="{%static 'IMG/Quikok_Logo_s.png'%}" alt="" width="245">
+    
+    <a href="{% url 'home' %}">
+      <img class="img-fluid mb-4 mt-5" src="{%static 'IMG/Quikok_Logo_s.png'%}" alt="" width="245">
+    </a>
     <hr>
     <!--<h2>會員註冊</h2>-->
     <p class="lead">謝謝您使用我們的服務, <strong>「開課！Quikok」</strong>是國內第一家利用人工智慧審核教師履歷、優化上課品質的教學平台, 我們也打造了傑出的視訊系統來帶給您最優異的學習體驗, 趕快來看看我們精彩的課程吧！</p>
@@ -132,7 +135,7 @@
           </script>
 
           <div class="col-md-4 mb-3">
-            <label for="birth_date"><strong>您的生日<span class="text-muted" style="font-size: 16px;"> (格式: YYYYMMDD)</span></strong>
+            <label for="birth_date"><strong>您的生日</strong>
               <!--<span class="text-muted" style="font-size: 12px;"> (選填, 輸入後可以啟用與同齡生比較PR值功能。)</span>--></label>
               <a id="why_bdate" class="text-muted" style="font-size: 15px;" data-container="body" data-toggle="popover" data-placement="right" 
               data-content="如果您有填寫生日資訊，將可以看到您在同齡學員中各科目的比較及落點資訊，也能更清楚知道自己的優勢跟缺點為何唷。">
