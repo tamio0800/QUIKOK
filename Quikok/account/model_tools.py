@@ -129,7 +129,7 @@ class user_db_manager:
         # 擴展sp, 代表老師也有可能變成學生的身分，但還是要到teacher_profile中抓資料
         unique_pairs = [(i.username, j.username) for i, j in pdt(sp, tp) if i.username != j.username]
         del((sp, tp))  # 釋放一些記憶體空間
-        # 接下來要尋找每一個對應的老師/學生在其所屬的table中的id為何
+        # 接下來要尋找每一個對應的老師/學生在auth.User中的id為何
         for s_username, t_username in unique_pairs:
             student_id, teacher_id = \
                 User.objects.get(username=s_username).id, User.objects.get(username=t_username).id
@@ -145,7 +145,7 @@ class user_db_manager:
                 ).save()
                 print('Chat_room Created:\nstudent: ' + s_username + \
                     '\nteacher: ' + t_username + '\n')
-
+            
 
 
         
