@@ -34,28 +34,21 @@
 
 <div class="container mt-4" id="排版2">
     <div class="row">
-        <div class="col-3" style="background-color:#B2C8CE;" id="左側好友">
-            <ul class="list-group">
-
-
+        <div class="col-sm-3" style="background-color:#B2C8CE;" id="左側好友">
+            <ul class="list-group fluid">
                 {% for room_id, friend_name, thumbnail in roomid_and_friend_list %}
-                <li>
-                
+                <span>
+                    <img src="/user_upload/{{thumbnail}}/snapshot.png" width="50px" class="img-fluid mt-1" >
                     <a href="/chat/{{current_user.username}}/?room_id={{room_id}}">
-                        <i class="fa fa-user-circle" aria-hidden="true">{{friend_name}}</i>
-<<<<<<< HEAD
-                        <img src="{{account.picture_folder.url}}"/>
-=======
-                        <img src="{{thumbnail.png}}">
->>>>>>> 4b54063ddc496c3cbef126cbbbff51e832b9adce
-                    </a>
+                    <font>{{friend_name}}</font></a>
+                </span>       
+                    
                 {% endfor %}
-
+                
             </ul>
         </div>
 
-
-        <div class="col-6" id="中間對話區">
+        <div class="col-sm-6" id="中間對話區">
             <div class="panel panel-info">
                 {# Messages go here #}
                 <ul id="messages" class="messages">
@@ -95,9 +88,12 @@
             </div>
         </div>
         <!--col-->
-        <div class="col-3 box" id="右側資訊">
-
-
+        <div class="col-sm-3 box" id="右側資訊">
+            
+            <img src = "{{current_teacher.picture_folder.url}}/snapshot.png"/>
+            <p>{{current_teacher.nickname}}</p>
+            <p>{{current_teacher.intro}}</p>
+            
         </div>
     </div>
 </div>

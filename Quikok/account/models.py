@@ -33,7 +33,7 @@ class teacher_profile(models.Model):
     highlight_2 = models.CharField(max_length = 10)  # 亮點介紹，不要超過10個字元長
     highlight_3 = models.CharField(max_length = 10)  # 亮點介紹，不要超過10個字元長
     mobile = models.CharField(max_length = 12)
-    picture_folder = models.CharField(max_length = 150)
+    picture_folder = models.ImageField(default = 'default.png', blank =True)
     tutor_exp_in_years = models.FloatField(default=0.0)
     student_type = models.CharField(max_length = 400)
     subject_type = models.CharField(max_length = 400)
