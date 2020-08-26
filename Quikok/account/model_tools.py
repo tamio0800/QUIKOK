@@ -131,37 +131,20 @@ class user_db_manager:
         del((sp, tp))  # 釋放一些記憶體空間
         # 接下來要尋找每一個對應的老師/學生在其所屬的table中的id為何
         for s_username, t_username in unique_pairs:
-            # s_username非學生即為老師
-            if teacher_profile.objects.filter(username=s_username).count() == 0:
-                # s_username是學生!!
-                s_username_id_in_its_profile = student_profile.objects.get(username=s_username).id
-            else:
-                # s_username實際上是老師!!
-                s_username_id_in_its_profile = teacher_profile.objects.get(username=s_username).id
+            student_id, teacher_id = \
+                User.objects.get(username=s_username).id, User.objects.get(username=t_username).id
             
-            t_username_id_in_its_profile = teacher_profile.objects.get(username=t_username).id
-            # t_username一定是老師
-
             # 接下來檢查這個pair有沒有存在於chat_room中，沒有的話就加上去
             if chat_room.objects.filter(
-                student_id=s_username_id_in_its_profile,
-                teacher_id=t_username_id_in_its_profile).count() == 0:
+                student_id=student_id,
+                teacher_id=teacher_id).count() == 0:
                 # 不存在
                 chat_room(
-                    student_id=s_username_id_in_its_profile,
-                    teacher_id=t_username_id_in_its_profile
+                    student_id=student_id,
+                    teacher_id=teacher_id
                 ).save()
                 print('Chat_room Created:\nstudent: ' + s_username + \
                     '\nteacher: ' + t_username + '\n')
-
-
-            
-
-
-
-
-
-
 
 
 
