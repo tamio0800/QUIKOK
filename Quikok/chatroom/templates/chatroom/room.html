@@ -124,6 +124,8 @@
         $('#messages').animate({
             scrollTop: $('#messages').prop('scrollHeight')
         });
+        // scroll down chat room history
+
         var room_url = '{{current_user.id}}_chatroom_{{chatroom.id}}/';
         var ws_scheme = window.location.protocol == "https:" ? "wss" : "ws";
         var websocket_str = ws_scheme + '://' + window.location.host + '/ws/chat/' + room_url;
