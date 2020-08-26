@@ -3,7 +3,11 @@
   <body class="bg-light" style="font-family:Microsoft JhengHei;">
     <div class="container">
   <div class="py-5 text-center">
-    <img class="d-block mx-auto mb-4" src="{% static 'IMG/Quikok_Logo-02.png' %}" alt="" width="245" height="108">
+    <!--<img class="d-block mx-auto mb-4" src="https://bootstrap.hexschool.com/docs/4.2/assets/brand/bootstrap-solid.svg" alt="" width="72" height="72">-->
+    
+    <a href="{% url 'home' %}">
+      <img class="img-fluid mb-4 mt-5" src="{%static 'IMG/Quikok_Logo_s.png'%}" alt="" width="245">
+    </a>
     <hr>
     <!--<h2>會員註冊</h2>-->
     <p class="lead">謝謝您使用我們的服務, <strong>「開課！Quikok」</strong>是國內第一家利用人工智慧審核教師履歷、優化上課品質的教學平台, 我們也打造了傑出的視訊系統來帶給您最優異的學習體驗, 趕快來看看我們精彩的課程吧！</p>
@@ -55,10 +59,10 @@
 
         <div class="row">
           <div class="col-md-6 mb-3">
-            <label for="mobile"><strong>您的手機號碼</strong><span class="text-muted" style="font-size: 16px;"> (當您忘記密碼時, 我們會以手機通知您。)</span></label>
-            <input type="text" class="form-control" id="mobile" name="mobile" placeholder="0912345678" value="{{mobile}}" required>
+            <label for="mobile"><strong>您的手機號碼</strong><span class="text-muted" style="font-size: 16px;"> (當您忘記密碼時, 我們會以手機做確認。)</span></label>
+            <input type="text" class="form-control" id="mobile" name="mobile" placeholder="0912345678" required>
             <div class="invalid-feedback" id="mobile_info"> 
-              哎呀, 您的手機號碼格式似乎錯囉！
+              請輸入如「0912-345-678」或「0912345678」的格式> <
             </div>
           </div>
         </div>
@@ -72,7 +76,7 @@
               $('#mobile_info').removeClass("valid-feedback d-block").addClass("invalid-feedback");
             }else{
               $('#mobile_info').removeClass("invalid-feedback").addClass("valid-feedback d-block");
-              $('#mobile_info').html('哎呀, 您的手機號碼格式似乎錯囉@__@').css('color', 'red');
+              $('#mobile_info').html('請輸入如「0912-345-678」或「0912345678」的格式> <').css('color', 'red');
             }
           });
           function clean_mobile(target){
@@ -86,17 +90,17 @@
         <div class="row">
           <div class="col-md-5 mb-3">
             <label for="username"><strong>您的姓名</strong></label>
-            <input type="text" class="form-control" id="name" name="name" placeholder="姓名" value="{{name}}" required>
+            <input type="text" class="form-control" id="name" name="name" placeholder="姓名" required>
           </div>
           <div class="col-md-5 mb-3">
             <label for="nickname""><strong>您的暱稱</strong><span class="text-muted" style="font-size: 16px;"> (選填)</span></label>
-            <input type="text" class="form-control" id="nickname" name="nickname" value="{{nickname}}" placeholder="您希望我們怎麼稱呼您呢">
+            <input type="text" class="form-control" id="nickname" name="nickname" placeholder="您希望我們怎麼稱呼您呢">
           </div>
         </div>
         <div class="row">
           <div class="col-md-4 mb-3">
             <label for="role"><strong>您的角色</strong></label>
-            <select class="custom-select d-block w-100" id="role" name="role" value="{{role}}" required>
+            <select class="custom-select d-block w-100" id="role" name="role" required>
               <option value="">請選擇...</option>
               <option value="myself">我是本人！</option>
               <option value="mother">我是家人 - 媽媽</option>
@@ -109,7 +113,7 @@
 
           <div class="col-md-4 mb-3">
             <label for="is_male"><strong>您的生理性別</strong></label>
-            <select class="custom-select d-block w-100" id="is_male" name="is_male" value="{{is_male}}" required>
+            <select class="custom-select d-block w-100" id="is_male" name="is_male" required>
               <option value="">請選擇...</option>
               <option value="0">女性 ♀</option>
               <option value="1">男性 ♂</option>
@@ -127,16 +131,39 @@
               }else{
                 $('#is_male').val('');
               }
-            });
+            }); 
           </script>
 
           <div class="col-md-4 mb-3">
-            <label for="birth_date"><strong>您的生日</strong><span class="text-muted" style="font-size: 15px;"> (YYYY/MM/DD)</span></label>
-            <input class="form-control" id="birth_date" name="birth_date" type="date" value="{{birth_date}}" required>
+            <label for="birth_date"><strong>您的生日</strong>
+              <!--<span class="text-muted" style="font-size: 12px;"> (選填, 輸入後可以啟用與同齡生比較PR值功能。)</span>--></label>
+              <a id="why_bdate" class="text-muted" style="font-size: 15px;" data-container="body" data-toggle="popover" data-placement="right" 
+              data-content="如果您有填寫生日資訊，將可以看到您在同齡學員中各科目的比較及落點資訊，也能更清楚知道自己的優勢跟缺點為何唷。">
+                (*選填, 點我看更多)
+              </a>
+            <!--<input class="form-control" id="birth_date" name="birth_date" type="date" value="date">-->
+            <input class="form-control" id="birth_date" name="birth_date" type="number" placeholder="ex. 19970101">
           </div>
         </div>
 
+        <script>
+          // 下面這一行是為了運行popover元件
+          $(function () {
+              $('[data-toggle="popover"]').popover()
+          }) 
+          $("#why_bdate").mouseenter(function(){
+            $("#why_bdate").removeClass("text-muted");
+            $("#why_bdate").css({"font-weight":"bold", "color":"green"});
+          });
+          $("#why_bdate").mouseleave(function(){
+            $("#why_bdate").addClass("text-muted");
+            $("#why_bdate").css({"font-weight":"normal", "color":"gray"});
+          });
+
+        </script>
+
         <hr class="mb-4">
+
         <div class="row">
           <h4 class="mb-3"><b>學習成效通知</b></h4>
         </div>
@@ -151,25 +178,6 @@
           <span style="font-size: 15px; color: green;">請用分號『;』隔開Email, 如: you@cool.com; we@awesome.com</span>
         </div>
         <hr class="mb-4">
-
-        <script>
-          //整理「追蹤」跟「通知」的資料清理
-          $("#mobile").blur(function(){
-            var mobile_pattern = /09[0-9]{8}/;
-            var mobile=$.trim($("#mobile").val().replace(/[- ]/g, ""));
-            if (mobile_pattern.test(mobile)){
-              $("#mobile").val(clean_mobile(mobile));
-              $('#mobile_info').removeClass("valid-feedback d-block").addClass("invalid-feedback");
-            }else{
-              $('#mobile_info').removeClass("invalid-feedback").addClass("valid-feedback d-block");
-              $('#mobile_info').html('哎呀, 您的手機號碼格式似乎錯囉@__@').css('color', 'red');
-            }
-          });
-          function clean_mobile(target){
-            return target.slice(0,4) + "-" + target.slice(4,7) + "-" + target.slice(7,10);
-          }
-        </script>
-
 
         <div class="row">
           <h4 class="mb-3"><b>我們的承諾</b></h4>
@@ -236,18 +244,18 @@
           </div>
 
         </div>
-
+        
         <div class="mb-3">
           <div class="form-check">
             <input type="checkbox" class="form-check-input" id="is_agree" style="width: 15px; height: 15px;">
-            <label class="form-check-label" id='agree_term' for="exampleCheck1"">我同意用戶協議</label>
+            <label class="form-check-label" id='agree_term' for="exampleCheck1">我同意用戶協議</label>
           </div>          
         </div>
         <script>
           //這裏主要是在做當滑鼠掃過“我同意”時會有一些特效幫助用戶注意到，
           //同時需要勾選同意後才能夠點選註冊按鈕
           $("#agree_term, #is_agree").mouseenter(function(){
-            $("#agree_term").css({"font-weight":"bold", "color":"green"});
+            $("#agree_term").css({"font-weight":"normal", "color":"green"});
           });
           $("#agree_term , #is_agree").mouseleave(function(){
             $("#agree_term").css({"font-weight":"normal", "color":"black"});
@@ -269,20 +277,79 @@
               $("#is_agree").prop("checked", true);
               $("#submit_btn").prop("disabled", false);
           }});
-
         </script>
 
         <hr class="mb-4">
         
         <button class="btn btn-primary btn-lg btn-block" id="submit_btn" type="submit" disabled><strong>註 冊</strong></button>
-        {% if already_taken_username %}
-          <div class="alert alert-secondary" role="alert" id="warning_info" hidden="true">
-            <a style="color: red;">* 『{{already_taken_username}}』已經被註冊囉, 請您確認輸入是否正確唷。</a>
-          </div>
-        {% endif %}
+        <div class="alert alert-secondary" role="alert" id="warning_info" hidden="true">
+          <a style="color: red;">*您需要同意我們的用戶協議, 才能進行註冊唷。</a>
+        </div>
       </form>
-
     </div>
   </div>
 
-  {% endblock %}
+  <!--
+    在下面這邊進行「帳號重複註冊」以及「註冊成功」的機制處理
+  -->
+  <div class="modal fade" id="username_taken_warning" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">帳號重複</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          不好意思，這個帳號已經被註冊了> <，如果您忘記密碼了，您可以在下方重設密碼，或者重新確認帳號後再進行註冊。
+        </div>
+        <div class="modal-footer">
+          <!--<button type="button" class="btn btn-secondary" 
+          onclick="location.href='http://127.0.0.1:8000/account/dev_forgot_password_1/';">重新設定密碼</button>-->
+          
+          <a class="btn btn-secondary" href="{% url 'forgot_pw_1' %}">重新設定密碼</a>
+          <button type="button" class="btn btn-primary" data-dismiss="modal">關閉並繼續註冊</button>
+          <!--<a class="btn btn-primary" href="{% url 'to_signup' %}">關閉並繼續註冊</a>-->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="sighup_successfully" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">註冊成功</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          謝謝您的註冊，如果有任何需要協助的地方請不吝告訴我們，請點擊下方的按鈕，我們將為您登入後跳轉至首頁。
+        </div>
+        <div class="modal-footer">
+          <a class="btn btn-primary" href="{% url 'home' %}">登入並跳轉到首頁</a>
+          <!--<button type="button" class="btn btn-primary" data-dismiss="modal">登入並跳轉到首頁</button>-->
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% if username_taken %}
+  <script>
+    $(document).ready(function(){
+      $("#is_agree").prop("checked", false);
+      $("#username_taken_warning").modal('show');
+    });
+  </script>
+{% elif is_successful %}
+  <script>
+    $(document).ready(function(){
+      $("#sighup_successfully").modal('show');
+    });
+  </script>   
+{% endif %}
+
+
+{% endblock %}

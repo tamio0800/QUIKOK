@@ -1,0 +1,108 @@
+{% extends 'base_layout_no_elements.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+  .bd-placeholder-img {
+    font-size: 1.125rem;
+    text-anchor: middle;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  .col-centered {
+    float: none;
+    margin: 0 auto;
+  }
+
+  .middle {
+    float: none;
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  @media (min-width: 768px) {
+    .bd-placeholder-img-lg {
+      font-size: 3.5rem;
+    }
+  }
+</style>
+
+<body class="text-center" style="font-family: Microsoft Yahei;">
+
+
+  <div class="row align-items-center">
+    <div class="col col-md-6 col-lg-5 col-xl-4 col-centered">
+      <a href="{% url 'home' %}">
+        <img class="img-fluid mb-4 mt-5" src="{%static 'IMG/Quikok_Logo_s.png'%}" alt="" width="200">
+      </a>
+      
+      <form class="form-signin mt-4" method='POST'>
+        {% csrf_token %}
+
+        <label for="inputEmail" class="sr-only">Email</label>
+        <input type="text" id="username"" name='username' class=" form-control" placeholder="您註冊的email帳號" required
+          autofocus value="{{username}}">
+        <label for="inputPassword" class="sr-only">密碼</label>
+        <input type="password" id="password" name='password' class="form-control" placeholder="密碼" required>
+
+        {% if user_not_match %}
+        <div class="row">
+          <div class="col">
+            <div class="alert alert-danger mt-2 mb-2" style="height: 30px; font-size: 16px;
+            text-align: justify;margin-bottom: 1px;line-height: 30px;padding: 0px 15px;" role="alert">
+              系統查無此筆資料，請您再次確認唷。
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="row">
+          <div class="col-4">
+            <div class="checkbox mb-2 mt-2">
+              <label>
+                <input type="checkbox" name="remember_me" value="1">
+                <a style=" font-size: 17px;"> 記得我</a>
+              </label>
+            </div>
+          </div>
+          <div class="col-3 offset-2 mb-2 mt-2">
+            <a style="font-size: 17px; color:rgb(107, 98, 236);"
+              href="{% url 'forgot_pw_1' %}">忘記密碼</a>
+          </div>
+          <div class="col-3 mb-2 mt-2">
+            <a style="font-size: 17px; color:rgb(107, 98, 236);"
+              href="{% url 'to_signup' %}">會員註冊</a>
+          </div>
+        </div>
+
+        <button class="btn btn-lg btn-primary btn-block mt-2" type="submit">登入</button>
+        <p class="mt-3 mb-3 text-muted">&copy; 2020</p>
+      </form>
+    </div>
+  </div>
+</body>
+
+</html>
+{% endblock %}
+
+
+<!--
+before sign in >>
+User: AnonymousUser
+User id: None
+User is_anonymous: True
+User is_authenticated: False
+User last_login:
+User date_joined:
+
+after sign in >>
+User: tamio.chou@gmail.com
+User id: 1
+User is_anonymous: False
+User is_authenticated: True
+User last_login: 2020年8月15日 23:27
+User date_joined: 2020年8月14日 16:03
+-->
