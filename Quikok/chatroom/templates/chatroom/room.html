@@ -8,9 +8,10 @@
 <link rel="stylesheet" href="{% static 'CSS/bootstrap.min.css' %}">
 <script src="{% static 'JS/jquery.min.js' %}"></script>
 <script src="{% static 'JS/bootstrap.min.js' %}"></script>
+
 <link rel="stylesheet" href="{% static 'CSS/style.css' %}" />
 <link rel="stylesheet" href="{% static 'CSS/font-awesome.min.css' %}" />
-
+<link rel="stylesheet" href="{% static 'CSS/teacher.css' %}" />
 
 <style>
     .box {
@@ -88,12 +89,36 @@
             </div>
         </div>
         <!--col-->
-        <div class="col-sm-3 box" id="右側資訊">
-            
-            <img src = "{{current_teacher.picture_folder.url}}/snapshot.png"/>
-            <p>{{current_teacher.nickname}}</p>
-            <p>{{current_teacher.intro}}</p>
-            
+        <div class="col-sm-3" id="右側資訊">
+            <!--老師資訊-->
+            <div class="container" style="background-color:#B2C8CE;">
+                <row>
+                    
+            {% if current_user_identity == 'student' %}
+                <img class="mt-2 col-12" src = "{{current_teacher.picture_folder.url}}/snapshot.png"/>
+                <p class="mt-2 col-12">{{current_teacher.nickname}}</p>
+                <p>{{current_teacher.intro}}</p>
+                {% if current_teacher.highlight_1 %}
+                    <label class="mt-1 teacher-info col-12" >{{current_teacher.highlight_1}}</label>
+                {% endif %}
+                {% if current_teacher.highlight_2 %}
+                    <label class="teacher-info col-12">{{current_teacher.highlight_2}}</label>
+                {% endif %}
+                {% if current_teacher.highlight_3 %}
+                    <label class="teacher-info col-12">{{current_teacher.highlight_3}}</label>
+                {% endif %}
+                <button class="btn"><a href="/account/teacher_info/">前往教師資訊頁</button>
+
+
+            <!--學生資訊-->
+            {% elif current_user_identity == 'teacher' %}
+                <img src = "{{current_student.picture_folder.url}}/snapshot.png"/>
+                <p>{{current_student.nickname}}</p>
+                <p>{{current_student.intro}}</p>
+            {% endif %}
+        
+        </row>
+        </div>
         </div>
     </div>
 </div>
@@ -134,11 +159,8 @@
                         {% endif %}
                     </li>
                     {% endfor %}
-
                 </ul>
-
             </div>
-
         </div>
     </div>
 

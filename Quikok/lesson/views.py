@@ -1,5 +1,5 @@
 from django.shortcuts import render
-
+from account.models import teacher_profile
 # Create your views here.
 def lessons_main_page(request):
     title = '開課! Quikok - 課程主頁'
@@ -12,6 +12,12 @@ def lessons_main_page(request):
         if request.POST['subjects'] is not '':
             
             print(request.POST['platform'])
+    
+    ## 08.26 建了許多假資料後回頭來串接這邊"
+
+    current_teacher = teacher_profile.objects.all()
+
+    
 
 
 

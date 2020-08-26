@@ -100,11 +100,16 @@ def chat(request, user_url):
         room_id = request.GET['room_id']
         room=chat_room.objects.get(id=room_id)
         if room.student.username == username:
+            current_user_identity = 'student'
             current_teacher = teacher_profile.objects.get(username = room.teacher.username)
-            #intro = current_teacher.intro # 老師的自我介紹三項優勢
-            #intro_img = current_teacher.picture_folder
-            #intro_nickname = current_teacher.nickname
+            current_student = ''
+            # 老師的自我介紹三項優勢 因可能有空白 不確定是否適合直接在前端用 .highlight 
+            # 直接叫出、是否要在這裡先判斷
+            
+
         else:
+            current_user_identity = 'teacher'
+            current_student = student_profile.objects.get(username = room.student.username)
             current_teacher = ''
         #else: annie:0825 現在student_profile學生尚未有intro欄位 
         #    current_student = student_profile.objects.get(username = room.student.username) 
@@ -126,8 +131,7 @@ def chat(request, user_url):
         'room_list': room_list,
         'chatroom':room,
         'current_teacher':current_teacher,
-        #'intro':intro,
-        #'intro_img':intro_img,
-        #"intro_nickname":intro_nickname,
+        'current_student':current_student,
+        'current_user_identity': current_user_identity,
         'roomid_and_friend_list':roomid_and_friend_list,
     })

@@ -11,7 +11,7 @@ class student_profile(models.Model):
     intro = models.CharField(max_length = 150)  # 簡短介紹，不要超過150個字元長
     role = models.CharField(max_length = 40)
     mobile = models.CharField(max_length = 12)
-    picture_folder = models.ImageField(default = 'default.png', blank =True)
+    picture_folder = models.ImageField(default = 'snapshop_default.png', blank =True)
     update_someone_by_email = models.CharField(max_length = 405)
     date_join = models.DateTimeField(auto_now_add=True)
 
@@ -33,7 +33,7 @@ class teacher_profile(models.Model):
     highlight_2 = models.CharField(max_length = 10)  # 亮點介紹，不要超過10個字元長
     highlight_3 = models.CharField(max_length = 10)  # 亮點介紹，不要超過10個字元長
     mobile = models.CharField(max_length = 12)
-    picture_folder = models.ImageField(default = 'default.png', blank =True)
+    picture_folder = models.ImageField(default = 'snapshop_default.png', blank =True)
     tutor_exp_in_years = models.FloatField(default=0.0)
     student_type = models.CharField(max_length = 400)
     subject_type = models.CharField(max_length = 400)
