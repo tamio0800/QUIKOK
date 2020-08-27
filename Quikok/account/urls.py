@@ -14,4 +14,9 @@ urlpatterns = [
     path('dev_forgot_password_4/', views.dev_forgot_password_4_update_successfully, name='forgot_pw_4'),
     path('teacher_info/', views.teacher_info_show, name='teacher_info'),
     # teacher_info之後要改成動態的 >> teacher_info/teacher_id
+    path('test_datepicker/', views.datepicker),
+    path('get_time/', views.get_time),
+    path('change_specific_time/', views.change_specific_time),
+    path('get_general_time/', views.get_general_time),
+    path('change_general_time/', views.change_general_time),
 ]
