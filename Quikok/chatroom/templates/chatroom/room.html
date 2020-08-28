@@ -19,13 +19,12 @@
         background-color: rebeccapurple;
         border: 1px solid rosybrown;
     }
-
+    
     .friends_list {
         background-color: #B2C8CE;
         color: snow;
-
     }
-
+    
     .friends_list:hover {
         background-color: #778488;
     }
@@ -51,10 +50,16 @@
                 <span class="overflow-auto">
                     <img src="/user_upload/{{thumbnail}}/snapshot.png" width="50px" class="img-fluid mt-1">
                     <a href="/chat/{{current_user.username}}/?room_id={{room_id}}">
+<<<<<<< HEAD
                         <font>{{friend_name}}</font>
                     </a>
                 </span>
                 {% endfor %}
+=======
+                    <font>{{friend_name}}</font></a>
+                </span> {% endfor %}
+
+>>>>>>> dbebbf1aa25edfabf982a3691f5cab82359facc6
             </ul>
         </div>
 
@@ -63,8 +68,7 @@
                 {# Messages go here #}
                 <ul id="messages" class="messages">
 
-                    {% for message in chat_messages %}
-                    {% if message.sender.username == current_user.username %}
+                    {% for message in chat_messages %} {% if message.sender.username == current_user.username %}
                     <li class="message right">
                         <!--在聊天中顯示大頭照 <div class="avatar">{{message.sender.username}}</div>-->
                         <div class="text_wrapper">
@@ -88,8 +92,7 @@
                 <!--發送訊息處-->
                 <div class="panel-footer">
                     <div class="input-group">
-                        <input id="chat-input" type="text" class="form-control input"
-                            placeholder="Type your message here ..." maxlength="500">
+                        <input id="chat-input" type="text" class="form-control input" placeholder="Type your message here ..." maxlength="500">
                         <span class="input-group-btn">
                             <button class="btn btn-info btn" id="btn-send">Send</button>
                         </span>
@@ -98,6 +101,7 @@
             </div>
         </div>
         <!--col-->
+<<<<<<< HEAD
         <div class="col-sm-3" id="右側資訊">
             <!--老師資訊-->
             <div class="container" style="background-color:#B2C8CE;">
@@ -127,9 +131,123 @@
                     {% endif %}
 
                 </row>
+=======
+        <div class="col-sm-3 box" id="右側資訊">
+
+            <img src="{{current_teacher.picture_folder.url}}/snapshot.png" />
+            <p>{{current_teacher.nickname}}</p>
+            <p>{{current_teacher.intro}}</p>
+
+        </div>
+    </div>
+</div>
+<!--排版-->
+
+
+<!--整個聊天室範圍做為一個容器-->
+<div class="container" id="whole">
+    <!--這邊是好友列表，我要想辦法讓他變成左邊區塊-->
+    <div class="row" id="friends_left">
+        <div class="col-3">
+            <!--
+                <a class="navbar-brand" href="#">
+                    <i class="fa fa-comments"></i> {{current_user.username}}
+                </a> -->
+
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+
+
+            <div id="navbar" class="navbar-collapse collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    {% for room in room_list %}
+                    <li>
+                        {% if room.member1.username == current_user.username %}
+                        <a href="/chat/{{current_user.username}}/?room_id={{room.id}}">
+                            <i class="fa fa-user-circle" aria-hidden="true">{{room.member2.username}}</i>
+                        </a>
+                        {% else %}
+                        <a href="/chat/{{current_user.username}}/?room_id={{room.id}}">
+                            <i class="fa fa-user-circle" aria-hidden="true">{{room.member1.username}}</i>
+                        </a>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+
+                </ul>
+
+>>>>>>> dbebbf1aa25edfabf982a3691f5cab82359facc6
             </div>
         </div>
     </div>
+<<<<<<< HEAD
+=======
+
+
+
+    <!--把這區實際聊天的地方取個名字：中間聊天室-->
+    <div class="row" id="mid_chat">
+        <div class="col-6">
+
+            <div class="panel panel-info">
+                <!--這邊h4會顯示對話對象的名字
+                    <div class="panel-heading">
+                        {% if chatroom.member1.username == current_user.username %}
+                        <h4 class="panel-title">{{chatroom.member2.username}}</h4>
+                        {% else %}
+                        <h4 class="panel-title">{{chatroom.member1.username}}</h4>
+                        {% endif %}
+                    </div>
+                -->
+
+                {# Messages go here #}
+                <ul id="messages" class="messages">
+
+                    {% for message in chat_messages %} {% if message.sender.username == current_user.username %}
+                    <li class="message right">
+                        <div class="avatar">{{message.sender.username}}</div>
+                        <div class="text_wrapper">
+                            <div class="text">{{message.message}}<br>
+                                <span class="small">{{message.timestamp}}</span>
+                            </div>
+                        </div>
+                    </li>
+
+                    {% else %}
+                    <li class="message left">
+                        <div class="avatar">{{message.sender.username}}</div>
+                        <div class="text_wrapper">
+                            <div class="text">{{message.message}}<br>
+                                <span class="small">{{message.timestamp}}</span>
+                            </div>
+                        </div>
+                    </li>
+
+                    {% endif %} {% endfor %}
+
+                </ul>
+
+                <!--發送訊息處-->
+                <div class="panel-footer">
+                    <div class="input-group">
+                        <input id="chat-input" type="text" class="form-control input" placeholder="Type your message here ..." maxlength="500">
+                        <span class="input-group-btn">
+                            <button class="btn btn-info btn" id="btn-send">Send</button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--col-->
+        <!--row-6-->
+    </div>
+
+
+>>>>>>> dbebbf1aa25edfabf982a3691f5cab82359facc6
 </div>
 <!--container whole-->
 
@@ -142,11 +260,11 @@
     var websocket_str = ws_scheme + '://' + window.location.host + '/ws/chat/' + room_url;
     var chatSocket = new WebSocket(websocket_str);
 
-    chatSocket.onopen = function (e) {
+    chatSocket.onopen = function(e) {
         console.log("Connection success");
     };
 
-    chatSocket.onmessage = function (e) {
+    chatSocket.onmessage = function(e) {
         var data = JSON.parse(e.data);
         var message = data['message'];
         var now_time = data['now_time'];
@@ -173,20 +291,20 @@
     };
 
 
-    chatSocket.onclose = function (e) {
+    chatSocket.onclose = function(e) {
         console.error('Chat socket closed unexpectedly');
         console.log(e)
     };
 
 
     $("#chat-input").focus();
-    $("#chat-input").keyup(function (e) {
+    $("#chat-input").keyup(function(e) {
         if (e.keyCode === 13) { // enter, return
             $("#btn-send").click();
         }
     });
 
-    $("#btn-send").click(function () {
+    $("#btn-send").click(function() {
         var message = $('#chat-input').val();
         chatSocket.send(JSON.stringify({
             'message': message

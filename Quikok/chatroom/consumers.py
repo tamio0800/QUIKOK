@@ -6,6 +6,8 @@ from channels.generic.websocket import WebsocketConsumer
 from .models import Messages, chat_room
 from django.contrib.auth.models import User
 
+# backend for websocket
+
 
 class ChatConsumer(WebsocketConsumer):
     def connect(self):

@@ -72,3 +72,15 @@ class dev_db(models.Model):
 
     def __str__(self):
         return self.username
+
+
+class general_available_time(models.Model):
+    user=models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='general_time')        
+    week=models.CharField(max_length=10)        #mon=1,tus=2,...,sun=7
+    time=models.CharField(max_length=100)       #Example:1,2,3,4,5,47
+
+class specific_available_time(models.Model):
+    user=models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='specific_time')        
+    date=models.CharField(max_length=20)        #Example:2020821
+    time=models.CharField(max_length=100)       #Example:1,2,3,4,5,47
+    
