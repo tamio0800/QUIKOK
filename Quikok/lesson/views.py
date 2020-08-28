@@ -13,7 +13,7 @@ def lessons_main_page(request):
             
             print(request.POST['platform'])
     
-    ## 08.26 建了許多假資料後回頭來串接這邊"
+    ## 08.26 建了許多老師假資料後回頭來串接這邊
 
     current_teacher = teacher_profile.objects.all()
 

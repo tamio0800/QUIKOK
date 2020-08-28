@@ -103,10 +103,6 @@ def chat(request, user_url):
             current_user_identity = 'student'
             current_teacher = teacher_profile.objects.get(username = room.teacher.username)
             current_student = ''
-            # 老師的自我介紹三項優勢 因可能有空白 不確定是否適合直接在前端用 .highlight 
-            # 直接叫出、是否要在這裡先判斷
-            
-
         else:
             current_user_identity = 'teacher'
             current_student = student_profile.objects.get(username = room.student.username)
