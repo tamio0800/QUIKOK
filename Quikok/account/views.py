@@ -3,13 +3,13 @@ from django.contrib import auth
 from django.contrib.auth.hashers import make_password, check_password  # 這一行用來加密密碼的
 from .model_tools import user_db_manager
 from django.contrib.auth.models import User
-from account.models import student_profile, teacher_profile
+from account.models import student_profile, teacher_profile, specific_available_time, general_available_time
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.core.files.storage import FileSystemStorage
 
 import pandas as pd
 import os
-from datetime import date
+from datetime import date as datefunction
 
 def is_num(target):
     try:
@@ -33,7 +33,7 @@ def signup(request):
         birth_date = request.POST.get('birth_date', False)
         if birth_date != False and is_num(birth_date):
             if len(str(birth_date)) == 8:
-                birth_date = date(
+                birth_date = datefunction(
                     int(str(birth_date)[:4]),
                     int(str(birth_date)[4:6]),
                     int(str(birth_date)[-2:])
@@ -198,28 +198,32 @@ def dev_forgot_password_4_update_successfully(request):
     return render(request, 'account/dev_forgot_password_4_update_successfully.html', locals())
 
 
-def dev_import_vendor(request):
-    title = '批次上傳老師資料'
-
+def admin_import_user(request):
+    title = '匯入用戶資訊'
     db_manager = user_db_manager()
     folder_where_are_uploaded_files_be = 'temp'
     if request.method == 'POST':
-        fs = FileSystemStorage(location = "temp")
+        fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
         for each_file in request.FILES.getlist("files"):
             fs.save(each_file.name, each_file)
             if each_file.name.endswith(('xlsx', 'xls')):
                 df = pd.read_excel(os.path.join(folder_where_are_uploaded_files_be, each_file.name))
-                df.loc[:, 'password_hash'] = make_password('00000000')
-                try:
-                    is_imported = db_manager.dev_import_vendor(dataframe = df)
-                    print(each_file.name, 'has been imported.')
-                except Exception as e:
-                    print(each_file.name, e)
-                    pass
+            elif each_file.name.endswith(('txt', 'csv')):
+                df = pd.read_csv(os.path.join(folder_where_are_uploaded_files_be, each_file.name))
+
+            df.loc[:, 'password_hash'] = make_password('00000000')
+            try:
+                is_imported = db_manager.admin_import_user(dataframe = df)
+                print(each_file.name, 'has been imported.')
+            except Exception as e:
+                print(each_file.name, e)
+                pass
             os.unlink(os.path.join(folder_where_are_uploaded_files_be, each_file.name))
-            return render(request, 'account/dev_import_vendor.html', locals())
+            
+        db_manager.admin_create_chatrooms()
+        return render(request, 'account/import_users.html', locals())
     else:
-        return render(request, 'account/dev_import_vendor.html', locals())
+        return render(request, 'account/import_users.html', locals())
             
 
 def logout(request):
@@ -269,3 +273,79 @@ def for_test(request):
 
 def teacher_info_show(request):
     return render(request, 'account/teacher_member_page.html', locals())
+
+
+
+def datepicker(request):
+    print('request:',request)
+    return render (request, 'account/datepicker.html' )
+
+
+def get_time(request):
+    username=request.user
+    year=request.GET['year']
+    month=request.GET['month']
+    day=request.GET['day']
+    date=year+month+day
+    week=datefunction(int(year),int(month),int(day)).isoweekday()
+    user=teacher_profile.objects.get(username=username)
+
+    if(specific_available_time.objects.filter(date=date).filter(user=user).exists()):
+        schedule=specific_available_time.objects.get(date=date,user=user).time
+    elif(general_available_time.objects.filter(week=week).filter(user=user).exists()):
+        schedule=general_available_time.objects.get(week=week,user=user).time
+    else:
+        schedule=''
+    print('schedule:',schedule)
+
+    return HttpResponse(schedule)
+
+def change_specific_time(request):
+    username=request.user
+    new_time=request.GET['new_time']
+    year=request.GET['year']
+    month=request.GET['month']
+    day=request.GET['day']
+    date=year+month+day
+    print('change_date:',date)
+    user=teacher_profile.objects.get(username=username)
+
+    try:
+        if(specific_available_time.objects.filter(date=date).filter(user=user).exists()):
+            specific_available_time.objects.filter(date=date).filter(user=user).update(time=new_time)
+        else:
+            specific_available_time.objects.create(date=date,time=new_time,user=user)
+        return HttpResponse('儲存成功!')
+    except Exception as e:
+        print(e)
+        return HttpResponse('失敗!請再試一次!')
+
+def get_general_time(request):
+    week=request.GET['week']
+    username=request.user
+    user=teacher_profile.objects.get(username=username)
+
+    if(general_available_time.objects.filter(week=week).filter(user=user).exists()):
+        schedule=general_available_time.objects.get(week=week,user=user).time
+    else:
+        schedule=''
+    print('schedule:',schedule)
+
+    return HttpResponse(schedule)
+
+
+def change_general_time(request):
+    username=request.user
+    new_time=request.GET['new_time']
+    week=request.GET['week']
+    user=teacher_profile.objects.get(username=username)
+
+    try:
+        if(general_available_time.objects.filter(week=week).filter(user=user).exists()):
+            general_available_time.objects.filter(week=week).filter(user=user).update(time=new_time)
+        else:
+            general_available_time.objects.create(week=week,time=new_time,user=user)
+        return HttpResponse('更新成功!')
+    except Exception as e:
+        print(e)
+        return HttpResponse('失敗!請再試一次!')

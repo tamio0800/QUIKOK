@@ -1,6 +1,7 @@
 {% extends 'base_layout.html' %} {% block content %}{% load static %}
 <link rel="stylesheet" href="{% static 'CSS/font-awesome.min.css' %}" />
-
+<script src="{% static 'JS/fontawesome5.0.js' %}" crossorigin="anonymous"></script>
+<link href="{% static 'CSS/product.css' %}" rel="stylesheet">
 <style>
     .bd-placeholder-img {
         font-size: 1.125rem;
@@ -29,10 +30,15 @@
     }
 
     .light_blue_bg {
-        height: 600px;
         width: 100%;
         background-image: linear-gradient(62deg, #8EC5FC 0%, #E0C3FC 100%);
         color: rgb(88, 87, 87);
+    }
+
+    .blank_bg {
+        width: 100%;
+        background-color: #FFDEE9;
+        background-image: linear-gradient(0deg, #FFDEE9 0%, #B5FFFC 100%);
 
     }
 
@@ -61,7 +67,7 @@
 
 <body style="font-family: Microsoft Yahei;">
 
-    <div class="text-center light_blue_bg teacher_short">
+    <div class="text-center bg-primary teacher_short">
         <div class="row mt-2">
             <div class="col">
                 <img src="https://i1.pngguru.com/preview/280/594/344/kpop-meme-episode-4-red-velvet-woman-shock-face-png-clipart-thumbnail.jpg"
@@ -70,25 +76,120 @@
         </div>
         <div class="row mt-3">
             <div class="col">
-                <strong style="font-size: 28px;">我是獨一無二的番茄老師</strong>
+                <strong style="font-size: 42px; color: whitesmoke;">金枕頭榴槤老師</strong>
             </div>
         </div>
-        <div class="row">
+
+        <div class="row mt-3 justify-content-center">
             <div class="col">
-                <hr class="divider" style="width: 10%; border-top: 3px solid; color: white;">
-                
+                <a style="font-weight: bold; color: white;">———— </a>
+                <i style="color: white; font-size:26px" class="fa fa-star"></i>
+                <i style="color: white; font-size:26px" class="fa fa-star"></i>
+                <i style="color: white; font-size:26px" class="fa fa-star"></i>
+                <a style="font-weight: bold; color: white;"> ————</a>
             </div>
         </div>
-        <div class="row mt-2">
+
+        <div class="row mt-3">
             <div class="col">
-                <a style="color: white; font-size: 22px;"><strong>#托福全科滿分 #哈佛醫學院第一名畢業 #2019年美國大學畢業生致詞代表</strong></a>
+                <a style="color: white; font-size: 22px;"><strong>#姐的教學直通內心&nbsp;#考差不是我的問題&nbsp;#白宮家教首席</strong></a>
             </div>
         </div>
+
+        <div class="row mt-3">
+            <div class="col">
+                <a id="certificated_by_quikok" style="color: rgba(255, 255, 255, 1); font-size: 20px;">
+                    <i class="fas fa-id-card">身分認證</i>&nbsp;&nbsp;
+                    <i class="fas fa-graduation-cap">學歷認證</i>&nbsp;&nbsp;
+                    <i class="fas fa-medal">經歷認證</i>&nbsp;&nbsp;
+                    <i class="fas fa-briefcase">工作認證</i>&nbsp;&nbsp;</a>
+            </div>
+        </div><br><br>
     </div>
 
-    <i class="fas fa-graduation-cap"></i>
-    <i class="fa fa-star"></i>
+    <div class="position-relative overflow-hidden p-3 p-md-5 m-md-3 bg-light">
+        <div class="teacher_intro">
+            <div class="row mt-5 text-center">
+                <div class="col">
+                    <h2>自我介紹</h2>
+                </div>
+            </div>
 
+            <div class="row mt-4 self-intro">
+                <div class="col-8 offset-2">
+                    <a>臣本布衣，躬耕於南陽，苟全性命於亂世，不求聞達於諸侯。
+                        先帝不以臣卑鄙，猥自枉屈，三顧臣於草廬之中，諮臣以
+                        當世之事，由是感激，遂許先帝以驅馳。後值傾覆，受任於敗
+                        軍之際，奉命於危難之間，爾來二十有一年矣！先帝知臣謹慎
+                        ，故臨崩寄臣以大事也。受命以來，夙夜憂勤，恐託付不效，
+                        以傷先帝之明。故五月渡瀘，深入不毛。今南方已定，兵甲已
+                        足，當獎率三軍，北定中原，庶竭駑鈍，攘除奸凶，興復漢室
+                        ，還於舊都；此臣所以報先帝而忠陛下之職分也。至於斟酌損
+                        益，進盡忠言，則攸之、褘、允之任也。</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-5">
+            
+            <div class="d-md-flex flex-md-equal w-100 my-md-3 pl-md-3">
+                <div class="bg-white mr-md-3 pt-3 px-3 pt-md-5 px-md-5 text-center overflow-hidden">
+                  <div class="my-3 p-3">
+                    <h2 class="display-5"">背景</h2>
+                    <p class="lead"">哈佛大學醫學院 畢業<small>(1997)</small></p> 
+                  </div>
+                  <div class="bg-dark shadow-sm mx-auto" style="width: 80%; height: 300px; border-radius: 21px 21px 0 0;"></div>
+                </div>
+                <div class="bg-light mr-md-3 pt-3 px-3 pt-md-5 px-md-5 text-center overflow-hidden">
+                  <div class="my-3 py-3">
+                    <h2 class="display-5">背景/資歷</h2>
+                    <p class="lead"">哈佛大學醫學院 畢業<small>(1997)</small></p>
+                  </div>
+                  <div class="bg-white shadow-sm mx-auto" style="width: 80%; height: 300px; border-radius: 21px 21px 0 0;"></div>
+                </div>
+              </div>
+
+
+            <div class="d-md-flex flex-md-equal w-100 my-md-3 pl-md-3">
+                <div class="bg-dark mr-md-3 pt-3 px-3 pt-md-5 px-md-5 text-center text-white overflow-hidden">
+                    <div class="my-3 py-3">
+                        <h2 class="display-5">Another headline</h2>
+                        <p class="lead">And an even wittier subheading.</p>
+                    </div>
+                    <div class="bg-light shadow-sm mx-auto"
+                        style="width: 80%; height: 300px; border-radius: 21px 21px 0 0;">
+                    </div>
+                </div>
+                <div class="bg-light mr-md-3 pt-3 px-3 pt-md-5 px-md-5 text-center overflow-hidden">
+                    <div class="my-3 p-3">
+                        <h2 class="display-5">教學資歷</h2>
+                        <p class="lead">And an even wittier subheading.</p>
+                    </div>
+                    <div class="bg-dark shadow-sm mx-auto"
+                        style="width: 80%; height: 300px; border-radius: 21px 21px 0 0;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-md-flex flex-md-equal w-100 my-md-3 pl-md-3">
+            <div class="bg-light mr-md-3 pt-3 px-3 pt-md-5 px-md-5 text-center overflow-hidden">
+              <div class="my-3 p-3">
+                <h2 class="display-5">Another headline</h2>
+                <p class="lead">And an even wittier subheading.</p>
+              </div>
+              <div class="bg-dark shadow-sm mx-auto" style="width: 80%; height: 300px; border-radius: 21px 21px 0 0;"></div>
+            </div>
+            <div class="bg-primary mr-md-3 pt-3 px-3 pt-md-5 px-md-5 text-center text-white overflow-hidden">
+              <div class="my-3 py-3">
+                <h2 class="display-5">Another headline</h2>
+                <p class="lead">And an even wittier subheading.</p>
+              </div>
+              <div class="bg-light shadow-sm mx-auto" style="width: 80%; height: 300px; border-radius: 21px 21px 0 0;"></div>
+            </div>
+        </div>
+
+    </div>
 
 
 

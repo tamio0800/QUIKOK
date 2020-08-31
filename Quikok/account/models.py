@@ -8,9 +8,10 @@ class student_profile(models.Model):
     nickname = models.CharField(max_length = 40)
     birth_date = models.DateField(null=True)
     is_male = models.BooleanField()
+    intro = models.CharField(max_length = 150)  # 簡短介紹，不要超過150個字元長
     role = models.CharField(max_length = 40)
     mobile = models.CharField(max_length = 12)
-    picture_folder = models.ImageField(default = 'default.png', blank =True)
+    picture_folder = models.ImageField(default = 'snapshop_default.png', blank =True)
     update_someone_by_email = models.CharField(max_length = 405)
     date_join = models.DateTimeField(auto_now_add=True)
 
@@ -27,9 +28,12 @@ class teacher_profile(models.Model):
     nickname = models.CharField(max_length = 40)
     birth_date = models.DateField(null=True)
     is_male = models.BooleanField()
-    intro = models.CharField(max_length = 300)  # 簡短介紹，不要超過300個字元長(2/漢字)
+    intro = models.CharField(max_length = 150)  # 簡短介紹，不要超過150個字元長
+    highlight_1 = models.CharField(max_length = 10)  # 亮點介紹，不要超過10個字元長
+    highlight_2 = models.CharField(max_length = 10)  # 亮點介紹，不要超過10個字元長
+    highlight_3 = models.CharField(max_length = 10)  # 亮點介紹，不要超過10個字元長
     mobile = models.CharField(max_length = 12)
-    picture_folder = models.CharField(max_length = 150)
+    picture_folder = models.ImageField(default = 'snapshop_default.png', blank =True)
     tutor_exp_in_years = models.FloatField(default=0.0)
     student_type = models.CharField(max_length = 400)
     subject_type = models.CharField(max_length = 400)
@@ -57,6 +61,7 @@ class connects(models.Model):
     def __str__(self):
         return self.username
 
+
 class dev_db(models.Model):
     username = models.CharField(max_length = 120)
     password = models.CharField(max_length = 100)
@@ -67,3 +72,15 @@ class dev_db(models.Model):
 
     def __str__(self):
         return self.username
+
+
+class general_available_time(models.Model):
+    user=models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='general_time')        
+    week=models.CharField(max_length=10)        #mon=1,tus=2,...,sun=7
+    time=models.CharField(max_length=100)       #Example:1,2,3,4,5,47
+
+class specific_available_time(models.Model):
+    user=models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='specific_time')        
+    date=models.CharField(max_length=20)        #Example:2020821
+    time=models.CharField(max_length=100)       #Example:1,2,3,4,5,47
+    

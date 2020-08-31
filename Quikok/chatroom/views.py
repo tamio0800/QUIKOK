@@ -56,8 +56,9 @@ def chat(request, user_url):
                 friend_temp = teacher_profile.objects.get(username= room.teacher.username)
                 friend_nick_list.append(friend_temp.nickname)
                 roomid_list.append(room.id)
+                #print("測試"+ str(friend_temp.picture_folder.url))
+                thumb_nail_list.append(friend_temp.picture_folder)
                 print(friend_temp.picture_folder)
-                #thumb_nail_list.append(friend_temp.picture_folder.url)
                 
             else:    
                 print("好友:"+ room.teacher.username + "不是老師也不是學生，可能是測試帳號或漏加帳號")    
@@ -71,6 +72,7 @@ def chat(request, user_url):
             #        print("好友:"+ room.student.username + "不是老師也不是學生，可能是測試帳號或漏加帳號")
             if len(friend_nick_temp) >= 1:
                 friend_temp = student_profile.objects.get(username= room.student.username)
+                print("加了一個學生到好友名單:"+ friend_temp.nickname)
                 friend_nick_list.append(friend_temp.nickname)
                 roomid_list.append(room.id)
                 thumb_nail_list.append(friend_temp.picture_folder)
@@ -85,19 +87,33 @@ def chat(request, user_url):
     for friend in friend_nick_list:
         print('好友暱稱表:'+ friend)
     print(thumb_nail_list)
+        
     roomid_and_friend_list = zip(roomid_list, friend_nick_list, thumb_nail_list)
-    ### 顯示大頭貼 ###
+    # 將房間id, 好友暱稱, 大頭貼資訊給前端
     
 
-
+    # 當前聊天內容(畫面左側)與對方資訊(右側)
     room=''
     chat_messages=''
     print('\n\nrequest.GET:'+str(request.GET))
     if 'room_id' in request.GET:
         room_id = request.GET['room_id']
         room=chat_room.objects.get(id=room_id)
+        if room.student.username == username:
+            current_user_identity = 'student'
+            current_teacher = teacher_profile.objects.get(username = room.teacher.username)
+            current_student = ''
+        else:
+            current_user_identity = 'teacher'
+            current_student = student_profile.objects.get(username = room.student.username)
+            current_teacher = ''
+        #else: annie:0825 現在student_profile學生尚未有intro欄位 
+        #    current_student = student_profile.objects.get(username = room.student.username) 
+           
+        #print("hi" +room.student.username)
+
         if room in room_list:
-            chat_messages = Messages.objects.filter(group=room_id).order_by("timestamp")[:100]
+            chat_messages = Messages.objects.filter(group=room_id).order_by("timestamp")[:100] #前一百則聊天訊息
 
         else :
             room=''
@@ -110,9 +126,8 @@ def chat(request, user_url):
         'chat_messages': chat_messages,
         'room_list': room_list,
         'chatroom':room,
-        #'is_teacher': user_is_teacher,
-        #'friend_nickname':friend_nickname,
-        #'friend_list' : friend_list,
-        #'roomid_list':roomid_list,
+        'current_teacher':current_teacher,
+        'current_student':current_student,
+        'current_user_identity': current_user_identity,
         'roomid_and_friend_list':roomid_and_friend_list,
     })
