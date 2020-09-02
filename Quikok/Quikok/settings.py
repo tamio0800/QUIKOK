@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'Quikok',
     'account',   # 用來進行開發  註冊/個人訊息的呈現app
     'lesson', # 課程商品頁
+    'django_api', # 用來放api們
 ]
 
 MIDDLEWARE = [
@@ -48,7 +49,7 @@ ROOT_URLCONF = 'Quikok.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['templates'],
+        'DIRS': ['frontend/dist'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -75,7 +76,7 @@ DATABASES = {
         'NAME': 'quikok_db',  # 資料庫/schema的名稱
         'USER': 'root',
         'PASSWORD': '0800',
-        'HOST': 'localhost',
+        'HOST': '127.0.0.1',
         'PORT': '3306',
     }
 }
@@ -129,7 +130,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = (os.path.join(BASE_DIR, 'assets'),)
+# STATICFILES_DIRS = (os.path.join(BASE_DIR, 'assets'),)
+# Add for vuejs
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "frontend/dist"),
+]
+
+
 #MEDIA_URL = '/temp_files/'  Tamio原本的設定
 #MEDIA_ROOT = os.path.join(BASE_DIR, 'temp_files')  # 增加這行做為上傳資料時的暫存位置
 
