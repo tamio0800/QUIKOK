@@ -5,14 +5,6 @@ from django.http import JsonResponse
 import json, os
 from django.middleware.csrf import get_token
 
-@require_http_methods(['GET'])
-def get_csrf_token(request):
-    csrf_token = get_token(request)
-    response = {}
-    response['csrf_token'] = csrf_token
-    return JsonResponse(response)
-
-
 def is_int(target):
     try:
         as_int = int(target)
@@ -49,7 +41,7 @@ def homepage_recommendList(request):
 @require_http_methods(['GET'])
 def homepage_api_getBannerBar(request):
     data = []
-    img_path = 'test_folder/homepage_Banner/'
+    img_path = 'website_assets/homepage/'
     # 之後再看這個路徑該怎麼修比較好
     for i, desktop_img in enumerate(os.listdir(os.path.join(img_path, 'desktop'))):
         data.append(
@@ -68,3 +60,10 @@ def homepage_api_getBannerBar(request):
             }
         )
     return JsonResponse(data, safe=False)
+
+@require_http_methods(['GET'])
+def get_csrf_token(request):
+    csrf_token = get_token(request)
+    response = {}
+    response['csrf_token'] = csrf_token
+    return JsonResponse(response)
