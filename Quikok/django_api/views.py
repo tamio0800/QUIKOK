@@ -49,7 +49,7 @@ def homepage_recommendList(request):
 @require_http_methods(['GET'])
 def homepage_api_getBannerBar(request):
     data = []
-    img_path = 'test_folder/homepage_Banner/'
+    img_path = 'website_assets/homepage/'
     # 之後再看這個路徑該怎麼修比較好
     for i, desktop_img in enumerate(os.listdir(os.path.join(img_path, 'desktop'))):
         data.append(
