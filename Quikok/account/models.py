@@ -29,24 +29,18 @@ class teacher_profile(models.Model):
     birth_date = models.DateField(null=True)
     is_male = models.BooleanField()
     intro = models.CharField(max_length = 150)  # 簡短介紹，不要超過150個字元長
-    highlight_1 = models.CharField(max_length = 10)  # 亮點介紹，不要超過10個字元長
-    highlight_2 = models.CharField(max_length = 10)  # 亮點介紹，不要超過10個字元長
-    highlight_3 = models.CharField(max_length = 10)  # 亮點介紹，不要超過10個字元長
     mobile = models.CharField(max_length = 12)
-    picture_folder = models.ImageField(default = 'snapshop_default.png', blank =True)
+    picture_folder = models.CharField(default = 'teacher_snapshop_default.png', blank =True) # 預設老師頭像
     tutor_exp_in_years = models.FloatField(default=0.0)
-    student_type = models.CharField(max_length = 400)
-    subject_type = models.CharField(max_length = 400)
+    subject_type = models.CharField(max_length = 400) # 科目名稱也可包含教課對象
     id_cert = models.CharField(max_length = 150)
     education_1 = models.CharField(max_length = 60)
     education_2 = models.CharField(max_length = 60)
     education_3 = models.CharField(max_length = 60)
-    education_cert_1 = models.CharField(max_length = 150)
-    education_cert_2 = models.CharField(max_length = 150)
-    education_cert_3 = models.CharField(max_length = 150)
+    education_cert_unapproved = models.CharField(max_length = 50) # 尚未審核通過的證書檔案指向資料夾位置
+    education_cert_approved = models.CharField(max_length = 50) # 已審核通過的證書檔案指向資料夾位置
     occupation = models.CharField(max_length = 60)
     company = models.CharField(max_length = 60)
-    occupation_cert = models.CharField(max_length = 150)
     date_join = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
