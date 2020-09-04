@@ -16,6 +16,7 @@ class student_profile(models.Model):
     mobile = models.CharField(max_length = 12)
     # picture_folder = models.ImageField(default = 'snapshop_default.png', blank =True)
     picture_folder = models.CharField(max_length = 60)  # 改成資料夾路徑
+    info_folder = models.CharField(max_length = 100)  # 資料夾路徑，存放個人檔案（暫不使用）
     update_someone_by_email = models.CharField(max_length = 405)
     date_join = models.DateTimeField(auto_now_add=True)
     # 為了使回傳platform名稱而不是object
@@ -37,6 +38,7 @@ class teacher_profile(models.Model):
     mobile = models.CharField(max_length = 12)
     # picture_folder = models.CharField(default = 'teacher_snapshop_default.png', blank =True) # 預設老師頭像
     picture_folder = models.CharField(max_length = 60)  # 改成資料夾路徑
+    info_folder = models.CharField(max_length = 100)  # 資料夾路徑，存放個人檔案（暫不使用）
     tutor_exp_in_years = models.FloatField(default=0.0)
     subject_type = models.CharField(max_length = 400) # 科目名稱也可包含教課對象
     # id_cert = models.CharField(max_length = 150) 整合進下方的cert..裡面
