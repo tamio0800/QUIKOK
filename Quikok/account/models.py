@@ -10,7 +10,7 @@ class student_profile(models.Model):
     nickname = models.CharField(max_length = 40)
     birth_date = models.DateField(null=True)
     is_male = models.BooleanField()
-    intro = models.CharField(max_length = 300)  
+    intro = models.CharField(default='', max_length = 300)  
     # 自我介紹，不要超過300個字元長，比老師長的緣故是比起老師，學生更需要詳細介紹自己的學習北京
     role = models.CharField(max_length = 40)
     mobile = models.CharField(max_length = 12)
