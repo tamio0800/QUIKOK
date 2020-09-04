@@ -4,6 +4,9 @@ from django.core import serializers
 from django.http import JsonResponse
 import json, os
 from django.middleware.csrf import get_token
+from datetime import date as date_function
+
+from account.models import dev_db
 
 def is_int(target):
     try:
@@ -66,4 +69,37 @@ def get_csrf_token(request):
     csrf_token = get_token(request)
     response = {}
     response['csrf_token'] = csrf_token
+    return JsonResponse(response)
+
+
+
+@require_http_methods(['GET'])
+def create_a_student_user(request):
+    username = request.GET.get('username', False)
+    password = request.GET.get('password', False)
+    name = request.GET.get('name', False)
+    birth_date = request.GET.get('birth_date', False)
+    is_male = 1
+    # http://127.0.0.1:8000/api/create_a_user/?username=testUser&password=1111&name=tata&birth_date=19901225&is_male=1
+    if int(is_male) == 0:
+        is_male = False
+    else:
+        is_male = True
+
+    # birth_date預期會是長這樣>> 19900101
+    _year, _month, _day = int(birth_date[:4]), int(birth_date[4:6]), int(birth_date[-2:])
+    
+    dev_db.objects.create(
+        username = username,
+        password = password,
+        name = name,
+        birth_date = date_function(_year, _month, _day),
+        is_male = is_male
+    )
+
+
+@require_http_methods(['GET'])
+def show_users(request):
+    response = {}
+    response['info'] = serializers.serialize('JSON', dev_db.objects.all())
     return JsonResponse(response)

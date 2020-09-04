@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from account.models import student_profile, teacher_profile, specific_available_time, general_available_time
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.core.files.storage import FileSystemStorage
+from account.models import dev_db
 
 import pandas as pd
 import os
@@ -20,6 +21,20 @@ def is_num(target):
             return False
     except:
         return False
+
+
+# FOR API
+from django.views.decorators.http import require_http_methods
+from django.core import serializers
+from django.http import JsonResponse
+import json
+from django.middleware.csrf import get_token
+
+
+
+
+
+# FOR API
 
 # Create your views here.
 def signup(request):

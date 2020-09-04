@@ -7,4 +7,6 @@ urlpatterns = [
     path('course/recommendList/', views.homepage_recommendList),
     path('getBannerBar/', views.homepage_api_getBannerBar),
     path('get_csrf_token/', views.get_csrf_token),
+    path('create_a_user/', views.create_a_student_user),
+    path('show_users/', views.show_users),
 ]
