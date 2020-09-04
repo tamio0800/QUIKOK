@@ -30,6 +30,7 @@ class teacher_profile(models.Model):
     password = models.CharField(max_length = 128)
     balance = models.IntegerField(default=0)  # 這個是帳戶餘額
     withholding_balance = models.IntegerField(default=0)  # 這個是帳戶預扣額度
+    future_balance = models.IntegerField(default=0) # 帳戶預進帳金額
     name = models.CharField(max_length = 40)
     nickname = models.CharField(max_length = 40)
     birth_date = models.DateField(null=True)
