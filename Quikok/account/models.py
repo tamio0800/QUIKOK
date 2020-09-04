@@ -5,6 +5,7 @@ class student_profile(models.Model):
     username = models.CharField(max_length = 150)
     password = models.CharField(max_length = 128)
     balance = models.IntegerField(default=0)  # 這個是帳戶餘額
+    withholding_balance = models.IntegerField(default=0)  # 這個是帳戶預扣額度
     name = models.CharField(max_length = 40)
     nickname = models.CharField(max_length = 40)
     birth_date = models.DateField(null=True)
@@ -27,6 +28,7 @@ class teacher_profile(models.Model):
     username = models.CharField(max_length = 150)
     password = models.CharField(max_length = 128)
     balance = models.IntegerField(default=0)  # 這個是帳戶餘額
+    withholding_balance = models.IntegerField(default=0)  # 這個是帳戶預扣額度
     name = models.CharField(max_length = 40)
     nickname = models.CharField(max_length = 40)
     birth_date = models.DateField(null=True)
@@ -43,6 +45,10 @@ class teacher_profile(models.Model):
     education_3 = models.CharField(max_length = 60)
     cert_unapproved = models.CharField(max_length = 60) # 尚未審核通過的各類型證書/證明檔案指向資料夾位置
     cert_approved = models.CharField(max_length = 560) # 已審核通過的各類型證書/證明檔案指向資料夾位置
+    id_approved = models.CharField(max_length = 60)  #身分類別的認證勳章
+    education_approved = models.CharField(max_length = 60)  #學歷類別的認證勳章
+    work_approved = models.CharField(max_length = 60)  #工作經歷類別的認證勳章
+    other_approved = models.CharField(max_length = 60)  #其他類別的認證勳章
     occupation = models.CharField(max_length = 60)
     company = models.CharField(max_length = 60)
     date_join = models.DateTimeField(auto_now_add=True)
