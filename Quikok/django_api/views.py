@@ -91,7 +91,6 @@ def create_dev_db_user(request):
         is_male = False
     else:
         is_male = True
-
     if False not in [username, password, name, birth_date] and is_male is not None:
         # birth_date預期會是長這樣>> 19900101
         _year, _month, _day = int(birth_date[:4]), int(birth_date[4:6]), int(birth_date[-2:])
@@ -117,9 +116,17 @@ def create_dev_db_user(request):
 
 @require_http_methods(['GET'])
 def show_users(request):
-    response = dev_db.objects.all()
-    data = serializers.serialize(response, response)
-    return JsonResponse(data)
+    all_users = dev_db.objects.all()
+    data = []
+    for each_user in all_users:
+        data.append({
+            'username': each_user.username,
+            'password': each_user.password,
+            'name': each_user.name,
+            'birth_date': each_user.birth_date,
+            'is_male': each_user.is_male
+        })
+    return JsonResponse(data, safe=False)
 
 
 #@require_http_methods(['GET'])
