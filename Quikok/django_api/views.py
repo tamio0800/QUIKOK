@@ -270,8 +270,9 @@ def create_teacher(request):
             student_profile.objects.create(
                     username = username,
                     password = password,
-                    balance = 0
-                    withholding_balance = 0
+                    balance = 0,
+                    future_balance = 0,
+                    withholding_balance = 0,
                     name =name,
                     nickname = nickname,
                     birth_date = birth_date,
