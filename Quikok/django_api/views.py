@@ -6,7 +6,7 @@ import json, os
 from django.middleware.csrf import get_token
 from datetime import date as date_function
 
-from account.models import dev_db, student_profile
+from account.models import dev_db, student_profile, teacher_profile
 
 
 def is_int(target):
@@ -131,3 +131,64 @@ def show_users(request):
 
 #@require_http_methods(['GET'])
 #def create_a_student_user(request):
+
+##### 老師區
+@require_http_methods(['GET'])
+def create_teacher(request):
+    response = {}
+    username = request.GET.get('username', False)
+    password = request.GET.get('password', False)
+    balance = request.GET.get('name', False)
+    withholding_balance = request.GET.get('name', False)
+    name = request.GET.get('name', False)
+    nickname = request.GET.get('nickname', False)
+    birth_date = request.GET.get('birth_date', False)
+    is_male = request.GET.get('is_male', None)
+    intro = request.GET.get('is_male', None)
+    mobile = request.GET.get('is_male', None)
+    # picture_folder = request.GET.get('is_male', None)
+    picture_folder = request.GET.get('is_male', None)
+    info_folder = request.GET.get('is_male', None)
+    tutor_experience = request.GET.get('is_male', None)
+    subject_type = request.GET.get('is_male', None)
+    education_1 = request.GET.get('is_male', None)
+    education_2 = request.GET.get('is_male', None)
+    education_3 = request.GET.get('is_male', None)
+    cert_unapproved = request.GET.get('is_male', None)
+    cert_approved = request.GET.get('is_male', None)
+    id_approved = request.GET.get('is_male', None)
+    education_approved = request.GET.get('is_male', None)
+    work_approved = request.GET.get('is_male', None)
+    other_approved = request.GET.get('is_male', None)  #其他類別的認證勳章
+    occupation = request.GET.get('is_male', None)
+    company = request.GET.get('is_male', None)
+    date_join = request.GET.get('is_male', None)
+
+
+    # print(is_male)
+    # # http://127.0.0.1:8000/api/create_teacher/?username=testUser3&password=1111&name=tata3&birth_date=19901225&is_male=1
+    if int(is_male) == 0:
+        is_male = False
+    else:
+        is_male = True
+    if False not in [username, password, name, birth_date] and is_male is not None:
+        # birth_date預期會是長這樣>> 19900101
+        _year, _month, _day = int(birth_date[:4]), int(birth_date[4:6]), int(birth_date[-2:])
+        teacher_profile.objects.create(
+            username = username,
+            password = password,
+            name = name,
+            birth_date = date_function(_year, _month, _day),
+            is_male = is_male
+        )
+        response['status'] = 'success'
+        response['errCode'] = 'null'
+        response['errMsg'] = 'null'
+        response['data'] = None
+        return JsonResponse(response)
+    else:
+        response['status'] = 'failed'
+        response['errCode'] = '1'
+        response['errMsg'] = 'not match'
+        response['data'] = None
+        return JsonResponse(response)
