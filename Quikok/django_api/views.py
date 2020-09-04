@@ -5,9 +5,9 @@ from django.http import JsonResponse
 import json, os
 from django.middleware.csrf import get_token
 
-from account.models import dev_db, student_profile
+from account.models import dev_db, student_profile, teacher_profile
+from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password, check_password  # 這一行用來加密密碼的
-
 
 def is_int(target):
     try:
@@ -168,7 +168,9 @@ def create_a_student_user(request):
     update_someone_by_email] and is_male is not None:
         # 先檢查有沒有這個username存在，存在的話會return None給obj
         obj = student_profile.objects.filter(username=username).first()
-        if obj is not None:
+        auth_obj = User.objects.filter(username=username).first()
+        # 下面這個條件式>> 皆非(a為空 或是 b為空) >> a跟b都不能為空
+        if not (obj is not None or auth_obj is not None):
             student_profile.objects.create(
                 username = username,
                 password = password,
@@ -182,6 +184,18 @@ def create_a_student_user(request):
                 mobile = mobile,
                 update_someone_by_email = update_someone_by_email
             ).save()
+
+            User.objects.create(
+                username = username,
+                password = password,
+                is_superuser = 0,
+                first_name = '',
+                last_name = '',
+                email = '',
+                is_staff = 0,
+                is_active = 1,
+            ).save()
+            
             response['status'] = 'success'
             response['errCode'] = None
             response['errMsg'] = None
@@ -200,3 +214,64 @@ def create_a_student_user(request):
     
     return JsonResponse(response)
 
+
+##### 老師區 #####
+@require_http_methods(['GET'])
+def create_teacher(request):
+    response = {}
+    username = request.GET.get('username', False)
+    password = request.GET.get('password', False)
+    balance = request.GET.get('name', False)
+    withholding_balance = request.GET.get('name', False)
+    name = request.GET.get('name', False)
+    nickname = request.GET.get('nickname', False)
+    birth_date = request.GET.get('birth_date', False)
+    is_male = request.GET.get('is_male', None)
+    intro = request.GET.get('is_male', None)
+    mobile = request.GET.get('is_male', None)
+    # picture_folder = request.GET.get('is_male', None)
+    picture_folder = request.GET.get('is_male', None)
+    info_folder = request.GET.get('is_male', None)
+    tutor_experience = request.GET.get('is_male', None)
+    subject_type = request.GET.get('is_male', None)
+    education_1 = request.GET.get('is_male', None)
+    education_2 = request.GET.get('is_male', None)
+    education_3 = request.GET.get('is_male', None)
+    cert_unapproved = request.GET.get('is_male', None)
+    cert_approved = request.GET.get('is_male', None)
+    id_approved = request.GET.get('is_male', None)
+    education_approved = request.GET.get('is_male', None)
+    work_approved = request.GET.get('is_male', None)
+    other_approved = request.GET.get('is_male', None)  #其他類別的認證勳章
+    occupation = request.GET.get('is_male', None)
+    company = request.GET.get('is_male', None)
+    date_join = request.GET.get('is_male', None)
+
+
+    # print(is_male)
+    # # http://127.0.0.1:8000/api/create_teacher/?username=testUser3&password=1111&name=tata3&birth_date=19901225&is_male=1
+    if int(is_male) == 0:
+        is_male = False
+    else:
+        is_male = True
+    if False not in [username, password, name, birth_date] and is_male is not None:
+        # birth_date預期會是長這樣>> 19900101
+        _year, _month, _day = int(birth_date[:4]), int(birth_date[4:6]), int(birth_date[-2:])
+        teacher_profile.objects.create(
+            username = username,
+            password = password,
+            name = name,
+            birth_date = date_function(_year, _month, _day),
+            is_male = is_male
+        )
+        response['status'] = 'success'
+        response['errCode'] = 'null'
+        response['errMsg'] = 'null'
+        response['data'] = None
+        return JsonResponse(response)
+    else:
+        response['status'] = 'failed'
+        response['errCode'] = '1'
+        response['errMsg'] = 'not match'
+        response['data'] = None
+        return JsonResponse(response)
