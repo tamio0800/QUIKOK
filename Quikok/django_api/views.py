@@ -6,7 +6,8 @@ import json, os
 from django.middleware.csrf import get_token
 from datetime import date as date_function
 
-from account.models import dev_db
+from account.models import dev_db, student_profile
+
 
 def is_int(target):
     try:
@@ -17,6 +18,7 @@ def is_int(target):
             return False
     except:
         return False
+
 
 @require_http_methods(['POST'])
 def homepage_recommendList(request):
@@ -64,6 +66,7 @@ def homepage_api_getBannerBar(request):
         )
     return JsonResponse(data, safe=False)
 
+
 @require_http_methods(['GET'])
 def get_csrf_token(request):
     csrf_token = get_token(request)
@@ -72,32 +75,52 @@ def get_csrf_token(request):
     return JsonResponse(response)
 
 
+
+# 以下只是用來做測試的而已
 @require_http_methods(['GET'])
-def create_a_student_user(request):
+def create_dev_db_user(request):
+    response = {}
     username = request.GET.get('username', False)
     password = request.GET.get('password', False)
     name = request.GET.get('name', False)
     birth_date = request.GET.get('birth_date', False)
-    is_male = request.GET.get('is_male', False)
-    print(is_male)
-    # http://127.0.0.1:8000/api/create_a_user/?username=testUser&password=1111&name=tata&birth_date=19901225&is_male=1
+    is_male = request.GET.get('is_male', None)
+    # print(is_male)
+    # http://127.0.0.1:8000/api/create_dev_db_user/?username=testUser3&password=1111&name=tata3&birth_date=19901225&is_male=1
     if int(is_male) == 0:
         is_male = False
     else:
         is_male = True
-    # birth_date預期會是長這樣>> 19900101
-    _year, _month, _day = int(birth_date[:4]), int(birth_date[4:6]), int(birth_date[-2:])
-    
-    dev_db.objects.create(
-        username = username,
-        password = password,
-        name = name,
-        birth_date = date_function(_year, _month, _day),
-        is_male = is_male
-    )
+
+    if False not in [username, password, name, birth_date] and is_male is not None:
+        # birth_date預期會是長這樣>> 19900101
+        _year, _month, _day = int(birth_date[:4]), int(birth_date[4:6]), int(birth_date[-2:])
+        dev_db.objects.create(
+            username = username,
+            password = password,
+            name = name,
+            birth_date = date_function(_year, _month, _day),
+            is_male = is_male
+        )
+        response['status'] = 'success'
+        response['errCode'] = 'null'
+        response['errMsg'] = 'null'
+        response['data'] = None
+        return JsonResponse(response)
+    else:
+        response['status'] = 'failed'
+        response['errCode'] = '1'
+        response['errMsg'] = 'not match'
+        response['data'] = None
+        return JsonResponse(response)
+        
 
 @require_http_methods(['GET'])
 def show_users(request):
-    response = {}
-    response['info'] = serializers.serialize('JSON', dev_db.objects.all())
-    return JsonResponse(response)
+    response = dev_db.objects.all()
+    data = serializers.serialize(response, response)
+    return JsonResponse(data)
+
+
+#@require_http_methods(['GET'])
+#def create_a_student_user(request):
