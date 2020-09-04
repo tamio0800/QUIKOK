@@ -170,7 +170,7 @@ def create_a_student_user(request):
         obj = student_profile.objects.filter(username=username).first()
         auth_obj = User.objects.filter(username=username).first()
         # 下面這個條件式>> 皆非(a為空 或是 b為空) >> a跟b都不能為空
-        if not (obj is not None or auth_obj is not None):
+        if not (obj is None or auth_obj is None):
             student_profile.objects.create(
                 username = username,
                 password = password,
@@ -203,7 +203,7 @@ def create_a_student_user(request):
         else:
             response['status'] = 'failed'
             response['errCode'] = '0'
-            response['errMsg'] = 'username taken'
+            response['errMsg'] = 'username taken' # 使用者以註冊
             response['data'] = None
     else:
         # 資料有問題
@@ -216,62 +216,112 @@ def create_a_student_user(request):
 
 
 ##### 老師區 #####
-@require_http_methods(['GET'])
+@require_http_methods(['POST'])
 def create_teacher(request):
     response = {}
-    username = request.GET.get('username', False)
-    password = request.GET.get('password', False)
-    balance = request.GET.get('name', False)
-    withholding_balance = request.GET.get('name', False)
-    name = request.GET.get('name', False)
-    nickname = request.GET.get('nickname', False)
-    birth_date = request.GET.get('birth_date', False)
-    is_male = request.GET.get('is_male', None)
-    intro = request.GET.get('is_male', None)
-    mobile = request.GET.get('is_male', None)
-    # picture_folder = request.GET.get('is_male', None)
-    picture_folder = request.GET.get('is_male', None)
-    info_folder = request.GET.get('is_male', None)
-    tutor_experience = request.GET.get('is_male', None)
-    subject_type = request.GET.get('is_male', None)
-    education_1 = request.GET.get('is_male', None)
-    education_2 = request.GET.get('is_male', None)
-    education_3 = request.GET.get('is_male', None)
-    cert_unapproved = request.GET.get('is_male', None)
-    cert_approved = request.GET.get('is_male', None)
-    id_approved = request.GET.get('is_male', None)
-    education_approved = request.GET.get('is_male', None)
-    work_approved = request.GET.get('is_male', None)
-    other_approved = request.GET.get('is_male', None)  #其他類別的認證勳章
-    occupation = request.GET.get('is_male', None)
-    company = request.GET.get('is_male', None)
-    date_join = request.GET.get('is_male', None)
-
-
-    # print(is_male)
-    # # http://127.0.0.1:8000/api/create_teacher/?username=testUser3&password=1111&name=tata3&birth_date=19901225&is_male=1
+    username = request.POST.get('username', False) # 當前端沒有值 就會是false ..
+    password = request.POST.get('password', False)
+    balance = request.POST.get('name', False)
+    withholding_balance = request.POST.get('name', False)
+    name = request.POST.get('name', False)
+    nickname = request.POST.get('nickname', False)
+    if not nickname:
+        nickname = name
+    birth_date = date_string_2_dateformat(request.POST.get('birth_date', False))
+    is_male = request.POST.get('is_male', None)
     if int(is_male) == 0:
         is_male = False
     else:
         is_male = True
-    if False not in [username, password, name, birth_date] and is_male is not None:
-        # birth_date預期會是長這樣>> 19900101
-        _year, _month, _day = int(birth_date[:4]), int(birth_date[4:6]), int(birth_date[-2:])
-        teacher_profile.objects.create(
-            username = username,
-            password = password,
-            name = name,
-            birth_date = date_function(_year, _month, _day),
-            is_male = is_male
-        )
-        response['status'] = 'success'
-        response['errCode'] = 'null'
-        response['errMsg'] = 'null'
-        response['data'] = None
-        return JsonResponse(response)
+
+    intro = request.POST.get('intro', None)
+    if len(str(intro)) < 5 : # 自我介紹至少填入5個字
+        intro = False
     else:
+        intro = True
+
+    mobile = request.POST.get('mobile', False)
+    picture_folder = request.POST.get('picture_folder', False)
+    info_folder = request.POST.get('info_folder', False) # 資料夾路徑，存放個人檔案（暫不使用）
+    tutor_experience = request.POST.get('tutor_experience', False)
+    subject_type = request.POST.get('subject_type', False)
+    education_1 = request.POST.get('education_1', False)
+    education_2 = request.POST.get('education_2', False)
+    education_3 = request.POST.get('education_3', False)
+    cert_unapproved = request.POST.get('cert_unapproved', False)
+    cert_approved = request.POST.get('cert_approved', False)
+    id_approved = request.POST.get('id_approved', False)
+    education_approved = request.POST.get('education_approved', False)
+    work_approved = request.POST.get('work_approved', False)
+    other_approved = request.POST.get('other_approved', False)  #其他類別的認證勳章
+    occupation = request.POST.get('occupation', False)
+    company = request.POST.get('company', False)
+
+
+    # print(is_male)
+    # # http://127.0.0.1:8000/api/create_teacher/?username=testUser3&password=1111&name=tata3&birth_date=19901225&is_male=1
+
+    if False not in [username, password, name, intro, subject_type] and is_male is not None:
+        # 先檢查有沒有這個username存在，存在的話會return None給obj
+        obj = student_profile.objects.filter(username=username).first()
+        auth_obj = User.objects.filter(username=username).first() #? .first是甚麼意思
+        # 下面這個條件式>> 皆非(a為空 或是 b為空) >> a跟b都不能為空
+        if not (obj is None or auth_obj is None):
+            student_profile.objects.create(
+                    username = username,
+                    password = password,
+                    balance = 0
+                    withholding_balance = 0
+                    name =name,
+                    nickname = nickname,
+                    birth_date = birth_date,
+                    is_male = is_male,
+                    intro = intro,
+                    mobile = mobile,
+                    picture_folder = picture_folder,
+                    info_folder = info_folder,
+                    tutor_experience = tutor_experience,
+                    subject_type = subject_type,
+                    education_1 = education_1,
+                    education_2 = education_2,
+                    education_3 = education_3 ,
+                    cert_unapproved = cert_unapproved,
+                    cert_approved = cert_approved,
+                    id_approved = id_approved,
+                    education_approved = education_approved,
+                    work_approved = work_approved,
+                    other_approved = other_approved, #其他類別的認證勳章
+                    occupation = occupation, 
+                    company = company
+                                        ).save()
+
+            User.objects.create(
+                username = username,
+                password = password,
+                is_superuser = 0,
+                first_name = '',
+                last_name = '',
+                email = '',
+                is_staff = 0,
+                is_active = 1,
+            ).save()
+                      
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+            response['data'] = None
+        
+        else:
+            response['status'] = 'failed'
+            response['errCode'] = '0'
+            response['errMsg'] = 'username taken'# 使用者已註冊
+            response['data'] = None
+       
+    else:
+        # 資料有問題
         response['status'] = 'failed'
         response['errCode'] = '1'
-        response['errMsg'] = 'not match'
+        response['errMsg'] = 'wrong data'
         response['data'] = None
-        return JsonResponse(response)
+    
+    return JsonResponse(response)
