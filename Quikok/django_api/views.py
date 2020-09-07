@@ -9,6 +9,7 @@ from account.models import dev_db, student_profile, teacher_profile
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password, check_password  # 這一行用來加密密碼的
 
+
 def is_int(target):
     try:
         as_int = int(target)
