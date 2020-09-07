@@ -268,7 +268,7 @@ def create_a_teacher_user(request):
     # origin >> work_approved = request.POST.get('work_approved', False)
     # origin >> other_approved = request.POST.get('other_approved', False)  #其他類別的認證勳章
     cert_unapproved = 'some/where/we/create/by/username'
-    cert_approved = 'some/where/we/create/by/username'
+    #cert_approved = 'some/where/we/create/by/username'
     id_approved = 'some/where/we/create/by/username'
     education_approved = 'some/where/we/create/by/username'
     work_approved = 'some/where/we/create/by/username'
@@ -280,6 +280,7 @@ def create_a_teacher_user(request):
     # 目前這個api裡面還沒有這個機制。
     occupation = request.POST.get('occupation', False)
     company = request.POST.get('company', False)
+
 
     # print(is_male)
     # # http://127.0.0.1:8000/api/create_teacher/?username=testUser3&password=1111&name=tata3&birth_date=19901225&is_male=1
@@ -302,7 +303,7 @@ def create_a_teacher_user(request):
                     balance = 0,
                     # origin future_balance = 0,
                     unearned_balance = 0, # 帳戶預進帳金額，改成會計用語
-                    withholding_balance = 0,
+                    withholding_balance = 0, # 預扣
                     name = name,
                     nickname = nickname,
                     birth_date = birth_date,
