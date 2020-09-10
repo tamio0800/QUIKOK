@@ -55,7 +55,8 @@ class teacher_profile(models.Model):
     other_approved = models.CharField(max_length = 60)  #其他類別的認證勳章
     occupation = models.CharField(max_length = 60, blank=True)
     company = models.CharField(max_length = 60, blank=True)
-    date_join = models.DateTimeField(auto_now_add=True)
+    is_approved = models.BooleanField(default = False)  # 要讓陳先生審核過
+    date_join = models.DateTimeField(auto_now_add = True)
 
     def __str__(self):
         return self.username
