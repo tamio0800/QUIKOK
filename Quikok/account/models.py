@@ -11,7 +11,7 @@ class student_profile(models.Model):
     birth_date = models.DateField(null=True)
     is_male = models.BooleanField()
     intro = models.CharField(default='', max_length = 300, blank=True)  
-    # 自我介紹，不要超過300個字元長，比老師長的緣故是比起老師，學生更需要詳細介紹自己的學習北京
+    # 自我介紹，不要超過300個字元長，比老師長的緣故是比起老師，學生更需要詳細介紹自己的學習背景
     role = models.CharField(max_length = 40)
     mobile = models.CharField(max_length = 12)
     # picture_folder = models.ImageField(default = 'snapshop_default.png', blank =True)
@@ -58,8 +58,11 @@ class teacher_profile(models.Model):
     is_approved = models.BooleanField(default = False)  # 要讓陳先生審核過
     date_join = models.DateTimeField(auto_now_add = True)
 
+    
+
     def __str__(self):
         return self.username
+
 
 class connects(models.Model):
     # 關係人table用來標註哪些人可以接收到哪些人的學習報告、資料等，有串聯的再於這個table中建立資料。
@@ -68,6 +71,7 @@ class connects(models.Model):
     
     def __str__(self):
         return self.username
+
 
 class dev_db(models.Model):
     username = models.CharField(max_length = 120)
@@ -83,16 +87,29 @@ class dev_db(models.Model):
 
 class general_available_time(models.Model):
     user=models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='general_time')        
-    week=models.CharField(max_length=10)        #mon=1,tus=2,...,sun=7
-    time=models.CharField(max_length=100)       #Example:1,2,3,4,5,47
+    week=models.IntegerField(max_length=1)      #mon=1,tus=2,...,sun=7
+    time=models.CharField(max_length=133)       #Example:0,1,2,3,4,5,47
+    # len(','.join([str(__ for _ in range(48)])) >> 133 
     def __str__(self):
         return self.user.username
+# 就這個函式解釋一下怎麼與teacher_profile互相聯繫
+# 這個table insert values後，會有一欄 user_id，
+# 這個user_id就是該teacher在teacher_profile中的id；
+# 假設我們在ORM中選了general_available_time某個row做為object(假設我們叫它gat)，
+# 可以透過gat.user.the_column_you_want來呼叫該名老師的資訊。
+# ===================
+# 而在teacher_profile中，假設我們filter了一個物件叫做teacher1，
+# 我們可以透過teacher1.general_time來取得該名老師對應的general_available_time物件。
+# ===================
+# 而如果是SQL，我們直接透過user_id，用join方式互串資訊就好囉。
+
+
 
 
 class specific_available_time(models.Model):
     user=models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='specific_time')        
-    date=models.CharField(max_length=20)        #Example:2020821
-    time=models.CharField(max_length=100)       #Example:1,2,3,4,5,47
+    date=models.DateField(max_length=20)        #Example:2020821
+    time=models.CharField(max_length=133)       #Example:1,2,3,4,5,4
     def __str__(self):
         return self.user.username
 
