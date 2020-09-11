@@ -58,7 +58,6 @@ class teacher_profile(models.Model):
     is_approved = models.BooleanField(default = False)  # 要讓陳先生審核過
     date_join = models.DateTimeField(auto_now_add = True)
 
-    
 
     def __str__(self):
         return self.username
@@ -87,7 +86,7 @@ class dev_db(models.Model):
 
 class general_available_time(models.Model):
     user=models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='general_time')        
-    week=models.IntegerField(max_length=1)      #mon=1,tus=2,...,sun=7
+    week=models.IntegerField()      #mon=1,tus=2,...,sun=7
     time=models.CharField(max_length=133)       #Example:0,1,2,3,4,5,47
     # len(','.join([str(__ for _ in range(48)])) >> 133 
     def __str__(self):
@@ -102,7 +101,6 @@ class general_available_time(models.Model):
 # 我們可以透過teacher1.general_time來取得該名老師對應的general_available_time物件。
 # ===================
 # 而如果是SQL，我們直接透過user_id，用join方式互串資訊就好囉。
-
 
 
 
