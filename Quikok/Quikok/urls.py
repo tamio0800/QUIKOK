@@ -14,7 +14,7 @@ urlpatterns = [
     path('homepage/', views.homepage, name='home'),
     path('base_layout/', views.base_layout),
     path('account/', include('account.urls')),
-    path('lesson/', include('lesson.urls')),
+    path('api/lesson/', include('lesson.urls')),
     path('test/', views.test_page),
     # path('api/course/recommendList', views.homepage_api_recommendList),
     # path('api/getBannerBar', views.homepage_api_getBannerBar),
