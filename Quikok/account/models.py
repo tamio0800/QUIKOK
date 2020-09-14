@@ -86,7 +86,7 @@ class dev_db(models.Model):
 
 class general_available_time(models.Model):
     user=models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='general_time')        
-    week=models.IntegerField()      #mon=1,tus=2,...,sun=7
+    week=models.IntegerField()      #sun=0, mon=1, tue=2,...,
     time=models.CharField(max_length=133)       #Example:0,1,2,3,4,5,47
     # len(','.join([str(__ for _ in range(48)])) >> 133 
     def __str__(self):

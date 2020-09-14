@@ -4,7 +4,7 @@ from account.models import teacher_profile, student_profile
 
 class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的東西填入
     # 每堂課程會有自己的unique id，我們用這個來辨識、串連課程
-    lesson_id = models.CharField(max_length=20) 
+    lesson_id = models.CharField(max_length=40) 
     teacher = models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='teacher_of_the_lesson')
     lesson_title = models.CharField(max_length = 10) # 課程的名稱
     price_per_hour = models.IntegerField()  # 該門課程的費用(時薪)
@@ -17,11 +17,11 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     # 課程方式/教學方式，舉例來說：「本堂課前十分鐘小考，測驗上次的內容吸收程度，
     # 接著正式上課兩小時，最後15分鐘溫習。」
     lesson_remarks = models.CharField(blank=True, max_length=200)
-    lesson_picture_folder = models.CharField(max_length=60)
+    lesson_picture_folder = models.CharField(max_length=80)
     # 如果課程有相關圖片，可以儲存在這個資料夾中
     syllabus = models.CharField(max_length=400)
     # 這個用來存放課程的綱要或架構，預計會以陣列的方式傳遞/儲存
-    lesson_appendix_folder = models.CharField(max_length=60)
+    lesson_appendix_folder = models.CharField(max_length=80)
     # 如果課程有相關附件，可以儲存在這個資料夾中
     # 這裡還要記得把老師的有空時段連過來
     # is_approved = models.BooleanField(default=False)
@@ -63,7 +63,7 @@ class lesson_info_snapshot(models.Model):
 
     def __str__(self):
         return self.lesson_id
-
+        
 
 class lesson_reviews(models.Model):
     # 每堂課程會有自己的unique id，我們用這個來辨識、串連課程
@@ -75,6 +75,5 @@ class lesson_reviews(models.Model):
 
     def __str__(self):
         return self.lesson_id
-
 
 
