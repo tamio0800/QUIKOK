@@ -1,3 +1,4 @@
 *.pyc
 migrations/
 quikok_env/
+vscode/settings.json
