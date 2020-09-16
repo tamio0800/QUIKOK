@@ -256,7 +256,7 @@ def create_a_teacher_user(request):
     picture_folder = 'some/where/we/create/by/username'
     # origin >> info_folder = request.POST.get('info_folder', False) # 資料夾路徑，存放個人檔案（暫不使用）
     # 我們自己建的，不需要前端/user給我們資料
-    info_folder = 'some/where/we/create/by/username'
+    #info_folder = 'some/where/we/create/by/username' 0916這個不知道是做甚麼的
     tutor_experience = request.POST.get('tutor_experience', False)
     subject_type = request.POST.get('subject_type', False)
     education_1 = request.POST.get('education_1', False)

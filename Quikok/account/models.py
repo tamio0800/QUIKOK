@@ -26,13 +26,13 @@ class student_profile(models.Model):
 
 class teacher_profile(models.Model):
     # 這是for存放老師的額外資訊
-    username = models.CharField(max_length = 150)
+    username = models.CharField(max_length = 150) # 帳號
     password = models.CharField(max_length = 128)
     balance = models.IntegerField(default=0)  # 這個是帳戶餘額
     withholding_balance = models.IntegerField(default=0)  # 這個是帳戶預扣額度
     # future_balance = models.IntegerField(default=0) # 帳戶預進帳金額
     unearned_balance = models.IntegerField(default=0) # 帳戶預進帳金額，改成會計用語
-    name = models.CharField(max_length = 40)
+    name = models.CharField(max_length = 40) #名字
     nickname = models.CharField(max_length = 40)
     birth_date = models.DateField(null=True)
     is_male = models.BooleanField()
@@ -58,6 +58,7 @@ class teacher_profile(models.Model):
     company = models.CharField(max_length = 100, blank=True) # 公司與職位 原本分兩個但設計時做在一起了所以只留這個
     is_approved = models.BooleanField(default = False)  # 要讓陳先生看過/審核過
     date_join = models.DateTimeField(auto_now_add = True)
+    special_exp = models.CharField(max_length = 300, blank=True)# 其他經歷或特殊專長
 
 
     def __str__(self):
