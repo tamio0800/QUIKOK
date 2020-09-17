@@ -39,16 +39,16 @@ class teacher_profile(models.Model):
     intro = models.CharField(max_length = 150)  # 簡短介紹，不要超過150個字元長
     mobile = models.CharField(max_length = 12)
     #picture_folder = models.CharField(default = 'teacher_snapshop_default.png', blank =True) # 預設老師頭像
-    #picture_folder = models.CharField(max_length = 60)  # 改成資料夾路徑
-    #info_folder = models.CharField(max_length = 100)  # 資料夾路徑，存放個人檔案（暫不使用）
+    user_folder = models.CharField(max_length = 60)  # 改成資料夾路徑
+    info_folder = models.CharField(max_length = 100)  # 資料夾路徑，存放個人檔案（暫不使用）
     tutor_experience = models.CharField(max_length = 12)  # 改成下拉式選單
     subject_type = models.CharField(max_length = 400) # 科目名稱也可包含教課對象
     # id_cert = models.CharField(max_length = 150) 整合進下方的cert..裡面
     education_1 = models.CharField(max_length = 60, blank=True)
     education_2 = models.CharField(max_length = 60, blank=True)
     education_3 = models.CharField(max_length = 60, blank=True)
-    #cert_unapproved = models.CharField(max_length = 60) # 尚未審核通過的各類型證書/證明檔案指向資料夾位置
-    #cert_approved = models.CharField(max_length = 60) # 已審核通過的各類型證書/證明檔案指向資料夾位置
+    cert_unapproved = models.CharField(max_length = 60) # 尚未審核通過的各類型證書/證明檔案指向資料夾位置
+    cert_approved = models.CharField(max_length = 60) # 已審核通過的各類型證書/證明檔案指向資料夾位置
     # 四大類別的認證預設 false, 未認證
     id_approved = models.BooleanField(default = False)  #身分類別的認證勳章 實名認證
     education_approved = models.BooleanField(default = False)  #學歷類別的認證勳章 全部的學歷都有認證才通過
@@ -88,7 +88,7 @@ class dev_db(models.Model):
 
 class general_available_time(models.Model):
     user=models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='general_time')        
-    week=models.IntegerField()      #sun=0, mon=1, tue=2,...,
+    week=models.IntegerField()      #sun=6, mon=0, tue=1,...,
     time=models.CharField(max_length=133)       #Example:0,1,2,3,4,5,47
     # len(','.join([str(__ for _ in range(48)])) >> 133 
     def __str__(self):

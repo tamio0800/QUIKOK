@@ -93,10 +93,10 @@ def create_a_student_user(request):
 
             ### 長出每個學生相對應資料夾 目前要長的有:放大頭照的資料夾
             # 將來可能會有成績單或考卷等資料夾
-            picture_folder = username.replace('@', 'at')
-            os.mkdir(os.path.join('user_upload', picture_folder))
+            user_folder = username.replace('@', 'at')
+            os.mkdir(os.path.join('user_upload', user_folder))
             # 存到 user_upload 該使用者的資料夾
-            folder_where_are_uploaded_files_be ='user_upload/' + picture_folder
+            folder_where_are_uploaded_files_be ='user_upload/' + user_folder
             #大頭照
 
             fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
@@ -131,7 +131,7 @@ def create_a_student_user(request):
 def create_a_teacher_user(request):
     response = {}
     username = request.POST.get('regEmail', False) # 當前端值有錯誤傳 null 就會是false 
-    password = request.POST.get(' regPwd', False)
+    password = request.POST.get('regPwd', False)
     # origin >> balance = request.POST.get('balance', False)
     # origin >> withholding_balance = request.POST.get('withholding_balance', False)
     # 不用寫上面那兩個，因為一開始老師註冊的時候不會有這兩個資訊，我們寫入db時主動帶入0就好了
@@ -156,12 +156,12 @@ def create_a_teacher_user(request):
     # origin >> else:
     # origin >>     intro = True
     mobile = request.POST.get('regMobile', False)
-    # origin >> picture_folder = request.POST.get('picture_folder', False)
+    # origin >> user_folder = request.POST.get('user_folder', False)
     # 我們自己建的，不需要前端/user給我們資料
-    #picture_folder = 'some/where/we/create/by/username'
+
     # origin >> info_folder = request.POST.get('info_folder', False) # 資料夾路徑，存放個人檔案（暫不使用）
     # 我們自己建的，不需要前端/user給我們資料
-    #info_folder = 'some/where/we/create/by/username'
+    info_folder = 'some/where/we/create/by/username'
     tutor_experience = request.POST.get('tutor_experience', False)
     subject_type = request.POST.get('subject_type', False)
     education_1 = request.POST.get('education_1', False) # 沒填的話前端傳空的過來
@@ -184,6 +184,7 @@ def create_a_teacher_user(request):
     special_exp = request.POST.get('special_exp', False)
     # print(is_male)
     # # http://127.0.0.1:8000/api/create_teacher/?username=testUser3&password=1111&name=tata3&birth_date=19901225&is_male=1
+    user_folder_name = username.replace('@', 'at')
 
     if False not in [
         username, password, name, intro, subject_type, mobile,
@@ -201,7 +202,6 @@ def create_a_teacher_user(request):
                     username = username,
                     password = password,
                     balance = 0,
-                    # origin future_balance = 0,
                     unearned_balance = 0, # 帳戶預進帳金額，改成會計用語
                     withholding_balance = 0,
                     name = name,
@@ -210,15 +210,15 @@ def create_a_teacher_user(request):
                     is_male = is_male,
                     intro = intro,
                     mobile = mobile,
-                    #picture_folder = picture_folder,
-                    #info_folder = info_folder,
+                    user_folder = 'user_upload/'+ user_folder_name 
+                    info_folder = 'user_upload/'+ user_folder_name +'/user_info' #尚未建立此資料夾
                     tutor_experience = tutor_experience,
                     subject_type = subject_type,
                     education_1 = education_1,
                     education_2 = education_2,
                     education_3 = education_3 ,
-                    #cert_unapproved = 0,
-                    #cert_approved = cert_approved,
+                    cert_unapproved = 'user_upload/'+ user_folder_name + '/unaproved_cer',
+                    cert_approved = 'user_upload/'+ user_folder_nam + '/aproved_cer',
                     id_approved = 0,
                     education_approved = 0,
                     work_approved = 0,
@@ -239,13 +239,13 @@ def create_a_teacher_user(request):
             ).save()
                       
             ### 長出老師相對應資料夾 
-            # 目前要長的有:放一般圖檔的資料夾(大頭照、可能之後可放宣傳圖)、未認證的資料夾、已認證過的證書
-            # 將來可能會有考卷檔案夾之類的
-            user_folder = username.replace('@', 'at')
+            # 目前要長的有:放一般圖檔的資料夾(大頭照、可能之後可放宣傳圖)、未認證的資料夾、
+            # 已認證過的證書、user_info 將來可能可以放考卷檔案夾之類的
+            
             os.mkdir(os.path.join('user_upload', user_folder))
             os.mkdir(os.path.join('user_upload/'+ user_folder, "unaproved_cer"))
             os.mkdir(os.path.join('user_upload/'+ user_folder, "aproved_cer"))
-
+            os.mkdir(os.path.join('user_upload/'+ user_folder, "user_info"))
             # for迴圈如果沒東西會是空的.  getlist()裡面是看前端的 multiple name
             for each_file in request.FILES.getlist("upload_snapshot"):
                 print('收到老師大頭照: ', each_file.name)
@@ -281,7 +281,7 @@ def create_a_teacher_user(request):
 
 
 #########以下是舊的views先貼過來以免 server跑不起來
-    from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect
 from django.contrib import auth
 from django.contrib.auth.hashers import make_password, check_password  # 這一行用來加密密碼的
 from .model_tools import user_db_manager
@@ -344,7 +344,7 @@ def signup(request):
         is_male = request.POST['is_male']
         role = request.POST['role']
         mobile = request.POST['mobile'].strip()
-        picture_folder = 'to_be_deleted'
+        user_folder = 'to_be_deleted'
         update_someone_by_email = request.POST['update_someone_by_email'].strip()
 
         db_manager = user_db_manager()        
@@ -359,7 +359,7 @@ def signup(request):
                 is_male = is_male,
                 role = request.POST['role'],
                 mobile = request.POST['mobile'],
-                picture_folder = 'to_be_deleted',
+                user_folder = 'to_be_deleted',
                 update_someone_by_email = request.POST['update_someone_by_email'],
             )
         if is_successful:
