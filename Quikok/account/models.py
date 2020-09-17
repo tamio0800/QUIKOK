@@ -26,13 +26,13 @@ class student_profile(models.Model):
 
 class teacher_profile(models.Model):
     # 這是for存放老師的額外資訊
-    username = models.CharField(max_length = 150)
+    username = models.CharField(max_length = 150) # 帳號
     password = models.CharField(max_length = 128)
     balance = models.IntegerField(default=0)  # 這個是帳戶餘額
     withholding_balance = models.IntegerField(default=0)  # 這個是帳戶預扣額度
     # future_balance = models.IntegerField(default=0) # 帳戶預進帳金額
     unearned_balance = models.IntegerField(default=0) # 帳戶預進帳金額，改成會計用語
-    name = models.CharField(max_length = 40)
+    name = models.CharField(max_length = 40) #名字
     nickname = models.CharField(max_length = 40)
     birth_date = models.DateField(null=True)
     is_male = models.BooleanField()
@@ -49,14 +49,16 @@ class teacher_profile(models.Model):
     education_3 = models.CharField(max_length = 60, blank=True)
     cert_unapproved = models.CharField(max_length = 60) # 尚未審核通過的各類型證書/證明檔案指向資料夾位置
     cert_approved = models.CharField(max_length = 60) # 已審核通過的各類型證書/證明檔案指向資料夾位置
-    id_approved = models.CharField(max_length = 60)  #身分類別的認證勳章
-    education_approved = models.CharField(max_length = 60)  #學歷類別的認證勳章
-    work_approved = models.CharField(max_length = 60)  #工作經歷類別的認證勳章
-    other_approved = models.CharField(max_length = 60)  #其他類別的認證勳章
-    occupation = models.CharField(max_length = 60, blank=True)
-    company = models.CharField(max_length = 60, blank=True)
-    is_approved = models.BooleanField(default = False)  # 要讓陳先生審核過
+    # 四大類別的認證預設 false, 未認證
+    id_approved = models.BooleanField(default = False)  #身分類別的認證勳章 實名認證
+    education_approved = models.BooleanField(default = False)  #學歷類別的認證勳章 全部的學歷都有認證才通過
+    work_approved = models.BooleanField(default = False)  #工作經歷類別的認證勳章:ex 某個厲害的公司,專案經驗
+    other_approved = models.BooleanField(default = False)  #其他類別的認證勳章: ex:金色多益、奧林匹亞數學冠軍
+    #occupation = models.CharField(max_length = 60, blank=True)
+    company = models.CharField(max_length = 100, blank=True) # 公司與職位 原本分兩個但設計時做在一起了所以只留這個
+    is_approved = models.BooleanField(default = False)  # 要讓陳先生看過/審核過
     date_join = models.DateTimeField(auto_now_add = True)
+    special_exp = models.CharField(max_length = 300, blank=True)# 其他經歷或特殊專長
 
 
     def __str__(self):

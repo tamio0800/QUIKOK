@@ -45,7 +45,7 @@ class user_db_manager:
         elif kwargs['user_type'] == 'vendor':
             pass
 
-    
+    # 建立user 存放自己上傳檔案的資料夾
     def admin_import_user(self, **kwargs):
         _df_tobe_imported = kwargs['dataframe']
         _df_tobe_imported['暱稱'][pd.isnull(_df_tobe_imported['暱稱'])] = \
