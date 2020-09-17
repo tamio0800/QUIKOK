@@ -238,9 +238,9 @@ def create_a_teacher_user(request):
                 is_active = 1,
             ).save()
                       
-### 長出老師相對應資料夾 
-# 目前要長的有:放一般圖檔的資料夾(大頭照、可能之後可放宣傳圖)、未認證的資料夾、已認證過的證書
-# 將來可能會有考卷檔案夾之類的
+            ### 長出老師相對應資料夾 
+            # 目前要長的有:放一般圖檔的資料夾(大頭照、可能之後可放宣傳圖)、未認證的資料夾、已認證過的證書
+            # 將來可能會有考卷檔案夾之類的
             user_folder = username.replace('@', 'at')
             os.mkdir(os.path.join('user_upload', user_folder))
             os.mkdir(os.path.join('user_upload/'+ user_folder, "unaproved_cer"))
