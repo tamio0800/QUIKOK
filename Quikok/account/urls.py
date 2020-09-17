@@ -3,6 +3,8 @@ from .import views
 from django.urls import path
 
 urlpatterns = [
+    path('signupStudent/', views.create_a_student_user, name='to_signup'),
+    path('signupTeacher/', views.create_a_teacher_user, name='to_signin'),
     path('signup/', views.signup, name='to_signup'),
     path('signin/', views.signin, name='to_signin'),
     path('logout/', views.logout, name='to_logout'),
@@ -19,4 +21,6 @@ urlpatterns = [
     path('change_specific_time/', views.change_specific_time),
     path('get_general_time/', views.get_general_time),
     path('change_general_time/', views.change_general_time),
+    path('change_general_time/', views.change_general_time),
+
 ]

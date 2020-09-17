@@ -95,12 +95,13 @@ def create_a_student_user(request):
             # 將來可能會有成績單或考卷等資料夾
             picture_folder = username.replace('@', 'at')
             os.mkdir(os.path.join('user_upload', picture_folder))
-            # 先存到 userup_load外層
-            folder_where_are_uploaded_files_be ='user_upload'
+            # 存到 user_upload 該使用者的資料夾
+            folder_where_are_uploaded_files_be ='user_upload/' + picture_folder
             #大頭照
 
             fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
-            # 如果沒東西 會是空的
+            # 如果沒東西 會是空的  user_upload 看前端取甚麼名字 
+            # 目前學生暫時沒開放此上傳功能
             for each_file in request.FILES.getlist("user_upload"):
                 print('each_file.name in VIEWS: ', each_file.name)
                 fs.save(each_file.name, each_file)
@@ -157,10 +158,10 @@ def create_a_teacher_user(request):
     mobile = request.POST.get('regMobile', False)
     # origin >> picture_folder = request.POST.get('picture_folder', False)
     # 我們自己建的，不需要前端/user給我們資料
-    picture_folder = 'some/where/we/create/by/username'
+    #picture_folder = 'some/where/we/create/by/username'
     # origin >> info_folder = request.POST.get('info_folder', False) # 資料夾路徑，存放個人檔案（暫不使用）
     # 我們自己建的，不需要前端/user給我們資料
-    info_folder = 'some/where/we/create/by/username'
+    #info_folder = 'some/where/we/create/by/username'
     tutor_experience = request.POST.get('tutor_experience', False)
     subject_type = request.POST.get('subject_type', False)
     education_1 = request.POST.get('education_1', False) # 沒填的話前端傳空的過來
@@ -172,12 +173,6 @@ def create_a_teacher_user(request):
     # origin >> education_approved = request.POST.get('education_approved', False)
     # origin >> work_approved = request.POST.get('work_approved', False)
     # origin >> other_approved = request.POST.get('other_approved', False)  #其他類別的認證勳章
-    cert_unapproved = 'some/where/we/create/by/username'
-    cert_approved = 'some/where/we/create/by/username'
-    id_approved = 'some/where/we/create/by/username'
-    education_approved = 'some/where/we/create/by/username'
-    work_approved = 'some/where/we/create/by/username'
-    other_approved = 'some/where/we/create/by/username'
     # 以上的原因也一樣，因為這些性質是資料夾路徑(我們自己建的)，不需要前端/user給我們資料
     # 但我們可能需要一些變數，來跟前端拿取user上傳的資料，不過我們頁面只有一個上傳欄位，
     # 或許我們先經過人工審核後再決定要分別放到哪一個資料夾去？
@@ -185,12 +180,6 @@ def create_a_teacher_user(request):
     # 目前這個api裡面還沒有這個機制。
     # 0916 為了做到上面這部分，使用者上傳的檔案前端統一給我們　userupload_files
     # 再用 files system從userupload_files 儲存到相對的位置
-    fs = FileSystemStorage()
-    for each_file in request.FILES.getlist("userupload_files"):
-        print('each_file.name in VIEWS: ', each_file.name)
-        fs.save(each_file.name, each_file)
-
-    userupload_files #大頭照的檔名請改為: thumbnail, 有上傳認證文件均不用改名
     company = request.POST.get('company', False) # 包含職位 occupation資訊
     special_exp = request.POST.get('special_exp', False)
     # print(is_male)
@@ -221,20 +210,20 @@ def create_a_teacher_user(request):
                     is_male = is_male,
                     intro = intro,
                     mobile = mobile,
-                    picture_folder = picture_folder,
-                    info_folder = info_folder,
+                    #picture_folder = picture_folder,
+                    #info_folder = info_folder,
                     tutor_experience = tutor_experience,
                     subject_type = subject_type,
                     education_1 = education_1,
                     education_2 = education_2,
                     education_3 = education_3 ,
-                    cert_unapproved = cert_unapproved,
-                    cert_approved = cert_approved,
-                    id_approved = id_approved,
-                    education_approved = education_approved,
-                    work_approved = work_approved,
-                    other_approved = other_approved, #其他類別的認證勳章
-                    occupation = if_false_return_empty_else_do_nothing(occupation), 
+                    #cert_unapproved = 0,
+                    #cert_approved = cert_approved,
+                    id_approved = 0,
+                    education_approved = 0,
+                    work_approved = 0,
+                    other_approved = 0, #其他類別的認證勳章
+                    #occupation = if_false_return_empty_else_do_nothing(occupation), 
                     company = if_false_return_empty_else_do_nothing(company)
             ).save()
 
@@ -250,17 +239,31 @@ def create_a_teacher_user(request):
             ).save()
                       
 ### 長出老師相對應資料夾 
-# 目前要長的有:放一般圖檔的資料夾(大頭照、已認證過的證書、可能之後可放宣傳圖)、未認證的資料夾
+# 目前要長的有:放一般圖檔的資料夾(大頭照、可能之後可放宣傳圖)、未認證的資料夾、已認證過的證書
 # 將來可能會有考卷檔案夾之類的
-            picture_folder = username.replace('@', 'at')
-            os.mkdir(os.path.join('user_upload', picture_folder))
-            os.mkdir(os.path.join('user_upload/'+ picture_folder, "unaproved_cer"))
-###
+            user_folder = username.replace('@', 'at')
+            os.mkdir(os.path.join('user_upload', user_folder))
+            os.mkdir(os.path.join('user_upload/'+ user_folder, "unaproved_cer"))
+            os.mkdir(os.path.join('user_upload/'+ user_folder, "aproved_cer"))
+
+            # for迴圈如果沒東西會是空的.  getlist()裡面是看前端的 multiple name
+            for each_file in request.FILES.getlist("upload_snapshot"):
+                print('收到老師大頭照: ', each_file.name)
+                folder_where_are_uploaded_files_be ='user_upload/' + user_folder 
+                fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
+                fs.save(each_file.name, each_file)
+            # 放未認證證書的資料夾
+            for each_file in request.FILES.getlist("upload_cer"):
+                print('收到老師認證資料: ', each_file.name)
+                folder_where_are_uploaded_files_be ='user_upload/' + user_folder + '/unaproved_cer'
+                fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
+                fs.save(each_file.name, each_file)
+
             response['status'] = 'success'
             response['errCode'] = None
             response['errMsg'] = None
             response['data'] = None
-        
+
         else:
             response['status'] = 'failed'
             response['errCode'] = '0'
@@ -496,7 +499,7 @@ def dev_forgot_password_4_update_successfully(request):
 def admin_import_user(request):
     title = '匯入用戶資訊'
     db_manager = user_db_manager()
-    folder_where_are_uploaded_files_be = 'temp'
+    folder_where_are_uploaded_files_be = 'temp' # 
     if request.method == 'POST':
         fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
         for each_file in request.FILES.getlist("files"):
