@@ -7,10 +7,10 @@ from account.models import student_profile, teacher_profile, specific_available_
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.core.files.storage import FileSystemStorage
 from account.models import dev_db
-
+from datetime import date as date_function
 import pandas as pd
 import os
-from datetime import date as datefunction
+
 
 def is_num(target):
     try:
@@ -29,34 +29,53 @@ from django.http import JsonResponse
 import json
 from django.middleware.csrf import get_token
 
+def date_string_2_dateformat(target_string):
+    if not target_string == False:
+        try:
+            # 將前端的 2000-01-01格式改為20000101
+            nodash_str = target_string.replace('-','')
+            if len(nodash_str) == 8 :
+                _year, _month, _day = int(nodash_str[:4]), int(nodash_str[4:6]), int(nodash_str[-2:])
+                return date_function(_year, _month, _day)
+            else:
+                return False
+        except Exception as e:
+            print(e)
+            return False
+    else:
+        return False
+
+
 ## 0916改成api的版本,之前的另存成views_old, 之後依據該檔把已設計好的功能寫過來
 
 @require_http_methods(['POST'])
 def create_a_student_user(request):
     response = {}
     username = request.POST.get('regEmail', False)
+    print('收到學生註冊:'+ username)
     # 此處的password已經經過前端加密，故無需再加密
     password = request.POST.get('regPwd', False)
     name = request.POST.get('regName', False)
     nickname = request.POST.get('regNickname', False)
-
     if not nickname:
         nickname = name
     birth_date = date_string_2_dateformat(request.POST.get('regBirth', False))
     is_male = request.POST.get('regGender', None) # is_male boolean
     # intro , 註冊時不需要填寫
-    role = request.POST.get('role', False)
+    role = request.POST.get('regRole', False)
     #def request_get(something):
     #    if something is None:
     #        return None
     #    else:
     #        return something
-    mobile = request.POST.get('mobile', False)
-    update_someone_by_email = request.POST.get('update_someone_by_email', False)
+    mobile = request.POST.get('regMobile', False)
+    update_someone_by_email = request.POST.get('regNotifiemail', False)
 
-
+    print('接收資料')
+    print('學生名稱:',username, password, name, '生日:',birth_date, '角色:',role,'手機:', mobile,':信箱', update_someone_by_email,is_male)
     if False not in [username, password, name, birth_date, role, mobile, 
     update_someone_by_email] and is_male is not None:
+        print('接收資料內容正常')
         # 先檢查有沒有這個username存在，存在的話會return None給obj
         obj = student_profile.objects.filter(username=username).first()
         auth_obj = User.objects.filter(username=username).first()
@@ -65,20 +84,27 @@ def create_a_student_user(request):
             is_male = False
         else:
             is_male = True
-        if not (obj is None or auth_obj is None):
+        
+        if obj is None and auth_obj is None:
+            print('建立新學生資料')
             student_profile.objects.create(
                 username = username,
                 password = password,
-                name = name,
-                nickname = nickname,
                 balance = 0,
                 withholding_balance = 0,
+                name = name,
+                nickname = nickname,
                 birth_date = birth_date,
-                is_male = regGender,
+                is_male = is_male,
+                intro = '',
                 role = role,
                 mobile = mobile,
+                picture_folder = 'user_upload/'+ username,
+                info_folder = 'user_upload/'+ username+ '/info_folder',
                 update_someone_by_email = update_someone_by_email
             ).save()
+            print('student_profile建立')
+
             #存入auth
             User.objects.create(
                 username = username,
@@ -90,15 +116,16 @@ def create_a_student_user(request):
                 is_staff = 0,
                 is_active = 1,
             ).save()
-
+            print('auth建立')
             ### 長出每個學生相對應資料夾 目前要長的有:放大頭照的資料夾
             # 將來可能會有成績單或考卷等資料夾
             user_folder = username.replace('@', 'at')
             os.mkdir(os.path.join('user_upload', user_folder))
+            os.mkdir(os.path.join('user_upload/'+ user_folder + '/info_folder'))
             # 存到 user_upload 該使用者的資料夾
             folder_where_are_uploaded_files_be ='user_upload/' + user_folder
             #大頭照
-
+            print('學生個人資料夾建立')
             fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
             # 如果沒東西 會是空的  user_upload 看前端取甚麼名字 
             # 目前學生暫時沒開放此上傳功能
@@ -112,6 +139,10 @@ def create_a_student_user(request):
             response['errMsg'] = None
             #response['data'] = None
         else:
+            if obj is not None:
+                print('此帳號已註冊過學生類別!')
+            elif auth_obj is not None:
+                print('此帳號已註冊到全站資料中!')
             response['status'] = 'failed'
             response['errCode'] = '0'
             response['errMsg'] = 'username taken' # 使用者已註冊
@@ -182,22 +213,24 @@ def create_a_teacher_user(request):
     # 再用 files system從userupload_files 儲存到相對的位置
     company = request.POST.get('company', False) # 包含職位 occupation資訊
     special_exp = request.POST.get('special_exp', False)
+
+
+    
     # print(is_male)
     # # http://127.0.0.1:8000/api/create_teacher/?username=testUser3&password=1111&name=tata3&birth_date=19901225&is_male=1
-    user_folder_name = username.replace('@', 'at')
-
+    user_folder = username.replace('@', 'at')
+    print('收到老師註冊資料')
     if False not in [
         username, password, name, intro, subject_type, mobile,
         tutor_experience, subject_type
     ] and is_male is not None:
+        print('判斷收到老師資料是正常的')
         # 先檢查有沒有這個username存在，存在的話會return None給obj
-        # origin >> obj = student_profile.objects.filter(username=username).first()
-        # tata: 要改成老師的資料庫
         obj = teacher_profile.objects.filter(username=username).first()
         auth_obj = User.objects.filter(username=username).first() #? .first是甚麼意思
-        # 下面這個條件式>> 皆非(a為空 或是 b為空) >> a跟b都不能為空
-        if not (obj is None or auth_obj is None):
-            # origin >> student_profile.objects.create(
+        # 下面這個條件式>> 皆非(a為空 或是 b為空) >> a跟b都不能為空>> annie0918:應該是兩個都要空才對
+        if obj is None and auth_obj is None :
+            print('還沒註冊過,建立 teacher_profile')
             teacher_profile.objects.create(
                     username = username,
                     password = password,
@@ -210,23 +243,23 @@ def create_a_teacher_user(request):
                     is_male = is_male,
                     intro = intro,
                     mobile = mobile,
-                    user_folder = 'user_upload/'+ user_folder_name 
-                    info_folder = 'user_upload/'+ user_folder_name +'/user_info' #尚未建立此資料夾
+                    user_folder = 'user_upload/'+ user_folder ,
+                    info_folder = 'user_upload/'+ user_folder +'/user_info', #尚未建立此資料夾
                     tutor_experience = tutor_experience,
                     subject_type = subject_type,
                     education_1 = education_1,
                     education_2 = education_2,
                     education_3 = education_3 ,
-                    cert_unapproved = 'user_upload/'+ user_folder_name + '/unaproved_cer',
-                    cert_approved = 'user_upload/'+ user_folder_nam + '/aproved_cer',
+                    cert_unapproved = 'user_upload/'+ user_folder + '/unaproved_cer',
+                    cert_approved = 'user_upload/'+ user_folder + '/aproved_cer',
                     id_approved = 0,
                     education_approved = 0,
                     work_approved = 0,
                     other_approved = 0, #其他類別的認證勳章
                     #occupation = if_false_return_empty_else_do_nothing(occupation), 
-                    company = if_false_return_empty_else_do_nothing(company)
+                    company = company
             ).save()
-
+            print('成功建立 teacher_profile')
             User.objects.create(
                 username = username,
                 password = password,
@@ -237,7 +270,7 @@ def create_a_teacher_user(request):
                 is_staff = 0,
                 is_active = 1,
             ).save()
-                      
+            print('老師成功建立 User.objects')        
             ### 長出老師相對應資料夾 
             # 目前要長的有:放一般圖檔的資料夾(大頭照、可能之後可放宣傳圖)、未認證的資料夾、
             # 已認證過的證書、user_info 將來可能可以放考卷檔案夾之類的
@@ -246,6 +279,7 @@ def create_a_teacher_user(request):
             os.mkdir(os.path.join('user_upload/'+ user_folder, "unaproved_cer"))
             os.mkdir(os.path.join('user_upload/'+ user_folder, "aproved_cer"))
             os.mkdir(os.path.join('user_upload/'+ user_folder, "user_info"))
+            print('已幫老師建立四個資料夾')
             # for迴圈如果沒東西會是空的.  getlist()裡面是看前端的 multiple name
             for each_file in request.FILES.getlist("upload_snapshot"):
                 print('收到老師大頭照: ', each_file.name)
@@ -265,6 +299,7 @@ def create_a_teacher_user(request):
             response['data'] = None
 
         else:
+            print('此帳號已註冊過!')
             response['status'] = 'failed'
             response['errCode'] = '0'
             response['errMsg'] = 'username taken'# 使用者已註冊
@@ -293,7 +328,9 @@ from account.models import dev_db
 
 import pandas as pd
 import os
-from datetime import date as datefunction
+from datetime import date as date_function
+
+
 
 def is_num(target):
     try:
@@ -312,14 +349,8 @@ from django.core import serializers
 from django.http import JsonResponse
 import json
 from django.middleware.csrf import get_token
-
-
-
-
-
 # FOR API
 
-# Create your views here.
 def signup(request):
     title = '會員註冊'
     if request.method == 'POST':
@@ -331,7 +362,7 @@ def signup(request):
         birth_date = request.POST.get('birth_date', False)
         if birth_date != False and is_num(birth_date):
             if len(str(birth_date)) == 8:
-                birth_date = datefunction(
+                birth_date = date_function(
                     int(str(birth_date)[:4]),
                     int(str(birth_date)[4:6]),
                     int(str(birth_date)[-2:])
@@ -585,7 +616,7 @@ def get_time(request):
     month=request.GET['month']
     day=request.GET['day']
     date=year+month+day
-    week=datefunction(int(year),int(month),int(day)).isoweekday()
+    week=date_function(int(year),int(month),int(day)).isoweekday()
     user=teacher_profile.objects.get(username=username)
 
     if(specific_available_time.objects.filter(date=date).filter(user=user).exists()):
