@@ -126,7 +126,7 @@ def create_a_student_user(request):
             # and if folder_a was empty, GIT will ignore this folder and remove it from tracked files,
             # which may cause the error above.
             if not os.path.isdir('user_upload/students'):
-                os.mkdir(os.path.join('user_upload/students')
+                os.mkdir(os.path.join('user_upload/students'))
             os.mkdir(os.path.join('user_upload/students', user_folder))
             os.mkdir(os.path.join('user_upload/students/'+ user_folder, 'info_folder'))
             # 存到 user_upload 該使用者的資料夾
@@ -305,7 +305,7 @@ def create_a_teacher_user(request):
             # 已認證過的證書、user_info 將來可能可以放考卷檔案夾之類的
             
             if not os.path.isdir('user_upload/teachers'):
-                os.mkdir(os.path.join('user_upload/teachers')
+                os.mkdir(os.path.join('user_upload/teachers'))
             os.mkdir(os.path.join('user_upload/teachers', user_folder))
             os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "unaproved_cer"))
             os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "aproved_cer"))
