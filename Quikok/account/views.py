@@ -120,6 +120,13 @@ def create_a_student_user(request):
             ### 長出每個學生相對應資料夾 目前要長的有:放大頭照的資料夾
             # 將來可能會有成績單或考卷等資料夾
             user_folder = username #.replace('@', 'at')
+
+            # If folder_a was not created, 
+            # os.mkdir(os.path.join('folder_a', 'folder_b')) will result in an error!
+            # and if folder_a was empty, GIT will ignore this folder and remove it from tracked files,
+            # which may cause the error above.
+            if not os.path.isdir('user_upload/students'):
+                os.mkdir(os.path.join('user_upload/students')
             os.mkdir(os.path.join('user_upload/students', user_folder))
             os.mkdir(os.path.join('user_upload/students/'+ user_folder, 'info_folder'))
             # 存到 user_upload 該使用者的資料夾
@@ -297,7 +304,8 @@ def create_a_teacher_user(request):
             # 目前要長的有:放一般圖檔的資料夾(大頭照、可能之後可放宣傳圖)、未認證的資料夾、
             # 已認證過的證書、user_info 將來可能可以放考卷檔案夾之類的
             
-            
+            if not os.path.isdir('user_upload/teachers'):
+                os.mkdir(os.path.join('user_upload/teachers')
             os.mkdir(os.path.join('user_upload/teachers', user_folder))
             os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "unaproved_cer"))
             os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "aproved_cer"))
