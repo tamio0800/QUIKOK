@@ -119,11 +119,11 @@ def create_a_student_user(request):
             print('auth建立')
             ### 長出每個學生相對應資料夾 目前要長的有:放大頭照的資料夾
             # 將來可能會有成績單或考卷等資料夾
-            user_folder = username.replace('@', 'at')
-            os.mkdir(os.path.join('user_upload', user_folder))
-            os.mkdir(os.path.join('user_upload/'+ user_folder + '/info_folder'))
+            user_folder = username #.replace('@', 'at')
+            os.mkdir(os.path.join('user_upload/students', user_folder))
+            os.mkdir(os.path.join('user_upload/students/'+ user_folder, 'info_folder'))
             # 存到 user_upload 該使用者的資料夾
-            folder_where_are_uploaded_files_be ='user_upload/' + user_folder
+            folder_where_are_uploaded_files_be ='user_upload/students/' + user_folder
             #大頭照
             print('學生個人資料夾建立')
             fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
@@ -213,12 +213,13 @@ def create_a_teacher_user(request):
     # 再用 files system從userupload_files 儲存到相對的位置
     company = request.POST.get('company', False) # 包含職位 occupation資訊
     special_exp = request.POST.get('special_exp', False)
+    # 一般開課時間
 
 
-    
+
     # print(is_male)
     # # http://127.0.0.1:8000/api/create_teacher/?username=testUser3&password=1111&name=tata3&birth_date=19901225&is_male=1
-    user_folder = username.replace('@', 'at')
+    user_folder = username #.replace('@', 'at')
     print('收到老師註冊資料')
     if False not in [
         username, password, name, intro, subject_type, mobile,
@@ -270,26 +271,48 @@ def create_a_teacher_user(request):
                 is_staff = 0,
                 is_active = 1,
             ).save()
-            print('老師成功建立 User.objects')        
+            print('老師成功建立 User.objects')
+
+            ## 寫入一般時間table
+            # 因為models設定general_available_time與 teacher_profile 
+            # 的teacher_name有foreignkey的關係
+            # 因此必須用teacher_profile.objects 來建立這邊的teacher_name
+            # (否則無法建立)
+            teacher_id = teacher_profile.objects.get(username=username)
+            general_time = request.POST.get('teacher_general_availabale_time', False)
+            temp_general_time = general_time.split(';')
+            print(general_time)
+            for every_week in temp_general_time[0:-1]:
+                temp_every_week = every_week.split(':')
+
+                general_available_time.objects.create(
+                    teacher_id = teacher_id,
+                    week = temp_every_week[0],
+                    time = temp_every_week[1]
+                                ).save()
+            print('老師成功建立 一般時間')    
+
+
             ### 長出老師相對應資料夾 
             # 目前要長的有:放一般圖檔的資料夾(大頭照、可能之後可放宣傳圖)、未認證的資料夾、
             # 已認證過的證書、user_info 將來可能可以放考卷檔案夾之類的
             
-            os.mkdir(os.path.join('user_upload', user_folder))
-            os.mkdir(os.path.join('user_upload/'+ user_folder, "unaproved_cer"))
-            os.mkdir(os.path.join('user_upload/'+ user_folder, "aproved_cer"))
-            os.mkdir(os.path.join('user_upload/'+ user_folder, "user_info"))
+            
+            os.mkdir(os.path.join('user_upload/teachers', user_folder))
+            os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "unaproved_cer"))
+            os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "aproved_cer"))
+            os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "user_info"))
             print('已幫老師建立四個資料夾')
             # for迴圈如果沒東西會是空的.  getlist()裡面是看前端的 multiple name
             for each_file in request.FILES.getlist("upload_snapshot"):
                 print('收到老師大頭照: ', each_file.name)
-                folder_where_are_uploaded_files_be ='user_upload/' + user_folder 
+                folder_where_are_uploaded_files_be ='user_upload/teachers/' + user_folder 
                 fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
                 fs.save(each_file.name, each_file)
             # 放未認證證書的資料夾
             for each_file in request.FILES.getlist("upload_cer"):
                 print('收到老師認證資料: ', each_file.name)
-                folder_where_are_uploaded_files_be ='user_upload/' + user_folder + '/unaproved_cer'
+                folder_where_are_uploaded_files_be ='user_upload/teachers/' + user_folder + '/unaproved_cer'
                 fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
                 fs.save(each_file.name, each_file)
 
