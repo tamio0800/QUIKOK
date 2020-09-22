@@ -2,8 +2,6 @@ from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 import os
-# Create your views here.
-
 from account.models import teacher_profile
 from lesson.models import lesson_info, lesson_reviews
 
@@ -30,13 +28,13 @@ def get_lesson_card(request):
     # 老師相關：老師圖像、老師暱稱、老師有空的general時段、身分認證、學歷認證、經歷認證、其他認證
     # 課程相關：課程名稱、課程特點1、課程特點2、課程特點3、課程時薪
     # http://127.0.0.1:8000/api/lesson/recommend_list?qty=1&ordered_by=%22x%22&filtered_by=%22X%22
-    qty = request.GET.get('qty', False)
-    ordered_by = request.GET.get('ordered_by', False)
-    filtered_by = request.GET.get('filtered_by', False)
+    qty = request.GET.get('qty', False) # 暫定六堂課
+    #ordered_by = request.GET.get('ordered_by', False)
+    #filtered_by = request.GET.get('filtered_by', False)
     response = {}
     print(qty)
-    print(ordered_by)
-    print(filtered_by)
+    #print(ordered_by)
+    #print(filtered_by)
     if (not qty or not ordered_by or not filtered_by):
         # 收取的資料不正確
         response['status'] = 'failed'
@@ -74,15 +72,15 @@ def get_lesson_card(request):
         response['errCode'] = None
         response['errMsg'] = None
         response['data'] = _data
-        return JsonResponse(response)
-        
-
-
-
-
-            
+        return JsonResponse(response)           
 
 # 課程相關：課程名稱、課程特點1、課程特點2、課程特點3、課程時薪
-
-    
     return render(request, 'lesson/lessons_main_page.html', locals())
+
+
+### 課程詳細資訊區
+#def show_lesson_info(request):
+#            response['status'] = 'success'
+#            response['errCode'] = None
+#            response['errMsg'] = None
+#def save_lesoon_edit(request):
