@@ -28,8 +28,8 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     lesson_attributes = models.CharField(blank=True, max_length=50)  # 這個是放課程的屬性，一開始先人工(Quikok)給，之後再交給機器學習模型來判斷
     lesson_avg_score = models.FloatField(default=0.0) # 這個是平均評分，每次評分表一更新這裡也會連動更新
     lesson_reviewed_times = models.IntegerField(default=0) # 這個是課程被評分過幾次的統計
-    created_time = models.DateTimeField(auto_created=True)
-    
+    created_time = models.DateTimeField(auto_now_add=True)
+    #created_time = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return self.lesson_id
 

@@ -2,8 +2,11 @@ from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 import os
+from account.models import student_profile, teacher_profile, specific_available_time, general_available_time
+from django.http import HttpResponse, HttpResponseRedirect, FileResponse
+from django.core.files.storage import FileSystemStorage
 # Create your views here.
-
+import pandas as pd
 from account.models import teacher_profile
 from lesson.models import lesson_info, lesson_reviews
 
@@ -13,9 +16,9 @@ def lessons_main_page(request):
     #if request.method == 'POST':
     #    subjects = request.POST.get('subjects')
     #    print(subjects)
-    if 'subjects' in request.POST:
-        if request.POST['subjects'] is not '':
-            print(request.POST['platform'])
+    #if 'subjects' in request.POST:
+    #    if request.POST['subjects'] is not '':
+    #        print(request.POST['platform'])
     
     ## 08.26 建了許多老師假資料後回頭來串接這邊
     current_teacher = teacher_profile.objects.all()
@@ -78,11 +81,47 @@ def get_lesson_card(request):
         
 
 
-
-
             
 
 # 課程相關：課程名稱、課程特點1、課程特點2、課程特點3、課程時薪
 
     
     return render(request, 'lesson/lessons_main_page.html', locals())
+
+
+
+def import_lesson(request):
+    title = '批次匯入課程'
+    folder_where_are_uploaded_files_be = 'temp' # 
+    if request.method == 'POST':
+        fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
+        for each_file in request.FILES.getlist("files"):
+            fs.save(each_file.name, each_file)
+            if each_file.name.endswith(('xlsx', 'xls')):
+                df_lesson = pd.read_excel(os.path.join(folder_where_are_uploaded_files_be, each_file.name))
+                for each_row_num in range(df_lesson.shape[0]):
+                    #print(each_row)
+                    teacher_id = teacher_profile.objects.get(id = each_row_num+1) #ForeignKey
+                    lesson_info.objects.create(
+                    lesson_id = df_lesson['lesson_id'][each_row_num],
+                    teacher = teacher_id,
+                    lesson_title = df_lesson['lesson_title'][each_row_num],
+                    price_per_hour = df_lesson['price_per_hour'][each_row_num],
+                    highlight_1 = df_lesson['highlight_1'][each_row_num],
+                    highlight_2 = df_lesson['highlight_2'][each_row_num],
+                    highlight_3 = df_lesson['highlight_3'][each_row_num],
+                    lesson_intro = df_lesson['lesson_intro'][each_row_num],
+                    how_does_lesson_go = df_lesson['how_does_lesson_go'][each_row_num],
+                    lesson_remarks = df_lesson['lesson_remarks'][each_row_num],
+                    lesson_picture_folder = '',
+                    syllabus = df_lesson['syllabus'][each_row_num],
+                    lesson_appendix_folder ='',
+                    lesson_attributes =df_lesson['lesson_attributes'][each_row_num],
+                    lesson_avg_score = 0,
+                    lesson_reviewed_times = 0,
+                    ).save()
+                    print('成功匯入課程:'+ df_lesson['lesson_title'][each_row_num])
+            else:
+                print('我只收xlsx,xls檔')        
+        os.unlink(os.path.join(folder_where_are_uploaded_files_be, each_file.name))
+    return render(request, 'lesson/import_lesson.html',locals())

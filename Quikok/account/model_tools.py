@@ -70,20 +70,23 @@ class user_db_manager:
                             is_male = '0',
                             intro = _df_tobe_imported.loc[i, '自我介紹'][:150],
                             mobile = '0912-345-678',
-                            picture_folder = picture_folder,
-                            tutor_exp_in_years = 0.5,
-                            student_type = '',
-                            subject_type = '',
-                            id_cert = '',
-                            education_1 = '',
-                            education_2 = '',
-                            education_3 = '',
-                            education_cert_1 = _df_tobe_imported.loc[i, '老師亮點1'][:10],
-                            education_cert_2 = _df_tobe_imported.loc[i, '老師亮點2'][:10],
-                            education_cert_3 = _df_tobe_imported.loc[i, '老師亮點3'][:10],
-                            occupation = '',
-                            company = '',
-                            occupation_cert = '',
+                            balance = _df_tobe_imported.loc[i, '帳戶餘額'], #餘額
+                            unearned_balance = _df_tobe_imported.loc[i, '預扣'], # 預扣
+                            withholding_balance = _df_tobe_imported.loc[i, '預進帳'], #預進帳
+                            user_folder = 'user_upload/'+ _df_tobe_imported.loc[i, '帳號'] ,
+                            info_folder = 'user_upload/'+ _df_tobe_imported.loc[i, '帳號'] +'/user_info', #尚未建立此資料夾
+                            tutor_experience = _df_tobe_imported.loc[i, '教學年資'],
+                            subject_type = _df_tobe_imported.loc[i, '科目與對象'],
+                            education_1 = _df_tobe_imported.loc[i, '第一學歷'],
+                            education_2 = _df_tobe_imported.loc[i, '第二學歷'],
+                            education_3 = _df_tobe_imported.loc[i, '第三學歷'],
+                            cert_unapproved = 'user_upload/'+ _df_tobe_imported.loc[i, '帳號'] + '/unaproved_cer',
+                            cert_approved = 'user_upload/'+ _df_tobe_imported.loc[i, '帳號'] + '/aproved_cer',
+                            id_approved = 0,
+                            education_approved = 0,
+                            work_approved = 0,
+                            other_approved = 0, #其他類別的認證勳章 
+                            company = _df_tobe_imported.loc[i, '任職公司']
                         ).save()
                 elif _df_tobe_imported.loc[i, '類別'] == 's':
                     # 學生用戶
