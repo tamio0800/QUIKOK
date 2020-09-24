@@ -5,7 +5,7 @@ from account.models import teacher_profile, student_profile
 class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的東西填入
     # 每堂課程會有自己的unique id，我們用這個來辨識、串連課程
     lesson_id = models.CharField(max_length = 40) 
-    teacher_id = models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='teacher_of_the_lesson')
+    teacher = models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='teacher_of_the_lesson')
      
     big_title = models.CharField(max_length = 15)
     little_title = models.CharField(max_length = 20)
