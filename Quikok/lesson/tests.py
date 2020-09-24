@@ -1,44 +1,30 @@
 from django.test import TestCase
-from account.models import dev_db, student_profile, teacher_profile
 import pandas as pd
 import os
+from lesson.models import lesson_info
+from account.models import teacher_profile
 
-'''
--- SELECT * FROM quikok_db.account_dev_db;
-use quikok_db;
-insert into account_dev_db
-	(
-		username, password, name, birth_date, is_male, date_join
-    )
-values
-	(
-		"test_1", "00000000", "annie", "2009-10-04", 0, now()
-        ""   
-	)'''
+# 將課程批次匯入db中的
+df_lesson = pd.read_excel('test_folder/批次匯入課程.xlsx')
 
-class user_db_manager:
-    def __init__(self):
-        pass
-    def create_user(self, **kwargs):
-
-lesson_file = ""
-lesson_df = pd.read.excel(lesson_file)
-
-
-            student_profile.objects.create(
-                username = username,
-                password = password,
-                balance = 0,
-                withholding_balance = 0,
-                name = name,
-                nickname = nickname,
-                birth_date = birth_date,
-                is_male = is_male,
-                intro = '',
-                role = role,
-                mobile = mobile,
-                picture_folder = 'user_upload/'+ username,
-                info_folder = 'user_upload/'+ username+ '/info_folder',
-                update_someone_by_email = update_someone_by_email
-            ).save()
-            print('匯入課程成功')
+for each_row_num in range(df_lesson.shape[0]):
+    #print(each_row)
+    teacher_id = teacher_profile.objects.get(id = each_row_num+1) #ForeignKey
+    lesson_info.objects.create(
+    lesson_id = df_lesson['lesson_id'][each_row_num],
+    teacher = teacher_id,
+    lesson_title = df_lesson['lesson_title'][each_row_num],
+    price_per_hour = df_lesson['price_per_hour'][each_row_num],
+    highlight_1 = df_lesson['highlight_1'][each_row_num],
+    highlight_2 = df_lesson['highlight_2'][each_row_num],
+    highlight_3 = df_lesson['highlight_3'][each_row_num],
+    lesson_intro = df_lesson['lesson_intro'][each_row_num],
+    how_does_lesson_go = df_lesson['how_does_lesson_go'][each_row_num],
+    lesson_remarks = df_lesson['lesson_remarks'][each_row_num],
+    lesson_picture_folder = '',
+    syllabus = df_lesson['syllabus'][each_row_num],
+    lesson_appendix_folder ='',
+    lesson_attributes =df_lesson['lesson_attributes'][each_row_num],
+    lesson_avg_score = 0,
+    lesson_reviewed_times = 0,
+    ).save()

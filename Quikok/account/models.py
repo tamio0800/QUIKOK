@@ -41,7 +41,7 @@ class teacher_profile(models.Model):
     #picture_folder = models.CharField(default = 'teacher_snapshop_default.png', blank =True) # 預設老師頭像
     user_folder = models.CharField(max_length = 60)  # 改成資料夾路徑
     info_folder = models.CharField(max_length = 100)  # 資料夾路徑，存放個人檔案（暫不使用）
-    tutor_experience = models.CharField(max_length = 12)  # 改成下拉式選單
+    tutor_experience = models.CharField(max_length = 12)  # 改成下拉式選單 五種分類
     subject_type = models.CharField(max_length = 400) # 科目名稱也可包含教課對象
     # id_cert = models.CharField(max_length = 150) 整合進下方的cert..裡面
     education_1 = models.CharField(max_length = 60, blank=True)
