@@ -380,8 +380,10 @@ import json
 from django.middleware.csrf import get_token
 # FOR API
 
+
 def signup(request):
     title = '會員註冊'
+   
     if request.method == 'POST':
         username = request.POST['username'].strip()
         password = request.POST.get('password', False)

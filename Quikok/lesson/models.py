@@ -3,7 +3,7 @@ from account.models import teacher_profile, student_profile
 
 
 class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的東西填入
-    # 每堂課程會有自己的unique id，我們用這個來辨識、串連課程
+    # 每堂課程會有自己的unique id，我們用這個來辨識、串連課程 09/25 討論後認為先用內建的id就好
     lesson_id = models.CharField(max_length = 40) 
     teacher = models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='teacher_of_the_lesson')
      
