@@ -433,7 +433,7 @@ def signup(request):
     else:
         return render(request, 'account/signup.html', locals())
 
-
+'''
 def signin(request):
     title = '會員登入'
     if request.method == 'POST':
@@ -467,6 +467,33 @@ def signin(request):
         return render(request, 'account/signin.html', locals())
     else:
         return render(request, 'account/signin.html', locals())
+'''
+def signin(request):
+    if request.method == 'POST':
+        #print(request.POST['inputEmail'])
+        #print(request.POST['inputPassword'])
+        #form = AuthenticationForm(data = request.POST)
+        #print(form)
+
+        username = request.POST.get('username')
+        print(username)
+        password = '00000000' #request.POST.get('password')
+        print(password)
+        user = auth.authenticate(username=username, password=password)
+        print(user)
+        if user is not None and user.is_active:
+            auth.login(request, user)
+            print(request)
+            print('登入')
+            #return HttpResponseRedirect('/homepage/')
+            return render(request, 'account/signin.html')
+            #return redirect('home') # url name
+        else :
+            print('user不存在')
+        #    return render (request, 'accounts/loginpage.html', 
+        #    {'mystery' : '帳號或密碼錯誤', 'title' : '登入頁'})
+    else:
+        return render(request, 'account/signin.html', locals())    
 
 
 def dev_forgot_password_1_check_username(request):

@@ -1,4 +1,5 @@
 from account.models import teacher_profile
+from .models import lesson_info
 from django.contrib.auth.models import User
 import pandas as pd
 import os
@@ -11,10 +12,13 @@ class lesson_manager:
         response = {}
         #lesson_id = '某個規則'
         
-        teacher_id = kwargs['teacher']
+        auth_id = kwargs['AuthId'] #Auth的Id
+        teacher_username = User.objects.get(id = 'auth_id').username
+        #teacher_id = teacher_profile.objects.get(id = 'temp_id').username
+        teacher = teacher_profile.objects.get(username = teacher_username)
+        #ForeignKey
         big_title = kwargs['big_title']
         little_title= kwargs['little_title']
-        
         default_background_picture= kwargs['default_background_picture']
         background_picture= kwargs['background_picture']
         lesson_title = kwargs['lesson_title']
@@ -30,8 +34,8 @@ class lesson_manager:
         lesson_attributes = kwargs['lesson_attributes']
 
         lesson_info(
-        lesson_id = lesson_id, 
-        teacher = teacher_id,
+        #lesson_id = lesson_id, 
+        teacher = teacher, #ForeignKey
         big_title = big_title,
         little_title= little_title,
         default_background_picture= default_background_picture,

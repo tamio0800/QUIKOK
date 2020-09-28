@@ -9,7 +9,9 @@ import pandas as pd
 from account.models import teacher_profile
 from lesson.models import lesson_info, lesson_reviews
 from lesson.lesson_tools import lesson_manager
+from django.contrib.auth.decorators import login_required
 
+@login_required
 def lessons_main_page(request):
     title = '開課! Quikok - 課程主頁'
     main_subjucts_list = ['國文','英文','數學']
@@ -127,9 +129,9 @@ def import_lesson(request):
 def create_lesson(request):
     response = {}
     if request.method == 'POST':
-        lesson_manager = lesson_manager()
+        lesson_create = lesson_manager()
         #lesson_id = '某個規則' 
-        lesson_manager.create_lesson(
+        lesson_create.create_lesson(
         teacher_id = request.POST.get('teacher_id', False),
         big_title = request.POST.get('big_title', False),
         little_title= request.POST.get('little_title', False),
