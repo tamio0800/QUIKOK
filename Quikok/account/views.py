@@ -482,7 +482,7 @@ def signin(request):
         user = auth.authenticate(username=username, password=password)
         print(user)
         if user is not None and user.is_active:
-            auth.login(request, user)
+            
             print(request)
             print('登入')
             #return HttpResponseRedirect('/homepage/')
