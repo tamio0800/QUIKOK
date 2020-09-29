@@ -118,8 +118,9 @@ def import_lesson(request):
         os.unlink(os.path.join(folder_where_are_uploaded_files_be, each_file.name))
     return render(request, 'lesson/import_lesson.html',locals())
 
-@require_http_methods(['POST'])
+#@require_http_methods(['POST'])
 def create_lesson(request):
+    # 新增課程
     response = {}
     lesson_id = '某個規則' 
     # 當前端值有錯誤傳 null 就會是false 
@@ -160,3 +161,10 @@ def create_lesson(request):
     lesson_remarks = lesson_remarks,
     lesson_attributes=  lesson_attributes,
     ).save()
+
+## for回傳資訊 (user觀看本頁)
+## for修改 : update
+try:
+    pass
+except expression as identifier:
+    pass
