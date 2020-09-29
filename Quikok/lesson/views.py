@@ -5,7 +5,6 @@ import os
 from account.models import student_profile, teacher_profile, specific_available_time, general_available_time
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.core.files.storage import FileSystemStorage
-# Create your views here.
 import pandas as pd
 from account.models import teacher_profile
 from lesson.models import lesson_info, lesson_reviews
@@ -33,13 +32,13 @@ def get_lesson_card(request):
     # 老師相關：老師圖像、老師暱稱、老師有空的general時段、身分認證、學歷認證、經歷認證、其他認證
     # 課程相關：課程名稱、課程特點1、課程特點2、課程特點3、課程時薪
     # http://127.0.0.1:8000/api/lesson/recommend_list?qty=1&ordered_by=%22x%22&filtered_by=%22X%22
-    qty = request.GET.get('qty', False)
-    ordered_by = request.GET.get('ordered_by', False)
-    filtered_by = request.GET.get('filtered_by', False)
+    qty = request.GET.get('qty', False) # 暫定六堂課
+    #ordered_by = request.GET.get('ordered_by', False)
+    #filtered_by = request.GET.get('filtered_by', False)
     response = {}
     print(qty)
-    print(ordered_by)
-    print(filtered_by)
+    #print(ordered_by)
+    #print(filtered_by)
     if (not qty or not ordered_by or not filtered_by):
         # 收取的資料不正確
         response['status'] = 'failed'
@@ -79,15 +78,8 @@ def get_lesson_card(request):
         response['data'] = _data
         return JsonResponse(response)
         
-
-
-            
-
 # 課程相關：課程名稱、課程特點1、課程特點2、課程特點3、課程時薪
-
-    
     return render(request, 'lesson/lessons_main_page.html', locals())
-
 
 
 def import_lesson(request):
@@ -125,3 +117,46 @@ def import_lesson(request):
                 print('我只收xlsx,xls檔')        
         os.unlink(os.path.join(folder_where_are_uploaded_files_be, each_file.name))
     return render(request, 'lesson/import_lesson.html',locals())
+
+@require_http_methods(['POST'])
+def create_lesson(request):
+    response = {}
+    lesson_id = '某個規則' 
+    # 當前端值有錯誤傳 null 就會是false 
+    teacher_id = request.POST.get('teacher_id', False)
+    big_title = request.POST.get('big_title', False)
+    
+    little_title= request.POST.get('little_title', False)
+    default_background_picture= request.POST.get('default_background_picture', False)
+    background_picture= request.POST.get('background_picture', False)
+    lesson_title = request.POST.get('lesson_title', False)
+    price_per_hour= request.POST.get('price_per_hour', False)
+    highlight_1 = request.POST.get('highlight_1', False) 
+    highlight_2 = request.POST.get('highlight_2', False)
+    highlight_3 = request.POST.get('highlight_3', False)
+    lesson_intro = request.POST.get('lesson_intro', False)
+    how_does_lesson_go = request.POST.get('how_does_lesson_go', False)
+    target_students = request.POST.get('target_students', False)
+    syllabus = request.POST.get('syllabus', False)
+    lesson_remarks = request.POST.get('lesson_remarks', False)
+    lesson_attributes = request.POST.get('lesson_attributes', False)
+
+    lesson_info.objects.create(
+    lesson_id = lesson_id, 
+    teacher = teacher_id,
+    big_title = big_title,
+    little_title= little_title,
+    default_background_picture= default_background_picture,
+    background_picture = background_picture,
+    lesson_title = lesson_title,
+    price_per_hour= price_per_hour,
+    highlight_1 = highlight_1,
+    highlight_2 = highlight_2,
+    highlight_3 = highlight_3,
+    lesson_intro = lesson_intro,
+    how_does_lesson_go = how_does_lesson_go,
+    target_students = target_students,
+    syllabus = syllabus,
+    lesson_remarks = lesson_remarks,
+    lesson_attributes=  lesson_attributes,
+    ).save()

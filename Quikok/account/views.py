@@ -222,8 +222,6 @@ def create_a_teacher_user(request):
     special_exp = request.POST.get('special_exp', False)
     # 一般開課時間
 
-
-
     # print(is_male)
     # # http://127.0.0.1:8000/api/create_teacher/?username=testUser3&password=1111&name=tata3&birth_date=19901225&is_male=1
     user_folder = username #.replace('@', 'at')
