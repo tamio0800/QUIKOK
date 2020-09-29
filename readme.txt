@@ -3,7 +3,7 @@ test 1
 
 ##使用批次匯入學生與老師並同時建立聊天室的方法
 1. runserver之後進入 http://127.0.0.1:8000/api/account/admin_import_user/
-2. 按選擇檔案、跳出視窗後去 test_folder 下載範例檔案:批次註冊資.xlsx
+2. 按選擇檔案、跳出視窗後去 test_folder (下載範例檔案:批次註冊資.xlsx
 3. 按最左邊那顆確認送出之後即成功
 
 ##使用批次匯入課程的方法

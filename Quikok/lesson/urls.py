@@ -6,4 +6,6 @@ urlpatterns = [
     path('lessons_main_page/', views.lessons_main_page),
     path('recommend_list/', views.get_lesson_card),
     path('import_lesson/', views.import_lesson),
+    path('createlesson/', views.lesson_manege),
+    path('editlesson/', views.lesson_manege),
 ]

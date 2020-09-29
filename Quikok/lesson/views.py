@@ -8,7 +8,10 @@ from django.core.files.storage import FileSystemStorage
 import pandas as pd
 from account.models import teacher_profile
 from lesson.models import lesson_info, lesson_reviews
+from lesson.lesson_tools import lesson_manager
+from django.contrib.auth.decorators import login_required
 
+@login_required
 def lessons_main_page(request):
     title = '開課! Quikok - 課程主頁'
     main_subjucts_list = ['國文','英文','數學']
@@ -96,6 +99,8 @@ def import_lesson(request):
                     teacher_id = teacher_profile.objects.get(id = each_row_num+1) #ForeignKey
                     lesson_info.objects.create(
                     lesson_id = df_lesson['lesson_id'][each_row_num],
+                    big_title = df_lesson['big_title'][each_row_num],
+                    little_title = df_lesson['little_title'][each_row_num],
                     teacher = teacher_id,
                     lesson_title = df_lesson['lesson_title'][each_row_num],
                     price_per_hour = df_lesson['price_per_hour'][each_row_num],
@@ -104,7 +109,9 @@ def import_lesson(request):
                     highlight_3 = df_lesson['highlight_3'][each_row_num],
                     lesson_intro = df_lesson['lesson_intro'][each_row_num],
                     how_does_lesson_go = df_lesson['how_does_lesson_go'][each_row_num],
+                    target_students = df_lesson['target_students'][each_row_num],
                     lesson_remarks = df_lesson['lesson_remarks'][each_row_num],
+                    lesson_background_folder = df_lesson['lesson_background_folder'][each_row_num],
                     lesson_picture_folder = '',
                     syllabus = df_lesson['syllabus'][each_row_num],
                     lesson_appendix_folder ='',
@@ -118,45 +125,90 @@ def import_lesson(request):
         os.unlink(os.path.join(folder_where_are_uploaded_files_be, each_file.name))
     return render(request, 'lesson/import_lesson.html',locals())
 
-@require_http_methods(['POST'])
-def create_lesson(request):
-    response = {}
-    lesson_id = '某個規則' 
-    # 當前端值有錯誤傳 null 就會是false 
-    teacher_id = request.POST.get('teacher_id', False)
-    big_title = request.POST.get('big_title', False)
-    
-    little_title= request.POST.get('little_title', False)
-    default_background_picture= request.POST.get('default_background_picture', False)
-    background_picture= request.POST.get('background_picture', False)
-    lesson_title = request.POST.get('lesson_title', False)
-    price_per_hour= request.POST.get('price_per_hour', False)
-    highlight_1 = request.POST.get('highlight_1', False) 
-    highlight_2 = request.POST.get('highlight_2', False)
-    highlight_3 = request.POST.get('highlight_3', False)
-    lesson_intro = request.POST.get('lesson_intro', False)
-    how_does_lesson_go = request.POST.get('how_does_lesson_go', False)
-    target_students = request.POST.get('target_students', False)
-    syllabus = request.POST.get('syllabus', False)
-    lesson_remarks = request.POST.get('lesson_remarks', False)
-    lesson_attributes = request.POST.get('lesson_attributes', False)
 
-    lesson_info.objects.create(
-    lesson_id = lesson_id, 
-    teacher = teacher_id,
-    big_title = big_title,
-    little_title= little_title,
-    default_background_picture= default_background_picture,
-    background_picture = background_picture,
-    lesson_title = lesson_title,
-    price_per_hour= price_per_hour,
-    highlight_1 = highlight_1,
-    highlight_2 = highlight_2,
-    highlight_3 = highlight_3,
-    lesson_intro = lesson_intro,
-    how_does_lesson_go = how_does_lesson_go,
-    target_students = target_students,
-    syllabus = syllabus,
-    lesson_remarks = lesson_remarks,
-    lesson_attributes=  lesson_attributes,
-    ).save()
+def lesson_manege(request):
+    # 新增課程
+    response = {}
+    # 當學生瀏覽課程、老師預覽/編輯上架
+    if request.method == 'GET':
+        return render(request, 'lesson/create_lesson.html')
+        # 這段功能還沒寫
+    if request.method == 'POST':
+        # 新增或修改課程
+        #if request.POST.get('action', False) == 'createLesson': 
+        # 目前只可以新增, 修改尚未製作..
+        
+        #lesson_id = '某個規則' 
+        
+        AuthId = request.POST.get('userID', False),
+        big_title = request.POST.get('big_title', False),
+        little_title= request.POST.get('little_title', False),
+        default_background_picture= request.POST.get('default_background_picture', False),
+        background_picture= request.POST.get('background_picture', False),
+        lesson_title = request.POST.get('lesson_title', False),
+        price_per_hour= request.POST.get('price_per_hour', False),
+        highlight_1 = request.POST.get('highlight_1', False) ,
+        highlight_2 = request.POST.get('highlight_2', False),
+        highlight_3 = request.POST.get('highlight_3', False),
+        lesson_intro = request.POST.get('lesson_intro', False),
+        how_does_lesson_go = request.POST.get('how_does_lesson_go', False),
+        target_students = request.POST.get('target_students', False),
+        syllabus = request.POST.get('syllabus', False),
+        lesson_remarks = request.POST.get('lesson_remarks', False),
+        lesson_attributes = request.POST.get('lesson_attributes', False)
+        
+        # 新增lesson必填欄位
+        if False not in [teacher_id, lesson_title, price_per_hour, lesson_intro]:
+            lesson_create = lesson_manager()
+            lesson_create.create_lesson(
+            teacher_id = teacher_id,
+            big_title = big_title,
+            little_title= little_title,
+            default_background_picture= request.POST.get('default_background_picture', False),
+            background_picture= request.POST.get('background_picture', False),
+            lesson_title = request.POST.get('lesson_title', False),
+            price_per_hour= request.POST.get('price_per_hour', False),
+            highlight_1 = request.POST.get('highlight_1', False) ,
+            highlight_2 = request.POST.get('highlight_2', False),
+            highlight_3 = request.POST.get('highlight_3', False),
+            lesson_intro = request.POST.get('lesson_intro', False),
+            how_does_lesson_go = request.POST.get('how_does_lesson_go', False),
+            target_students = request.POST.get('target_students', False),
+            syllabus = request.POST.get('syllabus', False),
+            lesson_remarks = request.POST.get('lesson_remarks', False),
+            lesson_attributes = request.POST.get('lesson_attributes', False)
+
+            )
+
+        response['status'] = 'success'
+        response['errCode'] = None
+        response['errMsg'] = None
+
+    else:
+        # 資料傳輸有問題
+        response['status'] = 'failed'
+        response['errCode'] = '1'
+        response['errMsg'] = 'wrong data'
+    return JsonResponse(response)    
+    #return render(request, 'lesson/create_lesson.html')
+
+
+    #lesson_info.objects.create(
+    #lesson_id = lesson_id, 
+    #teacher = teacher_id,
+    #big_title = big_title,
+    #little_title= little_title,
+    #default_background_picture= default_background_picture,
+    #background_picture = background_picture,
+    #lesson_title = lesson_title,
+    #price_per_hour= price_per_hour,
+    #highlight_1 = highlight_1,
+    #highlight_2 = highlight_2,
+    #highlight_3 = highlight_3,
+    #lesson_intro = lesson_intro,
+    #how_does_lesson_go = how_does_lesson_go,
+    #target_students = target_students,
+    #syllabus = syllabus,
+    #lesson_remarks = lesson_remarks,
+    #lesson_attributes=  lesson_attributes,
+    #).save()
