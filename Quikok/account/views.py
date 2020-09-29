@@ -10,7 +10,13 @@ from account.models import dev_db
 from datetime import date as date_function
 import pandas as pd
 import os
-
+# FOR API
+from django.views.decorators.http import require_http_methods
+from django.core import serializers
+from django.http import JsonResponse
+import json
+from django.middleware.csrf import get_token
+from datetime import datetime, timedelta
 
 def is_num(target):
     try:
@@ -22,12 +28,8 @@ def is_num(target):
     except:
         return False
 
-# FOR API
-from django.views.decorators.http import require_http_methods
-from django.core import serializers
-from django.http import JsonResponse
-import json
-from django.middleware.csrf import get_token
+
+
 
 def date_string_2_dateformat(target_string):
     if not target_string == False:
@@ -345,41 +347,6 @@ def create_a_teacher_user(request):
 
 
 #########以下是舊的views先貼過來以免 server跑不起來
-from django.shortcuts import render, redirect
-from django.contrib import auth
-from django.contrib.auth.hashers import make_password, check_password  # 這一行用來加密密碼的
-from .model_tools import user_db_manager
-from django.contrib.auth.models import User
-from account.models import student_profile, teacher_profile, specific_available_time, general_available_time
-from django.http import HttpResponse, HttpResponseRedirect, FileResponse
-from django.core.files.storage import FileSystemStorage
-from account.models import dev_db
-
-import pandas as pd
-import os
-from datetime import date as date_function
-
-
-
-def is_num(target):
-    try:
-        int(target)
-        if int(target) == float(target):
-            return True
-        else:
-            return False
-    except:
-        return False
-
-
-# FOR API
-from django.views.decorators.http import require_http_methods
-from django.core import serializers
-from django.http import JsonResponse
-import json
-from django.middleware.csrf import get_token
-# FOR API
-
 
 def signup(request):
     title = '會員註冊'
@@ -433,67 +400,48 @@ def signup(request):
     else:
         return render(request, 'account/signup.html', locals())
 
-'''
-def signin(request):
-    title = '會員登入'
-    if request.method == 'POST':
-        username = request.POST.get('username', False)
-        password = request.POST.get('password', False)
-        remember_me = request.POST.get('remember_me', False)
-        if remember_me != 1:
-            request.session.set_expiry(0)
-            # 不留存cookies
-        else:
-            request.session.set_expiry(None)
-            # 如果value等于0，那么session将在web浏览器关闭后就直接过期。
-            # 如果value等于None，那么session将用settings.py中设置的全局过期字段SESSION_COOKIE_AGE，这个字段默认是14天，也就是2个礼拜。
-        user = auth.authenticate(username=username, password=password)
-        if user is not None:
-            # print(user)
-        # if User.objects.filter(username = username).count() == 1:
-            # 代表有這個username
-            # user = User.objects.filter(username=username)[0]
-            # real_password_hash = User.objects.filter(username=username)[0].password
-            # password_match = check_password(request.POST['password'], real_password_hash)
-            # user = auth.authenticate(username=username, password=password)
-            # if password_match:
-            auth.login(request, user)  # 將用戶登入
-            return HttpResponseRedirect('/homepage/')
-            # else:
-            #    password_not_match = True
-        else:
-            user_not_match = True
-
-        return render(request, 'account/signin.html', locals())
-    else:
-        return render(request, 'account/signin.html', locals())
-'''
 def signin(request):
     if request.method == 'POST':
-        #print(request.POST['inputEmail'])
-        #print(request.POST['inputPassword'])
-        #form = AuthenticationForm(data = request.POST)
-        #print(form)
+        response = {}
+        username = request.POST.get('regEmail', False) # 當前端值有錯誤傳 null 就會是false 
+        password = request.POST.get('regPwd', False)
 
-        username = request.POST.get('username')
-        print(username)
-        password = '00000000' #request.POST.get('password')
-        print(password)
-        user = auth.authenticate(username=username, password=password)
-        print(user)
-        if user is not None and user.is_active:
-            
-            print(request)
-            print('登入')
-            #return HttpResponseRedirect('/homepage/')
-            return render(request, 'account/signin.html')
-            #return redirect('home') # url name
-        else :
-            print('user不存在')
-        #    return render (request, 'accounts/loginpage.html', 
-        #    {'mystery' : '帳號或密碼錯誤', 'title' : '登入頁'})
-    else:
-        return render(request, 'account/signin.html', locals())    
+        if username and password is not False:    
+            user_obj = models.User.objects.filter(username=username).first()
+            if user_obj is None:
+                # 使用者不存在
+                response['status'] = 'failed'
+                response['errCode'] = '1'
+                response['errMsg'] = 'username does not exist'
+                response['data'] = None
+            else:
+                # 核對帳密, 當傳入的密碼=資料庫裡的密碼
+                if password == user_obj.password:
+                # 登入
+                    time = datetime.datetime.now()
+                    after_14days = time + timedelta(days = 14)
+                    userToken.objects.update_or_create(username = 's1@s1',token = after_14days)
+                    
+                    response['status'] = 'success'
+                    response['errCode'] = None
+                    response['errMsg'] = None
+                    response['data'] = None
+
+
+                else:
+                # 密碼錯誤
+                    response['status'] = 'failed'
+                    response['errCode'] = '2'
+                    response['errMsg'] = 'wrong password'
+                    response['data'] = None
+        else:
+            # 傳送出錯
+            response['status'] = 'failed'
+            response['errCode'] = '0'
+            response['errMsg'] = None
+            response['data'] = None
+    
+    return JsonResponse(response)    
 
 
 def dev_forgot_password_1_check_username(request):

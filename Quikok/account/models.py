@@ -1,4 +1,8 @@
 from django.db import models
+from django.contrib.auth.models import User
+class userToken(models.Model):
+    authID = models.ForeignKey(User,on_delete=models.CASCADE)
+    token = models.CharField(max_length=60) # 登入的時間+14天
 
 class student_profile(models.Model):
     # 這是for存放一般會員/學生的額外資訊

@@ -137,9 +137,7 @@ def lesson_manege(request):
         # 新增或修改課程
         #if request.POST.get('action', False) == 'createLesson': 
         # 目前只可以新增, 修改尚未製作..
-        
-        #lesson_id = '某個規則' 
-        
+        # 修改應該只比新增多 "課程id" 這個資訊要拿
         AuthId = request.POST.get('userID', False),
         big_title = request.POST.get('big_title', False),
         little_title= request.POST.get('little_title', False),
