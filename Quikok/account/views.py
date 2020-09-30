@@ -3,7 +3,7 @@ from django.contrib import auth
 from django.contrib.auth.hashers import make_password, check_password  # 這一行用來加密密碼的
 from .model_tools import user_db_manager
 from django.contrib.auth.models import User
-from account.models import student_profile, teacher_profile, specific_available_time, general_available_time
+from account.models import userToken,student_profile, teacher_profile, specific_available_time, general_available_time
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.core.files.storage import FileSystemStorage
 from account.models import dev_db
@@ -309,7 +309,7 @@ def create_a_teacher_user(request):
             os.mkdir(os.path.join('user_upload/teachers', user_folder))
             os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "unaproved_cer"))
             os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "aproved_cer"))
-            os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "user_info"))
+            os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "user_info")) # models裡的info_folder
             print('已幫老師建立四個資料夾')
             # for迴圈如果沒東西會是空的.  getlist()裡面是看前端的 multiple name
             for each_file in request.FILES.getlist("upload_snapshot"):
@@ -342,6 +342,7 @@ def create_a_teacher_user(request):
         response['errCode'] = '1'
         response['errMsg'] = 'wrong data'
         response['data'] = None
+        
     
     return JsonResponse(response)
 
@@ -402,31 +403,57 @@ def signup(request):
 
 def signin(request):
     if request.method == 'POST':
+        print('收到post')
         response = {}
         username = request.POST.get('regEmail', False) # 當前端值有錯誤傳 null 就會是false 
         password = request.POST.get('regPwd', False)
 
         if username and password is not False:    
-            user_obj = models.User.objects.filter(username=username).first()
+            user_obj = User.objects.filter(username=username).first()
+            print(user_obj)
             if user_obj is None:
                 # 使用者不存在
                 response['status'] = 'failed'
                 response['errCode'] = '1'
                 response['errMsg'] = 'username does not exist'
                 response['data'] = None
+                print('使用者不存在')
             else:
                 # 核對帳密, 當傳入的密碼=資料庫裡的密碼
+                print('檢查帳密')
                 if password == user_obj.password:
                 # 登入
-                    time = datetime.datetime.now()
+                    time = datetime.now()
                     after_14days = time + timedelta(days = 14)
-                    userToken.objects.update_or_create(username = 's1@s1',token = after_14days)
+                    userToken.objects.update_or_create(authID = user_obj, 
+                                                    defaults = {'token' : after_14days},)
                     
+                    # check_type 用是不是老師來分
+                    user_is_teacher = teacher_profile.objects.filter(username=username).first()
+                    if user_is_teacher is not None:
+                        user_type = 'teacher'
+                        picture = user_is_teacher.info_folder
+                        nickname = user_is_teacher.nickname
+                        is_male = user_is_teacher.is_male
+                    else:
+                        user_type = 'student'
+                        user_is_student = student_profile.objects.filter(username=username).first()
+                        picture = user_is_student.picture_folder
+                        nickname = user_is_student.nickname
+                        is_male = user_is_student.is_male
+
                     response['status'] = 'success'
                     response['errCode'] = None
                     response['errMsg'] = None
-                    response['data'] = None
-
+                    response['data'] = {
+                        'picture': picture,
+                        'nickname': nickname,
+                        'user_id': user_obj.id ,
+                        'username': username,
+                        'is_male': is_male,
+                        'type': user_type,
+                        'user_token': str(after_14days),}
+                    print('成功登入', response)
 
                 else:
                 # 密碼錯誤
@@ -434,13 +461,16 @@ def signin(request):
                     response['errCode'] = '2'
                     response['errMsg'] = 'wrong password'
                     response['data'] = None
-        else:
-            # 傳送出錯
-            response['status'] = 'failed'
-            response['errCode'] = '0'
-            response['errMsg'] = None
-            response['data'] = None
-    
+                    print('password error')
+    else:
+        # 不是拿到post
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = None
+        response['data'] = None
+        print('something wrong')
+         
+    #return render(request, 'account/signin.html') # 測試用
     return JsonResponse(response)    
 
 
