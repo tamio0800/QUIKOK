@@ -101,7 +101,7 @@ def create_a_student_user(request):
                 intro = '',
                 role = role,
                 mobile = mobile,
-                picture_folder = 'user_upload/'+ username,
+                user_folder = 'user_upload/'+ username,
                 info_folder = 'user_upload/'+ username+ '/info_folder',
                 update_someone_by_email = update_someone_by_email
             ).save()
@@ -438,7 +438,7 @@ def signin(request):
                     else:
                         user_type = 'student'
                         user_is_student = student_profile.objects.filter(username=username).first()
-                        picture = user_is_student.picture_folder
+                        picture = user_is_student.user_folder
                         nickname = user_is_student.nickname
                         is_male = user_is_student.is_male
 
