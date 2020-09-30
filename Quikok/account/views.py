@@ -408,7 +408,7 @@ def signin(request):
         username = request.POST.get('regEmail', False) # 當前端值有錯誤傳 null 就會是false 
         password = request.POST.get('regPwd', False)
 
-        if username and password is not False:    
+        if False not in (username, password):
             user_obj = User.objects.filter(username=username).first()
             print(user_obj)
             if user_obj is None:
@@ -462,13 +462,19 @@ def signin(request):
                     response['errMsg'] = 'wrong password'
                     response['data'] = None
                     print('password error')
+        else:
+            response['status'] = 'failed'
+            response['errCode'] = '3'
+            response['errMsg'] = 'get nothing'
+            response['data'] = None
+            print('get nothing')
     else:
         # 不是拿到post
         response['status'] = 'failed'
         response['errCode'] = '0'
         response['errMsg'] = None
         response['data'] = None
-        print('something wrong')
+        print('wrong method')
          
     #return render(request, 'account/signin.html') # 測試用
     return JsonResponse(response)    
