@@ -23,6 +23,8 @@ class lesson_manager:
         background_picture= kwargs['background_picture']
         lesson_title = kwargs['lesson_title']
         price_per_hour= kwargs['price_per_hour']
+        trial_class_price = kwargs['trialClassPrice']  # 該門課程的試上鐘點費
+        discount_price = kwargs['discountPrice']
         highlight_1 = kwargs['highlight_1']
         highlight_2 = kwargs['highlight_2']
         highlight_3 = kwargs['highlight_3']

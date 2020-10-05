@@ -5,11 +5,15 @@
 <div class="container mt-3" style="font-family: Microsoft Yahei;">
     
     
-        <form method="post" enctype="multipart/form-data" action="">
+        <form method="post" enctype="multipart/form-data" >
             <div class="row mt-5">
                 {% csrf_token %}
                 <div class="col-5">
-                    <label for="username"><strong>大標題</strong></label>
+                    <label for="userID"><strong>auth_id</strong></label>
+                    <input type="text" class="form-control" name="userID">
+                    <label for="action"><strong>createLesson or editLesson</strong></label>
+                    <input type="text" class="form-control" name="action">
+                    <label for="big_title"><strong>大標題</strong></label>
                     <input type="text" class="form-control" id="bigtitle" name="big_title">
                     <label for="username"><strong>小標題</strong></label>
                     <input type="text" class="form-control" id="little_title" name="little_title">
@@ -20,7 +24,11 @@
                     <label for="username"><strong>課程名稱</strong></label>
                     <input type="text" class="form-control" id="bigtitle" name="lesson_title">
                     <label for="username"><strong>鐘點費</strong></label>
-                    <input type="text" class="form-control" id="bigtitle" name="price_per_hour">
+                    <input type="text" class="form-control" name="lesson_title">
+                    <label for="trial_class_price"><strong>試教費</strong></label>
+                    <input type="text" class="form-control" name="trial_class_price">
+                    <label for="discount_price"><strong>多堂優惠</strong></label>
+                    <input type="text" class="form-control" name="discount_price">
                     <label for="username"><strong>亮點一</strong></label>
                     <input type="text" class="form-control" id="bigtitle" name="highlight_1">
                     <label for="username"><strong>亮點二</strong></label>
