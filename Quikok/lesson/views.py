@@ -145,6 +145,7 @@ def lesson_manage(request):
         teacher = teacher_profile.objects.get(username = teacher_username)
         big_title = request.POST.get('big_title', False)
         little_title= request.POST.get('little_title', False)
+        title_color= request.POST.get('title_color', False)
         default_background_picture= request.POST.get('default_background_picture', False)
         background_picture= request.POST.get('background_picture', False)
         lesson_title = request.POST.get('lesson_title', False)
@@ -160,7 +161,7 @@ def lesson_manage(request):
         syllabus = request.POST.get('syllabus', False)
         lesson_remarks = request.POST.get('lesson_remarks', False)
         lesson_attributes = request.POST.get('lesson_attributes', False)
-        
+        selling_status = request.POST.get('sellStatus', False)
         if action == 'editLesson': 
             # 如果 lesson_id 有值表示是要修改欄位,多加一個action條件防意外
             if  [lesson_id,teacher, lesson_title, price_per_hour, lesson_intro]:
@@ -169,6 +170,7 @@ def lesson_manage(request):
                     lesson_obj.update(
                         big_title = big_title,
                         little_title= little_title,
+                        title_color = title_color,
                         default_background_picture= default_background_picture,
                         background_picture = background_picture,
                         lesson_title = lesson_title,
@@ -184,6 +186,7 @@ def lesson_manage(request):
                         syllabus = syllabus,
                         lesson_remarks = lesson_remarks,
                         lesson_attributes=  lesson_attributes,
+                        selling_status = selling_status
                     )
                     response['status'] = 'success'
                     response['errCode'] = None
@@ -201,13 +204,14 @@ def lesson_manage(request):
 
         # 新增lesson 時的必填欄位, 不得為 False, 雖然前端有做處理但這邊再防傳輸問題
         elif  action == 'createLesson':
-            if [teacher, lesson_title, price_per_hour, lesson_intro]:
+            if [selling_status, teacher, lesson_title, price_per_hour, lesson_intro]:
                 lesson_info.objects.create(
                     #lesson_id = lesson_id, 
                     #teacher =teacher 
                     teacher = teacher, #測試
                     big_title = big_title,
                     little_title= little_title,
+                    title_color = title_color,
                     default_background_picture= default_background_picture,
                     background_picture = background_picture,
                     lesson_title = lesson_title,
@@ -223,6 +227,7 @@ def lesson_manage(request):
                     syllabus = syllabus,
                     lesson_remarks = lesson_remarks,
                     lesson_attributes=  lesson_attributes,
+                    selling_status = selling_status,
                     ).save()
                 response['status'] = 'success'
                 response['errCode'] = None

@@ -9,6 +9,7 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     #teacher  =  models.CharField(max_length = 150) # = username
     big_title = models.CharField(max_length = 15)
     little_title = models.CharField(max_length = 20)
+    title_color = models.CharField(max_length = 5) # 標題顏色
     default_background_picture = models.CharField(max_length = 40) # 指向他選擇的是幾號預設圖的那個位置
     background_picture = models.CharField(max_length = 40) # 指向上傳圖的路徑
     lesson_title = models.CharField(max_length = 10) # 課程的名稱
@@ -39,7 +40,8 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     lesson_avg_score = models.FloatField(default = 0.0) # 這個是平均評分，每次評分表一更新這裡也會連動更新
     lesson_reviewed_times = models.IntegerField(default = 0) # 這個是課程被評分過幾次的統計
     created_time = models.DateTimeField(auto_now_add = True)
-    #created_time = models.DateTimeField(auto_now_add=True)
+    selling_status = models.CharField(max_length = 20)
+    #  販售狀態 : 草稿/上架/ 沒上架/ 刪 draft/selling/notSelling/donotShow
     def __str__(self):
         return self.lesson_id
 

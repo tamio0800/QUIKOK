@@ -9,14 +9,18 @@
             <div class="row mt-5">
                 {% csrf_token %}
                 <div class="col-5">
-                    <label for="userID"><strong>auth_id</strong></label>
+                    <label for="userID"><strong>老師的auth_id</strong></label>
                     <input type="text" class="form-control" name="userID">
+                    <label for="userID"><strong>課程的id, edit課程才填</strong></label>
+                    <input type="text" class="form-control" name="lessonID">
                     <label for="action"><strong>createLesson or editLesson</strong></label>
                     <input type="text" class="form-control" name="action">
                     <label for="big_title"><strong>大標題</strong></label>
                     <input type="text" class="form-control" id="bigtitle" name="big_title">
                     <label for="username"><strong>小標題</strong></label>
                     <input type="text" class="form-control" id="little_title" name="little_title">
+                    <label><strong>標題顏色</strong></label>
+                    <input type="text" class="form-control" name="title_color">
                     <label for="username"><strong>預設背景號碼</strong></label>
                     <input type="text" class="form-control" id="bigtitle" name="default_background_picture">
                     <label for="username"><strong>上傳圖片</strong></label>
@@ -47,7 +51,9 @@
                     <input type="text" class="form-control" id="bigtitle" name="lesson_remarks">
                     <label for="username"><strong>標籤</strong></label>
                     <input type="text" class="form-control" id="bigtitle" name="lesson_attributes">
-                    
+                    <label><strong>販售狀態</strong></label>
+                    <input type="text" class="form-control" name="sellStatus">
+
                 </div>
                 <div class="col-7 text-center">
                     <input class="btn btn-primary" type="submit"
