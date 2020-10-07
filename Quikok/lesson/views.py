@@ -133,7 +133,29 @@ def lesson_manage(request):
     # 當學生瀏覽課程、老師預覽/修改上架內容
     # 這段功能還沒寫
     if request.method == 'GET':
+        lesson_id = request.POST.get('lesson_id', False)
+        show_lesson = lesson_info.objects.get(id = lesson_id)
+        big_title = show_lesson
+        little_title= show_lesson
+        title_color= show_lesson
+        default_background_picture= show_lesson
+        background_picture= request.POST.get('background_picture', False)
+        lesson_title = request.POST.get('lesson_title', False)
+        price_per_hour= request.POST.get('price_per_hour', False)
+        trial_class_price = request.POST.get('trialClassPrice', False)
+        discount_price = request.POST.get('discountPrice', False)
+        highlight_1 = request.POST.get('highlight_1', False) 
+        highlight_2 = request.POST.get('highlight_2', False)
+        highlight_3 = request.POST.get('highlight_3', False)
+        lesson_intro = request.POST.get('lesson_intro', False)
+        how_does_lesson_go = request.POST.get('how_does_lesson_go', False)
+        target_students = request.POST.get('target_students', False)
+        syllabus = request.POST.get('syllabus', False)
+        lesson_remarks = request.POST.get('lesson_remarks', False)
+        lesson_attributes = request.POST.get('lesson_attributes', False)
+        selling_status = request.POST.get('sellStatus', False)
         return render(request, 'lesson/create_lesson.html')
+
     if request.method == 'POST':
         action = request.POST.get('action', False) # 新增或修改課程
         lesson_id = request.POST.get('lessonID', False)
