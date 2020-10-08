@@ -14,6 +14,7 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     background_picture = models.CharField(max_length = 40) # 指向上傳圖的路徑
     lesson_title = models.CharField(max_length = 10) # 課程的名稱
     price_per_hour = models.IntegerField()  # 該門課程的鐘點費
+    unit_class_price = models.IntegerField() # 單堂課程的鐘點費
     trial_class_price = models.IntegerField()  # 該門課程的試上鐘點費
     discount_price = models.CharField(max_length = 80) # 優惠折數
     highlight_1 = models.CharField(max_length = 10)  # 亮點介紹1，不要超過10個字元長

@@ -7,5 +7,6 @@ urlpatterns = [
     path('recommend_list/', views.get_lesson_card),
     path('import_lesson/', views.import_lesson),
     path('createlesson/', views.lesson_manage),
+    path('test_create_lesson/', views.lesson_manage),
     path('editlesson/', views.lesson_manage),
 ]
