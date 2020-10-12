@@ -9,4 +9,6 @@ urlpatterns = [
     path('createlesson/', views.lesson_manage),
     path('test_create_lesson/', views.lesson_manage),
     path('editlesson/', views.lesson_manage),
+    path('show_lesson_detail/', views.lesson_manage),
+    
 ]

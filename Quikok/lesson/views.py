@@ -133,10 +133,11 @@ def lesson_manage(request):
     # 當學生瀏覽課程、老師預覽/修改上架內容
     # 差異化的功能selling_status<學生瀏覽課程調資料時應該不用回傳@@ 或是只回傳selling?
     if request.method == 'GET' :
+        #action = request.POST.get('action', False)#測試用
         action = request.GET.get('action', False)
         if  action == 'showLesson':
-            lesson_id = request.POST.get('lesson_id', False) #測試用
-            #lesson_id = request.GET.get('lesson_id', False)
+            #lesson_id = request.POST.get('lessonID', False) 
+            lesson_id = request.GET.get('lesson_id', False) # 測試用
             # lesson_id是False也會回傳none
             show_lesson = lesson_info.objects.filter(id = lesson_id).first()
             if show_lesson is None:
