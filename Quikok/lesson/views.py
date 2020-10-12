@@ -131,35 +131,75 @@ def lesson_manage(request):
     # 新增課程
     response = {}
     # 當學生瀏覽課程、老師預覽/修改上架內容
-    # 這段功能還沒寫
-    if request.method == 'GET':
-        
-        lesson_id = request.POST.get('lesson_id', False)
-        show_lesson = lesson_info.objects.get(id = lesson_id)
-        big_title = show_lesson.big_title
-        little_title = show_lesson.little_title
-        title_color = show_lesson.title_color
-        default_background_picture = show_lesson.default_background_picture
-        background_picture = show_lesson.background_picture
-        lesson_title = show_lesson.lesson_title
-        price_per_hour= show_lesson.price_per_hour
-        trial_class_price = show_lesson.trial_class_price
-        discount_price = show_lesson.discount_price
-        highlight_1 = show_lesson.highlight_1
-        highlight_2 = show_lesson.highlight_2
-        highlight_3 = show_lesson.highlight_3
-        lesson_intro = show_lesson.lesson_intro 
-        how_does_lesson_go = show_lesson.how_does_lesson_go
-        target_students = show_lesson.target_students
-        syllabus = show_lesson.syllabus
-        lesson_remarks = show_lesson.lesson_remarks
-        lesson_attributes = show_lesson.lesson_attributes
-        selling_status = show_lesson.selling_status
-        #return render(request, 'lesson/create_lesson.html')
+    # 差異化的功能selling_status<學生瀏覽課程調資料時應該不用回傳@@ 或是只回傳selling?
+    if request.method == 'GET' :
+        action = request.GET.get('action', False)
+        if  action == 'showLesson':
+            lesson_id = request.POST.get('lesson_id', False) #測試用
+            #lesson_id = request.GET.get('lesson_id', False)
+            # lesson_id是False也會回傳none
+            show_lesson = lesson_info.objects.filter(id = lesson_id).first()
+            if show_lesson is None:
+                response['status'] = 'failed'
+                response['errCode'] = '0'
+                response['errMsg'] = 'get nothing or cannot find the lesson'
+            else:
+                big_title = show_lesson.big_title
+                little_title = show_lesson.little_title
+                title_color = show_lesson.title_color
+                default_background_picture = show_lesson.default_background_picture
+                background_picture = show_lesson.background_picture
+                lesson_title = show_lesson.lesson_title
+                price_per_hour= show_lesson.price_per_hour
+                trial_class_price = show_lesson.trial_class_price
+                discount_price = show_lesson.discount_price
+                highlight_1 = show_lesson.highlight_1
+                highlight_2 = show_lesson.highlight_2
+                highlight_3 = show_lesson.highlight_3
+                lesson_intro = show_lesson.lesson_intro 
+                how_does_lesson_go = show_lesson.how_does_lesson_go
+                target_students = show_lesson.target_students
+                syllabus = show_lesson.syllabus
+                lesson_remarks = show_lesson.lesson_remarks
+                lesson_attributes = show_lesson.lesson_attributes
+                selling_status = show_lesson.selling_status
+            
+                if  [lesson_title, price_per_hour, lesson_intro, selling_status]:
+                    data = [{
+                        'big_title' : big_title,
+                        'little_title' :little_title,
+                        'title_color' : title_color,
+                        'default_background_picture' : default_background_picture,
+                        'background_picture' : background_picture,
+                        'lesson_title' : lesson_title,
+                        'price_per_hour' :price_per_hour,
+                        'trial_class_price': trial_class_price,
+                        'discount_price' :discount_price,
+                        'highlight_1':highlight_1,
+                        'highlight_2':highlight_2,
+                        'highlight_3': highlight_3,
+                        'lesson_intro': lesson_intro,
+                        'how_does_lesson_go': how_does_lesson_go,
+                        'target_students':target_students,
+                        'syllabus':syllabus,
+                        'lesson_remarks':lesson_remarks,
+                        'lesson_attributes':lesson_attributes,
+                        'selling_status': selling_status
+                    }]
+                    response = {
+                    'status': 'success',
+                    'errCode': None,
+                    'errMsg': None,
+                    'data' :data
+                    }
+                    print(response)
+                else:
+                    response['status'] = 'failed'
+                    response['errCode'] = '1'
+                    response['errMsg'] = 'query failed: false in required field'
 
 
-
-        return render(request, 'lesson/create_lesson.html')
+            return render(request, 'lesson/create_lesson.html')
 
     if request.method == 'POST':
         action = request.POST.get('action', False) # 新增或修改課程
