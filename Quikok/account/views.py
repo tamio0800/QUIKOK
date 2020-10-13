@@ -297,7 +297,8 @@ def create_a_teacher_user(request):
                     work_approved = 0,
                     other_approved = 0, #其他類別的認證勳章
                     #occupation = if_false_return_empty_else_do_nothing(occupation), 
-                    company = company
+                    company = company,
+                    special_exp = special_exp
             ).save()
             print('成功建立 teacher_profile')
             User.objects.create(
