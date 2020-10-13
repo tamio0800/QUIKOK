@@ -44,7 +44,9 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     selling_status = models.CharField(max_length = 20)
     #  販售狀態 : 草稿/上架/ 沒上架/ 刪 draft/selling/notSelling/donotShow
     def __str__(self):
-        return self.lesson_id
+        #return self.lesson_id
+        return str(self.id)
+
 
 
 class lesson_info_snapshot(models.Model): 

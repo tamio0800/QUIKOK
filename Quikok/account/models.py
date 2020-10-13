@@ -42,7 +42,7 @@ class teacher_profile(models.Model):
     is_male = models.BooleanField()
     intro = models.CharField(max_length = 150)  # 簡短介紹，不要超過150個字元長
     mobile = models.CharField(max_length = 12)
-    #picture_folder = models.CharField(default = 'teacher_snapshop_default.png', blank =True) # 預設老師頭像
+    thumbnail_dir = models.CharField(max_length = 150) # 老師頭像完整路徑 thumbnail_dir
     user_folder = models.CharField(max_length = 60)  # 該user最外層的資料夾路徑
     info_folder = models.CharField(max_length = 100)  # 資料夾路徑，存放個人檔案目前暫沒使用
     tutor_experience = models.CharField(max_length = 12)  # 改成下拉式選單 五種分類
