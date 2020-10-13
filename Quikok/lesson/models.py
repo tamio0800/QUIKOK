@@ -7,8 +7,8 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     lesson_id = models.CharField(max_length = 40) 
     teacher = models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='teacher_of_the_lesson')
     #teacher  =  models.CharField(max_length = 150) # = username
-    big_title = models.CharField(max_length = 15)
-    little_title = models.CharField(max_length = 20)
+    big_title = models.CharField(max_length = 15)  # 圖片的大標題
+    little_title = models.CharField(max_length = 20)  # 圖片的小標題
     title_color = models.CharField(max_length = 5) # 標題顏色
     default_background_picture = models.CharField(max_length = 40) # 指向他選擇的是幾號預設圖的那個位置
     background_picture = models.CharField(max_length = 40) # 指向上傳圖的路徑
