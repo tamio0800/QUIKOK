@@ -12,6 +12,7 @@ from lesson.models import lesson_info, lesson_reviews
 from lesson.lesson_tools import lesson_manager
 from django.contrib.auth.decorators import login_required
 
+
 @login_required
 def lessons_main_page(request):
     title = '開課! Quikok - 課程主頁'
