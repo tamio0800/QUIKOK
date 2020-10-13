@@ -54,6 +54,7 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
         return str(self.id)
 
 
+
 class lesson_info_snapshot(models.Model): 
     # 加上課程更改的snapshot，其中價格的變更一定要留存
     # 主要為了證明對方真的有更改過那個價格，而且也為了之後資料分析怎麼樣的設計有助於吸引顧客。

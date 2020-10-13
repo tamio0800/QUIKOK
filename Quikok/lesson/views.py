@@ -206,7 +206,7 @@ def lesson_manage(request):
 
     if request.method == 'POST':
         action = request.POST.get('action', False) # 新增或修改課程
-        lesson_id = request.POST.get('lessonID', False)
+        lesson_id = request.POST.get('lessonID', False) # 新增沒有,修改才有
         # 修改應該只比新增多 "課程id" 這個資訊要拿
         auth_id = request.POST.get('userID', False)
         #auth_id = 2 # 測試用
@@ -310,6 +310,19 @@ def lesson_manage(request):
                     lesson_attributes=  lesson_attributes,
                     selling_status = selling_status
                     ).save()
+                
+                # 創立這個課的資料夾
+                # 為了要以該課程的id建立資料夾,需要query剛建立好的課程 id
+                # 理論上老師剛新建的課程id會是最新(id最大)的
+                #teacher_id = teacher_profile.objects.get(username = teacher_username)
+                latest_lesson_id = lesson_info.objects.filter(teacher_id = teacher.id).order_by('-id')[0]
+                latest_lesson_id = str(latest_lesson_id.id) # int轉str 檔名要用str
+                if not os.path.isdir('user_upload/teachers/'+ teacher_username +'/lessons/' +'lessonID'+ latest_lesson_id):
+                    os.mkdir(os.path.join('user_upload/teachers/'+teacher_username +'/lessons/' +'lessonID'+ latest_lesson_id))
+            ###測試區 希望可以讓回傳直接看到 id (目前是 lesson_id 但這個col之後會刪掉
+            #teacher = teacher_profile.objects.get(username = 'tt@tt.com')
+            #lesson_info.objects.filter(teacher_id = teacher.id)
+            ###
                 response['status'] = 'success'
                 response['errCode'] = None
                 response['errMsg'] = None
