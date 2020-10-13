@@ -33,8 +33,8 @@ def get_lesson_card(request):
     # 20200911 暫時不開發排序、篩選部分
     # 接收：需要多少小卡(int)、排序依據(string)、篩選依據(string)
     # 需要回傳「相同數量」的課程小卡，包含：
-    # 老師相關：老師圖像、老師暱稱、老師有空的general時段、身分認證、學歷認證、經歷認證、其他認證
-    # 課程相關：課程名稱、課程特點1、課程特點2、課程特點3、課程時薪
+    # 老師相關：老師圖像、老師名字、身分認證、學歷認證、經歷認證、其他認證
+    # 課程相關：課程大標、課程小標、課程名稱、鐘點費、課程特點1、課程特點2、課程特點3
     # http://127.0.0.1:8000/api/lesson/recommend_list?qty=1&ordered_by=%22x%22&filtered_by=%22X%22
     qty = request.GET.get('qty', False) # 暫定六堂課
     #ordered_by = request.GET.get('ordered_by', False)
@@ -43,7 +43,8 @@ def get_lesson_card(request):
     print(qty)
     #print(ordered_by)
     #print(filtered_by)
-    if (not qty or not ordered_by or not filtered_by):
+    if not qty:
+        # 之後等加入條件再改寫法 
         # 收取的資料不正確
         response['status'] = 'failed'
         response['errCode'] = '0'
