@@ -133,3 +133,18 @@ class teacher_teaching_history(models.Model):
     def __str__(self):
         return self.user.username
 
+
+class favorite_lessons(models.Model):
+    # 不特別限定老師或是學生使用
+    follower_auth_id = models.IntegerField()
+    lesson_id = models.IntegerField()
+    def __str__(self):
+        return str(self.follower_auth_id)
+
+class favorite_teachers(models.Model):
+    # 這個暫時不會用到，先留著
+    # 不特別限定老師或是學生使用
+    follower_auth_id = models.IntegerField()
+    teacher_auth_id = models.IntegerField()
+    def __str__(self):
+        return str(self.follower_auth_id)
