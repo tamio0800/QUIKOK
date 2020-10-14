@@ -261,12 +261,19 @@ def create_a_teacher_user(request):
             os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "lessons"))
             print('已幫老師建立5個資料夾')
             # for迴圈如果沒東西會是空的.  getlist()裡面是看前端的 multiple name
-            for each_file in request.FILES.getlist("upload_snapshot"):
-                print('收到老師大頭照: ', each_file.name)
-                folder_where_are_uploaded_files_be ='user_upload/teachers/' + user_folder 
-                fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
-                fs.save(each_file.name, each_file)
-                thumbnail_dir = 'user_upload/teachers/' + user_folder + '/' + each_file.name
+
+            if request.FILES.getlist("upload_snapshot"):
+                for each_file in request.FILES.getlist("upload_snapshot"):
+                    print('收到老師大頭照: ', each_file.name)
+                    folder_where_are_uploaded_files_be ='user_upload/teachers/' + user_folder 
+                    fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
+                    fs.save(each_file.name, each_file)
+                    thumbnail_dir = 'user_upload/teachers/' + user_folder + '/' + each_file.name
+            else:
+                print('沒收到老師大頭照')
+                # 可能依照性別使用預設的圖片
+                thumbnail_dir = 'user_upload/teachers/' + user_folder + '/' + 'thumbnail.jpg'
+
             # 放未認證證書的資料夾
             for each_file in request.FILES.getlist("upload_cer"):
                 print('收到老師認證資料: ', each_file.name)
