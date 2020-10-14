@@ -88,8 +88,26 @@ def create_a_student_user(request):
             is_male = True
         
         if obj is None and auth_obj is None:
+            #存入auth
+            user_created_object = \
+                User.objects.create(
+                    username = username,
+                    password = password,
+                    is_superuser = 0,
+                    first_name = '',
+                    last_name = '',
+                    email = '',
+                    is_staff = 0,
+                    is_active = 1,
+                )
+            # 用create()的寫法是為了知道這個user在auth裡面的id為何
+            user_created_object.save()
+            print('auth建立')
+
+
             print('建立新學生資料')
             student_profile.objects.create(
+                auth_id = user_created_object.id,
                 username = username,
                 password = password,
                 balance = 0,
@@ -107,18 +125,7 @@ def create_a_student_user(request):
             ).save()
             print('student_profile建立')
 
-            #存入auth
-            User.objects.create(
-                username = username,
-                password = password,
-                is_superuser = 0,
-                first_name = '',
-                last_name = '',
-                email = '',
-                is_staff = 0,
-                is_active = 1,
-            ).save()
-            print('auth建立')
+            
             ### 長出每個學生相對應資料夾 目前要長的有:放大頭照的資料夾
             # 將來可能會有成績單或考卷等資料夾
             user_folder = username #.replace('@', 'at')
@@ -141,7 +148,6 @@ def create_a_student_user(request):
             for each_file in request.FILES.getlist("user_upload"):
                 print('each_file.name in VIEWS: ', each_file.name)
                 fs.save(each_file.name, each_file)
-
 
             # 回前端
             response['status'] = 'success'
@@ -268,9 +274,22 @@ def create_a_teacher_user(request):
                 fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
                 fs.save(each_file.name, each_file)
 
-
+            user_created_object = \
+                User.objects.create(
+                    username = username,
+                    password = password,
+                    is_superuser = 0,
+                    first_name = '',
+                    last_name = '',
+                    email = '',
+                    is_staff = 0,
+                    is_active = 1,
+                )
+            user_created_object.save()
+            print('老師成功建立 User.objects')
             
             teacher_profile.objects.create(
+                    auth_id = user_created_object.id,
                     username = username,
                     password = password,
                     balance = 0,
@@ -300,17 +319,7 @@ def create_a_teacher_user(request):
                     company = company
             ).save()
             print('成功建立 teacher_profile')
-            User.objects.create(
-                username = username,
-                password = password,
-                is_superuser = 0,
-                first_name = '',
-                last_name = '',
-                email = '',
-                is_staff = 0,
-                is_active = 1,
-            ).save()
-            print('老師成功建立 User.objects')
+            
 
             ## 寫入一般時間table
             # 因為models設定general_available_time與 teacher_profile 

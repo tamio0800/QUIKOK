@@ -1,6 +1,9 @@
 from account.models import teacher_profile
-from .models import lesson_info
+from lesson.models import lesson_info, lesson_reviews
 from django.contrib.auth.models import User
+from django.db.models import Avg, Sum  
+# 上面兩個用來對資料庫的資訊做處理，用法如下(有null的話要另外處理)
+# model_name.objects.filter().aggregate(Sum('column_name')) >> {'column_name__sum':?}
 import pandas as pd
 import os
 
@@ -58,3 +61,43 @@ class lesson_manager:
     #def show_lesson_info():
 
     #def edit_lesson()
+
+
+class lesson_card_manager: 
+    def __init__(self):
+        self.lesson_card_info = dict()
+    
+    def setup_a_lesson_card(self, **kwargs):
+        # 當課程建立或是修改時，同步編修課程小卡資料
+        try:
+            teacher_object = teacher_profile.objects.filter(auth_id=kwargs['teacher_auth_id']).first()
+            review_object = lesson_reviews.objects.filter(corresponding_lesson_id=kwargs['corresponding_lesson_id'])
+
+            # 先取得課程本身的資訊
+            self.lesson_card_info['corresponding_lesson_id'] =  kwargs['corresponding_lesson_id']
+            self.lesson_card_info['big_title'] =  kwargs['big_title']
+            self.lesson_card_info['little_title'] =  kwargs['little_title']
+            self.lesson_card_info['title_color'] =  kwargs['title_color']
+            self.lesson_card_info['background_picture_code'] =  kwargs['background_picture_code']
+            self.lesson_card_info['background_picture_path'] =  kwargs['background_picture_path']
+            self.lesson_card_info['price_per_hour'] =  kwargs['price_per_hour']
+            self.lesson_card_info['lesson_title'] =  kwargs['lesson_title']
+            self.lesson_card_info['highlight_1'] =  kwargs['highlight_1']
+            self.lesson_card_info['highlight_2'] =  kwargs['highlight_2']
+            self.lesson_card_info['highlight_3'] =  kwargs['highlight_3']
+            
+            # 再取得老師資訊與評價資訊
+            self.lesson_card_info['teacher_auth_id'] =  kwargs['teacher_auth_id']
+            self.lesson_card_info['teacher_nickname'] =  teacher_object.nickname
+            self.lesson_card_info['education'] =  teacher_object.education_1
+            self.lesson_card_info['education_is_approved'] =  teacher_object.education_approved
+            self.lesson_card_info['working_experience'] =  teacher_object.company
+            self.lesson_card_info['working_experience_is_approved'] =  teacher_object.work_approved
+
+            self.lesson_card_info['lesson_avg_score'] = review_object.aggregate(Sum('score_given'))['score_given__sum']
+            self.lesson_card_info['lesson_reviewed_times'] = len(review_object)
+
+            return True
+        except:
+            return False
+
