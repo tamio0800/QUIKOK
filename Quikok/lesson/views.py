@@ -308,6 +308,8 @@ def lesson_manage(request):
                     lesson_attributes=  lesson_attributes,
                     selling_status = selling_status
                     ).save()
+
+                    
                 response['status'] = 'success'
                 response['errCode'] = None
                 response['errMsg'] = None
