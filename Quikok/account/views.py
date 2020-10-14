@@ -88,6 +88,38 @@ def create_a_student_user(request):
             is_male = True
         
         if obj is None and auth_obj is None:
+
+
+            
+            ### 長出每個學生相對應資料夾 目前要長的有:放大頭照的資料夾
+            # 將來可能會有成績單或考卷等資料夾
+            #user_folder = username #.replace('@', 'at')
+            # If folder_a was not created, 
+            # os.mkdir(os.path.join('folder_a', 'folder_b')) will result in an error!
+            # and if folder_a was empty, GIT will ignore this folder and remove it from tracked files,
+            # which may cause the error above.
+            if not os.path.isdir('user_upload/students'):
+                os.mkdir(os.path.join('user_upload/students'))
+            os.mkdir(os.path.join('user_upload/students', username))
+            os.mkdir(os.path.join('user_upload/students/'+ username, 'info_folder'))
+            # 存到 user_upload 該使用者的資料夾
+            
+            #大頭照
+            print('學生個人資料夾建立')
+           
+            # 如果沒東西 會是空的  user_upload 看前端取甚麼名字 
+            # 目前學生暫時沒開放此上傳功能 ?? 10/13 what?
+
+            each_file = request.FILES.get("upload_snapshot")
+            if each_file :
+                print('收到學生大頭照: ', each_file.name)
+                folder_where_are_uploaded_files_be ='user_upload/students/' + username
+                fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
+                file_exten = each_file.name.split('.')[-1]
+                fs.save('thumbnail'+'.'+ file_exten , each_file) # 檔名統一改成thumbnail開頭
+                thumbnail_dir = 'user_upload/students/' + username + '/' + 'thumbnail'+'.'+ file_exten
+            else:
+                thumbnail_dir = ''
             #存入auth
             user_created_object = \
                 User.objects.create(
@@ -121,33 +153,11 @@ def create_a_student_user(request):
                 mobile = mobile,
                 user_folder = 'user_upload/'+ username,
                 info_folder = 'user_upload/'+ username+ '/info_folder',
+                thumbnail_dir = thumbnail_dir ,
                 update_someone_by_email = update_someone_by_email
             ).save()
             print('student_profile建立')
 
-            
-            ### 長出每個學生相對應資料夾 目前要長的有:放大頭照的資料夾
-            # 將來可能會有成績單或考卷等資料夾
-            user_folder = username #.replace('@', 'at')
-
-            # If folder_a was not created, 
-            # os.mkdir(os.path.join('folder_a', 'folder_b')) will result in an error!
-            # and if folder_a was empty, GIT will ignore this folder and remove it from tracked files,
-            # which may cause the error above.
-            if not os.path.isdir('user_upload/students'):
-                os.mkdir(os.path.join('user_upload/students'))
-            os.mkdir(os.path.join('user_upload/students', user_folder))
-            os.mkdir(os.path.join('user_upload/students/'+ user_folder, 'info_folder'))
-            # 存到 user_upload 該使用者的資料夾
-            folder_where_are_uploaded_files_be ='user_upload/students/' + user_folder
-            #大頭照
-            print('學生個人資料夾建立')
-            fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
-            # 如果沒東西 會是空的  user_upload 看前端取甚麼名字 
-            # 目前學生暫時沒開放此上傳功能 ?? 10/13 what?
-            for each_file in request.FILES.getlist("user_upload"):
-                print('each_file.name in VIEWS: ', each_file.name)
-                fs.save(each_file.name, each_file)
 
             # 回前端
             response['status'] = 'success'
@@ -265,13 +275,15 @@ def create_a_teacher_user(request):
                 print('收到老師大頭照: ', each_file.name)
                 folder_where_are_uploaded_files_be ='user_upload/teachers/' + user_folder 
                 fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
-                fs.save(each_file.name, each_file)
-                thumbnail_dir = 'user_upload/teachers/' + user_folder + '/' + each_file.name
+                file_exten = each_file.name.split('.')[-1]
+                fs.save('thumbnail'+'.'+ file_exten , each_file) # 檔名統一改成thumbnail開頭
+                thumbnail_dir = 'user_upload/teachers/' + user_folder + '/' + 'thumbnail'+'.'+ file_exten
             # 放未認證證書的資料夾
             for each_file in request.FILES.getlist("upload_cer"):
                 print('收到老師認證資料: ', each_file.name)
                 folder_where_are_uploaded_files_be ='user_upload/teachers/' + user_folder + '/unaproved_cer'
                 fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
+
                 fs.save(each_file.name, each_file)
 
             user_created_object = \
