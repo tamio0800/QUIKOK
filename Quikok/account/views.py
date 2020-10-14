@@ -88,8 +88,6 @@ def create_a_student_user(request):
             is_male = True
         
         if obj is None and auth_obj is None:
-
-
             
             ### 長出每個學生相對應資料夾 目前要長的有:放大頭照的資料夾
             # 將來可能會有成績單或考卷等資料夾
