@@ -137,10 +137,11 @@ def create_a_student_user(request):
             print('學生個人資料夾建立')
             fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
             # 如果沒東西 會是空的  user_upload 看前端取甚麼名字 
-            # 目前學生暫時沒開放此上傳功能
+            # 目前學生暫時沒開放此上傳功能 ?? 10/13 what?
             for each_file in request.FILES.getlist("user_upload"):
                 print('each_file.name in VIEWS: ', each_file.name)
                 fs.save(each_file.name, each_file)
+
 
             # 回前端
             response['status'] = 'success'
@@ -235,10 +236,40 @@ def create_a_teacher_user(request):
         print('判斷收到老師資料是正常的')
         # 先檢查有沒有這個username存在，存在的話會return None給obj
         obj = teacher_profile.objects.filter(username=username).first()
-        auth_obj = User.objects.filter(username=username).first() #? .first是甚麼意思
+        auth_obj = User.objects.filter(username=username).first() 
+
+        
         # 下面這個條件式>> 皆非(a為空 或是 b為空) >> a跟b都不能為空>> annie0918:應該是兩個都要空才對
         if obj is None and auth_obj is None :
             print('還沒註冊過,建立 teacher_profile')
+            ### 長出老師相對應資料夾 
+            # 目前要長的有:放一般圖檔的資料夾user_folder(大頭照、可能之後可放宣傳圖)、未認證的資料夾unaproved_cer、
+            # 已認證過的證書aproved_cer、user_info 將來可能可以放考卷檔案夾之類的、課程統一資料夾lessons、
+            
+            if not os.path.isdir('user_upload/teachers'):
+                os.mkdir(os.path.join('user_upload/teachers'))
+            os.mkdir(os.path.join('user_upload/teachers', user_folder))
+            os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "unaproved_cer"))
+            os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "aproved_cer"))
+            os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "user_info")) # models裡的info_folder
+            os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "lessons"))
+            print('已幫老師建立5個資料夾')
+            # for迴圈如果沒東西會是空的.  getlist()裡面是看前端的 multiple name
+            for each_file in request.FILES.getlist("upload_snapshot"):
+                print('收到老師大頭照: ', each_file.name)
+                folder_where_are_uploaded_files_be ='user_upload/teachers/' + user_folder 
+                fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
+                fs.save(each_file.name, each_file)
+                thumbnail_dir = 'user_upload/teachers/' + user_folder + '/' + each_file.name
+            # 放未認證證書的資料夾
+            for each_file in request.FILES.getlist("upload_cer"):
+                print('收到老師認證資料: ', each_file.name)
+                folder_where_are_uploaded_files_be ='user_upload/teachers/' + user_folder + '/unaproved_cer'
+                fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
+                fs.save(each_file.name, each_file)
+
+
+            
             teacher_profile.objects.create(
                     username = username,
                     password = password,
@@ -251,8 +282,9 @@ def create_a_teacher_user(request):
                     is_male = is_male,
                     intro = intro,
                     mobile = mobile,
+                    thumbnail_dir = thumbnail_dir,
                     user_folder = 'user_upload/'+ user_folder ,
-                    info_folder = 'user_upload/'+ user_folder +'/user_info', #尚未建立此資料夾
+                    info_folder = 'user_upload/'+ user_folder + '/user_info', 
                     tutor_experience = tutor_experience,
                     subject_type = subject_type,
                     education_1 = education_1,
@@ -265,7 +297,8 @@ def create_a_teacher_user(request):
                     work_approved = 0,
                     other_approved = 0, #其他類別的認證勳章
                     #occupation = if_false_return_empty_else_do_nothing(occupation), 
-                    company = company
+                    company = company,
+                    special_exp = special_exp
             ).save()
             print('成功建立 teacher_profile')
             User.objects.create(
@@ -300,29 +333,7 @@ def create_a_teacher_user(request):
             print('老師成功建立 一般時間')    
 
 
-            ### 長出老師相對應資料夾 
-            # 目前要長的有:放一般圖檔的資料夾(大頭照、可能之後可放宣傳圖)、未認證的資料夾、
-            # 已認證過的證書、user_info 將來可能可以放考卷檔案夾之類的
-            
-            if not os.path.isdir('user_upload/teachers'):
-                os.mkdir(os.path.join('user_upload/teachers'))
-            os.mkdir(os.path.join('user_upload/teachers', user_folder))
-            os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "unaproved_cer"))
-            os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "aproved_cer"))
-            os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "user_info")) # models裡的info_folder
-            print('已幫老師建立四個資料夾')
-            # for迴圈如果沒東西會是空的.  getlist()裡面是看前端的 multiple name
-            for each_file in request.FILES.getlist("upload_snapshot"):
-                print('收到老師大頭照: ', each_file.name)
-                folder_where_are_uploaded_files_be ='user_upload/teachers/' + user_folder 
-                fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
-                fs.save(each_file.name, each_file)
-            # 放未認證證書的資料夾
-            for each_file in request.FILES.getlist("upload_cer"):
-                print('收到老師認證資料: ', each_file.name)
-                folder_where_are_uploaded_files_be ='user_upload/teachers/' + user_folder + '/unaproved_cer'
-                fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
-                fs.save(each_file.name, each_file)
+
 
             response['status'] = 'success'
             response['errCode'] = None

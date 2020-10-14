@@ -12,6 +12,7 @@ from lesson.models import lesson_info, lesson_reviews
 from lesson.lesson_tools import lesson_manager
 from django.contrib.auth.decorators import login_required
 
+
 @login_required
 def lessons_main_page(request):
     title = '開課! Quikok - 課程主頁'
@@ -33,8 +34,8 @@ def get_lesson_card(request):
     # 20200911 暫時不開發排序、篩選部分
     # 接收：需要多少小卡(int)、排序依據(string)、篩選依據(string)
     # 需要回傳「相同數量」的課程小卡，包含：
-    # 老師相關：老師圖像、老師暱稱、老師有空的general時段、身分認證、學歷認證、經歷認證、其他認證
-    # 課程相關：課程名稱、課程特點1、課程特點2、課程特點3、課程時薪
+    # 老師相關：老師圖像、老師名字、身分認證、學歷認證、經歷認證、其他認證
+    # 課程相關：課程大標、課程小標、課程名稱、鐘點費、課程特點1、課程特點2、課程特點3
     # http://127.0.0.1:8000/api/lesson/recommend_list?qty=1&ordered_by=%22x%22&filtered_by=%22X%22
     qty = request.GET.get('qty', False) # 暫定六堂課
     #ordered_by = request.GET.get('ordered_by', False)
@@ -43,7 +44,8 @@ def get_lesson_card(request):
     print(qty)
     #print(ordered_by)
     #print(filtered_by)
-    if (not qty or not ordered_by or not filtered_by):
+    if not qty:
+        # 之後等加入條件再改寫法 
         # 收取的資料不正確
         response['status'] = 'failed'
         response['errCode'] = '0'
@@ -204,7 +206,7 @@ def lesson_manage(request):
 
     if request.method == 'POST':
         action = request.POST.get('action', False) # 新增或修改課程
-        lesson_id = request.POST.get('lessonID', False)
+        lesson_id = request.POST.get('lessonID', False) # 新增沒有,修改才有
         # 修改應該只比新增多 "課程id" 這個資訊要拿
         auth_id = request.POST.get('userID', False)
         #auth_id = 2 # 測試用
@@ -283,7 +285,25 @@ def lesson_manage(request):
         # 新增lesson 時的必填欄位, 不得為 False, 雖然前端有做處理但這邊再防傳輸問題
         elif  action == 'createLesson':
             if [selling_status, teacher, lesson_title, price_per_hour, lesson_intro]:
-                lesson_info.objects.create(
+                
+                # 創立這個課的資料夾
+                # 為了要以該課程的id建立資料夾,需要query剛建立好的課程 id
+                # 理論上老師剛新建的課程id會是最新(id最大)的
+                #teacher_id = teacher_profile.objects.get(username = teacher_username)
+                latest_lesson_id = lesson_info.objects.filter(teacher_id = teacher.id).order_by('-id')[0]
+                latest_lesson_id = str(latest_lesson_id.id) # int轉str 檔名要用str
+                lesson_folder = os.path.join('user_upload/teachers/'+teacher_username +'/lessons/' +'lessonID'+ latest_lesson_id)
+                # 建立課程資料夾
+                if not os.path.isdir(lesson_folder):
+                    os.mkdir(os.path.join(lesson_folder))
+                # 儲存這個課的userupload_pic 自定義背景
+                thumbnail = request.FILES.getlist("tUploadBackPic"):
+                print('課程自訂背景圖: ', thumbnail.name)
+                fs = FileSystemStorage(location=lesson_folder)
+                fs.save(thumbnail.name, thumbnail)
+                
+                teacher_upload_back_pic_dir = lesson_folder + '/' + thumbnail.name
+                            lesson_info.objects.create(
                     #lesson_id = lesson_id, 
                     #teacher =teacher 
                     teacher = teacher, #測試
@@ -291,7 +311,8 @@ def lesson_manage(request):
                     little_title= little_title,
                     title_color = title_color,
                     default_background_picture= default_background_picture,
-                    background_picture = background_picture,
+                    background_picture_code = background_picture,
+                    background_picture_path = teacher_upload_back_pic_dir,
                     lesson_title = lesson_title,
                     price_per_hour= price_per_hour,
                     unit_class_price = unit_class_price,
@@ -309,7 +330,7 @@ def lesson_manage(request):
                     selling_status = selling_status
                     ).save()
 
-                    
+    
                 response['status'] = 'success'
                 response['errCode'] = None
                 response['errMsg'] = None
