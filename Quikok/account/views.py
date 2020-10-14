@@ -275,8 +275,11 @@ def create_a_teacher_user(request):
                     print('收到老師大頭照: ', each_file.name)
                     folder_where_are_uploaded_files_be ='user_upload/teachers/' + user_folder 
                     fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
-                    fs.save(each_file.name, each_file)
+                    file_exten = each_file.name.split('.')[-1]
+                    fs.save('thumbnail'+'.'+ file_exten , each_file) # 檔名統一改成thumbnail開頭
                     thumbnail_dir = 'user_upload/teachers/' + user_folder + '/' + each_file.name
+
+    
             else:
                 print('沒收到老師大頭照')
                 # 可能依照性別使用預設的圖片

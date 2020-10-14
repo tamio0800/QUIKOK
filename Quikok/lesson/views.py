@@ -209,8 +209,8 @@ def lesson_manage(request):
         action = request.POST.get('action', False) # 新增或修改課程
         lesson_id = request.POST.get('lessonID', False) # 新增沒有,修改才有
         # 修改應該只比新增多 "課程id" 這個資訊要拿
-        auth_id = request.POST.get('userID', False)
-        #auth_id = 2 # 測試用
+        #auth_id = request.POST.get('userID', False)
+        auth_id = 2 # 測試用
         teacher_username = User.objects.get(id = auth_id).username
         # 用老師username當key從auth找profile
         teacher = teacher_profile.objects.get(username = teacher_username)
@@ -218,8 +218,7 @@ def lesson_manage(request):
         big_title = request.POST.get('big_title', False)
         little_title= request.POST.get('little_title', False)
         title_color= request.POST.get('title_color', False)
-        background_picture_code= request.POST.get('default_background_picture', False)
-        background_picture_path= request.POST.get('background_picture', False)
+        background_picture_code= request.POST.get('choose_background_picture', False)
         lesson_title = request.POST.get('lesson_title', False)
         
         price_per_hour= request.POST.get('price_per_hour', False)
@@ -293,23 +292,6 @@ def lesson_manage(request):
         elif  action == 'createLesson':
             if [selling_status, teacher, lesson_title, price_per_hour, lesson_intro]:
                 
-                # 創立這個課的資料夾
-                # 為了要以該課程的id建立資料夾,需要query剛建立好的課程 id
-                # 理論上老師剛新建的課程id會是最新(id最大)的
-                #teacher_id = teacher_profile.objects.get(username = teacher_username)
-                latest_lesson_id = lesson_info.objects.filter(teacher_id = teacher.id).order_by('-id')[0]
-                latest_lesson_id = str(latest_lesson_id.id) # int轉str 檔名要用str
-                lesson_folder = os.path.join('user_upload/teachers/'+teacher_username +'/lessons/' +'lessonID'+ latest_lesson_id)
-                # 建立課程資料夾
-                if not os.path.isdir(lesson_folder):
-                    os.mkdir(os.path.join(lesson_folder))
-                # 儲存這個課的userupload_pic 自定義背景
-                thumbnail = request.FILES.getlist("tUploadBackPic")
-                print('課程自訂背景圖: ', thumbnail.name)
-                fs = FileSystemStorage(location=lesson_folder)
-                fs.save(thumbnail.name, thumbnail)
-                teacher_upload_back_pic_dir = lesson_folder + '/' + thumbnail.name
-                
                 new_created_object = \
                     lesson_info.objects.create(
                         #lesson_id = lesson_id, 
@@ -318,9 +300,9 @@ def lesson_manage(request):
                         big_title = big_title,
                         little_title= little_title,
                         title_color = title_color,
-                        default_background_picture= default_background_picture,
+                        #default_background_picture= default_background_picture,
                         background_picture_code= background_picture_code,
-                        background_picture_path = background_picture_path,
+                        background_picture_path = '', # 這個值在此課程的資料夾建立後再update填入
                         lesson_title = lesson_title,
                         price_per_hour= price_per_hour,
                         # unit_class_price = unit_class_price,
@@ -338,6 +320,29 @@ def lesson_manage(request):
                         selling_status = selling_status
                         )
                 new_created_object.save()
+
+                # 創立這個課的資料夾
+                # 為了要以該課程的id建立資料夾,需要query剛建立好的課程 id
+                # 理論上老師剛新建的課程id會是最新(id最大)的
+                #teacher_id = teacher_profile.objects.get(username = teacher_username)
+                #latest_lesson_id = lesson_info.objects.filter(teacher_id = teacher.id).order_by('-id')[0]
+                #latest_lesson_id = str(latest_lesson_id.id) # int轉str 檔名要用str
+                lesson_id = str(new_created_object.id) # 這樣拿更快
+                lesson_folder = os.path.join('user_upload/teachers/'+teacher_username +\
+                    '/lessons/' +'lessonID'+ lesson_id)
+                # 建立課程資料夾
+                if not os.path.isdir(lesson_folder):
+                    os.mkdir(os.path.join(lesson_folder))
+                # 儲存這個課的userupload_pic 自定義背景
+                background = request.FILES.get("tUploadBackPic")
+                print('課程自訂背景圖: ', background.name)
+                file_exten = background.name.split('.')[-1]
+                back_pic_full_name = 'lesson'+ lesson_id +'upload_back_pic'+'.'+ file_exten
+                fs.save(back_pic_full_name , background) # 改檔名
+                background_pic_path = 'user_upload/teachers/' + \
+                                    username + '/lessons/' + back_pic_full_name
+                new_created_object.update(background_picture_path = background_pic_path)
+
 
                 # ================課程小卡================
                 lesson_card_manager.setup_a_lesson_card(

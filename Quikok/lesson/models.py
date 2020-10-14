@@ -15,7 +15,7 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     # teacher  =  models.CharField(max_length = 150) # = username
     big_title = models.CharField(max_length = 10)  # 背景圖片的大標題
     little_title = models.CharField(max_length = 10)  # 背景圖片的小標題
-    title_color = models.IntegerField() # 標題顏色, 0:白色、1:黑色
+    title_color = models.CharField(max_length = 10) # 標題顏色, 0:白色、1:黑色
     background_picture_code = models.IntegerField() 
     # 這個用來儲存user選擇了什麼樣的上架背景圖，舉例來說99代表user自己上傳的圖，這時我們要找到對應的路徑回傳給前端；
     # 如果今天這個值是1、2、3之類的Quikok預設圖片，那我們直接回傳代號給前端即可。
