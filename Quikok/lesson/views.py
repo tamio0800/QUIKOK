@@ -288,7 +288,25 @@ def lesson_manage(request):
         # 新增lesson 時的必填欄位, 不得為 False, 雖然前端有做處理但這邊再防傳輸問題
         elif  action == 'createLesson':
             if [selling_status, teacher, lesson_title, price_per_hour, lesson_intro]:
-                lesson_info.objects.create(
+                
+                # 創立這個課的資料夾
+                # 為了要以該課程的id建立資料夾,需要query剛建立好的課程 id
+                # 理論上老師剛新建的課程id會是最新(id最大)的
+                #teacher_id = teacher_profile.objects.get(username = teacher_username)
+                latest_lesson_id = lesson_info.objects.filter(teacher_id = teacher.id).order_by('-id')[0]
+                latest_lesson_id = str(latest_lesson_id.id) # int轉str 檔名要用str
+                lesson_folder = os.path.join('user_upload/teachers/'+teacher_username +'/lessons/' +'lessonID'+ latest_lesson_id)
+                # 建立課程資料夾
+                if not os.path.isdir(lesson_folder):
+                    os.mkdir(os.path.join(lesson_folder))
+                # 儲存這個課的userupload_pic 自定義背景
+                thumbnail = request.FILES.getlist("tUploadBackPic"):
+                print('課程自訂背景圖: ', thumbnail.name)
+                fs = FileSystemStorage(location=lesson_folder)
+                fs.save(thumbnail.name, thumbnail)
+                
+                teacher_upload_back_pic_dir = lesson_folder + '/' + thumbnail.name
+                            lesson_info.objects.create(
                     #lesson_id = lesson_id, 
                     #teacher =teacher 
                     teacher = teacher, #測試
@@ -296,7 +314,8 @@ def lesson_manage(request):
                     little_title= little_title,
                     title_color = title_color,
                     default_background_picture= default_background_picture,
-                    background_picture = background_picture,
+                    background_picture_code = background_picture,
+                    background_picture_path = teacher_upload_back_pic_dir,
                     lesson_title = lesson_title,
                     price_per_hour= price_per_hour,
                     unit_class_price = unit_class_price,
@@ -313,19 +332,8 @@ def lesson_manage(request):
                     lesson_attributes=  lesson_attributes,
                     selling_status = selling_status
                     ).save()
-                
-                # 創立這個課的資料夾
-                # 為了要以該課程的id建立資料夾,需要query剛建立好的課程 id
-                # 理論上老師剛新建的課程id會是最新(id最大)的
-                #teacher_id = teacher_profile.objects.get(username = teacher_username)
-                latest_lesson_id = lesson_info.objects.filter(teacher_id = teacher.id).order_by('-id')[0]
-                latest_lesson_id = str(latest_lesson_id.id) # int轉str 檔名要用str
-                if not os.path.isdir('user_upload/teachers/'+ teacher_username +'/lessons/' +'lessonID'+ latest_lesson_id):
-                    os.mkdir(os.path.join('user_upload/teachers/'+teacher_username +'/lessons/' +'lessonID'+ latest_lesson_id))
-            ###測試區 希望可以讓回傳直接看到 id (目前是 lesson_id 但這個col之後會刪掉
-            #teacher = teacher_profile.objects.get(username = 'tt@tt.com')
-            #lesson_info.objects.filter(teacher_id = teacher.id)
-            ###
+
+    
                 response['status'] = 'success'
                 response['errCode'] = None
                 response['errMsg'] = None

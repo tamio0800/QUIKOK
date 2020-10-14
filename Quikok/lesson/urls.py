@@ -7,8 +7,8 @@ urlpatterns = [
     path('recommendList/', views.get_lesson_card),
     path('import_lesson/', views.import_lesson),
     path('createlesson/', views.lesson_manage),
-    path('test_create_lesson/', views.lesson_manage),
-    path('editlesson/', views.lesson_manage),
-    path('show_lesson_detail/', views.lesson_manage),
+    path('testCreateLesson/', views.lesson_manage),
+    path('editLesson/', views.lesson_manage),
+    path('showLessonDetail/', views.lesson_manage),
     
 ]
