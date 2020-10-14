@@ -9,11 +9,10 @@ from django.core.files.storage import FileSystemStorage
 import pandas as pd
 from account.models import teacher_profile
 from lesson.models import lesson_info, lesson_reviews
-from lesson.lesson_tools import lesson_manager
+from lesson.lesson_tools import lesson_manager, lesson_card_manager
 from django.contrib.auth.decorators import login_required
 
-
-
+lesson_card_manager = lesson_card_manager()
 
 
 @login_required
@@ -153,8 +152,8 @@ def lesson_manage(request):
                 big_title = show_lesson.big_title
                 little_title = show_lesson.little_title
                 title_color = show_lesson.title_color
-                default_background_picture = show_lesson.default_background_picture
-                background_picture = show_lesson.background_picture
+                background_picture_code = show_lesson.background_picture_code
+                background_picture_path = show_lesson.background_picture_path
                 lesson_title = show_lesson.lesson_title
                 price_per_hour= show_lesson.price_per_hour
                 trial_class_price = show_lesson.trial_class_price
@@ -175,8 +174,8 @@ def lesson_manage(request):
                         'big_title' : big_title,
                         'little_title' :little_title,
                         'title_color' : title_color,
-                        'default_background_picture' : default_background_picture,
-                        'background_picture' : background_picture,
+                        'default_background_picture' : background_picture_code,
+                        'background_picture' : background_picture_path,
                         'lesson_title' : lesson_title,
                         'price_per_hour' :price_per_hour,
                         'trial_class_price': trial_class_price,
@@ -204,7 +203,6 @@ def lesson_manage(request):
                     response['errCode'] = '1'
                     response['errMsg'] = 'query failed: false in required field'
 
-
             return render(request, 'lesson/create_lesson.html')
 
     if request.method == 'POST':
@@ -220,8 +218,8 @@ def lesson_manage(request):
         big_title = request.POST.get('big_title', False)
         little_title= request.POST.get('little_title', False)
         title_color= request.POST.get('title_color', False)
-        default_background_picture= request.POST.get('default_background_picture', False)
-        background_picture= request.POST.get('background_picture', False)
+        background_picture_code= request.POST.get('default_background_picture', False)
+        background_picture_path= request.POST.get('background_picture', False)
         lesson_title = request.POST.get('lesson_title', False)
         
         price_per_hour= request.POST.get('price_per_hour', False)
@@ -242,8 +240,6 @@ def lesson_manage(request):
         lesson_attributes = request.POST.get('lesson_attributes', False)
         selling_status = request.POST.get('sellStatus', False)
 
-
-        
         if action == 'editLesson': 
             # 如果 lesson_id 有值表示是要修改欄位,多加一個action條件防意外
             if  [lesson_id,teacher, lesson_title, price_per_hour, lesson_intro]:
@@ -253,11 +249,11 @@ def lesson_manage(request):
                         big_title = big_title,
                         little_title= little_title,
                         title_color = title_color,
-                        default_background_picture= default_background_picture,
-                        background_picture = background_picture,
+                        background_picture_code= background_picture_code,
+                        background_picture_path = background_picture_path,
                         lesson_title = lesson_title,
                         price_per_hour= price_per_hour,
-                        unit_class_price = unit_pclass_price,
+                        # unit_class_price = unit_class_price,
                         trial_class_price = trial_class_price,
                         discount_price = discount_price,
                         highlight_1 = highlight_1,
@@ -271,6 +267,14 @@ def lesson_manage(request):
                         lesson_attributes=  lesson_attributes,
                         selling_status = selling_status
                     )
+
+                    # ================課程小卡================
+                    lesson_card_manager.setup_a_lesson_card(
+                        corresponding_lesson_id = lesson_id,
+                        teacher_auth_id = auth_id,
+                    )
+                    # ================課程小卡================ 
+
                     response['status'] = 'success'
                     response['errCode'] = None
                     response['errMsg'] = None
@@ -305,35 +309,42 @@ def lesson_manage(request):
                 fs = FileSystemStorage(location=lesson_folder)
                 fs.save(thumbnail.name, thumbnail)
                 teacher_upload_back_pic_dir = lesson_folder + '/' + thumbnail.name
-                            
-                lesson_info.objects.create(
-                    #lesson_id = lesson_id, 
-                    #teacher =teacher 
-                    teacher = teacher, #測試
-                    big_title = big_title,
-                    little_title= little_title,
-                    title_color = title_color,
-                    default_background_picture= default_background_picture,
-                    background_picture_code = background_picture,
-                    background_picture_path = teacher_upload_back_pic_dir,
-                    lesson_title = lesson_title,
-                    price_per_hour= price_per_hour,
-                    unit_class_price = unit_class_price,
-                    trial_class_price = trial_class_price,
-                    discount_price = discount_price,
-                    highlight_1 = highlight_1,
-                    highlight_2 = highlight_2,
-                    highlight_3 = highlight_3,
-                    lesson_intro = lesson_intro,
-                    how_does_lesson_go = how_does_lesson_go,
-                    target_students = target_students,
-                    syllabus = syllabus,
-                    lesson_remarks = lesson_remarks,
-                    lesson_attributes=  lesson_attributes,
-                    selling_status = selling_status
-                    ).save()
+                
+                new_created_object = \
+                    lesson_info.objects.create(
+                        #lesson_id = lesson_id, 
+                        #teacher =teacher 
+                        teacher = teacher, #測試
+                        big_title = big_title,
+                        little_title= little_title,
+                        title_color = title_color,
+                        default_background_picture= default_background_picture,
+                        background_picture_code= background_picture_code,
+                        background_picture_path = background_picture_path,
+                        lesson_title = lesson_title,
+                        price_per_hour= price_per_hour,
+                        # unit_class_price = unit_class_price,
+                        trial_class_price = trial_class_price,
+                        discount_price = discount_price,
+                        highlight_1 = highlight_1,
+                        highlight_2 = highlight_2,
+                        highlight_3 = highlight_3,
+                        lesson_intro = lesson_intro,
+                        how_does_lesson_go = how_does_lesson_go,
+                        target_students = target_students,
+                        syllabus = syllabus,
+                        lesson_remarks = lesson_remarks,
+                        lesson_attributes=  lesson_attributes,
+                        selling_status = selling_status
+                        )
+                new_created_object.save()
 
-    
+                # ================課程小卡================
+                lesson_card_manager.setup_a_lesson_card(
+                        corresponding_lesson_id = new_created_object.id,
+                        teacher_auth_id = auth_id,
+                    )
+                # ================課程小卡================ 
                 response['status'] = 'success'
                 response['errCode'] = None
                 response['errMsg'] = None
