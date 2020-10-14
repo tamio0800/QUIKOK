@@ -308,7 +308,6 @@ def lesson_manage(request):
                 print('課程自訂背景圖: ', thumbnail.name)
                 fs = FileSystemStorage(location=lesson_folder)
                 fs.save(thumbnail.name, thumbnail)
-                
                 teacher_upload_back_pic_dir = lesson_folder + '/' + thumbnail.name
                 
                 new_created_object = \
