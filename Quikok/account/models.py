@@ -6,6 +6,7 @@ class userToken(models.Model):
 
 class student_profile(models.Model):
     # 這是for存放一般會員/學生的額外資訊
+    auth_id = models.IntegerField()  # 將用戶的auth_id聯動過來，方便進行query
     username = models.CharField(max_length = 150)
     password = models.CharField(max_length = 128)
     balance = models.IntegerField(default=0)  # 這個是帳戶餘額
@@ -30,6 +31,7 @@ class student_profile(models.Model):
 
 class teacher_profile(models.Model):
     # 這是for存放老師的額外資訊
+    auth_id = models.IntegerField()  # 將用戶的auth_id聯動過來，方便進行query
     username = models.CharField(max_length = 150) # 帳號
     password = models.CharField(max_length = 128)
     balance = models.IntegerField(default=0)  # 這個是帳戶餘額
