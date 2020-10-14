@@ -22,6 +22,7 @@ class student_profile(models.Model):
     # picture_folder = models.ImageField(default = 'snapshop_default.png', blank =True)
     user_folder = models.CharField(max_length = 60) #該user最外層的資料夾路徑  從 picture_folder 改名,與老師的命名統一
     info_folder = models.CharField(max_length = 100)  # 資料夾路徑，存放個人檔案（暫不使用）
+    thumbnail_dir = models.CharField(max_length = 150)
     update_someone_by_email = models.CharField(max_length = 405, blank=True)
     date_join = models.DateTimeField(auto_now_add=True)
     # 為了使回傳platform名稱而不是object
