@@ -297,13 +297,13 @@ def lesson_manage(request):
                 if not os.path.isdir(lesson_folder):
                     os.mkdir(os.path.join(lesson_folder))
                 # 儲存這個課的userupload_pic 自定義背景
-                thumbnail = request.FILES.getlist("tUploadBackPic"):
+                thumbnail = request.FILES.getlist("tUploadBackPic")
                 print('課程自訂背景圖: ', thumbnail.name)
                 fs = FileSystemStorage(location=lesson_folder)
                 fs.save(thumbnail.name, thumbnail)
-                
                 teacher_upload_back_pic_dir = lesson_folder + '/' + thumbnail.name
-                            lesson_info.objects.create(
+                            
+                lesson_info.objects.create(
                     #lesson_id = lesson_id, 
                     #teacher =teacher 
                     teacher = teacher, #測試
