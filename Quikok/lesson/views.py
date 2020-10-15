@@ -187,8 +187,8 @@ def lesson_manage(request):
                     response['status'] = 'failed'
                     response['errCode'] = '1'
                     response['errMsg'] = 'query failed: false in required field'
-
-            return render(request, 'lesson/create_lesson.html')
+            return JsonResponse(response) 
+            #return render(request, 'lesson/create_lesson.html') #測試頁面
 
     if request.method == 'POST':
         action = request.POST.get('action', False) # 新增或修改課程
@@ -314,20 +314,28 @@ def lesson_manage(request):
                 #latest_lesson_id = str(latest_lesson_id.id) # int轉str 檔名要用str
                 lesson_id = str(new_created_object.id) # 這樣拿更快
                 lesson_folder = os.path.join('user_upload/teachers/'+teacher_username +\
-                    '/lessons/' +'lessonID'+ lesson_id)
+                    '/lessons/' +'lessonID_'+ lesson_id)
                 # 建立課程資料夾
                 if not os.path.isdir(lesson_folder):
                     os.mkdir(os.path.join(lesson_folder))
                 # 儲存這個課的userupload_pic 自定義背景
-                background = request.FILES.get("tUploadBackPic")
-                print('課程自訂背景圖: ', background.name)
-                file_exten = background.name.split('.')[-1]
-                back_pic_full_name = 'lesson'+ lesson_id +'upload_back_pic'+'.'+ file_exten
-                fs.save(back_pic_full_name , background) # 改檔名
-                background_pic_path = 'user_upload/teachers/' + \
-                                    username + '/lessons/' + back_pic_full_name
-                new_created_object.update(background_picture_path = background_pic_path)
-
+                background = request.FILES.get("tUploadBackPic", False)
+                if background is not False:
+                    print('課程自訂背景圖: ', background.name)
+                    file_exten = background.name.split('.')[-1]
+                    # 完整檔名
+                    back_pic_full_name = 'lesson_'+ lesson_id +'_upload_back_pic'+'.'+ file_exten
+                    # 完整路徑名稱
+                    background_pic_path = 'user_upload/teachers/' + \
+                    teacher_username + '/lessons/lessonID_' + lesson_id
+                    fs = FileSystemStorage(location=background_pic_path)
+                    fs.save(back_pic_full_name , background) # 改檔名
+                    back_pic_path_add_name = background_pic_path +back_pic_full_name
+                    # 寫入背景圖路徑
+                    new_update_object= \
+                        lesson_info.objects.filter(id = lesson_id).update(background_picture_path = back_pic_path_add_name)
+                else:
+                    pass # 不更新背景景圖路徑    
 
                 # ================課程小卡================
                 lesson_card_manager.setup_a_lesson_card(
@@ -348,8 +356,8 @@ def lesson_manage(request):
             response['errCode'] = '2'
             response['errMsg'] = 'what is action?'
     print(response)
-    #return JsonResponse(response)    
-    return render(request, 'lesson/create_lesson.html')#後端測試用
+    return JsonResponse(response)    
+    #return render(request, 'lesson/create_lesson.html')#後端測試用
 
 
     #lesson_info.objects.create(
