@@ -8,7 +8,7 @@ from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.core.files.storage import FileSystemStorage
 import pandas as pd
 from account.models import teacher_profile
-from lesson.models import lesson_info, lesson_reviews
+from lesson.models import lesson_info, lesson_reviews, lesson_card
 from lesson.lesson_tools import lesson_manager, lesson_card_manager
 from django.contrib.auth.decorators import login_required
 
@@ -44,8 +44,7 @@ def get_lesson_card(request):
     #filtered_by = request.GET.get('filtered_by', False)
     response = {}
     print(qty)
-    #print(ordered_by)
-    #print(filtered_by)
+
     if not qty:
         # 之後等加入條件再改寫法 
         # 收取的資料不正確
@@ -59,25 +58,11 @@ def get_lesson_card(request):
         # order_by 跟 filtered_by 暫時不寫
         qty = int(qty)
         _data = []
-        lesson_objects = lesson_info.objects.filter()[:qty]
-        for each_lesson_object in lesson_objects:
+        lesson_card_objects = lesson_card.objects.filter()[:qty]
+        for each_lesson_card_object in lesson_card_objects:
             lesson_attributes = {}
-            lesson_attributes['teacher_thumbnail'] = os.path.join(each_lesson_object.teacher.picture_folder, 'thumbnail.png')
-            lesson_attributes['teacher_nickname'] = each_lesson_object.teacher.nickname
-            available_time = {}
-            teacher_general_time_obj = each_lesson_object.teacher.general_time
-            for each_week in teacher_general_time_obj.filter():
-                available_time[each_week.week] = each_week.time
-            lesson_attributes['teacher_general_availabale_time'] = available_time
-            lesson_attributes['teacher_id_approved'] = each_lesson_object.teacher.id_approved
-            lesson_attributes['teacher_education_approved'] = each_lesson_object.teacher.education_approved
-            lesson_attributes['teacher_work_approved'] = each_lesson_object.teacher.work_approved
-            lesson_attributes['teacher_other_approved'] = each_lesson_object.teacher.other_approved
-            lesson_attributes['lesson_title'] = each_lesson_object.lesson_title
-            lesson_attributes['highlight_1'] = each_lesson_object.highlight_1
-            lesson_attributes['highlight_2'] = each_lesson_object.highlight_2
-            lesson_attributes['highlight_3'] = each_lesson_object.highlight_3
-            lesson_attributes['price_per_hour'] = each_lesson_object.price_per_hour
+            
+            
             _data.append(lesson_attributes)
         
         response['status'] = 'success'

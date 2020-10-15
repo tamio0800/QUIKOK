@@ -360,28 +360,22 @@ def create_a_teacher_user(request):
                                 ).save()
             print('老師成功建立 一般時間')    
 
-
-
-
             response['status'] = 'success'
             response['errCode'] = None
             response['errMsg'] = None
             response['data'] = None
-
         else:
             print('此帳號已註冊過!')
             response['status'] = 'failed'
             response['errCode'] = '0'
             response['errMsg'] = 'username taken'# 使用者已註冊
             response['data'] = None
-       
     else:
         # 資料有問題
         response['status'] = 'failed'
         response['errCode'] = '1'
         response['errMsg'] = 'wrong data'
         response['data'] = None
-        
     
     return JsonResponse(response)
 

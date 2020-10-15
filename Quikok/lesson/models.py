@@ -15,7 +15,7 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     # teacher  =  models.CharField(max_length = 150) # = username
     big_title = models.CharField(max_length = 10)  # 背景圖片的大標題
     little_title = models.CharField(max_length = 10)  # 背景圖片的小標題
-    title_color = models.CharField(max_length = 10) # 標題顏色, 0:白色、1:黑色
+    title_color = models.CharField(max_length = 7) # 標題顏色 以色碼存入，  >> #\d{6}
     background_picture_code = models.IntegerField() 
     # 這個用來儲存user選擇了什麼樣的上架背景圖，舉例來說99代表user自己上傳的圖，這時我們要找到對應的路徑回傳給前端；
     # 如果今天這個值是1、2、3之類的Quikok預設圖片，那我們直接回傳代號給前端即可。
@@ -24,7 +24,16 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     price_per_hour = models.IntegerField()  # 該門課程的鐘點費
     # unit_class_price = models.IntegerField() # 單堂課程的鐘點費
     trial_class_price = models.IntegerField()  # 該門課程的試上鐘點費
-    discount_price = models.CharField(max_length = 20) # 優惠折數
+    discount_price = models.CharField(max_length = 30) # 優惠折數
+    # discount_price說明
+    # 假設老師勾選了方案一 & 方案二 & 方案三，內容各自為：
+    # 一次購買「10」小時，提供總價「95」%優惠價..
+    # 一次購買「20」小時，提供總價「80」%優惠價..
+    # 一次購買「30」小時，提供總價「70」%優惠價..
+    # 此時 discount_price >> "10:95;20:80;30:70;"。
+    # 若只勾選方案一，則為：
+    # discount_price >> "10:95;"
+
     highlight_1 = models.CharField(max_length = 10)  # 亮點介紹1，不要超過10個字元長
     highlight_2 = models.CharField(max_length = 10)  # 亮點介紹2，不要超過10個字元長
     highlight_3 = models.CharField(max_length = 10)  # 亮點介紹3，不要超過10個字元長
@@ -62,15 +71,17 @@ class lesson_card(models.Model):
     corresponding_lesson_id = models.IntegerField()  # 所對應的課程id
     big_title = models.CharField(max_length = 10)  # 背景圖片的大標題
     little_title = models.CharField(max_length = 10)  # 背景圖片的小標題
-    title_color = models.IntegerField() # 標題顏色, 0:白色、1:黑色
+    title_color = models.CharField(max_length = 7)    
     background_picture_code = models.IntegerField()
     background_picture_path = models.CharField(max_length = 80) # 指向上傳圖的路徑
     lesson_avg_score = models.FloatField(default = 0.0) # 這個是平均評分，每次評分表一更新這裡也會連動更新
     lesson_reviewed_times = models.IntegerField(default = 0) # 這個是課程被評分過幾次的統計
     teacher_auth_id = models.IntegerField()
     teacher_nickname = models.CharField(max_length = 40)
+    teacher_thumbnail_path = models.CharField(max_length = 150)  # 老師的大頭照路徑
     price_per_hour = models.IntegerField()  # 該門課程的鐘點費
     lesson_title = models.CharField(max_length = 14) # 課程的名稱
+    best_sale = models.CharField(max_length = 20) # 用來吸引人的最優惠折價標語
     education = models.CharField(max_length = 60, blank=True)  # 最高學歷說明
     education_is_approved = models.BooleanField()
     working_experience = models.CharField(max_length = 100, blank=True)  # 經歷說明
