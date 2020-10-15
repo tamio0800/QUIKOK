@@ -70,12 +70,30 @@ class lesson_card_manager:
     
     def setup_a_lesson_card(self, **kwargs):
         # 當課程建立或是修改時，同步編修課程小卡資料
+
         try:
             teacher_object = teacher_profile.objects.filter(auth_id = kwargs['teacher_auth_id']).first()
             lesson_object = lesson_info.objects.filter(id = kwargs['corresponding_lesson_id']).first()
             review_objects = lesson_reviews.objects.filter(corresponding_lesson_id = kwargs['corresponding_lesson_id'])
             
-            
+            def get_lesson_s_best_sale(lesson_id):
+                trial_class_price = lesson_object.trial_class_price
+                price_per_hour = lesson_object.price_per_hour
+                if trial_class_price is not None and trial_class_price < price_per_hour:
+                    # 有試教優惠的話就直接回傳
+                    return "試課優惠"
+                else:
+                    discount_price = lesson_object.discount_price
+                    discount_pairs = discount_price.split(';')
+                    all_discounts = [int(_.split(':')[-1]) for _ in discount_pairs if len(_) > 0]
+                    if len(all_discounts) == 0:
+                        # 沒有折數
+                        return None
+                    else:
+                        best_discount = min(all_discounts)
+                        return str(100 - best_discount) + '% off'
+                        # 反之則回傳  xx% off
+
             # 先取得課程本身的資訊
             self.lesson_card_info['corresponding_lesson_id'] =  kwargs['corresponding_lesson_id']
             self.lesson_card_info['big_title'] =  lesson_object.big_title
@@ -88,16 +106,19 @@ class lesson_card_manager:
             self.lesson_card_info['highlight_1'] =  lesson_object.highlight_1
             self.lesson_card_info['highlight_2'] =  lesson_object.highlight_2
             self.lesson_card_info['highlight_3'] =  lesson_object.highlight_3
-            
+            self.lesson_card_info['best_sale'] = get_lesson_s_best_sale(kwargs['corresponding_lesson_id'])
+        
             # 再取得老師資訊與評價資訊
             self.lesson_card_info['teacher_auth_id'] =  kwargs['teacher_auth_id']
             self.lesson_card_info['teacher_nickname'] =  teacher_object.nickname
+            self.lesson_card_info['teacher_thumbnail_path'] =  teacher_object.thumbnail_dir
+            
             self.lesson_card_info['education'] =  teacher_object.education_1
             self.lesson_card_info['education_is_approved'] =  teacher_object.education_approved
             self.lesson_card_info['working_experience'] =  teacher_object.company
             self.lesson_card_info['working_experience_is_approved'] =  teacher_object.work_approved
   
-            if len(review_object) == 0:
+            if len(review_objects) == 0:
                 # 這是一個新上架的課程或是沒有人給予過評論
                 self.lesson_card_info['lesson_reviewed_times'] = 0
                 self.lesson_card_info['lesson_avg_score'] = 0
@@ -112,4 +133,7 @@ class lesson_card_manager:
             return True
         except:
             return False
+    
+    
+
 

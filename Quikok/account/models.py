@@ -140,6 +140,7 @@ class favorite_lessons(models.Model):
     # 不特別限定老師或是學生使用
     follower_auth_id = models.IntegerField()
     lesson_id = models.IntegerField()
+    teacher_auth_id = models.IntegerField()  # 這個用來表示這門課是誰開的
     def __str__(self):
         return str(self.follower_auth_id)
 
