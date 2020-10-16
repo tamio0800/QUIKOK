@@ -70,6 +70,9 @@ class lesson_card_manager:
     
     def setup_a_lesson_card(self, **kwargs):
         # 當課程建立或是修改時，同步編修課程小卡資料
+        print("Activate setup_a_lesson_card!!!!")
+        from account.models import teacher_profile
+        from lesson.models import lesson_info, lesson_reviews, lesson_card
 
         try:
             teacher_object = teacher_profile.objects.filter(auth_id = kwargs['teacher_auth_id']).first()
@@ -127,11 +130,12 @@ class lesson_card_manager:
                 self.lesson_card_info['lesson_avg_score'] = review_objects.aggregate(_sum = Sum('score_given'))['_sum']
 
             lesson_card.objects.create(
-                self.lesson_card_info
+                **self.lesson_card_info
             ).save()
 
             return True
-        except:
+        except Exception as e:
+            print(e)
             return False
     
     

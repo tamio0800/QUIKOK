@@ -7,12 +7,12 @@ from account.models import student_profile, teacher_profile, specific_available_
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.core.files.storage import FileSystemStorage
 import pandas as pd
-from account.models import teacher_profile
+from account.models import teacher_profile, favorite_lessons
 from lesson.models import lesson_info, lesson_reviews, lesson_card
 from lesson.lesson_tools import lesson_manager, lesson_card_manager
 from django.contrib.auth.decorators import login_required
 
-lesson_card_manager = lesson_card_manager()
+
 
 
 @login_required
@@ -40,6 +40,7 @@ def get_lesson_card(request):
     # 課程相關：課程大標、課程小標、課程名稱、鐘點費、課程特點1、課程特點2、課程特點3
     # http://127.0.0.1:8000/api/lesson/recommend_list?qty=1&ordered_by=%22x%22&filtered_by=%22X%22
     qty = request.GET.get('qty', False) # 暫定六堂課
+    user_auth_id = request.GET.get('userID', False)
     #ordered_by = request.GET.get('ordered_by', False)
     #filtered_by = request.GET.get('filtered_by', False)
     response = {}
@@ -59,10 +60,37 @@ def get_lesson_card(request):
         qty = int(qty)
         _data = []
         lesson_card_objects = lesson_card.objects.filter()[:qty]
+        user_s_all_favorite_lessons_ids = \
+            favorite_lessons.objects.filter(follower_auth_id = user_auth_id).values_list('lesson_id')
+        # 上面會回傳類似[(1,), (2,), (3,)...]的型態
+        user_s_all_favorite_lessons_ids = [_[0] for _ in user_s_all_favorite_lessons_ids]
+
         for each_lesson_card_object in lesson_card_objects:
             lesson_attributes = {}
-            
-            
+            lesson_attributes['teacher_thumbnail_path'] = each_lesson_card_object.teacher_thumbnail_path
+            lesson_attributes['teacher_nickname'] = each_lesson_card_object.teacher_nickname
+            lesson_attributes['teacher_auth_id'] = each_lesson_card_object.teacher_auth_id
+            lesson_attributes['big_title'] = each_lesson_card_object.big_title
+            lesson_attributes['little_title'] = each_lesson_card_object.little_title
+            lesson_attributes['title_color'] = each_lesson_card_object.title_color
+            lesson_attributes['background_picture_code'] = each_lesson_card_object.background_picture_code
+            lesson_attributes['background_picture_path'] = each_lesson_card_object.background_picture_path
+            lesson_attributes['lesson_title'] = each_lesson_card_object.lesson_title
+            lesson_attributes['highlight_1'] = each_lesson_card_object.highlight_1
+            lesson_attributes['highlight_2'] = each_lesson_card_object.highlight_2
+            lesson_attributes['highlight_3'] = each_lesson_card_object.highlight_3
+            lesson_attributes['price_per_hour'] = each_lesson_card_object.price_per_hour
+            lesson_attributes['best_sale'] = each_lesson_card_object.best_sale
+
+            lesson_attributes['education'] = each_lesson_card_object.education
+            lesson_attributes['education_is_approved'] = each_lesson_card_object.education_is_approved
+            lesson_attributes['working_experience'] = each_lesson_card_object.working_experience
+            lesson_attributes['working_experience_is_approved'] = each_lesson_card_object.working_experience_is_approved
+            lesson_attributes['lesson_avg_score'] = each_lesson_card_object.lesson_avg_score
+            lesson_attributes['lesson_reviewed_times'] = each_lesson_card_object.lesson_reviewed_times
+            lesson_attributes['is_this_my_favorite_lesson'] = \
+                each_lesson_card_object.id in user_s_all_favorite_lessons_ids
+
             _data.append(lesson_attributes)
         
         response['status'] = 'success'
@@ -70,10 +98,8 @@ def get_lesson_card(request):
         response['errMsg'] = None
         response['data'] = _data
         return JsonResponse(response)
-        
-# 課程相關：課程名稱、課程特點1、課程特點2、課程特點3、課程時薪
-    return render(request, 'lesson/lessons_main_page.html', locals())
 
+        
 
 def import_lesson(request):
     title = '批次匯入課程'
@@ -119,6 +145,10 @@ def import_lesson(request):
 def lesson_manage(request):
     # 新增課程
     response = {}
+    
+    the_lesson_card_manager = lesson_card_manager()
+    # 創建lesson_card_manager類別
+
     # 當學生瀏覽課程、老師預覽/修改上架內容
     # 差異化的功能selling_status<學生瀏覽課程調資料時應該不用回傳@@ 或是只回傳selling?
     if request.method == 'GET' :
@@ -208,7 +238,7 @@ def lesson_manage(request):
         
         price_per_hour= request.POST.get('price_per_hour', False)
         #price_per_hour = 300
-        unit_class_price = request.POST.get('unitClassPrice', 0)
+        # unit_class_price = request.POST.get('unitClassPrice', 0)
         #unit_class_price = 300
         #單節費用 有勾選前端回傳鐘點費金額 無勾選前端回傳null
         trial_class_price = request.POST.get('trialClassPrice', 0)
@@ -226,7 +256,7 @@ def lesson_manage(request):
 
         if action == 'editLesson': 
             # 如果 lesson_id 有值表示是要修改欄位,多加一個action條件防意外
-            if  [lesson_id,teacher, lesson_title, price_per_hour, lesson_intro]:
+            if  [lesson_id, teacher, lesson_title, price_per_hour, lesson_intro]:
                 lesson_obj = lesson_info.objects.filter(id = lesson_id)
                 if lesson_obj:
                     lesson_obj.update(
@@ -253,7 +283,7 @@ def lesson_manage(request):
                     )
 
                     # ================課程小卡================
-                    lesson_card_manager.setup_a_lesson_card(
+                    the_lesson_card_manager.setup_a_lesson_card(
                         corresponding_lesson_id = lesson_id,
                         teacher_auth_id = auth_id,
                     )
@@ -332,13 +362,12 @@ def lesson_manage(request):
                     fs.save(back_pic_full_name , background) # 改檔名
                     back_pic_path_add_name = background_pic_path +back_pic_full_name
                     # 寫入背景圖路徑
-                    new_update_object= \
-                        lesson_info.objects.filter(id = lesson_id).update(background_picture_path = back_pic_path_add_name)
+                    lesson_info.objects.filter(id = int(lesson_id)).update(background_picture_path = back_pic_path_add_name)
                 else:
                     pass # 不更新背景景圖路徑    
 
                 # ================課程小卡================
-                lesson_card_manager.setup_a_lesson_card(
+                the_lesson_card_manager.setup_a_lesson_card(
                         corresponding_lesson_id = new_created_object.id,
                         teacher_auth_id = auth_id,
                     )

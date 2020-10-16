@@ -20,8 +20,8 @@ class student_profile(models.Model):
     role = models.CharField(max_length = 40)
     mobile = models.CharField(max_length = 12)
     # picture_folder = models.ImageField(default = 'snapshop_default.png', blank =True)
-    user_folder = models.CharField(max_length = 60) #該user最外層的資料夾路徑  從 picture_folder 改名,與老師的命名統一
-    info_folder = models.CharField(max_length = 100)  # 資料夾路徑，存放個人檔案（暫不使用）
+    user_folder = models.CharField(max_length = 400) #該user最外層的資料夾路徑  從 picture_folder 改名,與老師的命名統一
+    info_folder = models.CharField(max_length = 400)  # 資料夾路徑，存放個人檔案（暫不使用）
     thumbnail_dir = models.CharField(max_length = 150)
     update_someone_by_email = models.CharField(max_length = 405, blank=True)
     date_join = models.DateTimeField(auto_now_add=True)
@@ -46,8 +46,8 @@ class teacher_profile(models.Model):
     intro = models.CharField(max_length = 150)  # 簡短介紹，不要超過150個字元長
     mobile = models.CharField(max_length = 12)
     thumbnail_dir = models.CharField(max_length = 150) # 老師頭像完整路徑 thumbnail_dir
-    user_folder = models.CharField(max_length = 60)  # 該user最外層的資料夾路徑
-    info_folder = models.CharField(max_length = 100)  # 資料夾路徑，存放個人檔案目前暫沒使用
+    user_folder = models.CharField(max_length = 400)  # 該user最外層的資料夾路徑
+    info_folder = models.CharField(max_length = 400)  # 資料夾路徑，存放個人檔案目前暫沒使用
     tutor_experience = models.CharField(max_length = 12)  # 改成下拉式選單 五種分類
     subject_type = models.CharField(max_length = 400) # 科目名稱也可包含教課對象
     # id_cert = models.CharField(max_length = 150) 整合進下方的cert..裡面
