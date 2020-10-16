@@ -421,12 +421,14 @@ def signin(request):
                         picture = user_is_teacher.thumbnail_dir
                         nickname = user_is_teacher.nickname
                         is_male = user_is_teacher.is_male
+                        balance = ''
                     else:
                         user_type = 'student'
                         user_is_student = student_profile.objects.filter(username=username).first()
                         picture = user_is_student.thumbnail_dir
                         nickname = user_is_student.nickname
                         is_male = user_is_student.is_male
+                        balance = user_is_student.balance
 
                     response['status'] = 'success'
                     response['errCode'] = None
@@ -438,7 +440,10 @@ def signin(request):
                         'username': username,
                         'is_male': is_male,
                         'type': user_type,
-                        'user_token': token,}
+                        'user_token': token,
+                        'deposit': balance,
+                        'message': '', # 是否有未讀聊天室訊息, 這邊等聊天室做了再補
+                        }
                     print('成功登入', response)
 
                 else:
@@ -466,7 +471,7 @@ def signin(request):
     return JsonResponse(response)    
 
 
-# 頁面權限檢查
+# 頁面權限檢查 目前身分有:老師/學生/訪客
 @require_http_methods(['POST'])
 def auth_check(request):
     response = {}
@@ -480,20 +485,23 @@ def auth_check(request):
     logout_date = user.logout_time
     time_has_passed = time - logout_date
     
-    # 超過十四天未登入,直接沒有權限、需再登入
-    if time_has_passed.days > 13:
-        response['status'] = 'success'
-        response['errCode'] = '0'
-        response['errMsg'] = 'more than 14 days'
-        response['data'] = {'authority': False}
+    if user_id is not False: 
+        # 超過十四天未登入,直接沒有權限、需再登入
+        if time_has_passed.days > 13:
+            response['status'] = 'success'
+            response['errCode'] = '0'
+            response['errMsg'] = 'more than 14 days'
+            response['data'] = {'authority': False}
 
-    else:
-        if token_from_user == token_in_db:
-            # 進入檢查該網站權限程序
-            pass 
         else:
-            pass
-
+            if token_from_user == token_in_db:
+                # 進入檢查該網站權限程序
+                pass 
+            else:
+                pass
+    # 可能是訪客
+    else:
+        pass
 
         
 
