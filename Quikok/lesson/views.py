@@ -14,7 +14,6 @@ from django.contrib.auth.decorators import login_required
 
 
 
-
 @login_required
 def lessons_main_page(request):
     title = '開課! Quikok - 課程主頁'
@@ -32,13 +31,9 @@ def lessons_main_page(request):
 
 
 @require_http_methods(['GET'])
-def get_lesson_card(request):
+def get_lesson_cards_for_common_users(request):
     # 20200911 暫時不開發排序、篩選部分
-    # 接收：需要多少小卡(int)、排序依據(string)、篩選依據(string)
-    # 需要回傳「相同數量」的課程小卡，包含：
-    # 老師相關：老師圖像、老師名字、身分認證、學歷認證、經歷認證、其他認證
-    # 課程相關：課程大標、課程小標、課程名稱、鐘點費、課程特點1、課程特點2、課程特點3
-    # http://127.0.0.1:8000/api/lesson/recommend_list?qty=1&ordered_by=%22x%22&filtered_by=%22X%22
+    # 接收：需要多少小卡(int)、排序依據(string)、篩選依據(string)、觀看的用戶
     qty = request.GET.get('qty', False) # 暫定六堂課
     user_auth_id = request.GET.get('userID', False)
     #ordered_by = request.GET.get('ordered_by', False)
@@ -59,11 +54,11 @@ def get_lesson_card(request):
         # order_by 跟 filtered_by 暫時不寫
         qty = int(qty)
         _data = []
-        lesson_card_objects = lesson_card.objects.filter()[:qty]
+        selling_lessons_ids = lesson_info.objects.filter(selling_status='selling').values_list('id', flat=True)
+        lesson_card_objects = lesson_card.objects.filter(corresponding_lesson_id__in = selling_lessons_ids)[:qty]
+
         user_s_all_favorite_lessons_ids = \
-            favorite_lessons.objects.filter(follower_auth_id = user_auth_id).values_list('lesson_id')
-        # 上面會回傳類似[(1,), (2,), (3,)...]的型態
-        user_s_all_favorite_lessons_ids = [_[0] for _ in user_s_all_favorite_lessons_ids]
+            favorite_lessons.objects.filter(follower_auth_id = user_auth_id).values_list('lesson_id', flat=True)
 
         for each_lesson_card_object in lesson_card_objects:
             lesson_attributes = {}
@@ -90,13 +85,65 @@ def get_lesson_card(request):
             lesson_attributes['lesson_reviewed_times'] = each_lesson_card_object.lesson_reviewed_times
             lesson_attributes['is_this_my_favorite_lesson'] = \
                 each_lesson_card_object.id in user_s_all_favorite_lessons_ids
-
             _data.append(lesson_attributes)
         
         response['status'] = 'success'
         response['errCode'] = None
         response['errMsg'] = None
         response['data'] = _data
+        return JsonResponse(response)
+
+
+@require_http_methods(['GET'])
+def get_lesson_cards_for_the_teacher_who_created_them(request):
+    user_auth_id = request.GET.get('userID', False)
+    # 這裡的user_auth_id就是指那個老師
+    response = {}
+    if not user_auth_id:
+        # 之後等加入條件再改寫法 
+        # 收取的資料不正確
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = 'Found no teacher.'
+        response['data'] = None
+        return JsonResponse(response)
+    else:
+        # 收取的資料正確，準備撈資料回傳
+        # order_by 跟 filtered_by 暫時不寫
+        data = []
+        lesson_objects = lesson_info.objects.filter(teacher_id = user_auth_id)
+
+        def intro_briefed(intro_texts, length=32):
+            _ = intro_texts[:length].strip()
+            if len(_) == 32:
+                return _ + '...'
+            else:
+                return _
+
+        for each_lesson_object in lesson_objects:
+            lesson_attributes = {}
+            lesson_attributes['lesson_status'] = each_lesson_object.selling_status
+            lesson_attributes['price_per_hour'] = each_lesson_object.price_per_hour
+            lesson_attributes['brief_lesson_intro'] = intro_briefed(each_lesson_object.lesson_intro)
+            lesson_attributes['background_picture_code'] = each_lesson_object.background_picture_code
+            lesson_attributes['background_picture_path'] = each_lesson_object.background_picture_path
+            lesson_attributes['lesson_title'] = each_lesson_cardeach_lesson_object_object.lesson_title
+
+            sales_package = list()
+            if each_lesson_object.trial_class_price is not None:
+                sales_package.append('試教 $' + str(each_lesson_object.trial_class_price))
+            if each_lesson_object.lesson_has_one_hour_package:
+                sales_package.append('單堂')
+            for i, j in [_.split(':') for _ in each_lesson_object.discount_price.split(';') if len(_)]:
+                sales_package.append(i + 'hr ' + j + '%')
+            lesson_attributes['sales_package'] = ';'.join(sales_package)
+
+            data.append(lesson_attributes)
+        
+        response['status'] = 'success'
+        response['errCode'] = None
+        response['errMsg'] = None
+        response['data'] = data
         return JsonResponse(response)
 
         
@@ -155,34 +202,36 @@ def lesson_manage(request):
         #action = request.POST.get('action', False)#測試用
         action = request.GET.get('action', False)
         if  action == 'showLesson':
-            #lesson_id = request.POST.get('lessonID', False) 
+            # 取得課程內容
+            # lesson_id = request.POST.get('lessonID', False) 
             lesson_id = request.GET.get('lesson_id', False) # 測試用
             # lesson_id是False也會回傳none
-            show_lesson = lesson_info.objects.filter(id = lesson_id).first()
-            if show_lesson is None:
+            lesson_object = lesson_info.objects.filter(id = lesson_id).first()
+            if lesson_object is None:
                 response['status'] = 'failed'
                 response['errCode'] = '0'
-                response['errMsg'] = 'get nothing or cannot find the lesson'
+                response['errMsg'] = 'Found no lesson.'
             else:
-                big_title = show_lesson.big_title
-                little_title = show_lesson.little_title
-                title_color = show_lesson.title_color
-                background_picture_code = show_lesson.background_picture_code
-                background_picture_path = show_lesson.background_picture_path
-                lesson_title = show_lesson.lesson_title
-                price_per_hour= show_lesson.price_per_hour
-                trial_class_price = show_lesson.trial_class_price
-                discount_price = show_lesson.discount_price
-                highlight_1 = show_lesson.highlight_1
-                highlight_2 = show_lesson.highlight_2
-                highlight_3 = show_lesson.highlight_3
-                lesson_intro = show_lesson.lesson_intro 
-                how_does_lesson_go = show_lesson.how_does_lesson_go
-                target_students = show_lesson.target_students
-                syllabus = show_lesson.syllabus
-                lesson_remarks = show_lesson.lesson_remarks
-                lesson_attributes = show_lesson.lesson_attributes
-                selling_status = show_lesson.selling_status
+                big_title = lesson_object.big_title
+                little_title = lesson_object.little_title
+                title_color = lesson_object.title_color
+                background_picture_code = lesson_object.background_picture_code
+                background_picture_path = lesson_object.background_picture_path
+                lesson_title = lesson_object.lesson_title
+                price_per_hour= lesson_object.price_per_hour
+
+                trial_class_price = lesson_object.trial_class_price
+                discount_price = lesson_object.discount_price
+                highlight_1 = lesson_object.highlight_1
+                highlight_2 = lesson_object.highlight_2
+                highlight_3 = lesson_object.highlight_3
+                lesson_intro = lesson_object.lesson_intro 
+                how_does_lesson_go = lesson_object.how_does_lesson_go
+                target_students = lesson_object.target_students
+                syllabus = lesson_object.syllabus
+                lesson_remarks = lesson_object.lesson_remarks
+                lesson_attributes = lesson_object.lesson_attributes
+                selling_status = lesson_object.selling_status
             
                 if  [lesson_title, price_per_hour, lesson_intro, selling_status]:
                     data = [{
@@ -238,7 +287,11 @@ def lesson_manage(request):
         
         price_per_hour= request.POST.get('price_per_hour', False)
         #price_per_hour = 300
-        # unit_class_price = request.POST.get('unitClassPrice', 0)
+        unit_class_price = request.POST.get('unitClassPrice', False)
+        if unit_class_price:
+            lesson_has_one_hour_package = True
+        else:
+            lesson_has_one_hour_package = False
         #unit_class_price = 300
         #單節費用 有勾選前端回傳鐘點費金額 無勾選前端回傳null
         trial_class_price = request.POST.get('trialClassPrice', 0)
@@ -267,7 +320,7 @@ def lesson_manage(request):
                         background_picture_path = background_picture_path,
                         lesson_title = lesson_title,
                         price_per_hour= price_per_hour,
-                        # unit_class_price = unit_class_price,
+                        lesson_has_one_hour_package = lesson_has_one_hour_package,
                         trial_class_price = trial_class_price,
                         discount_price = discount_price,
                         highlight_1 = highlight_1,
@@ -320,7 +373,7 @@ def lesson_manage(request):
                         background_picture_path = '', # 這個值在此課程的資料夾建立後再update填入
                         lesson_title = lesson_title,
                         price_per_hour= price_per_hour,
-                        # unit_class_price = unit_class_price,
+                        lesson_has_one_hour_package = lesson_has_one_hour_package,
                         trial_class_price = trial_class_price,
                         discount_price = discount_price,
                         highlight_1 = highlight_1,

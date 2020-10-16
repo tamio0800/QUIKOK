@@ -67,7 +67,6 @@ class lesson_card_manager:
     def __init__(self):
         self.lesson_card_info = dict()
 
-    
     def setup_a_lesson_card(self, **kwargs):
         # 當課程建立或是修改時，同步編修課程小卡資料
         print("Activate setup_a_lesson_card!!!!")

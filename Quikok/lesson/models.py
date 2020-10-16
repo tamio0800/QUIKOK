@@ -8,6 +8,12 @@ class test_class(models.Model):
     def __str__(self):
         return str(self.id)
 
+class test_class2(models.Model):
+    title = models.CharField(max_length=20)
+    class1 = models.ForeignKey(test_class, on_delete=models.CASCADE) 
+    def __str__(self):
+        return str(self.id)
+
 class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的東西填入
     # 每堂課程會有自己的unique id，我們用這個來辨識、串連課程 09/25 討論後認為先用內建的id就好
     # lesson_id = models.CharField(max_length = 40) 
@@ -22,6 +28,7 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     background_picture_path = models.CharField(max_length = 400) # 指向上傳圖的路徑
     lesson_title = models.CharField(max_length = 14) # 課程的名稱
     price_per_hour = models.IntegerField()  # 該門課程的鐘點費
+    lesson_has_one_hour_package = models.BooleanField()  # 該門課程是否可以單堂出售
     # unit_class_price = models.IntegerField() # 單堂課程的鐘點費
     trial_class_price = models.IntegerField()  # 該門課程的試上鐘點費
     discount_price = models.CharField(max_length = 30) # 優惠折數
@@ -33,7 +40,6 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     # 此時 discount_price >> "10:95;20:80;30:70;"。
     # 若只勾選方案一，則為：
     # discount_price >> "10:95;"
-
     highlight_1 = models.CharField(max_length = 10)  # 亮點介紹1，不要超過10個字元長
     highlight_2 = models.CharField(max_length = 10)  # 亮點介紹2，不要超過10個字元長
     highlight_3 = models.CharField(max_length = 10)  # 亮點介紹3，不要超過10個字元長
@@ -59,7 +65,8 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     lesson_reviewed_times = models.IntegerField(default = 0) # 這個是課程被評分過幾次的統計
     created_time = models.DateTimeField(auto_now_add = True)
     selling_status = models.CharField(max_length = 20)
-    #  販售狀態 : 草稿/上架/ 沒上架/ 刪 draft/selling/notSelling/donotShow
+    # 販售狀態 >>
+    #   草稿: draft, 上架: selling, 沒上架: notSelling, 刪除: donotShow
     def __str__(self):
         return str(self.id)
 

@@ -10,6 +10,7 @@ class auth_check(models.Model):
     surf_url = models.CharField(max_length=300) # 正在瀏覽的網址,不含流水號
     #auth_approve = models.BooleanField()
 
+
 class student_profile(models.Model):
     # 這是for存放一般會員/學生的額外資訊
     auth_id = models.IntegerField()  # 將用戶的auth_id聯動過來，方便進行query
