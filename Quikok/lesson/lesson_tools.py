@@ -1,4 +1,4 @@
-from account.models import teacher_profile
+from account.models import teacher_profile, favorite_lessons
 from lesson.models import lesson_info, lesson_reviews, lesson_card
 from django.contrib.auth.models import User
 from django.db.models import Avg, Sum  
@@ -9,9 +9,68 @@ import os
 
 class lesson_manager:
     def __init__(self):
-        pass # ?
+        self.status = ''
+        self.errCode = None
+        self.errMsg = None
+        self.data = dict()
+
+    def return_lesson_details(self, lesson_id, user_auth_id, for_whom='common_users'):
+        # for_whom接收的參數有兩個，'common_users' 以及 'teacher_who_created_it'
+        if for_whom == 'common_users':
+            # 給一般user看的，不需要特別檢查該user是否為本課程的創始人。
+            lesson_object = lesson_info.objects.filter(id=lesson_id).first()
+            if lesson_object is None:
+                self.status = 'failed'
+                self.errCode = 1
+                self.errMsg = 'Found No Lesson.'
+                return (self.status, self.errCode, self.errMsg, self.data)
+        elif for_whom == 'teacher_who_created_it':
+            # 在這裡for_whomfrom_whom指的是teacher's auth_id
+            lesson_object = lesson_info.objects.filter(id=lesson_id).filter(teacher__auth_id=user_auth_id).first()
+            if lesson_object is None:
+                self.status = 'failed'
+                self.errCode = 2
+                self.errMsg = 'Found No Lesson OR Non Match User.'
+                return (self.status, self.errCode, self.errMsg, self.data)        
+        _data = self.fetch_lesson_details(lesson_id=lesson_id)
+        # print(_data)
+        self.status = 'success'
+        self.errCode = None
+        self.errMsg = None
+
+        # 在下面定義API的回傳, 就是回傳資料加工區啦
+        exclude_columns = [
+            'id', 'lesson_has_one_hour_package', 'teacher_id', 'created_time']      
+        for each_col in _data.keys():
+            if each_col not in exclude_columns:
+                self.data[each_col] = _data[each_col]
+        if _data['lesson_has_one_hour_package']:
+            self.data['unitClassPrice'] = _data['price_per_hour']
+        else:
+            self.data['unitClassPrice'] = None
+        # 課程的資料加工完畢，來點開課老師本身的資訊
+        self.data['is_this_teacher_male'] = \
+            teacher_profile.objects.filter(auth_id=lesson_object.teacher_id).first().is_male
+
+        # 如果for_whom == 'common_users'，要加上資訊: 這門課是不是該user的最愛?   
+        if for_whom == 'common_users':
+            this_user_favorite_lessons_object = favorite_lessons.objects.filter(follower_auth_id=user_auth_id)
+            if this_user_favorite_lessons_object is None:
+                self.data['is_this_my_favorite_lesson'] = False
+            else:
+                this_user_favorite_lessons_s_ids = this_user_favorite_lessons_object.values_list('lesson_id', flat=True)
+                self.data['is_this_my_favorite_lesson'] = \
+                    lesson_id in this_user_favorite_lessons_s_ids
+        
+        return (self.status, self.errCode, self.errMsg, self.data)
+            
+    def fetch_lesson_details(self, lesson_id):
+        # print('fetch_lesson_details 1')
+        lesson_object = lesson_info.objects.filter(id = lesson_id)
+        return lesson_object.values()[0]
     
     def create_lesson(self, **kwargs):
+        # 年久失修，不要直接用唷！！
         response = {}
         #lesson_id = '某個規則'
         
@@ -114,6 +173,7 @@ class lesson_card_manager:
             self.lesson_card_info['teacher_auth_id'] =  kwargs['teacher_auth_id']
             self.lesson_card_info['teacher_nickname'] =  teacher_object.nickname
             self.lesson_card_info['teacher_thumbnail_path'] =  teacher_object.thumbnail_dir
+            self.lesson_card_info['is_this_teacher_male'] =  teacher_object.is_male
             
             self.lesson_card_info['education'] =  teacher_object.education_1
             self.lesson_card_info['education_is_approved'] =  teacher_object.education_approved

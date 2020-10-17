@@ -68,10 +68,8 @@ class teacher_profile(models.Model):
     date_join = models.DateTimeField(auto_now_add = True)
     special_exp = models.CharField(max_length = 300, blank=True)# 其他經歷或特殊專長
 
-
     def __str__(self):
         return self.username
-
 
 class connects(models.Model):
     # 關係人table用來標註哪些人可以接收到哪些人的學習報告、資料等，有串聯的再於這個table中建立資料。
@@ -80,7 +78,6 @@ class connects(models.Model):
     
     def __str__(self):
         return self.username
-
 
 class dev_db(models.Model):
     username = models.CharField(max_length = 120)
@@ -95,7 +92,7 @@ class dev_db(models.Model):
 
 
 class general_available_time(models.Model):
-    teacher_id =models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='general_time')        
+    teacher_id = models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='general_time')        
     week=models.CharField(max_length=1)      #sun=6, mon=0, tue=1,...,
     time=models.CharField(max_length=133)       #Example:0,1,2,3,4,5,47
     # len(','.join([str(__ for _ in range(48)])) >> 133 

@@ -17,6 +17,7 @@ from django.http import JsonResponse
 import json
 from django.middleware.csrf import get_token
 from datetime import datetime, timedelta
+import shutil
 
 def is_num(target):
     try:
@@ -27,8 +28,6 @@ def is_num(target):
             return False
     except:
         return False
-
-
 
 
 def date_string_2_dateformat(target_string):
@@ -98,6 +97,11 @@ def create_a_student_user(request):
             # which may cause the error above.
             if not os.path.isdir('user_upload/students'):
                 os.mkdir(os.path.join('user_upload/students'))
+
+            if os.path.isdir(os.path.join('user_upload/students', username)):
+                # 如果已經有了這個資料夾，就刪除裡面所有項目並且重建
+                shutil.rmtree(os.path.join('user_upload/students', username))
+                print('User Folder Already Existed >> Rebuild It.')
             os.mkdir(os.path.join('user_upload/students', username))
             os.mkdir(os.path.join('user_upload/students/'+ username, 'info_folder'))
             # 存到 user_upload 該使用者的資料夾
@@ -262,6 +266,10 @@ def create_a_teacher_user(request):
             
             if not os.path.isdir('user_upload/teachers'):
                 os.mkdir(os.path.join('user_upload/teachers'))
+            if os.path.isdir(os.path.join('user_upload/teachers', user_folder)):
+                # 如果已經有了這個資料夾，就刪除裡面所有項目並且重建
+                shutil.rmtree(os.path.join('user_upload/teachers', user_folder))
+                print('User Folder Already Existed >> Rebuild It.')
             os.mkdir(os.path.join('user_upload/teachers', user_folder))
             os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "unaproved_cer"))
             os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "aproved_cer"))

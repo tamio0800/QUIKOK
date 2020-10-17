@@ -80,6 +80,7 @@ class lesson_card(models.Model):
     teacher_thumbnail_path = models.CharField(max_length = 400)  # 老師的大頭照路徑
     teacher_nickname = models.CharField(max_length = 40)
     teacher_auth_id = models.IntegerField()
+    is_this_teacher_male = models.BooleanField(default=True)
     big_title = models.CharField(max_length = 10)  # 背景圖片的大標題
     little_title = models.CharField(max_length = 10)  # 背景圖片的小標題
     title_color = models.CharField(max_length = 7)    

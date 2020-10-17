@@ -55,36 +55,42 @@ def get_lesson_cards_for_common_users(request):
         qty = int(qty)
         _data = []
         selling_lessons_ids = lesson_info.objects.filter(selling_status='selling').values_list('id', flat=True)
-        lesson_card_objects = lesson_card.objects.filter(corresponding_lesson_id__in = selling_lessons_ids)[:qty]
-
+        lesson_card_objects_values_set = lesson_card.objects.filter(corresponding_lesson_id__in = selling_lessons_ids)[:qty].values()
+        # lesson_card_objects_values_set = lesson_card.objects.filter()[:qty].values()
         user_s_all_favorite_lessons_ids = \
             favorite_lessons.objects.filter(follower_auth_id = user_auth_id).values_list('lesson_id', flat=True)
 
-        for each_lesson_card_object in lesson_card_objects:
-            lesson_attributes = {}
-            lesson_attributes['teacher_thumbnail_path'] = each_lesson_card_object.teacher_thumbnail_path
-            lesson_attributes['teacher_nickname'] = each_lesson_card_object.teacher_nickname
-            lesson_attributes['teacher_auth_id'] = each_lesson_card_object.teacher_auth_id
-            lesson_attributes['big_title'] = each_lesson_card_object.big_title
-            lesson_attributes['little_title'] = each_lesson_card_object.little_title
-            lesson_attributes['title_color'] = each_lesson_card_object.title_color
-            lesson_attributes['background_picture_code'] = each_lesson_card_object.background_picture_code
-            lesson_attributes['background_picture_path'] = each_lesson_card_object.background_picture_path
-            lesson_attributes['lesson_title'] = each_lesson_card_object.lesson_title
-            lesson_attributes['highlight_1'] = each_lesson_card_object.highlight_1
-            lesson_attributes['highlight_2'] = each_lesson_card_object.highlight_2
-            lesson_attributes['highlight_3'] = each_lesson_card_object.highlight_3
-            lesson_attributes['price_per_hour'] = each_lesson_card_object.price_per_hour
-            lesson_attributes['best_sale'] = each_lesson_card_object.best_sale
-
-            lesson_attributes['education'] = each_lesson_card_object.education
-            lesson_attributes['education_is_approved'] = each_lesson_card_object.education_is_approved
-            lesson_attributes['working_experience'] = each_lesson_card_object.working_experience
-            lesson_attributes['working_experience_is_approved'] = each_lesson_card_object.working_experience_is_approved
-            lesson_attributes['lesson_avg_score'] = each_lesson_card_object.lesson_avg_score
-            lesson_attributes['lesson_reviewed_times'] = each_lesson_card_object.lesson_reviewed_times
+        for each_lesson_card_object_values in lesson_card_objects_values_set:
+            lesson_attributes = each_lesson_card_object_values
             lesson_attributes['is_this_my_favorite_lesson'] = \
-                each_lesson_card_object.id in user_s_all_favorite_lessons_ids
+                lesson_attributes['corresponding_lesson_id'] in user_s_all_favorite_lessons_ids
+            
+            lesson_attributes.pop('id', None)
+            lesson_attributes.pop('corresponding_lesson_id', None)
+            # 以上drop掉這兩個keys
+
+            #lesson_attributes['teacher_thumbnail_path'] = each_lesson_card_object.teacher_thumbnail_path
+            #lesson_attributes['teacher_nickname'] = each_lesson_card_object.teacher_nickname
+            #lesson_attributes['teacher_auth_id'] = each_lesson_card_object.teacher_auth_id
+            #lesson_attributes['big_title'] = each_lesson_card_object.big_title
+            #lesson_attributes['little_title'] = each_lesson_card_object.little_title
+            #lesson_attributes['title_color'] = each_lesson_card_object.title_color
+            #lesson_attributes['background_picture_code'] = each_lesson_card_object.background_picture_code
+            #lesson_attributes['background_picture_path'] = each_lesson_card_object.background_picture_path
+            #lesson_attributes['lesson_title'] = each_lesson_card_object.lesson_title
+            #lesson_attributes['highlight_1'] = each_lesson_card_object.highlight_1
+            #lesson_attributes['highlight_2'] = each_lesson_card_object.highlight_2
+            #lesson_attributes['highlight_3'] = each_lesson_card_object.highlight_3
+            #lesson_attributes['price_per_hour'] = each_lesson_card_object.price_per_hour
+            #lesson_attributes['best_sale'] = each_lesson_card_object.best_sale
+
+            #lesson_attributes['education'] = each_lesson_card_object.education
+            #lesson_attributes['education_is_approved'] = each_lesson_card_object.education_is_approved
+            #lesson_attributes['working_experience'] = each_lesson_card_object.working_experience
+            #lesson_attributes['working_experience_is_approved'] = each_lesson_card_object.working_experience_is_approved
+            #lesson_attributes['lesson_avg_score'] = each_lesson_card_object.lesson_avg_score
+            #lesson_attributes['lesson_reviewed_times'] = each_lesson_card_object.lesson_reviewed_times
+            
             _data.append(lesson_attributes)
         
         response['status'] = 'success'
@@ -111,7 +117,7 @@ def get_lesson_cards_for_the_teacher_who_created_them(request):
         # 收取的資料正確，準備撈資料回傳
         # order_by 跟 filtered_by 暫時不寫
         data = []
-        lesson_objects = lesson_info.objects.filter(teacher_id = user_auth_id)
+        lesson_objects = lesson_info.objects.filter(teacher__auth_id = user_auth_id)
 
         def intro_briefed(intro_texts, length=32):
             _ = intro_texts[:length].strip()
@@ -127,7 +133,7 @@ def get_lesson_cards_for_the_teacher_who_created_them(request):
             lesson_attributes['brief_lesson_intro'] = intro_briefed(each_lesson_object.lesson_intro)
             lesson_attributes['background_picture_code'] = each_lesson_object.background_picture_code
             lesson_attributes['background_picture_path'] = each_lesson_object.background_picture_path
-            lesson_attributes['lesson_title'] = each_lesson_cardeach_lesson_object_object.lesson_title
+            lesson_attributes['lesson_title'] = each_lesson_object.lesson_title
 
             sales_package = list()
             if each_lesson_object.trial_class_price is not None:
@@ -189,10 +195,89 @@ def import_lesson(request):
     return render(request, 'lesson/import_lesson.html',locals())
 
 
+@require_http_methods(['GET'])
+def return_lesson_details_for_teacher_who_created_it(request):
+    # http://127.0.0.1:8000/api/lesson/returnLessonDetailsForTeacherWhoCreatedIt/?action=editLesson&userID=2&lessonID=1
+    response = dict()
+    the_lesson_manager = lesson_manager()
+    action = request.GET.get('action', False)
+    teacher_auth_id = request.GET.get('userID', False)
+    lesson_id = request.GET.get('lessonID', False)
+
+    print('action', action)
+    print('teacher_auth_id', teacher_auth_id)
+    print('lesson_id', lesson_id)
+
+    if action != 'editLesson':
+        response['status'] = 'failed'
+        response['errCode'] = 0
+        response['errMsg'] = 'Unknown Action'
+        response['data'] = None
+        return JsonResponse(response)
+    else:
+        print('check1')
+        try:
+            status, errCode, errMsg, _data = the_lesson_manager.return_lesson_details(
+                lesson_id=lesson_id,
+                user_auth_id = teacher_auth_id,
+                for_whom='teacher_who_created_it',
+            )
+            response['status'] = status
+            response['errCode'] = errCode
+            response['errMsg'] = errMsg
+            response['data'] = _data
+            return JsonResponse(response)
+        except:
+            response['status'] = 'failed'
+            response['errCode'] = 3
+            response['errMsg'] = 'Querying Failed.'
+            response['data'] = None
+            return JsonResponse(response)
+            
+
+@require_http_methods(['GET'])
+def return_lesson_details_for_browsing(request):
+    # http://127.0.0.1:8000/api/lesson/returnLessonDetailsForTeacherWhoCreatedIt/?action=5&userID=2&lessonID=1
+    response = dict()
+    the_lesson_manager = lesson_manager()
+    action = request.GET.get('action', False)
+    teacher_auth_id = request.GET.get('userID', False)
+    lesson_id = request.GET.get('lessonID', False)
+
+    print('action', action)
+    print('teacher_auth_id', teacher_auth_id)
+    print('lesson_id', lesson_id)
+
+    if action != 'browsing':
+        response['status'] = 'failed'
+        response['errCode'] = 0
+        response['errMsg'] = 'Unknown Action'
+        response['data'] = None
+        return JsonResponse(response)
+    else:
+        print('check1')
+        try:
+            status, errCode, errMsg, _data = the_lesson_manager.return_lesson_details(
+                lesson_id=lesson_id,
+                user_auth_id = teacher_auth_id,
+                for_whom='common_users',
+            )
+            response['status'] = status
+            response['errCode'] = errCode
+            response['errMsg'] = errMsg
+            response['data'] = _data
+            return JsonResponse(response)
+        except:
+            response['status'] = 'failed'
+            response['errCode'] = 3
+            response['errMsg'] = 'Querying Failed.'
+            response['data'] = None
+            return JsonResponse(response)
+
+
 def lesson_manage(request):
     # 新增課程
     response = {}
-    
     the_lesson_card_manager = lesson_card_manager()
     # 創建lesson_card_manager類別
 
@@ -201,7 +286,7 @@ def lesson_manage(request):
     if request.method == 'GET' :
         #action = request.POST.get('action', False)#測試用
         action = request.GET.get('action', False)
-        if  action == 'showLesson':
+        if action == 'showLesson':
             # 取得課程內容
             # lesson_id = request.POST.get('lessonID', False) 
             lesson_id = request.GET.get('lesson_id', False) # 測試用
@@ -219,7 +304,6 @@ def lesson_manage(request):
                 background_picture_path = lesson_object.background_picture_path
                 lesson_title = lesson_object.lesson_title
                 price_per_hour= lesson_object.price_per_hour
-
                 trial_class_price = lesson_object.trial_class_price
                 discount_price = lesson_object.discount_price
                 highlight_1 = lesson_object.highlight_1
