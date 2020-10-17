@@ -5,6 +5,12 @@ class userToken(models.Model):
     token = models.CharField(max_length=60) # hash密碼
     logout_time = models.CharField(max_length=60) # 登入的時間+14天
 
+class auth_check(models.Model):
+    url_type = models.CharField(max_length=30) # teacher, student, public
+    surf_url = models.CharField(max_length=300) # 正在瀏覽的網址,不含流水號
+    #auth_approve = models.BooleanField()
+
+
 class student_profile(models.Model):
     # 這是for存放一般會員/學生的額外資訊
     auth_id = models.IntegerField()  # 將用戶的auth_id聯動過來，方便進行query
