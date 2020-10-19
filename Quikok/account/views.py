@@ -391,52 +391,55 @@ def create_a_teacher_user(request):
 
 
 # 登入
+@require_http_methods(['POST'])
 def signin(request):
-    if request.method == 'POST':
-        print('收到post')
-        response = {}
-        username = request.POST.get('regEmail', False) # 當前端值有錯誤傳 null 就會是false 
-        password = request.POST.get('regPwd', False)
+    print('hi')
+    #if request.method == 'POST':
+    print('收到post')
+    response = {}
+    username = request.POST.get('userName', False) # 當前端值有錯誤傳 null 就會是false 
+    password = request.POST.get('userPwd', False)
         
-        if False not in (username, password):
-            user_obj = User.objects.filter(username=username).first()
-            print(user_obj)
-            if user_obj is None:
-                # 使用者不存在
-                response['status'] = 'failed'
-                response['errCode'] = '1'
-                response['errMsg'] = 'username does not exist'
-                response['data'] = None
-                print('使用者不存在')
-            else:
-                # 核對帳密, 當傳入的密碼=資料庫裡的密碼
-                print('檢查帳密')
-                if password == user_obj.password:
+    if False not in (username, password):
+        user_obj = User.objects.filter(username=username).first()
+        print(user_obj)
+        if user_obj is None:
+            # 使用者不存在
+            response['status'] = 'failed'
+            response['errCode'] = '1'
+            response['errMsg'] = 'username does not exist'
+            response['data'] = None
+            print('使用者不存在')
+        else: #使用者存在
+            # 核對帳密, 當傳入的密碼=資料庫裡的密碼
+            print('檢查帳密')
+            if password == user_obj.password:
                 # 登入 # 將登入時間輸入權限檢查的 table
-                    time = datetime.now()
-                    after_14days = time + timedelta(days = 14)
-                    token = make_password(after_14days)
-                    # 如果有這個user, 則 token更新, 沒有則create
-                    userToken.objects.update_or_create(authID = user_obj, 
-                                                    defaults = {'logout_time' : after_14days,
-                                                                'token' : token
-                                                                },)
+                # 更新或建立 token
+                time = datetime.now()
+                after_14days = time + timedelta(days = 14)
+                token = make_password(after_14days)
+                # 如果有這個user, 則 token更新, 沒有則create
+                userToken.objects.update_or_create(authID = user_obj, 
+                                                defaults = {'logout_time' : after_14days,
+                                                            'token' : token
+                                                            },)
                     
-                    # check_type 用是不是老師來分
-                    user_is_teacher = teacher_profile.objects.filter(username=username).first()
-                    if user_is_teacher is not None:
-                        user_type = 'teacher'
-                        picture = user_is_teacher.thumbnail_dir
-                        nickname = user_is_teacher.nickname
-                        is_male = user_is_teacher.is_male
-                        balance = ''
-                    else:
-                        user_type = 'student'
-                        user_is_student = student_profile.objects.filter(username=username).first()
-                        picture = user_is_student.thumbnail_dir
-                        nickname = user_is_student.nickname
-                        is_male = user_is_student.is_male
-                        balance = user_is_student.balance
+                # check_type 用是不是老師來分
+                user_is_teacher = teacher_profile.objects.filter(username=username).first()
+                if user_is_teacher is not None:
+                    user_type = 'teacher'
+                    picture = user_is_teacher.thumbnail_dir
+                    nickname = user_is_teacher.nickname
+                    is_male = user_is_teacher.is_male
+                    balance = ''
+                else:
+                    user_type = 'student'
+                    user_is_student = student_profile.objects.filter(username=username).first()
+                    picture = user_is_student.thumbnail_dir
+                    nickname = user_is_student.nickname
+                    is_male = user_is_student.is_male
+                    balance = user_is_student.balance
 
                     response['status'] = 'success'
                     response['errCode'] = None
@@ -454,19 +457,19 @@ def signin(request):
                         }
                     print('成功登入', response)
 
-                else:
-                # 密碼錯誤
-                    response['status'] = 'failed'
-                    response['errCode'] = '2'
-                    response['errMsg'] = 'wrong password'
-                    response['data'] = None
-                    print('password error')
-        else:
-            response['status'] = 'failed'
-            response['errCode'] = '3'
-            response['errMsg'] = 'get nothing'
-            response['data'] = None
-            print('get nothing')
+            else:
+            # 密碼錯誤
+                response['status'] = 'failed'
+                response['errCode'] = '2'
+                response['errMsg'] = 'wrong password'
+                response['data'] = None
+                print('password error')
+        #else:
+        #    response['status'] = 'failed'
+        #    response['errCode'] = '3'
+        #    response['errMsg'] = 'get nothing'
+        #    response['data'] = None
+        #    print('get nothing')
     else:
         # 不是拿到post
         response['status'] = 'failed'
