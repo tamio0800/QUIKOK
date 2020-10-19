@@ -6,9 +6,11 @@ class userToken(models.Model):
     logout_time = models.CharField(max_length=60) # 登入的時間+14天
 
 class auth_check(models.Model):
-    url_auth_type = models.CharField(max_length = 30) # teacher, student, public
+    url_auth_type = models.CharField(max_length = 30) 
+    # teacher, student, teacher_and_student, public
     category_name = models.CharField(max_length = 30)
     surf_url = models.CharField(max_length = 300) # 正在瀏覽的網址,不含流水號
+    
     #auth_approve = models.BooleanField()
 
 

@@ -9,24 +9,24 @@ class auth_ckeck(**kwargs):
     def create_url_rules(self):
         # 各個網站的結構
         url_category_rules = {
-            '老師會員中心': ('^/account/info/teacherS+', 'Teacher')
-            '課程管理' : ('^/account/lessonS+','Teacher')
-            '課程上架': ('^/lesson/ready/addS+','Teacher')
-            '課程編輯': ('^/lesson/ready/edit/S+','Teacher')
-            '課程預覽' : ('^/lesson/main/preview/S+','Teacher')
-            '上課live_house' : '', # 還沒做到
-            '聊天室主頁' : '', # 還沒做到
-            '學生會員中心' : '^/account/info/studentS+',
-            '學生帳務中心' : '',
-            '學習歷程':'',
-            '方案購買':'',
-            '課程預約':'',
+            '老師會員中心': ('^/account/info/teacherS+', 'teacher'),
+            '課程管理' : ('^/account/lessonS+','teacher'),
+            '課程上架': ('^/lesson/ready/addS+','teacher'),
+            '課程編輯': ('^/lesson/ready/edit/S+','teacher'),
+            '課程預覽' : ('^/lesson/main/preview/S+','teacher'),
+            '上課live_house' : ('', 'teacher_and_student'), # 還沒做到
+            '聊天室主頁' : ('', 'teacher_and_student'), # 還沒做到
+            '學生會員中心' : ('^/account/info/studentS+', 'student' ),
+            '學生帳務中心' : ('', 'student'),
+            '學習歷程': ('', 'student'),
+            '方案購買': ('', 'student'),
+            '課程預約': ('', 'student'),
             # 以下為公開頁面
-            '首頁' : '/home',
-            '課程搜尋頁' : '^/lesson/search?q=S+',
-            '課程資訊頁' : '^/lesson/main/view/S+',
-            '註冊新老師' : '/account/register/teacherS+',
-            '註冊新學生' : '^/account/register/studentS+'
+            '首頁' : ('/home', 'public'),
+            '課程搜尋頁' : ('^/lesson/search?q=S+', 'public'),
+            '課程資訊頁' : ('^/lesson/main/view/S+', 'public'),
+            '註冊新老師' : ('/account/register/teacherS+', 'public'),
+            '註冊新學生' : ('^/account/register/studentS+', 'public')
         }
         return url_category_rules
 
