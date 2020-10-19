@@ -393,7 +393,6 @@ def create_a_teacher_user(request):
 # 登入
 @require_http_methods(['POST'])
 def signin(request):
-    print('hi')
     #if request.method == 'POST':
     print('收到post')
     response = {}
@@ -424,10 +423,11 @@ def signin(request):
                                                 defaults = {'logout_time' : after_14days,
                                                             'token' : token
                                                             },)
-                    
+                print('token更新')    
                 # check_type 用是不是老師來分
                 user_is_teacher = teacher_profile.objects.filter(username=username).first()
                 if user_is_teacher is not None:
+                    print('老師')
                     user_type = 'teacher'
                     picture = user_is_teacher.thumbnail_dir
                     nickname = user_is_teacher.nickname
@@ -441,21 +441,21 @@ def signin(request):
                     is_male = user_is_student.is_male
                     balance = user_is_student.balance
 
-                    response['status'] = 'success'
-                    response['errCode'] = None
-                    response['errMsg'] = None
-                    response['data'] = {
-                        'picture': picture,
-                        'nickname': nickname,
-                        'user_id': user_obj.id ,
-                        'username': username,
-                        'is_male': is_male,
-                        'type': user_type,
-                        'user_token': token,
-                        'deposit': balance,
-                        'message': '', # 是否有未讀聊天室訊息, 這邊等聊天室做了再補
-                        }
-                    print('成功登入', response)
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = {
+                    'picture': picture,
+                    'nickname': nickname,
+                    'user_id': user_obj.id ,
+                    'username': username,
+                    'is_male': is_male,
+                    'type': user_type,
+                    'user_token': token,
+                    'deposit': balance,
+                    'message': '', # 是否有未讀聊天室訊息, 這邊等聊天室做了再補
+                    }
+                print('成功登入', response)
 
             else:
             # 密碼錯誤
@@ -477,7 +477,6 @@ def signin(request):
         response['errMsg'] = None
         response['data'] = None
         print('wrong method')
-         
     #return render(request, 'account/signin.html') # 測試用
     return JsonResponse(response)    
 
