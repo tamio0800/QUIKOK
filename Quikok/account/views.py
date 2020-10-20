@@ -537,7 +537,7 @@ def auth_check(request):
             response['errCode'] = None
             response['errMsg'] = 'not received data'
             response['data'] = None
-            print('成功失敗', response)
+            print('失敗', response)
 
         
 
