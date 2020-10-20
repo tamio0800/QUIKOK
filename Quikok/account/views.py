@@ -486,7 +486,7 @@ def signin(request):
 def auth_check(request):
     response = {}
     user_id = request.POST.get('userId', False)
-    print('檢查id格式'+user_id)
+    print('檢查id格式'+ str(user_id))
     url = request.POST.get('url', False)
     token_from_user = request.POST.get('token', False)
     time = datetime.now()
