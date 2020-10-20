@@ -506,12 +506,30 @@ def auth_check(request):
         else:
             if token_from_user == token_in_db:
                 # 進入檢查該網站權限程序
-                pass 
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = {
+                authority : True 
+                }
+        print('成功登入', response) 
             else:
-                pass
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = {
+                authority : True 
+                }
+        print('成功登入', response)
     # 可能是訪客
     else:
-        pass
+        response['status'] = 'success'
+        response['errCode'] = None
+        response['errMsg'] = None
+        response['data'] = {
+            authority : True 
+            }
+        print('成功登入', response)
 
         
 
