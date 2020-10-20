@@ -1,10 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import User
-class userToken(models.Model):
-    authID = models.ForeignKey(User,on_delete=models.CASCADE)
+class user_token(models.Model):
+    authID_object_id = models.ForeignKey(User,on_delete=models.CASCADE)
     token = models.CharField(max_length=128) # hash密碼
     logout_time = models.CharField(max_length=60) # 登入的時間+14天
-
+    def __str__(self):
+        return str(self.id)
 class auth_check(models.Model):
     url_auth_type = models.CharField(max_length = 30) 
     # teacher, student, member_only, public 

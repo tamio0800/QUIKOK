@@ -7,7 +7,7 @@ class auth_ckeck(**kwargs):
         user_id = ''
     # read tabel
     def create_url_rules(self):
-        # 各個網站的結構
+        # 目前有的各個網站的結構以及權限分類
         url_category_rules = {
             '老師會員中心': ('^/account/info/teacherS+', 'teacher'),
             '課程管理' : ('^/account/lessonS+','teacher'),
@@ -30,6 +30,7 @@ class auth_ckeck(**kwargs):
         }
         return url_category_rules
     def check_url_belong_to_which_category(self, url):
+
         pass
     def write_into_db(self):
         from .models import auth_check
