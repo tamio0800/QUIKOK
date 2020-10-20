@@ -11,7 +11,7 @@ class auth_ckeck(**kwargs):
         url_category_rules = {
             '老師會員中心': ('^/account/info/teacherS+', 'teacher'),
             '課程管理' : ('^/account/lessonS+','teacher'),
-            '課程上架': ('^/lesson/ready/addS+','teacher'),
+            '課程上架': ('^/lesson/ready/addS+','teacher'),}
             '課程編輯': ('^/lesson/ready/edit/S+','teacher'),
             '課程預覽' : ('^/lesson/main/preview/S+','teacher'),
             '上課live_house' : ('', 'member_only'), # 還沒做到
@@ -30,6 +30,7 @@ class auth_ckeck(**kwargs):
         }
         return url_category_rules
     def check_url_belong_to_which_category(self, url):
+        for url_category_name, url_pattern_and_auth_type in self.url_category_rules.items()
         pass
     def write_into_db(self):
         #from .models import auth_check

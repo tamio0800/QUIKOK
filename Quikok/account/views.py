@@ -482,14 +482,16 @@ def signin(request):
 
 
 # 頁面權限檢查 目前身分有:老師/學生/訪客
-@require_http_methods(['POST'])
+#@require_http_methods(['POST'])
 def auth_check(request):
     response = {}
     user_id = request.POST.get('userId', False)
     print('檢查id格式'+ str(user_id))
     url = request.POST.get('url', False)
     print('檢查網址'+ url)
-    token_from_user = request.POST.get('token', False)
+    #token_from_user = request.POST.get('token', False)
+    #token_from_user = request.META.get('Authorization', False)
+    token_from_user = request.META['QUERY_STRING']
     print('token is :'+ str(token_from_user))
     time = datetime.now()
     user = user_token.objects.filter(authID_object = user_id).first()
@@ -543,6 +545,7 @@ def auth_check(request):
             response['errMsg'] = 'not received data'
             response['data'] = None
             print('失敗', response)
+    return JsonResponse(response)
 
         
 
