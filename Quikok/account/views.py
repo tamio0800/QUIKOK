@@ -512,7 +512,7 @@ def auth_check(request):
                 response['data'] = {
                 authority : True 
                 }
-        print('成功登入', response) 
+                print('成功登入', response) 
             else:
                 response['status'] = 'success'
                 response['errCode'] = None
@@ -520,16 +520,22 @@ def auth_check(request):
                 response['data'] = {
                 authority : True 
                 }
-        print('成功登入', response)
-    # 可能是訪客
-    else:
-        response['status'] = 'success'
-        response['errCode'] = None
-        response['errMsg'] = None
-        response['data'] = {
+                print('成功登入', response)
+    
+    else: # 可能是訪客或是沒收到資訊
+        if url and token_from_user:
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+            response['data'] = {
             authority : True 
             }
-        print('成功登入', response)
+        else:
+            response['status'] = 'failed'
+            response['errCode'] = None
+            response['errMsg'] = 'not received data'
+            response['data'] = None
+            print('成功失敗', response)
 
         
 
