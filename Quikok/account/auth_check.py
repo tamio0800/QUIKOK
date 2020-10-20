@@ -3,19 +3,19 @@ class auth_ckeck(**kwargs):
     def __init__(self):
         self.url_category_rules = self.create_url_rules()
          
-    url = ''
-    user_id = ''
+        url = ''
+        user_id = ''
     # read tabel
     def create_url_rules(self):
-        # 各個網站的結構
+        # 目前有的各個網站的結構以及權限分類
         url_category_rules = {
             '老師會員中心': ('^/account/info/teacherS+', 'teacher'),
             '課程管理' : ('^/account/lessonS+','teacher'),
             '課程上架': ('^/lesson/ready/addS+','teacher'),
             '課程編輯': ('^/lesson/ready/edit/S+','teacher'),
             '課程預覽' : ('^/lesson/main/preview/S+','teacher'),
-            '上課live_house' : ('', 'teacher_and_student'), # 還沒做到
-            '聊天室主頁' : ('', 'teacher_and_student'), # 還沒做到
+            '上課live_house' : ('', 'member_only'), # 還沒做到
+            '聊天室主頁' : ('', 'member_only'), # 還沒做到
             '學生會員中心' : ('^/account/info/studentS+', 'student' ),
             '學生帳務中心' : ('', 'student'),
             '學習歷程': ('', 'student'),
@@ -29,9 +29,11 @@ class auth_ckeck(**kwargs):
             '註冊新學生' : ('^/account/register/studentS+', 'public')
         }
         return url_category_rules
+    def check_url_belong_to_which_category(self, url):
 
+        pass
     def write_into_db(self):
-        from .models import auth_check
+        #from .models import auth_check
         for url_category_name, url_pattern in self.url_category_rules.items():
             auth_check.objects.update_or_create(
                 category_name = url_category_name, 

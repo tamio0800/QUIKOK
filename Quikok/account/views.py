@@ -3,7 +3,7 @@ from django.contrib import auth
 from django.contrib.auth.hashers import make_password, check_password  # 這一行用來加密密碼的
 from .model_tools import user_db_manager
 from django.contrib.auth.models import User
-from account.models import userToken,student_profile, teacher_profile, specific_available_time, general_available_time
+from account.models import user_token,student_profile, teacher_profile, specific_available_time, general_available_time
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.core.files.storage import FileSystemStorage
 from account.models import dev_db
@@ -419,7 +419,7 @@ def signin(request):
                 after_14days = time + timedelta(days = 14)
                 token = make_password(after_14days)
                 # 如果有這個user, 則 token更新, 沒有則create
-                userToken.objects.update_or_create(authID = user_obj, 
+                user_token.objects.update_or_create(authID_object = user_obj, 
                                                 defaults = {'logout_time' : after_14days,
                                                             'token' : token
                                                             },)
@@ -486,15 +486,17 @@ def signin(request):
 def auth_check(request):
     response = {}
     user_id = request.POST.get('userId', False)
+    print('檢查id格式'+user_id)
     url = request.POST.get('url', False)
     token_from_user = request.POST.get('token', False)
     time = datetime.now()
+    user = user_token.objects.filter(authID_object = user_id).first()
     
-    user = userToken.objects.filter(authID = user_id)
     token_in_db = user.token
     logout_date = user.logout_time
     time_has_passed = time - logout_date
     
+    # if url是需要權限的才需要登入
     if user_id is not False: 
         # 超過十四天未登入,直接沒有權限、需再登入
         if time_has_passed.days > 13:
@@ -505,13 +507,38 @@ def auth_check(request):
 
         else:
             if token_from_user == token_in_db:
-                # 進入檢查該網站權限程序
-                pass 
+                # 進入檢查該網頁權限程序
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = {
+                'authority' : True 
+                }
+                print('成功登入', response) 
             else:
-                pass
-    # 可能是訪客
-    else:
-        pass
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = 'token error'
+                response['data'] = {
+                'authority' : False 
+                }
+                print('請重新登入', response)
+    
+    else: # 可能是訪客或是沒收到資訊
+        if url and token_from_user:
+            # 進檢查程序
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+            response['data'] = {
+            'authority' : True 
+            }
+        else:
+            response['status'] = 'failed'
+            response['errCode'] = None
+            response['errMsg'] = 'not received data'
+            response['data'] = None
+            print('失敗', response)
 
         
 

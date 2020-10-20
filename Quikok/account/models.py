@@ -1,18 +1,20 @@
 from django.db import models
 from django.contrib.auth.models import User
-class userToken(models.Model):
-    authID = models.ForeignKey(User ,on_delete=models.CASCADE)
+class user_token(models.Model):
+    authID_object = models.ForeignKey(User, on_delete=models.CASCADE)
     token = models.CharField(max_length=128) # hash密碼
     logout_time = models.CharField(max_length=60) # 登入的時間+14天
-
+    def __str__(self):
+        return str(self.id)
 class auth_check(models.Model):
     url_auth_type = models.CharField(max_length = 30) 
-    # teacher, student, teacher_and_student, public
+    # teacher, student, member_only, public 
+    # member_only的意思是只有會員才能看(例如聊天室沒有註冊、登入的訪客是無法看得)
     category_name = models.CharField(max_length = 30)
-    surf_url = models.CharField(max_length = 300) # 正在瀏覽的網址,不含流水號
-    
+    # 網頁名稱例如: 老師會員中心,課程管理
+    surf_url = models.CharField(max_length = 300) 
+    # 正在瀏覽的網址,不含流水號
     #auth_approve = models.BooleanField()
-
 
 class student_profile(models.Model):
     # 這是for存放一般會員/學生的額外資訊
