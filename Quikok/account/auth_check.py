@@ -33,7 +33,7 @@ class auth_ckeck(**kwargs):
 
         pass
     def write_into_db(self):
-        from .models import auth_check
+        #from .models import auth_check
         for url_category_name, url_pattern in self.url_category_rules.items():
             auth_check.objects.update_or_create(
                 category_name = url_category_name, 

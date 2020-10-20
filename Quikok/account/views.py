@@ -419,7 +419,7 @@ def signin(request):
                 after_14days = time + timedelta(days = 14)
                 token = make_password(after_14days)
                 # 如果有這個user, 則 token更新, 沒有則create
-                user_token.objects.update_or_create(authID = user_obj, 
+                user_token.objects.update_or_create(authID_object = user_obj, 
                                                 defaults = {'logout_time' : after_14days,
                                                             'token' : token
                                                             },)
@@ -486,10 +486,11 @@ def signin(request):
 def auth_check(request):
     response = {}
     user_id = request.POST.get('userId', False)
+    print('檢查id格式'+user_id)
     url = request.POST.get('url', False)
     token_from_user = request.POST.get('token', False)
     time = datetime.now()
-    user = user_token.objects.filter(authID_object_id = user_id).first()
+    user = user_token.objects.filter(authID_object = user_id).first()
     
     token_in_db = user.token
     logout_date = user.logout_time
