@@ -419,7 +419,7 @@ def signin(request):
                 after_14days = time + timedelta(days = 14)
                 token = make_password(after_14days)
                 # 如果有這個user, 則 token更新, 沒有則create
-                userToken.objects.update_or_create(authID = user_obj, 
+                user_token.objects.update_or_create(authID = user_obj, 
                                                 defaults = {'logout_time' : after_14days,
                                                             'token' : token
                                                             },)
