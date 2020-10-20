@@ -489,7 +489,7 @@ def auth_check(request):
     url = request.POST.get('url', False)
     token_from_user = request.POST.get('token', False)
     time = datetime.now()
-    user = userToken.objects.filter(authID_object_id = user_id).first()
+    user = user_token.objects.filter(authID_object_id = user_id).first()
     
     token_in_db = user.token
     logout_date = user.logout_time
