@@ -13,6 +13,13 @@ from lesson.lesson_tools import lesson_manager, lesson_card_manager
 from django.contrib.auth.decorators import login_required
 
 
+def check_if_all_variables_are_true(*args):
+    print(args)
+    for each_arg in args:
+        if not each_arg:
+            return False
+    return True
+
 
 @login_required
 def lessons_main_page(request):
@@ -41,7 +48,7 @@ def get_lesson_cards_for_common_users(request):
     response = {}
     print(qty)
 
-    if not qty:
+    if not check_if_all_variables_are_true(qty, user_auth_id):
         # 之後等加入條件再改寫法 
         # 收取的資料不正確
         response['status'] = 'failed'
@@ -68,28 +75,6 @@ def get_lesson_cards_for_common_users(request):
             lesson_attributes.pop('id', None)
             lesson_attributes.pop('corresponding_lesson_id', None)
             # 以上drop掉這兩個keys
-
-            #lesson_attributes['teacher_thumbnail_path'] = each_lesson_card_object.teacher_thumbnail_path
-            #lesson_attributes['teacher_nickname'] = each_lesson_card_object.teacher_nickname
-            #lesson_attributes['teacher_auth_id'] = each_lesson_card_object.teacher_auth_id
-            #lesson_attributes['big_title'] = each_lesson_card_object.big_title
-            #lesson_attributes['little_title'] = each_lesson_card_object.little_title
-            #lesson_attributes['title_color'] = each_lesson_card_object.title_color
-            #lesson_attributes['background_picture_code'] = each_lesson_card_object.background_picture_code
-            #lesson_attributes['background_picture_path'] = each_lesson_card_object.background_picture_path
-            #lesson_attributes['lesson_title'] = each_lesson_card_object.lesson_title
-            #lesson_attributes['highlight_1'] = each_lesson_card_object.highlight_1
-            #lesson_attributes['highlight_2'] = each_lesson_card_object.highlight_2
-            #lesson_attributes['highlight_3'] = each_lesson_card_object.highlight_3
-            #lesson_attributes['price_per_hour'] = each_lesson_card_object.price_per_hour
-            #lesson_attributes['best_sale'] = each_lesson_card_object.best_sale
-
-            #lesson_attributes['education'] = each_lesson_card_object.education
-            #lesson_attributes['education_is_approved'] = each_lesson_card_object.education_is_approved
-            #lesson_attributes['working_experience'] = each_lesson_card_object.working_experience
-            #lesson_attributes['working_experience_is_approved'] = each_lesson_card_object.working_experience_is_approved
-            #lesson_attributes['lesson_avg_score'] = each_lesson_card_object.lesson_avg_score
-            #lesson_attributes['lesson_reviewed_times'] = each_lesson_card_object.lesson_reviewed_times
             
             _data.append(lesson_attributes)
         
@@ -273,6 +258,56 @@ def return_lesson_details_for_browsing(request):
             response['errMsg'] = 'Querying Failed.'
             response['data'] = None
             return JsonResponse(response)
+
+
+@require_http_methods(['POST'])
+def test_create_or_edit_a_lesson(request):
+    response = dict()
+    action = request.POST.get('action', False)
+    teacher_auth_id = request.POST.get('userID', False)
+    lesson_id = request.POST.get('lessonID', False) # 新增沒有,修改才有
+    the_leeson_manager = lesson_manager()
+
+    if not check_if_all_variables_are_true(action, teacher_auth_id):
+        # 萬一有變數沒有傳到後端來的話...
+        response['status'] = 'failed'
+        response['errCode'] = 0
+        response['errMsg'] = 'Connection Failed.'
+        return JsonResponse(response)
+
+    if action == 'createLesson':
+        response['status'], response['errCode'], response['errMsg']= \
+            the_leeson_manager.setup_a_lesson(
+                teacher_auth_id, request, None, action)
+        return JsonResponse(response)
+    elif action == 'editLesson':
+        response['status'], response['errCode'], response['errMsg']= \
+            the_leeson_manager.setup_a_lesson(
+                teacher_auth_id, request, lesson_id, action)
+        return JsonResponse(response)
+    else:
+        response['status'] = 'failed'
+        response['errCode'] = 1
+        response['errMsg'] = 'Unknown Action.'
+        return JsonResponse(response)
+
+    
+def fake_form(request):
+    if request.method == 'POST':
+        v = request.POST.get("t_input", False)
+        print('v >>  ', v)
+        print('is v False >>  ', v == False)
+        print('is v None >>  ', v is None)
+        print('is v an empty string >>  ', v == '')
+        print('if v is not false, it might print a "COOL"...')
+        if v:
+            print("COOL")
+        print('End of line.')
+        return HttpResponse("GOT IT.")
+    else:
+        return render(request, 'lesson/fake_form.html')
+
+
 
 
 def lesson_manage(request):
