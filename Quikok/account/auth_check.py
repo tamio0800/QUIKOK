@@ -30,15 +30,14 @@ class auth_ckeck(**kwargs):
         }
         return url_category_rules
     def check_url_belong_to_which_category(self, url):
-
         pass
     def write_into_db(self):
         #from .models import auth_check
-        for url_category_name, url_pattern in self.url_category_rules.items():
+        for url_category_name, url_pattern_and_auth_type in self.url_category_rules.items():
             auth_check.objects.update_or_create(
                 category_name = url_category_name, 
-                defaults = {'logout_time' : after_14days,
-                            'token' : token
+                defaults = {'url_pattern' : url_pattern_and_auth_type[0],
+                            'url_auth_type' : url_pattern_and_auth_type[1]
                                             },)
 
         for category in self.url_category_rules.keys():

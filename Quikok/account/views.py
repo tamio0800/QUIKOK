@@ -488,6 +488,7 @@ def auth_check(request):
     user_id = request.POST.get('userId', False)
     print('檢查id格式'+ str(user_id))
     url = request.POST.get('url', False)
+    print('檢查網址'+ url)
     token_from_user = request.POST.get('token', False)
     print('token is :'+ str(token_from_user))
     time = datetime.now()

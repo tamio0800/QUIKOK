@@ -12,7 +12,7 @@ class auth_check(models.Model):
     # member_only的意思是只有會員才能看(例如聊天室沒有註冊、登入的訪客是無法看得)
     category_name = models.CharField(max_length = 30)
     # 網頁名稱例如: 老師會員中心,課程管理
-    surf_url = models.CharField(max_length = 300) 
+    url_pattern = models.CharField(max_length = 300) 
     # 正在瀏覽的網址,不含流水號
     #auth_approve = models.BooleanField()
 
