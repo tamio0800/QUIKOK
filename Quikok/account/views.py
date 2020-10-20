@@ -527,7 +527,7 @@ def auth_check(request):
                 response['errCode'] = None
                 response['errMsg'] = 'token error'
                 response['data'] = {
-                'authority' : False 
+                'authority' : True 
                 }
                 print('請重新登入', response)
     
