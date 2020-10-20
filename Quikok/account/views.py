@@ -488,13 +488,17 @@ def auth_check(request):
     user_id = request.POST.get('userId', False)
     print('檢查id格式'+ str(user_id))
     url = request.POST.get('url', False)
+    print('檢查網址'+ url)
     token_from_user = request.POST.get('token', False)
+    print('token is :'+ str(token_from_user))
     time = datetime.now()
     user = user_token.objects.filter(authID_object = user_id).first()
     
     token_in_db = user.token
     logout_date = user.logout_time
-    time_has_passed = time - logout_date
+    logout_only_date = logout_date.split(' ')[0] # 0是日期, 1是小時
+    logout_datetime_type = datetime.strptime(logout_only_date,"%Y-%m-%d")
+    time_has_passed = logout_datetime_type - time 
     
     # if url是需要權限的才需要登入
     if user_id is not False: 
