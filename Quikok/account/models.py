@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 class user_token(models.Model):
-    authID_object = models.ForeignKey(User,on_delete=models.CASCADE)
+    authID_object = models.ForeignKey(User, on_delete=models.CASCADE)
     token = models.CharField(max_length=128) # hash密碼
     logout_time = models.CharField(max_length=60) # 登入的時間+14天
     def __str__(self):

@@ -8,10 +8,12 @@ urlpatterns = [
     path('getLessonCardsForTheTeacherWhoCreatedThem/', views.get_lesson_cards_for_the_teacher_who_created_them),
     path('returnLessonDetailsForTeacherWhoCreatedIt/', views.return_lesson_details_for_teacher_who_created_it),
     path('returnLessonDetailsForBrowsing/', views.return_lesson_details_for_browsing),
+    path('createOrEditLesson/', views.test_create_or_edit_a_lesson),
     path('import_lesson/', views.import_lesson),
     path('createLesson/', views.lesson_manage),
     path('createlesson/', views.lesson_manage),
     path('editLesson/', views.lesson_manage),
     path('showLessonDetail/', views.lesson_manage),
+    path('fake_form/', views.fake_form),
     
 ]
