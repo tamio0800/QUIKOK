@@ -492,7 +492,8 @@ def auth_check(request):
     #token_from_user = request.POST.get('token', False)
     #token_from_user = request.META.get('Authorization', False)
     token_from_user = request.META['QUERY_STRING']
-    print('token is :'+ str(token_from_user))
+    token_clean =  token_from_user.split('=')[0]
+    print('token is :'+ str(token_clean))
     time = datetime.now()
     user = user_token.objects.filter(authID_object = user_id).first()
     
