@@ -113,6 +113,7 @@ def get_lesson_cards_for_the_teacher_who_created_them(request):
 
         for each_lesson_object in lesson_objects:
             lesson_attributes = {}
+            lesson_attributes['lesson_id'] = each_lesson_object.corresponding_lesson_id
             lesson_attributes['lesson_status'] = each_lesson_object.selling_status
             lesson_attributes['price_per_hour'] = each_lesson_object.price_per_hour
             lesson_attributes['brief_lesson_intro'] = intro_briefed(each_lesson_object.lesson_intro)
@@ -121,13 +122,13 @@ def get_lesson_cards_for_the_teacher_who_created_them(request):
             lesson_attributes['lesson_title'] = each_lesson_object.lesson_title
 
             sales_package = list()
-            if each_lesson_object.trial_class_price is not None:
+            if each_lesson_object.trial_class_price != -999 :
                 sales_package.append('試教 $' + str(each_lesson_object.trial_class_price))
             if each_lesson_object.lesson_has_one_hour_package:
-                sales_package.append('單堂')
+                sales_package.append('單堂販售')
             for i, j in [_.split(':') for _ in each_lesson_object.discount_price.split(';') if len(_)]:
-                sales_package.append(i + 'hr ' + j + '%')
-            lesson_attributes['sales_package'] = ';'.join(sales_package)
+                sales_package.append(i + '小時 ' + j + '%')
+            lesson_attributes['sales_package'] = sales_package   # ';'.join(sales_package)
 
             data.append(lesson_attributes)
         

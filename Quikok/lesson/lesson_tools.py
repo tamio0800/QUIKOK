@@ -33,7 +33,7 @@ class lesson_manager:
                 self.errMsg = 'Found No Lesson OR Non Match User.'
                 return (self.status, self.errCode, self.errMsg, self.data)        
         _data = self.fetch_lesson_details(lesson_id=lesson_id)
-        # print(_data)
+        print(_data)
         self.status = 'success'
         self.errCode = None
         self.errMsg = None
@@ -65,6 +65,7 @@ class lesson_manager:
         
         return (self.status, self.errCode, self.errMsg, self.data)
             
+
     def fetch_lesson_details(self, lesson_id):
         # print('fetch_lesson_details 1')
         lesson_object = lesson_info.objects.filter(id = lesson_id)
@@ -165,58 +166,6 @@ class lesson_manager:
                 self.errCode = '3'
                 self.errMsg = 'Error While Writting In Database.'
                 return (self.status, self.errCode, self.errMsg)
-
-
-    def old_create_lesson(self, **kwargs):
-        # 年久失修，不要直接用唷！！
-        response = {}
-        
-        auth_id = kwargs['AuthId'] #Auth的Id
-        teacher_username = User.objects.get(id = 'auth_id').username
-        #teacher_id = teacher_profile.objects.get(id = 'temp_id').username
-        teacher = teacher_profile.objects.get(username = teacher_username)
-        # ForeignKey
-        big_title = kwargs['big_title']
-        little_title= kwargs['little_title']
-        default_background_picture= kwargs['default_background_picture']
-        background_picture= kwargs['background_picture']
-        lesson_title = kwargs['lesson_title']
-        price_per_hour= kwargs['price_per_hour']
-        trial_class_price = kwargs['trialClassPrice']  # 該門課程的試上鐘點費
-        discount_price = kwargs['discountPrice']
-        highlight_1 = kwargs['highlight_1']
-        highlight_2 = kwargs['highlight_2']
-        highlight_3 = kwargs['highlight_3']
-        lesson_intro = kwargs['lesson_intro']
-        how_does_lesson_go = kwargs['how_does_lesson_go']
-        target_students = kwargs['target_students']
-        syllabus = kwargs['syllabus']
-        lesson_remarks = kwargs['lesson_remarks']
-        lesson_attributes = kwargs['lesson_attributes']
-
-        lesson_info(
-        #lesson_id = lesson_id, 
-        teacher = teacher, #ForeignKey
-        big_title = big_title,
-        little_title= little_title,
-        default_background_picture= default_background_picture,
-        background_picture = background_picture,
-        lesson_title = lesson_title,
-        price_per_hour= price_per_hour,
-        highlight_1 = highlight_1,
-        highlight_2 = highlight_2,
-        highlight_3 = highlight_3,
-        lesson_intro = lesson_intro,
-        how_does_lesson_go = how_does_lesson_go,
-        target_students = target_students,
-        syllabus = syllabus,
-        lesson_remarks = lesson_remarks,
-        lesson_attributes=  lesson_attributes,
-        ).save()
-
-    #def show_lesson_info():
-
-    #def edit_lesson()
 
 
 class lesson_card_manager: 
