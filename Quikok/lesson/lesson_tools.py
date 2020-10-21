@@ -143,7 +143,6 @@ class lesson_manager:
                 for key, item in _temp_lesson_info.items():
                     setattr(edited_lesson, key, item)  
                 edited_lesson.save()
-                
                 the_lesson_card_manager = lesson_card_manager()
                 the_lesson_card_manager.setup_a_lesson_card(
                     corresponding_lesson_id = lesson_id,
@@ -229,7 +228,8 @@ class lesson_card_manager:
                 self.lesson_card_info['lesson_avg_score'] = review_objects.aggregate(_avg = Avg('score_given'))['_avg']
             
             # 先確認這個課程小卡是否存在，不存在的話建立，存在的話修改
-            if lesson_card.objects.filter(corresponding_lesson_id=self.lesson_card_info['corresponding_lesson_id']).first() is None:
+            lesson_card_object = lesson_card.objects.filter(corresponding_lesson_id=self.lesson_card_info['corresponding_lesson_id']).first()
+            if lesson_card_object is None:
                 #  建立
                 lesson_card.objects.create(
                     **self.lesson_card_info
@@ -237,9 +237,8 @@ class lesson_card_manager:
             else:
                 #  修改
                 self.lesson_card_info.pop('corresponding_lesson_id', None)
-                lesson_card.objects.update(
-                    **self.lesson_card_info
-                )
+                for key, item in self.lesson_card_info.items():
+                    setattr(lesson_card_object, key, item)
             return True
         except Exception as e:
             print('setup lesson card error:  ', e)
