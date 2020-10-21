@@ -113,7 +113,7 @@ def get_lesson_cards_for_the_teacher_who_created_them(request):
 
         for each_lesson_object in lesson_objects:
             lesson_attributes = {}
-            lesson_attributes['lesson_id'] = each_lesson_object.corresponding_lesson_id
+            lesson_attributes['lesson_id'] = each_lesson_object.id
             lesson_attributes['lesson_status'] = each_lesson_object.selling_status
             lesson_attributes['price_per_hour'] = each_lesson_object.price_per_hour
             lesson_attributes['brief_lesson_intro'] = intro_briefed(each_lesson_object.lesson_intro)
