@@ -40,14 +40,15 @@ class lesson_manager:
 
         # 在下面定義API的回傳, 就是回傳資料加工區啦
         exclude_columns = [
-            'id', 'lesson_has_one_hour_package', 'teacher_id', 'created_time']      
+            'id', 'teacher_id', 'created_time']      
         for each_col in _data.keys():
             if each_col not in exclude_columns:
                 self.data[each_col] = _data[each_col]
-        if _data['lesson_has_one_hour_package']:
-            self.data['unitClassPrice'] = _data['price_per_hour']
-        else:
-            self.data['unitClassPrice'] = None
+
+        # if _data['lesson_has_one_hour_package']:
+        #     self.data['unitClassPrice'] = _data['price_per_hour']
+        # else:
+        #     self.data['unitClassPrice'] = None
         # 課程的資料加工完畢，來點開課老師本身的資訊
         self.data['is_this_teacher_male'] = \
             teacher_profile.objects.filter(auth_id=lesson_object.teacher_id).first().is_male
@@ -82,8 +83,8 @@ class lesson_manager:
                 [field.name for field in lesson_info._meta.get_fields() if field.name not in exclude_columns]
         
         for each_column_to_be_read in columns_to_be_read:
-            _arg = a_request_object.POST.get(each_column_to_be_read, False)
-            if not _arg:
+            _arg = a_request_object.POST.get(each_column_to_be_read, 'was_None')
+            if _arg != 'was_None':
                 # 代表_arg被轉成False了，這是不正常的現象，返回錯誤
                 self.status = 'failed'
                 self.errCode = '0'
@@ -91,9 +92,9 @@ class lesson_manager:
                 return (self.status, self.errCode, self.errMsg)
             else:
                 _temp_lesson_info[each_column_to_be_read] = _arg
-        if a_request_object.POST.get('unitClassPrice', False):
+        # if a_request_object.POST.get('unitClassPrice', False):
             # 代表其非為空值，且非為None
-            _temp_lesson_info['lesson_has_one_hour_package'] = True
+        #    _temp_lesson_info['lesson_has_one_hour_package'] = True
 
         if action == 'createLesson':
             _temp_lesson_info['lesson_avg_score'] = 0

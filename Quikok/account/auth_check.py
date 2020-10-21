@@ -1,5 +1,6 @@
 # 跟權限確認有關係的功能
 class auth_ckeck(**kwargs):
+    # tata: 這裏上面其實不用加 (**kwargs)沒關係xd, 因為在下面的__init__做定義了。
     def __init__(self):
         self.url_category_rules = self.create_url_rules()
          
@@ -11,7 +12,7 @@ class auth_ckeck(**kwargs):
         url_category_rules = {
             '老師會員中心': ('^/account/info/teacherS+', 'teacher'),
             '課程管理' : ('^/account/lessonS+','teacher'),
-            '課程上架': ('^/lesson/ready/addS+','teacher'),}
+            '課程上架': ('^/lesson/ready/addS+','teacher'),}  # tata: < 這裏多打了一個 {
             '課程編輯': ('^/lesson/ready/edit/S+','teacher'),
             '課程預覽' : ('^/lesson/main/preview/S+','teacher'),
             '上課live_house' : ('', 'member_only'), # 還沒做到
