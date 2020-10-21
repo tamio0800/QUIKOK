@@ -33,7 +33,6 @@ class lesson_manager:
                 self.errMsg = 'Found No Lesson OR Non Match User.'
                 return (self.status, self.errCode, self.errMsg, self.data)        
         _data = self.fetch_lesson_details(lesson_id=lesson_id)
-        print(_data)
         self.status = 'success'
         self.errCode = None
         self.errMsg = None
@@ -44,15 +43,15 @@ class lesson_manager:
         for each_col in _data.keys():
             if each_col not in exclude_columns:
                 self.data[each_col] = _data[each_col]
-
+        
         # if _data['lesson_has_one_hour_package']:
         #     self.data['unitClassPrice'] = _data['price_per_hour']
         # else:
         #     self.data['unitClassPrice'] = None
         # 課程的資料加工完畢，來點開課老師本身的資訊
         self.data['is_this_teacher_male'] = \
-            teacher_profile.objects.filter(auth_id=lesson_object.teacher_id).first().is_male
-
+            teacher_profile.objects.filter(id=lesson_object.teacher_id).first().is_male
+        
         # 如果for_whom == 'common_users'，要加上資訊: 這門課是不是該user的最愛?   
         if for_whom == 'common_users':
             this_user_favorite_lessons_object = favorite_lessons.objects.filter(follower_auth_id=user_auth_id)
@@ -69,6 +68,10 @@ class lesson_manager:
     def fetch_lesson_details(self, lesson_id):
         # print('fetch_lesson_details 1')
         lesson_object = lesson_info.objects.filter(id = lesson_id)
+        #_values_as_dict = lesson_object.values()[0]
+        #_teacher_not_auth_id = _values_as_dict['teacher_id']
+        #_teacher_auth_id = teacher_profile.objects.filter(id=_teacher_not_auth_id).first().auth_id
+        #_values_as_dict['teacher_id'] = _teacher_auth_id
         return lesson_object.values()[0]
     
 

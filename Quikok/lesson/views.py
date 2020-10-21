@@ -201,13 +201,15 @@ def return_lesson_details_for_teacher_who_created_it(request):
         response['data'] = None
         return JsonResponse(response)
     else:
-        print('check1')
+        # print('check1')
         try:
+            
             status, errCode, errMsg, _data = the_lesson_manager.return_lesson_details(
                 lesson_id=lesson_id,
                 user_auth_id = teacher_auth_id,
                 for_whom='teacher_who_created_it',
             )
+           
             response['status'] = status
             response['errCode'] = errCode
             response['errMsg'] = errMsg
