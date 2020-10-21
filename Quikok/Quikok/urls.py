@@ -19,7 +19,7 @@ urlpatterns = [
     # path('api/course/recommendList', views.homepage_api_recommendList),
     # path('api/getBannerBar', views.homepage_api_getBannerBar),
     path('api/', include('django_api.urls')),
-    re_path(r'^$', TemplateView.as_view(template_name="index.html")),  # 新增的
+    re_path(r'.*', TemplateView.as_view(template_name="index.html")),  # 新增的
 ]
 
 urlpatterns += staticfiles_urlpatterns()

@@ -66,27 +66,19 @@ class lesson_manager:
             
 
     def fetch_lesson_details(self, lesson_id):
-        # print('fetch_lesson_details 1')
         lesson_object = lesson_info.objects.filter(id = lesson_id)
-        #_values_as_dict = lesson_object.values()[0]
-        #_teacher_not_auth_id = _values_as_dict['teacher_id']
-        #_teacher_auth_id = teacher_profile.objects.filter(id=_teacher_not_auth_id).first().auth_id
-        #_values_as_dict['teacher_id'] = _teacher_auth_id
         return lesson_object.values()[0]
     
 
     def setup_a_lesson(self, teacher_auth_id, a_request_object, lesson_id, action):
         # 全新的課程建立
         _temp_lesson_info = dict()
-
         exclude_columns = [
             'id', 'teacher', 'created_time', 
             'lesson_avg_score', 'lesson_reviewed_times']
-
         columns_to_be_read = \
                 [field.name for field in lesson_info._meta.get_fields() if field.name not in exclude_columns]
         
-       
         for each_column_to_be_read in columns_to_be_read:
             _arg = a_request_object.POST.get(each_column_to_be_read, 'was_None')
             if _arg == 'was_None':
@@ -102,17 +94,16 @@ class lesson_manager:
         # if a_request_object.POST.get('unitClassPrice', False):
             # 代表其非為空值，且非為None
         #    _temp_lesson_info['lesson_has_one_hour_package'] = True
+        _temp_lesson_info['teacher'] = teacher_profile.objects.filter(auth_id=teacher_auth_id).first()
 
         if action == 'createLesson':
             _temp_lesson_info['lesson_avg_score'] = 0
             _temp_lesson_info['lesson_reviewed_times'] = 0
-            _temp_lesson_info['teacher'] = teacher_profile.objects.filter(auth_id=teacher_auth_id).first()
             if _temp_lesson_info['teacher'] is None:
                 self.status = 'failed'
                 self.errCode = '2'
                 self.errMsg = 'Found No Teacher.'
                 return (self.status, self.errCode, self.errMsg)
-
             try:
                 created_lesson = lesson_info.objects.create(
                     **_temp_lesson_info
@@ -140,19 +131,19 @@ class lesson_manager:
                 self.status = 'failed'
                 self.errCode = '2'
                 self.errMsg = 'Found No Teacher.'
-                return (self.status, self.errCode, self.errMsg)
-            
+                return (self.status, self.errCode, self.errMsg)    
             try:
-                edited_lesson = lesson_info.objects.filter(teacher__auth_id==teacher_auth_id).filter(id=lesson_id).first()
+                edited_lesson = lesson_info.objects.filter(teacher__auth_id=teacher_auth_id).filter(id=lesson_id).first()
                 if edited_lesson is None:
                     # 代表課程跟老師對應不起來
                     self.status = 'failed'
                     self.errCode = '2'
                     self.errMsg = 'Found No Matched Teacher And The Lesson.'
                     return (self.status, self.errCode, self.errMsg)
-                edited_lesson.update(
-                    **_temp_lesson_info
-                )
+                for key, item in _temp_lesson_info.items():
+                    setattr(edited_lesson, key, item)  
+                edited_lesson.save()
+                
                 the_lesson_card_manager = lesson_card_manager()
                 the_lesson_card_manager.setup_a_lesson_card(
                     corresponding_lesson_id = lesson_id,
