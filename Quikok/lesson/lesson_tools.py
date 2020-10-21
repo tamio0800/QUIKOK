@@ -82,16 +82,19 @@ class lesson_manager:
         columns_to_be_read = \
                 [field.name for field in lesson_info._meta.get_fields() if field.name not in exclude_columns]
         
+       
         for each_column_to_be_read in columns_to_be_read:
             _arg = a_request_object.POST.get(each_column_to_be_read, 'was_None')
-            if _arg != 'was_None':
-                # 代表_arg被轉成False了，這是不正常的現象，返回錯誤
+            if _arg == 'was_None':
                 self.status = 'failed'
                 self.errCode = '0'
                 self.errMsg = 'Connection Failed >> ' + each_column_to_be_read  + ' is None.'
                 return (self.status, self.errCode, self.errMsg)
             else:
                 _temp_lesson_info[each_column_to_be_read] = _arg
+        _temp_lesson_info['lesson_has_one_hour_package'] = \
+            _temp_lesson_info['lesson_has_one_hour_package'] == 'true'
+        # 轉成boolean
         # if a_request_object.POST.get('unitClassPrice', False):
             # 代表其非為空值，且非為None
         #    _temp_lesson_info['lesson_has_one_hour_package'] = True
@@ -121,7 +124,8 @@ class lesson_manager:
                 self.errCode = None
                 self.errMsg = None
                 return (self.status, self.errCode, self.errMsg)
-            except:
+            except Exception as e:
+                print(e)
                 self.status = 'failed'
                 self.errCode = '3'
                 self.errMsg = 'Error While Writting In Database.'
@@ -155,7 +159,8 @@ class lesson_manager:
                 self.errCode = None
                 self.errMsg = None
                 return (self.status, self.errCode, self.errMsg)
-            except:
+            except Exception as e:
+                print(e)
                 self.status = 'failed'
                 self.errCode = '3'
                 self.errMsg = 'Error While Writting In Database.'
@@ -232,7 +237,7 @@ class lesson_card_manager:
             def get_lesson_s_best_sale(lesson_id):
                 trial_class_price = lesson_object.trial_class_price
                 price_per_hour = lesson_object.price_per_hour
-                if trial_class_price is not None and trial_class_price < price_per_hour:
+                if trial_class_price != -999 and trial_class_price < price_per_hour:
                     # 有試教優惠的話就直接回傳
                     return "試課優惠"
                 else:
