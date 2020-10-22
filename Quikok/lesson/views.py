@@ -294,6 +294,20 @@ def test_create_or_edit_a_lesson(request):
         response['errMsg'] = 'Unknown Action.'
         return JsonResponse(response)
 
+
+@require_http_methods(['POST'])
+def change_lesson_s_status(request):
+    response = dict()
+    action = request.POST.get('action', False)
+    teacher_auth_id = request.POST.get('userID', False)
+    lesson_id = request.POST.get('lessonID', False) 
+
+    #if check_if_all_variables_are_true(action, teacher_auth_id, lesson_id):
+
+
+
+
+
     
 def fake_form(request):
     if request.method == 'POST':
@@ -561,49 +575,5 @@ def lesson_manage(request):
             response['errMsg'] = 'what is action?'
     print(response)
     return JsonResponse(response)    
-    #return render(request, 'lesson/create_lesson.html')#後端測試用
 
 
-    #lesson_info.objects.create(
-    #lesson_id = lesson_id, 
-    #teacher = teacher_id,
-    #big_title = big_title,
-    #little_title= little_title,
-    #default_background_picture= default_background_picture,
-    #background_picture = background_picture,
-    #lesson_title = lesson_title,
-    #price_per_hour= price_per_hour,
-    #highlight_1 = highlight_1,
-    #highlight_2 = highlight_2,
-    #highlight_3 = highlight_3,
-    #lesson_intro = lesson_intro,
-    #how_does_lesson_go = how_does_lesson_go,
-    #target_students = target_students,
-    #syllabus = syllabus,
-    #lesson_remarks = lesson_remarks,
-    #lesson_attributes=  lesson_attributes,
-    #).save()
-
-# 用 lesson_tools create 課程的方式
-            #lesson_create = lesson_manager()
-            #lesson_create.create_lesson(
-            #teacher_id = teacher_id,
-            #big_title = big_title,
-            #little_title= little_title,
-            #default_background_picture= request.POST.get('default_background_picture', False),
-            #background_picture= request.POST.get('background_picture', False),
-            #lesson_title = request.POST.get('lesson_title', False),
-            #discount_price= request.POST.get('discountPrice', False),
-            #price_per_hour= request.POST.get('price_per_hour', False),
-            #trial_class_price = request.POST.get('trialClassPrice', False),
-            #highlight_1 = request.POST.get('highlight_1', False) ,
-            #highlight_2 = request.POST.get('highlight_2', False),
-            #highlight_3 = request.POST.get('highlight_3', False),
-            #lesson_intro = request.POST.get('lesson_intro', False),
-            #how_does_lesson_go = request.POST.get('how_does_lesson_go', False),
-            #target_students = request.POST.get('target_students', False),
-            #syllabus = request.POST.get('syllabus', False),
-            #lesson_remarks = request.POST.get('lesson_remarks', False),
-            #lesson_attributes = request.POST.get('lesson_attributes', False)
-
-            #)
