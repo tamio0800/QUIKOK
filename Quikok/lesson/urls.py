@@ -9,7 +9,7 @@ urlpatterns = [
     path('returnLessonDetailsForTeacherWhoCreatedIt/', views.return_lesson_details_for_teacher_who_created_it),
     path('returnLessonDetailsForBrowsing/', views.return_lesson_details_for_browsing),
     path('createOrEditLesson/', views.test_create_or_edit_a_lesson),
-    path('setLessonStatus/', views.change_lesson_s_status),
+    path('setLessonStatus/', views.set_lesson_s_status),
     path('import_lesson/', views.import_lesson),
     path('createLesson/', views.lesson_manage),
     path('createlesson/', views.lesson_manage),
