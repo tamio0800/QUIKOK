@@ -494,6 +494,13 @@ def auth_check(request):
     token_from_user = request.META['QUERY_STRING']
     token_clean =  token_from_user.split('=')[0]
     print('token is :'+ str(token_clean))
+    response['status'] = 'success'
+    response['errCode'] = None
+    response['errMsg'] = None
+    response['data'] = {
+        'authority' : True 
+    }
+    return JsonResponse(response)
     #time = datetime.now()
     #user = user_token.objects.filter(authID_object = user_id).first()
     
@@ -505,7 +512,7 @@ def auth_check(request):
     #time_has_passed = logout_datetime_type - time 
     
     # if url是需要權限的才需要登入
-    if user_id is not False: 
+    '''if user_id is not False: 
         # 超過十四天未登入,直接沒有權限、需再登入
         if time_has_passed.days > 13:
             response['status'] = 'success'
@@ -547,7 +554,7 @@ def auth_check(request):
             response['errMsg'] = 'not received data'
             response['data'] = None
             print('失敗', response)
-    return JsonResponse(response)
+    return JsonResponse(response)'''
 
         
 
