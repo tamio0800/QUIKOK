@@ -10,6 +10,7 @@ urlpatterns = [
     path('returnLessonDetailsForBrowsing/', views.return_lesson_details_for_browsing),
     path('createOrEditLesson/', views.test_create_or_edit_a_lesson),
     path('setLessonStatus/', views.set_lesson_s_status),
+    path('addOrRemoveFavoriteLessons', views.add_or_remove_favorite_lessons),
     path('import_lesson/', views.import_lesson),
     path('createLesson/', views.lesson_manage),
     path('createlesson/', views.lesson_manage),

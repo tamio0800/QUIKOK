@@ -187,7 +187,47 @@ def get_lesson_cards_for_the_teacher_who_created_them(request):
         response['data'] = data
         return JsonResponse(response)
 
-        
+
+@require_http_methods(['POST'])
+def add_or_remove_favorite_lessons(request):
+    user_auth_id = request.POST.get('userID', False)
+    lesson_id = request.POST.get('lessonID', False)
+    response = {}
+    if not check_if_all_variables_are_true(user_auth_id, lesson_id):
+        # 之後等加入條件再改寫法 
+        # 收取的資料不正確
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = 'Received Arguments Failed'
+        return JsonResponse(response)
+    
+    if int(user_auth_id) == -1:
+        response['status'] = 'failed'
+        response['errCode'] = '1'
+        response['errMsg'] = 'User Is Anonymous.'
+        return JsonResponse(response)
+
+    favorite_lessons_object = favorite_lessons.objects.filter(follower_auth_id=user_auth_id).filter(lesson_id=lesson_id).first()
+
+    if favorite_lessons_object is None:
+        # 代表這門課還不是該user的喜好，我們要加進去
+        favorite_lessons.objects.create(
+            follower_auth_id = user_auth_id,
+            lesson_id = lesson_id,
+            teacher_auth_id = teacher_profile.objects.filter(id=lesson_info.objects.filter(id=lesson_id).first().teacher_id).first().auth_id
+        ).save()
+    else:
+        # 代表這門課已經是該user的喜好，我們要移除
+        favorite_lessons_object.delete()
+    
+    response['status'] = 'success'
+    response['errCode'] = None
+    response['errMsg'] = None
+    return JsonResponse(response)
+
+
+
+
 
 def import_lesson(request):
     title = '批次匯入課程'
