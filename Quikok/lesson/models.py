@@ -43,23 +43,24 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     highlight_1 = models.CharField(max_length = 10)  # 亮點介紹1，不要超過10個字元長
     highlight_2 = models.CharField(max_length = 10)  # 亮點介紹2，不要超過10個字元長
     highlight_3 = models.CharField(max_length = 10)  # 亮點介紹3，不要超過10個字元長
-    lesson_intro = models.CharField(blank=True, max_length=300)
+    lesson_intro = models.TextField(blank=True, null=True)
+    # lesson_intro = models.CharField(blank=True, max_length=300)
     # 課程詳細介紹，不超過300長度
-    how_does_lesson_go = models.CharField(blank=True, max_length=200)
+    how_does_lesson_go = models.TextField(blank=True, null=True)
+    # how_does_lesson_go = models.CharField(blank=True, max_length=200)
     # 課程方式/教學方式，舉例來說：「本堂課前十分鐘小考，測驗上次的內容吸收程度，
     # 接著正式上課兩小時，最後15分鐘溫習。」
-    target_students = models.CharField(max_length = 40) # 授課對象
-    lesson_remarks = models.CharField(blank=True, max_length = 200) # 備註，目前是用來儲存「給學生的注意事項」
+    target_students = models.TextField(blank=True, null=True) # 授課對象
+    lesson_remarks = models.TextField(blank=True, null=True) # 備註，目前是用來儲存「給學生的注意事項」
     # lesson_background_folder = models.CharField(max_length = 80)# 該課程背景圖片指向的資料夾 可選預設或上傳
     # lesson_picture_folder = models.CharField(max_length = 80) # 目前版本用不到本col 如果目前版本用不到本col有相關圖片，可以儲存在這個資料夾中
-    
-    syllabus = models.CharField(max_length = 500)
-    # 存放課程的綱要或架構，預計會以陣列的方式傳遞/儲存 格式:大標/小標:內容; 
+    syllabus = models.TextField(blank=True, null=True) 
+    # 存放課程的綱要或架構，預計會以html的方式傳遞/儲存 格式:大標/小標:內容; 
     # lesson_appendix_folder = models.CharField(max_length = 80)
     # 目前版本用不到本col 如果將來有相關附件，可以儲存在這個資料夾中
     # 這裡還要記得把老師的有空時段連過來
     # is_approved = models.BooleanField(default=False)
-    lesson_attributes = models.CharField(blank = True, max_length = 150)  
+    lesson_attributes = models.CharField(blank = True, max_length = 400)  
     # 這個是放課程的標籤，一開始先人工(老師)給，之後再交給機器學習模型來判斷
     lesson_avg_score = models.FloatField(default = 0.0) # 這個是平均評分，每次評分表一更新這裡也會連動更新
     lesson_reviewed_times = models.IntegerField(default = 0) # 這個是課程被評分過幾次的統計
@@ -143,7 +144,7 @@ class lesson_reviews(models.Model):
     student_auth_id = models.IntegerField()
     teacher_auth_id = models.IntegerField()
     score_given = models.IntegerField() # 評分介於1~5分
-    remark_given = models.CharField(blank=True, max_length=100) # 可接受空白，不超過100字
+    remark_given = models.TextField(blank=True, null=True)
     picture_folder = models.CharField(blank=True, max_length=400) # 加上真的有上課的圖以資證明（學蝦皮） 
     def __str__(self):
         return str(self.id)
