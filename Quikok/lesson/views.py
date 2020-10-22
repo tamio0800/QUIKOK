@@ -59,7 +59,7 @@ def get_lesson_cards_for_common_users(request):
         # 收取的資料不正確
         response['status'] = 'failed'
         response['errCode'] = '0'
-        response['errMsg'] = 'Received Arguments Failed''
+        response['errMsg'] = 'Received Arguments Failed'
         response['data'] = None
         return JsonResponse(response)
     else:
@@ -251,8 +251,7 @@ def return_lesson_details_for_teacher_who_created_it(request):
         return JsonResponse(response)
     else:
         # print('check1')
-        try:
-            
+        try:   
             status, errCode, errMsg, _data = the_lesson_manager.return_lesson_details(
                 lesson_id=lesson_id,
                 user_auth_id = teacher_auth_id,
@@ -324,7 +323,7 @@ def test_create_or_edit_a_lesson(request):
         # 萬一有變數沒有傳到後端來的話...
         response['status'] = 'failed'
         response['errCode'] = 0
-        response['errMsg'] = 'Connection Failed.'
+        response['errMsg'] = 'Received Arguments Failed.'
         return JsonResponse(response)
 
     if action == 'createLesson':
@@ -345,17 +344,39 @@ def test_create_or_edit_a_lesson(request):
 
 
 @require_http_methods(['POST'])
-def change_lesson_s_status(request):
+def set_lesson_s_status(request):
     response = dict()
     action = request.POST.get('action', False)
     teacher_auth_id = request.POST.get('userID', False)
     lesson_id = request.POST.get('lessonID', False) 
 
-    #if check_if_all_variables_are_true(action, teacher_auth_id, lesson_id):
-
-
-
-
+    if check_if_all_variables_are_true(action, teacher_auth_id, lesson_id):
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = 'Received Arguments Failed.'
+        return JsonResponse(response)
+    
+    vaildated_lesson_object = \
+        lesson_info.objects.filter(teacher_auth_id=teacher_auth_id).filter(id=lesson_id).first()
+    if vaildated_lesson_object is None:
+        response['status'] = 'failed'
+        response['errCode'] = '1'
+        response['errMsg'] = 'Unmatched Lesson Id And Teacher Id.'
+        return JsonResponse(response)
+    else:
+        # 有找到對應的課程
+        if action in ['selling', 'notSelling', 'donotShow']:
+            setattr(vaildated_lesson_object, 'selling_status', action)
+            vaildated_lesson_object.save()
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+            return JsonResponse(response)
+        else:
+            response['status'] = 'failed'
+            response['errCode'] = '2'
+            response['errMsg'] = 'Unknown Action.'
+            return JsonResponse(response)
 
     
 def fake_form(request):
