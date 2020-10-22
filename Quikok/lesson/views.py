@@ -37,47 +37,96 @@ def lessons_main_page(request):
     return render(request, 'lesson/lessons_main_page.html', locals())
 
 
-@require_http_methods(['GET'])
+@require_http_methods(['POST'])
 def get_lesson_cards_for_common_users(request):
     # 20200911 暫時不開發排序、篩選部分
     # 接收：需要多少小卡(int)、排序依據(string)、篩選依據(string)、觀看的用戶
-    qty = request.GET.get('qty', False) # 暫定六堂課
-    user_auth_id = request.GET.get('userID', False)
-    #ordered_by = request.GET.get('ordered_by', False)
-    #filtered_by = request.GET.get('filtered_by', False)
+    qty = request.POST.get('qty', False) # 暫定六堂課
+    user_auth_id = request.POST.get('userID', False)
+    keywords = request.POST.get('keywords', False)
+    only_show_ones_favorites = request.POST.get('only_show_ones_favorites', False)
+    only_show_lessons_by_this_teacher_s_auth_id = \
+        request.POST.get('only_show_lessons_by_this_teacher_s_auth_id', False)
+
+    #ordered_by = request.POST.get('ordered_by', False)
+    #filtered_by = request.POST.get('filtered_by', False)
     response = {}
     print(qty)
 
-    if not check_if_all_variables_are_true(qty, user_auth_id):
+    if not check_if_all_variables_are_true(qty, user_auth_id,
+    keywords, only_show_ones_favorites, only_show_lessons_by_this_teacher_s_auth_id):
         # 之後等加入條件再改寫法 
         # 收取的資料不正確
         response['status'] = 'failed'
         response['errCode'] = '0'
-        response['errMsg'] = 'invalid query'
+        response['errMsg'] = 'Received Arguments Failed''
         response['data'] = None
         return JsonResponse(response)
     else:
         # 收取的資料正確，準備撈資料回傳
         # order_by 跟 filtered_by 暫時不寫
-        qty = int(qty)
+        if int(qty) == -1:
+            # 不指定顯示數量，全部都要回傳
+            qty = None
+        else:
+            qty = int(qty)
+        only_show_ones_favorites = only_show_ones_favorites == 'true'
         _data = []
         selling_lessons_ids = lesson_info.objects.filter(selling_status='selling').values_list('id', flat=True)
-        lesson_card_objects_values_set = lesson_card.objects.filter(corresponding_lesson_id__in = selling_lessons_ids)[:qty].values()
-        # lesson_card_objects_values_set = lesson_card.objects.filter()[:qty].values()
-        user_s_all_favorite_lessons_ids = \
-            favorite_lessons.objects.filter(follower_auth_id = user_auth_id).values_list('lesson_id', flat=True)
-
-        for each_lesson_card_object_values in lesson_card_objects_values_set:
-            lesson_attributes = each_lesson_card_object_values
-            lesson_attributes['is_this_my_favorite_lesson'] = \
-                lesson_attributes['corresponding_lesson_id'] in user_s_all_favorite_lessons_ids
-            
-            lesson_attributes.pop('id', None)
-            lesson_attributes.pop('corresponding_lesson_id', None)
-            # 以上drop掉這兩個keys
-            
-            _data.append(lesson_attributes)
         
+        if int(only_show_lessons_by_this_teacher_s_auth_id) == -1:
+            # 所有老師的課程小卡都show出來
+            if only_show_ones_favorites:
+                # 只show出用戶有收藏的上架中的課程小卡
+                ones_favorite_and_selling_lessons_set = lesson_card.objects.filter(id__in=user_s_all_favorite_lessons_ids).filter(corresponding_lesson_id__in=selling_lessons_ids)[:qty].values()
+                for each_lesson_card_object_values in ones_favorite_and_selling_lessons_set:
+                    lesson_attributes = each_lesson_card_object_values
+                    lesson_attributes['is_this_my_favorite_lesson'] = True
+                    lesson_attributes.pop('id', None)
+                    lesson_attributes.pop('corresponding_lesson_id', None)
+                    # 以上drop掉這兩個keys
+                    _data.append(lesson_attributes)
+            else:
+                # show出所有上架中的課程小卡
+                lesson_card_objects_values_set = lesson_card.objects.filter(corresponding_lesson_id__in = selling_lessons_ids)[:qty].values()
+                user_s_all_favorite_lessons_ids = \
+                    favorite_lessons.objects.filter(follower_auth_id = user_auth_id).values_list('lesson_id', flat=True)
+                for each_lesson_card_object_values in lesson_card_objects_values_set:
+                    lesson_attributes = each_lesson_card_object_values
+                    lesson_attributes['is_this_my_favorite_lesson'] = \
+                        lesson_attributes['corresponding_lesson_id'] in user_s_all_favorite_lessons_ids
+                    lesson_attributes.pop('id', None)
+                    lesson_attributes.pop('corresponding_lesson_id', None)
+                    # 以上drop掉這兩個keys  
+                    _data.append(lesson_attributes)
+        else:
+            # 只show出指定老師的上架中的課程小卡
+            that_teacher_auth_id = int(only_show_lessons_by_this_teacher_s_auth_id)
+            if only_show_ones_favorites:
+                # 只show出用戶有收藏的指定老師的上架中的課程小卡
+                ones_favorite_and_selling_lessons_set = lesson_card.objects.filter(teacher_auth_id=that_teacher_auth_id).filter(id__in=user_s_all_favorite_lessons_ids).filter(corresponding_lesson_id__in=selling_lessons_ids)[:qty].values()   
+                for each_lesson_card_object_values in ones_favorite_and_selling_lessons_set:
+                    lesson_attributes = each_lesson_card_object_values
+                    lesson_attributes['is_this_my_favorite_lesson'] = True
+                    lesson_attributes.pop('id', None)
+                    lesson_attributes.pop('corresponding_lesson_id', None)
+                    # 以上drop掉這兩個keys
+                    _data.append(lesson_attributes)
+            else:
+                # show出所有上架中的指定老師的課程小卡
+                lesson_card_objects_values_set = lesson_card.objects.filter(teacher_auth_id=that_teacher_auth_id).filter(corresponding_lesson_id__in = selling_lessons_ids)[:qty].values()
+                user_s_all_favorite_lessons_ids = \
+                    favorite_lessons.objects.filter(follower_auth_id = user_auth_id).values_list('lesson_id', flat=True)
+                
+                for each_lesson_card_object_values in lesson_card_objects_values_set:
+                    lesson_attributes = each_lesson_card_object_values
+                    lesson_attributes['is_this_my_favorite_lesson'] = \
+                        lesson_attributes['corresponding_lesson_id'] in user_s_all_favorite_lessons_ids
+                    lesson_attributes.pop('id', None)
+                    lesson_attributes.pop('corresponding_lesson_id', None)
+                    # 以上drop掉這兩個keys  
+                    _data.append(lesson_attributes)
+            
         response['status'] = 'success'
         response['errCode'] = None
         response['errMsg'] = None
