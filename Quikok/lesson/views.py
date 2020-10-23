@@ -408,7 +408,7 @@ def set_lesson_s_status(request):
         return JsonResponse(response)
     else:
         # 有找到對應的課程
-        if action in ['selling', 'notSelling', 'donotShow']:
+        if action.strip().lower() in ['selling', 'notselling', 'donotshow']:
             setattr(vaildated_lesson_object, 'selling_status', action)
             vaildated_lesson_object.save()
             response['status'] = 'success'
