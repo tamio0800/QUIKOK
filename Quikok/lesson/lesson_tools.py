@@ -252,7 +252,6 @@ class lesson_card_manager:
             lesson_card_object = lesson_card.objects.filter(corresponding_lesson_id=self.lesson_card_info['corresponding_lesson_id']).first()
             if lesson_card_object is None:
                 #  建立
-                for key, value in self.lesson_card_info.items():
                 lesson_card.objects.create(
                     **self.lesson_card_info
                 ).save()
