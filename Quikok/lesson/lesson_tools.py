@@ -7,6 +7,27 @@ from django.db.models import Avg, Sum
 import pandas as pd
 import os
 
+
+def get_lesson_s_best_sale(lesson_id):
+    lesson_object = lesson_info.objects.filter(id=lesson_id).first()
+    trial_class_price = lesson_object.trial_class_price
+    price_per_hour = lesson_object.price_per_hour
+    if trial_class_price != -999 and trial_class_price < price_per_hour:
+        # 有試教優惠的話就直接回傳
+        return "試課優惠"
+    else:
+        discount_price = lesson_object.discount_price
+        discount_pairs = discount_price.split(';')
+        all_discounts = [int(_.split(':')[-1]) for _ in discount_pairs if len(_) > 0]
+        if len(all_discounts) == 0:
+            # 沒有折數
+            return None
+        else:
+            best_discount = min(all_discounts)
+            return str(100 - best_discount) + '% off'
+            # 反之則回傳  xx% off
+
+
 class lesson_manager:
     def __init__(self):
         self.status = ''
@@ -61,25 +82,7 @@ class lesson_manager:
                 teacher_profile.objects.filter(id=lesson_object.teacher_id).first().auth_id
         else:
             # 是要給老師看的，另外加上for老師的資訊
-            def get_lesson_s_best_sale(lesson_id):
-                lesson_object = lesson_info.objects.filter(id=lesson_id).first()
-                trial_class_price = lesson_object.trial_class_price
-                price_per_hour = lesson_object.price_per_hour
-                if trial_class_price != -999 and trial_class_price < price_per_hour:
-                    # 有試教優惠的話就直接回傳
-                    return "試課優惠"
-                else:
-                    discount_price = lesson_object.discount_price
-                    discount_pairs = discount_price.split(';')
-                    all_discounts = [int(_.split(':')[-1]) for _ in discount_pairs if len(_) > 0]
-                    if len(all_discounts) == 0:
-                        # 沒有折數
-                        return None
-                    else:
-                        best_discount = min(all_discounts)
-                        return str(100 - best_discount) + '% off'
-                        # 反之則回傳  xx% off
-
+            
             self.data['best_sale'] = get_lesson_s_best_sale(lesson_id=lesson_id)
         
         return (self.status, self.errCode, self.errMsg, self.data)
@@ -195,24 +198,6 @@ class lesson_card_manager:
         try:
             teacher_object = teacher_profile.objects.filter(auth_id = kwargs['teacher_auth_id']).first()
             lesson_object = lesson_info.objects.filter(id = kwargs['corresponding_lesson_id']).first()
-            
-            def get_lesson_s_best_sale(lesson_object, lesson_id):
-                trial_class_price = lesson_object.trial_class_price
-                price_per_hour = lesson_object.price_per_hour
-                if trial_class_price != -999 and trial_class_price < price_per_hour:
-                    # 有試教優惠的話就直接回傳
-                    return "試課優惠"
-                else:
-                    discount_price = lesson_object.discount_price
-                    discount_pairs = discount_price.split(';')
-                    all_discounts = [int(_.split(':')[-1]) for _ in discount_pairs if len(_) > 0]
-                    if len(all_discounts) == 0:
-                        # 沒有折數
-                        return None
-                    else:
-                        best_discount = min(all_discounts)
-                        return str(100 - best_discount) + '% off'
-                        # 反之則回傳  xx% off
 
             review_objects = lesson_reviews.objects.filter(corresponding_lesson_id = kwargs['corresponding_lesson_id'])
             # 先取得課程本身的資訊
@@ -227,7 +212,7 @@ class lesson_card_manager:
             self.lesson_card_info['highlight_1'] =  lesson_object.highlight_1
             self.lesson_card_info['highlight_2'] =  lesson_object.highlight_2
             self.lesson_card_info['highlight_3'] =  lesson_object.highlight_3
-            self.lesson_card_info['best_sale'] = get_lesson_s_best_sale(lesson_object, kwargs['corresponding_lesson_id'])
+            self.lesson_card_info['best_sale'] = get_lesson_s_best_sale(kwargs['corresponding_lesson_id'])
         
             # 再取得老師資訊與評價資訊
             self.lesson_card_info['teacher_auth_id'] =  kwargs['teacher_auth_id']
