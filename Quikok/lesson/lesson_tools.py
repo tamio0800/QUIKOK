@@ -252,6 +252,7 @@ class lesson_card_manager:
             lesson_card_object = lesson_card.objects.filter(corresponding_lesson_id=self.lesson_card_info['corresponding_lesson_id']).first()
             if lesson_card_object is None:
                 #  建立
+                for key, value in self.lesson_card_info.items():
                 lesson_card.objects.create(
                     **self.lesson_card_info
                 ).save()
@@ -260,6 +261,7 @@ class lesson_card_manager:
                 self.lesson_card_info.pop('corresponding_lesson_id', None)
                 for key, item in self.lesson_card_info.items():
                     setattr(lesson_card_object, key, item)
+                lesson_card_object.save()
             return True
         except Exception as e:
             print('setup lesson card error:  ', e)
