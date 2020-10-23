@@ -389,11 +389,12 @@ def test_create_or_edit_a_lesson(request):
 @require_http_methods(['POST'])
 def set_lesson_s_status(request):
     response = dict()
-    action = request.POST.get('action', False)
+    action = request.POST.get('selling_status', False)
     teacher_auth_id = request.POST.get('userID', False)
     lesson_id = request.POST.get('lessonID', False) 
+    print(action, teacher_auth_id, lesson_id)
 
-    if check_if_all_variables_are_true(action, teacher_auth_id, lesson_id):
+    if not check_if_all_variables_are_true(action, teacher_auth_id, lesson_id):
         response['status'] = 'failed'
         response['errCode'] = '0'
         response['errMsg'] = 'Received Arguments Failed.'
@@ -408,7 +409,7 @@ def set_lesson_s_status(request):
         return JsonResponse(response)
     else:
         # 有找到對應的課程
-        if action.strip().lower() in ['selling', 'notselling', 'donotshow']:
+        if action in ['selling', 'notSelling', 'donotShow']:
             setattr(vaildated_lesson_object, 'selling_status', action)
             vaildated_lesson_object.save()
             response['status'] = 'success'
