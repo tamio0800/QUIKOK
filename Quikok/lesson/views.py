@@ -84,7 +84,6 @@ def get_lesson_cards_for_common_users(request):
                     lesson_attributes = each_lesson_card_object_values
                     lesson_attributes['is_this_my_favorite_lesson'] = True
                     lesson_attributes.pop('id', None)
-                    lesson_attributes['lessonID'] = lesson_attributes['corresponding_lesson_id']
                     lesson_attributes.pop('corresponding_lesson_id', None)
                     # 以上drop掉這兩個keys
                     _data.append(lesson_attributes)
@@ -96,7 +95,6 @@ def get_lesson_cards_for_common_users(request):
                     lesson_attributes['is_this_my_favorite_lesson'] = \
                         lesson_attributes['corresponding_lesson_id'] in user_s_all_favorite_lessons_ids
                     lesson_attributes.pop('id', None)
-                    lesson_attributes['lessonID'] = lesson_attributes['corresponding_lesson_id']
                     lesson_attributes.pop('corresponding_lesson_id', None)
                     # 以上drop掉這兩個keys  
                     _data.append(lesson_attributes)
@@ -110,7 +108,6 @@ def get_lesson_cards_for_common_users(request):
                     lesson_attributes = each_lesson_card_object_values
                     lesson_attributes['is_this_my_favorite_lesson'] = True
                     lesson_attributes.pop('id', None)
-                    lesson_attributes['lessonID'] = lesson_attributes['corresponding_lesson_id']
                     lesson_attributes.pop('corresponding_lesson_id', None)
                     # 以上drop掉這兩個keys
                     _data.append(lesson_attributes)
@@ -125,7 +122,6 @@ def get_lesson_cards_for_common_users(request):
                     lesson_attributes['is_this_my_favorite_lesson'] = \
                         lesson_attributes['corresponding_lesson_id'] in user_s_all_favorite_lessons_ids
                     lesson_attributes.pop('id', None)
-                    lesson_attributes['lessonID'] = lesson_attributes['corresponding_lesson_id']
                     lesson_attributes.pop('corresponding_lesson_id', None)
                     # 以上drop掉這兩個keys  
                     _data.append(lesson_attributes)
@@ -195,6 +191,7 @@ def get_lesson_cards_for_the_teacher_who_created_them(request):
 def add_or_remove_favorite_lessons(request):
     user_auth_id = request.POST.get('userID', False)
     lesson_id = request.POST.get('lessonID', False)
+    
     response = {}
     if not check_if_all_variables_are_true(user_auth_id, lesson_id):
         # 之後等加入條件再改寫法 
@@ -280,7 +277,7 @@ def return_lesson_details_for_teacher_who_created_it(request):
     action = request.GET.get('action', False)
     teacher_auth_id = request.GET.get('userID', False)
     lesson_id = request.GET.get('lessonID', False)
-
+    the_lesson_manager = lesson_manager()
     print('action', action)
     print('teacher_auth_id', teacher_auth_id)
     print('lesson_id', lesson_id)

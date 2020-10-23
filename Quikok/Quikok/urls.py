@@ -12,6 +12,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('chat/', include('chatroom.urls')),
     path('homepage/', views.homepage, name='home'),
+    path('api/getBannerBar/', views.get_banner_bar),
     path('base_layout/', views.base_layout),
     path('api/account/', include('account.urls')),
     path('api/lesson/', include('lesson.urls')),
