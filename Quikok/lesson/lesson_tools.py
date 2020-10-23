@@ -21,7 +21,7 @@ def get_lesson_s_best_sale(lesson_id):
         all_discounts = [int(_.split(':')[-1]) for _ in discount_pairs if len(_) > 0]
         if len(all_discounts) == 0:
             # 沒有折數
-            return None
+            return ''
         else:
             best_discount = min(all_discounts)
             return str(100 - best_discount) + '% off'
@@ -187,8 +187,6 @@ class lesson_manager:
 class lesson_card_manager: 
     def __init__(self):
         self.lesson_card_info = dict()
-
-    
 
     def setup_a_lesson_card(self, **kwargs):
         # 當課程建立或是修改時，同步編修課程小卡資料
