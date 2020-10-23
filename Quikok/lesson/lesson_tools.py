@@ -78,6 +78,7 @@ class lesson_manager:
                 this_user_favorite_lessons_s_ids = this_user_favorite_lessons_object.values_list('lesson_id', flat=True)
                 self.data['is_this_my_favorite_lesson'] = \
                     lesson_id in this_user_favorite_lessons_s_ids
+                print(self.data)
             self.data['teacher_auth_id'] = \
                 teacher_profile.objects.filter(id=lesson_object.teacher_id).first().auth_id
         else:

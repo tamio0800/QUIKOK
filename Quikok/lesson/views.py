@@ -323,10 +323,6 @@ def return_lesson_details_for_browsing(request):
     teacher_auth_id = request.GET.get('userID', False)
     lesson_id = request.GET.get('lessonID', False)
 
-    print('action', action)
-    print('teacher_auth_id', teacher_auth_id)
-    print('lesson_id', lesson_id)
-
     if action != 'browsing':
         response['status'] = 'failed'
         response['errCode'] = 0
@@ -334,10 +330,9 @@ def return_lesson_details_for_browsing(request):
         response['data'] = None
         return JsonResponse(response)
     else:
-        print('check1')
         try:
             status, errCode, errMsg, _data = the_lesson_manager.return_lesson_details(
-                lesson_id=lesson_id,
+                lesson_id=int(lesson_id),
                 user_auth_id = teacher_auth_id,
                 for_whom='common_users',
             )
