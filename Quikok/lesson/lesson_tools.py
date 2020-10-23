@@ -43,7 +43,7 @@ class lesson_manager:
         for each_col in _data.keys():
             if each_col not in exclude_columns:
                 self.data[each_col] = _data[each_col]
-        
+        self.data['lessonID'] = _data['id']
         # if _data['lesson_has_one_hour_package']:
         #     self.data['unitClassPrice'] = _data['price_per_hour']
         # else:
