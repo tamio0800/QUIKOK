@@ -273,7 +273,6 @@ def import_lesson(request):
 def return_lesson_details_for_teacher_who_created_it(request):
     # http://127.0.0.1:8000/api/lesson/returnLessonDetailsForTeacherWhoCreatedIt/?action=editLesson&userID=2&lessonID=1
     response = dict()
-    the_lesson_manager = lesson_manager()
     action = request.GET.get('action', False)
     teacher_auth_id = request.GET.get('userID', False)
     lesson_id = request.GET.get('lessonID', False)

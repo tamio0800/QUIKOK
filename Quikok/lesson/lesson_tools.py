@@ -61,6 +61,10 @@ class lesson_manager:
                 this_user_favorite_lessons_s_ids = this_user_favorite_lessons_object.values_list('lesson_id', flat=True)
                 self.data['is_this_my_favorite_lesson'] = \
                     lesson_id in this_user_favorite_lessons_s_ids
+        else:
+            # 是要給老師看的，另外加上for老師的資訊
+            the_lesson_card_manager = lesson_card_manager()
+            self.data['best_sale'] = the_lesson_card_manager.get_lesson_s_best_sale(lesson_id=lesson_id)
         
         return (self.status, self.errCode, self.errMsg, self.data)
             
@@ -165,35 +169,33 @@ class lesson_card_manager:
     def __init__(self):
         self.lesson_card_info = dict()
 
+    def get_lesson_s_best_sale(self, lesson_id):
+        trial_class_price = lesson_object.trial_class_price
+        price_per_hour = lesson_object.price_per_hour
+        if trial_class_price != -999 and trial_class_price < price_per_hour:
+            # 有試教優惠的話就直接回傳
+            return "試課優惠"
+        else:
+            discount_price = lesson_object.discount_price
+            discount_pairs = discount_price.split(';')
+            all_discounts = [int(_.split(':')[-1]) for _ in discount_pairs if len(_) > 0]
+            if len(all_discounts) == 0:
+                # 沒有折數
+                return None
+            else:
+                best_discount = min(all_discounts)
+                return str(100 - best_discount) + '% off'
+                # 反之則回傳  xx% off
+
     def setup_a_lesson_card(self, **kwargs):
         # 當課程建立或是修改時，同步編修課程小卡資料
         print("Activate setup_a_lesson_card!!!!")
         from account.models import teacher_profile
         from lesson.models import lesson_info, lesson_reviews, lesson_card
-
         try:
             teacher_object = teacher_profile.objects.filter(auth_id = kwargs['teacher_auth_id']).first()
             lesson_object = lesson_info.objects.filter(id = kwargs['corresponding_lesson_id']).first()
             review_objects = lesson_reviews.objects.filter(corresponding_lesson_id = kwargs['corresponding_lesson_id'])
-            
-            def get_lesson_s_best_sale(lesson_id):
-                trial_class_price = lesson_object.trial_class_price
-                price_per_hour = lesson_object.price_per_hour
-                if trial_class_price != -999 and trial_class_price < price_per_hour:
-                    # 有試教優惠的話就直接回傳
-                    return "試課優惠"
-                else:
-                    discount_price = lesson_object.discount_price
-                    discount_pairs = discount_price.split(';')
-                    all_discounts = [int(_.split(':')[-1]) for _ in discount_pairs if len(_) > 0]
-                    if len(all_discounts) == 0:
-                        # 沒有折數
-                        return None
-                    else:
-                        best_discount = min(all_discounts)
-                        return str(100 - best_discount) + '% off'
-                        # 反之則回傳  xx% off
-
             # 先取得課程本身的資訊
             self.lesson_card_info['corresponding_lesson_id'] =  kwargs['corresponding_lesson_id']
             self.lesson_card_info['big_title'] =  lesson_object.big_title
@@ -206,7 +208,7 @@ class lesson_card_manager:
             self.lesson_card_info['highlight_1'] =  lesson_object.highlight_1
             self.lesson_card_info['highlight_2'] =  lesson_object.highlight_2
             self.lesson_card_info['highlight_3'] =  lesson_object.highlight_3
-            self.lesson_card_info['best_sale'] = get_lesson_s_best_sale(kwargs['corresponding_lesson_id'])
+            self.lesson_card_info['best_sale'] = self.get_lesson_s_best_sale(kwargs['corresponding_lesson_id'])
         
             # 再取得老師資訊與評價資訊
             self.lesson_card_info['teacher_auth_id'] =  kwargs['teacher_auth_id']
