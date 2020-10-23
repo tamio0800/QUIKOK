@@ -16,7 +16,7 @@ from django.contrib.auth.decorators import login_required
 def check_if_all_variables_are_true(*args):
     print(args)
     for each_arg in args:
-        if not each_arg:
+        if each_arg == False:
             return False
     return True
 
