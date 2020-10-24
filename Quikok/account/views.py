@@ -1,9 +1,9 @@
 from django.shortcuts import render, redirect
 from django.contrib import auth
 from django.contrib.auth.hashers import make_password, check_password  # 這一行用來加密密碼的
-from .model_tools import user_db_manager
+from .model_tools import user_db_manager, teacher_manager
 from django.contrib.auth.models import User
-from account.models import user_token,student_profile, teacher_profile, specific_available_time, general_available_time
+from account.models import user_token, student_profile, teacher_profile, specific_available_time, general_available_time
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.core.files.storage import FileSystemStorage
 from account.models import dev_db
@@ -18,6 +18,7 @@ import json
 from django.middleware.csrf import get_token
 from datetime import datetime, timedelta
 import shutil
+
 
 def is_num(target):
     try:
@@ -353,7 +354,7 @@ def create_a_teacher_user(request):
             # 的teacher_name有foreignkey的關係
             # 因此必須用teacher_profile.objects 來建立這邊的teacher_name
             # (否則無法建立)
-            teacher_id = teacher_profile.objects.get(username=username)
+            teacher_object = teacher_profile.objects.get(username=username)
             general_time = request.POST.get('teacher_general_availabale_time', False)
             temp_general_time = general_time.split(';')
             print(general_time)
@@ -361,7 +362,7 @@ def create_a_teacher_user(request):
                 temp_every_week = every_week.split(':')
 
                 general_available_time.objects.create(
-                    teacher_id = teacher_id,
+                    teacher_model = teacher_object,
                     week = temp_every_week[0],
                     time = temp_every_week[1]
                                 ).save()
@@ -387,6 +388,23 @@ def create_a_teacher_user(request):
     return JsonResponse(response)
 
 
+@require_http_methods(['GET'])
+def return_teacher_s_profile_for_oneself_viewing(request):
+    response = dict()
+    teacher_auth_id = request.POST.get('userID', False)
+    the_teacher_manager = teacher_manager()
+
+    if teacher_auth_id == False:
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = 'Received Arguments Failed.'
+        response['data'] = None
+        return JsonResponse(response)
+    
+    response['status'], response['errCode'], response['errMsg'], response['data'] = \
+        the_teacher_manager.return_teacher_profile_for_oneself_viewing(teacher_auth_id)
+    
+    return JsonResponse(response)
 
 
 

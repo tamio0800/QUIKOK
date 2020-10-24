@@ -101,14 +101,14 @@ class dev_db(models.Model):
     def __str__(self):
         return self.username
 
-
+# from account.models import general_available_time as g
 class general_available_time(models.Model):
-    teacher_id = models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='general_time')        
+    teacher_model = models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='general_time')        
     week=models.CharField(max_length=1)      #sun=6, mon=0, tue=1,...,
     time=models.CharField(max_length=133)       #Example:0,1,2,3,4,5,47
     # len(','.join([str(__ for _ in range(48)])) >> 133 
     def __str__(self):
-        return self.user.username
+        return self.teacher_model.username
 # 就這個函式解釋一下怎麼與teacher_profile互相聯繫
 # 這個table insert values後，會有一欄 user_id，
 # 這個user_id就是該teacher在teacher_profile中的id；

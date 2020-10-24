@@ -1,9 +1,57 @@
-from account.models import dev_db, student_profile, teacher_profile
+from account.models import dev_db, student_profile, teacher_profile, general_available_time
 from chatroom.models import chat_room
 from django.contrib.auth.models import User
 from itertools import product as pdt
 import pandas as pd
 import os
+
+
+class teacher_manager:
+    def __init__(self):
+        self.status = None
+        self.errCode = None
+        self.errMsg = None
+        self.data = None
+
+    def return_teacher_profile_for_oneself_viewing(self, teacher_auth_id):
+        teacher_profile_object = teacher_profile.objects.filter(auth_id=teacher_auth_id)
+        if teacher_profile_object.first() is None:
+            self.status = 'failed'
+            self.errCode = '1'
+            self.errMsg = 'Found No Teacher.'
+            return (self.status, self.errCode, self.errMsg, self.data)
+        try:
+            _data = dict()
+            exclude_columns = [
+                'specific_time', 'teaching_history', 'id', 'teacher_of_the_lesson_snapshot',
+                'teacher_of_the_lesson', 'password', 'user_folder', 'info_folder',
+                'cert_unapproved', 'date_join', 'auth_id', 'cert_approved']
+            for each_key, each_value in teacher_profire_object.values()[0].items():
+                if each_key not in exclude_columns:
+                    _data[each_key] = each_value 
+            general_available_time_object_records = \
+                general_available_time.objects.filter(teacher_model__auth_id=teacher_auth_id).values()
+            
+            if len(general_available_time_object_records) > 0:
+                # 代表有找到老師的時間
+                general_available_time = list()
+                for each_record in general_available_time_object_records:
+                    general_available_time.append(
+                        each_record['week'] + ':' + each_record['time']
+                        )
+                general_available_time = ';'.join(general_available_time)
+            else:
+                general_available_time = ''
+            _data['general_available_time'] = general_available_time
+            self.status = 'success'
+            self.data = _data
+            return (self.status, self.errCode, self.errMsg, self.data)
+        except Exception as e:
+            print(e)
+            self.status = 'failed'
+            self.errCode = '2'
+            self.errMsg = 'Querying Data Failed.'
+            return (self.status, self.errCode, self.errMsg, self.data)
 
 class user_db_manager:
     def __init__(self):
