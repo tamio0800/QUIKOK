@@ -12,7 +12,6 @@ class teacher_manager:
         self.errCode = None
         self.errMsg = None
         self.data = None
-
     def return_teacher_profile_for_oneself_viewing(self, teacher_auth_id):
         teacher_profile_object = teacher_profile.objects.filter(auth_id=teacher_auth_id)
         if teacher_profile_object.first() is None:
@@ -31,18 +30,17 @@ class teacher_manager:
                     _data[each_key] = each_value 
             general_available_time_object_records = \
                 general_available_time.objects.filter(teacher_model__auth_id=teacher_auth_id).values()
-            print("XXXXXXXXXXXXXXXX")
             if len(general_available_time_object_records) > 0:
                 # 代表有找到老師的時間
-                general_available_time = list()
+                general_available_time_list = list()
                 for each_record in general_available_time_object_records:
-                    general_available_time.append(
+                    general_available_time_list.append(
                         each_record['week'] + ':' + each_record['time']
                         )
-                general_available_time = ';'.join(general_available_time)
+                general_available_time_list = ';'.join(general_available_time_list)
             else:
-                general_available_time = ''
-            _data['general_available_time'] = general_available_time
+                general_available_time_list = ''
+            _data['general_available_time'] = general_available_time_list
             self.status = 'success'
             self.data = _data
             return (self.status, self.errCode, self.errMsg, self.data)
