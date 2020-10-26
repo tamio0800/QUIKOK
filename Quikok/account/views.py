@@ -391,7 +391,7 @@ def create_a_teacher_user(request):
 @require_http_methods(['GET'])
 def return_teacher_s_profile_for_oneself_viewing(request):
     response = dict()
-    teacher_auth_id = request.POST.get('userID', False)
+    teacher_auth_id = request.GET.get('userID', False)
     the_teacher_manager = teacher_manager()
 
     if teacher_auth_id == False:
