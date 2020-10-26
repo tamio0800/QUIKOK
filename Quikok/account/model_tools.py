@@ -49,6 +49,7 @@ class teacher_manager:
     def return_teacher_profile_for_oneself_viewing(self, teacher_auth_id):
         # 老師編輯個人資料
         teacher_profile_object = teacher_profile.objects.filter(auth_id=teacher_auth_id)
+
         if teacher_profile_object.first() is None:
             self.status = 'failed'
             self.errCode = '1'
@@ -63,20 +64,35 @@ class teacher_manager:
                 'cert_unapproved', 'date_join', 'auth_id', 'cert_approved']
             for each_key, each_value in teacher_profile_object.values()[0].items():
                 if each_key not in exclude_columns:
-                    _data[each_key] = each_value 
+                    _data[each_key] = each_value
+            # 一般時間
             general_available_time_object_records = \
                 general_available_time.objects.filter(teacher_model__auth_id=teacher_auth_id).values()
             if len(general_available_time_object_records) > 0:
                 # 代表有找到老師的時間
                 general_available_time_list = list()
-                for each_record in general_available_time_object_records:
-                    general_available_time_list.append(
-                        each_record['week'] + ':' + each_record['time']
-                        )
-                general_available_time_list = ';'.join(general_available_time_list)
+            for each_record in general_available_time_object_records:
+                general_available_time_list.append(
+                    each_record['week'] + ':' + each_record['time']
+                    )
+            general_available_time_list = ';'.join(general_available_time_list)
+
             else:
                 general_available_time_list = ''
             _data['general_available_time'] = general_available_time_list
+            # 特定時間
+            specific_available_time_list = list()
+            specific_time_queryset = teacher_profile_object.first().specific_time.values()
+            if len(specific_time_queryset) > 0: # 表示有特定時間
+                for each_record in specific_time_queryset:
+                    _date = each_record['date']
+                    _time = each_record['time']
+                    specific_available_time_list.append(_date + ':' + _time)
+                specific_available_time_list = ';'.join(specific_available_time_list)
+                _data['specific_available_time'] = specific_available_time_list
+            else:
+                pass # 應該不需要做甚麼事情
+
             self.status = 'success'
             self.data = _data
             return (self.status, self.errCode, self.errMsg, self.data)
