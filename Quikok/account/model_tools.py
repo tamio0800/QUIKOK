@@ -26,12 +26,12 @@ class teacher_manager:
                 'specific_time', 'teaching_history', 'id', 'teacher_of_the_lesson_snapshot',
                 'teacher_of_the_lesson', 'password', 'user_folder', 'info_folder',
                 'cert_unapproved', 'date_join', 'auth_id', 'cert_approved']
-            for each_key, each_value in teacher_profire_object.values()[0].items():
+            for each_key, each_value in teacher_profile_object.values()[0].items():
                 if each_key not in exclude_columns:
                     _data[each_key] = each_value 
             general_available_time_object_records = \
                 general_available_time.objects.filter(teacher_model__auth_id=teacher_auth_id).values()
-            
+            print("XXXXXXXXXXXXXXXX")
             if len(general_available_time_object_records) > 0:
                 # 代表有找到老師的時間
                 general_available_time = list()
