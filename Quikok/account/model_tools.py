@@ -5,15 +5,47 @@ from itertools import product as pdt
 import pandas as pd
 import os
 
-
+class student_manager:
+    def __init__(self):
+        self.status = None
+        self.errCode = None
+        self.errMsg = None
+        self.data = None
+    def return_student_profile_for_oneself_viewing(self, student_auth_id):
+        # 學生編輯個人資料
+        student_profile_object = student_profile.objects.filter(auth_id=student_auth_id)
+        if student_profile_object.first() is None:
+            self.status = 'failed'
+            self.errCode = '1'
+            self.errMsg = 'Found No Student.'
+            return (self.status, self.errCode, self.errMsg, self.data)
+        try:
+            _data = dict() 
+            exclude_columns = [
+                'id','auth_id',  'info_folder',
+                'password', 'user_folder', 'date_join']
+            for each_key, each_value in student_profile_object.values()[0].items():
+                if each_key not in exclude_columns:
+                    _data[each_key] = each_value 
+            
+            self.status = 'success'
+            self.data = _data
+            return (self.status, self.errCode, self.errMsg, self.data)
+        except Exception as e:
+            print(e)
+            self.status = 'failed'
+            self.errCode = '2'
+            self.errMsg = 'Querying Data Failed.'
+            return (self.status, self.errCode, self.errMsg, self.data)
 class teacher_manager:
     def __init__(self):
         self.status = None
         self.errCode = None
         self.errMsg = None
         self.data = None
-
+    
     def return_teacher_profile_for_oneself_viewing(self, teacher_auth_id):
+        # 老師編輯個人資料
         teacher_profile_object = teacher_profile.objects.filter(auth_id=teacher_auth_id)
         if teacher_profile_object.first() is None:
             self.status = 'failed'
@@ -21,12 +53,12 @@ class teacher_manager:
             self.errMsg = 'Found No Teacher.'
             return (self.status, self.errCode, self.errMsg, self.data)
         try:
-            _data = dict()
+            _data = dict() 
             exclude_columns = [
                 'specific_time', 'teaching_history', 'id', 'teacher_of_the_lesson_snapshot',
                 'teacher_of_the_lesson', 'password', 'user_folder', 'info_folder',
                 'cert_unapproved', 'date_join', 'auth_id', 'cert_approved']
-            for each_key, each_value in teacher_profire_object.values()[0].items():
+            for each_key, each_value in teacher_profile_object.values()[0].items():
                 if each_key not in exclude_columns:
                     _data[each_key] = each_value 
             general_available_time_object_records = \
