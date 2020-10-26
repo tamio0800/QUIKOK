@@ -12,6 +12,9 @@ class teacher_manager:
         self.errCode = None
         self.errMsg = None
         self.data = None
+
+    #老師個人資訊編輯頁(自己看自己)
+    # 還需要補上一般時間跟特定時間
     def return_teacher_profile_for_oneself_viewing(self, teacher_auth_id):
         teacher_profile_object = teacher_profile.objects.filter(auth_id=teacher_auth_id)
         if teacher_profile_object.first() is None:
@@ -21,8 +24,9 @@ class teacher_manager:
             return (self.status, self.errCode, self.errMsg, self.data)
         try:
             _data = dict()
+            # 不需要看到的欄位
             exclude_columns = [
-                'specific_time', 'teaching_history', 'id', 'teacher_of_the_lesson_snapshot',
+                'teaching_history', 'id', 'teacher_of_the_lesson_snapshot',
                 'teacher_of_the_lesson', 'password', 'user_folder', 'info_folder',
                 'cert_unapproved', 'date_join', 'auth_id', 'cert_approved']
             for each_key, each_value in teacher_profile_object.values()[0].items():
@@ -50,7 +54,46 @@ class teacher_manager:
             self.errCode = '2'
             self.errMsg = 'Querying Data Failed.'
             return (self.status, self.errCode, self.errMsg, self.data)
-
+    def return_teacher_profile_for_public_viewing(self, teacher_auth_id):
+        teacher_profile_object = teacher_profile.objects.filter(auth_id=teacher_auth_id)
+        if teacher_profile_object.first() is None:
+            self.status = 'failed'
+            self.errCode = '1'
+            self.errMsg = 'Found No Teacher.'
+            return (self.status, self.errCode, self.errMsg, self.data)
+        try:
+            _data = dict()
+            exclude_columns = [
+                'auth_id','username','password','balance', 'withholding_balance',
+                'specific_time', 'teaching_history', 'id', 
+                'teacher_of_the_lesson_snapshot',
+                'teacher_of_the_lesson',  'user_folder', 'info_folder',
+                'cert_unapproved', 'date_join',  'cert_approved']
+            for each_key, each_value in teacher_profile_object.values()[0].items():
+                if each_key not in exclude_columns:
+                    _data[each_key] = each_value 
+            general_available_time_object_records = \
+                general_available_time.objects.filter(teacher_model__auth_id=teacher_auth_id).values()
+            if len(general_available_time_object_records) > 0:
+                # 代表有找到老師的時間
+                general_available_time_list = list()
+                for each_record in general_available_time_object_records:
+                    general_available_time_list.append(
+                        each_record['week'] + ':' + each_record['time']
+                        )
+                general_available_time_list = ';'.join(general_available_time_list)
+            else:
+                general_available_time_list = ''
+            _data['general_available_time'] = general_available_time_list
+            self.status = 'success'
+            self.data = _data
+            return (self.status, self.errCode, self.errMsg, self.data)
+        except Exception as e:
+            print(e)
+            self.status = 'failed'
+            self.errCode = '2'
+            self.errMsg = 'Querying Data Failed.'
+            return (self.status, self.errCode, self.errMsg, self.data)
 class user_db_manager:
     def __init__(self):
         pass
