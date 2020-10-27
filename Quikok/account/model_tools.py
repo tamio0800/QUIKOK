@@ -71,11 +71,11 @@ class teacher_manager:
             if len(general_available_time_object_records) > 0:
                 # 代表有找到老師的時間
                 general_available_time_list = list()
-            for each_record in general_available_time_object_records:
-                general_available_time_list.append(
-                    each_record['week'] + ':' + each_record['time']
-                    )
-            general_available_time_list = ';'.join(general_available_time_list)
+                for each_record in general_available_time_object_records:
+                    general_available_time_list.append(
+                        each_record['week'] + ':' + each_record['time']
+                        )
+                general_available_time_list = ';'.join(general_available_time_list)
 
             else:
                 general_available_time_list = ''
