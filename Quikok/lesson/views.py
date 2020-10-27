@@ -325,7 +325,7 @@ def return_lesson_details_for_browsing(request):
 
     if action != 'browsing':
         response['status'] = 'failed'
-        response['errCode'] = 0
+        response['errCode'] = '0'
         response['errMsg'] = 'Unknown Action'
         response['data'] = None
         return JsonResponse(response)
@@ -343,7 +343,7 @@ def return_lesson_details_for_browsing(request):
             return JsonResponse(response)
         except:
             response['status'] = 'failed'
-            response['errCode'] = 3
+            response['errCode'] = '3'
             response['errMsg'] = 'Querying Failed.'
             response['data'] = None
             return JsonResponse(response)
