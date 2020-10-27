@@ -12,19 +12,21 @@ class student_manager:
         self.errMsg = None
         self.data = None
     def check_if_student_exist(self, student_auth_id):
+        
         student_profile_object = student_profile.objects.filter(auth_id=student_auth_id)
         if student_profile_object.first() is None:
             self.status = 'failed'
             self.errCode = '1'
             self.errMsg = 'Found No Student.'
-            
+        else:
+            return(student_profile_object)    
     def return_student_profile_for_oneself_viewing(self, student_auth_id):
         # 顯示學生隱私資料for學生編輯個人資料
-        self.check_if_student_exist(student_auth_id)
         if self.status == 'failed':
-            return (self.status, self.errCode, self.errMsg, self.data)
+            #return (self.status, self.errCode, self.errMsg, self.data)
         else:
             try:
+                student_profile_object = self.check_if_student_exist(student_auth_id)
                 _data = dict() 
                 exclude_columns = [
                     'id','auth_id',  'info_folder',
@@ -35,13 +37,13 @@ class student_manager:
                 
                 self.status = 'success'
                 self.data = _data
-                return (self.status, self.errCode, self.errMsg, self.data)
+                #return (self.status, self.errCode, self.errMsg, self.data)
             except Exception as e:
                 print(e)
                 self.status = 'failed'
                 self.errCode = '2'
                 self.errMsg = 'Querying Data Failed.'
-                return (self.status, self.errCode, self.errMsg, self.data)
+        return (self.status, self.errCode, self.errMsg, self.data)
         
             
     def update_student_profile(self, student_auth_id):
@@ -85,7 +87,8 @@ class teacher_manager:
             exclude_columns = [
                 'teaching_history', 'id', 'teacher_of_the_lesson_snapshot',
                 'teacher_of_the_lesson', 'password', 'user_folder', 'info_folder',
-                'cert_unapproved', 'date_join', 'auth_id', 'cert_approved']
+                'cert_unapproved', 'date_join', 'auth_id', 'cert_approved', 'all_lesson_score_mean',
+                'total_number_of_remark']
             for each_key, each_value in teacher_profile_object.values()[0].items():
                 if each_key not in exclude_columns:
                     _data[each_key] = each_value

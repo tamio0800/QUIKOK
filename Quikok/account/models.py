@@ -78,6 +78,8 @@ class teacher_profile(models.Model):
     is_approved = models.BooleanField(default = False)  # 要讓陳先生看過/審核過
     date_join = models.DateTimeField(auto_now_add = True)
     special_exp = models.CharField(max_length = 300, blank=True)# 其他經歷或特殊專長
+    all_lesson_score_mean = models.IntegerField(default=0)  # 全部課程分數平均
+    total_number_of_remark = models.IntegerField(default=0) # 評分筆數
 
     def __str__(self):
         return self.username
