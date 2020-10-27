@@ -204,12 +204,19 @@ def return_student_profile_for_oneself_viewing(request):
     return JsonResponse(response)
 
 
-@require_http_methods(['POST'])
+#@require_http_methods(['POST'])
 def edit_student_profile(request):
-    response = dict()
-    student_auth_id = request.POST.get('userID', False)
-    
-
+    if request.method == 'POST':
+        response = dict()
+        test = request.POST.getlist()
+        student_auth_id = request.POST.get('userID', False)
+        #request.POST.get('user_mobile', False)
+        #request.POST.get('user_nickname', False)
+        #request.POST.get('user_notifiemail', False)
+        #thumbnail_dir = request.POST.get('upload_snapshot', False)
+        print('收到:'+test)
+    else:
+        return render(request, 'account/signup.html')
 ##### 老師區 #####
 @require_http_methods(['POST'])
 def create_a_teacher_user(request):

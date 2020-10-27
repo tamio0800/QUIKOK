@@ -23,7 +23,7 @@ class student_manager:
     def return_student_profile_for_oneself_viewing(self, student_auth_id):
         # 顯示學生隱私資料for學生編輯個人資料
         if self.status == 'failed':
-            #return (self.status, self.errCode, self.errMsg, self.data)
+            return (self.status, self.errCode, self.errMsg, self.data)
         else:
             try:
                 student_profile_object = self.check_if_student_exist(student_auth_id)
@@ -43,10 +43,11 @@ class student_manager:
                 self.status = 'failed'
                 self.errCode = '2'
                 self.errMsg = 'Querying Data Failed.'
-        return (self.status, self.errCode, self.errMsg, self.data)
+
+            return (self.status, self.errCode, self.errMsg, self.data)
         
             
-    def update_student_profile(self, student_auth_id):
+    def update_student_profile(self, student_auth_id, **kwargs):
         # 學生資料編輯
         self.check_if_student_exist(student_auth_id)
         if self.status == 'failed':
