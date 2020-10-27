@@ -49,7 +49,7 @@ def date_string_2_dateformat(target_string):
 
 
 ## 0916改成api的版本,之前的另存成views_old, 之後依據該檔把已設計好的功能寫過來
-
+##### 學生區 #####
 @require_http_methods(['POST'])
 def create_a_student_user(request):
     response = {}
@@ -185,7 +185,23 @@ def create_a_student_user(request):
     return JsonResponse(response)
 
 
+@require_http_methods(['GET'])
+def return_student_profile_for_oneself_viewing(request):
+    response = dict()
+    student_auth_id = request.GET.get('userID', False)
+    the_student_manager = student_manager()
 
+    if student_auth_id == False:
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = 'Received Arguments Failed.'
+        response['data'] = None
+        return JsonResponse(response)
+    
+    response['status'], response['errCode'], response['errMsg'], response['data'] = \
+        the_student_manager.return_student_profile_for_oneself_viewing(teacher_auth_id)
+    
+    return JsonResponse(response)
 ##### 老師區 #####
 @require_http_methods(['POST'])
 def create_a_teacher_user(request):
@@ -387,7 +403,7 @@ def create_a_teacher_user(request):
     
     return JsonResponse(response)
 
-
+#老師個人資訊編輯頁(自己看自己)
 @require_http_methods(['GET'])
 def return_teacher_s_profile_for_oneself_viewing(request):
     response = dict()
@@ -406,6 +422,24 @@ def return_teacher_s_profile_for_oneself_viewing(request):
     
     return JsonResponse(response)
 
+#老師個人資訊編輯頁(公開)
+@require_http_methods(['GET'])
+def return_teacher_s_profile_for_public_viewing(request):
+    response = dict()
+    teacher_auth_id = request.GET.get('userID', False)
+    the_teacher_manager = teacher_manager()
+
+    if teacher_auth_id == False:
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = 'Received Arguments Failed.'
+        response['data'] = None
+        return JsonResponse(response)
+    
+    response['status'], response['errCode'], response['errMsg'], response['data'] = \
+        the_teacher_manager.return_teacher_profile_for_public_viewing(teacher_auth_id)
+    
+    return JsonResponse(response)
 
 
 # 登入

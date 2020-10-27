@@ -80,7 +80,7 @@ class teacher_manager:
             else:
                 general_available_time_list = ''
             _data['general_available_time'] = general_available_time_list
-            # 特定時間
+            # 特定時間 第一版不做
             specific_available_time_list = list()
             specific_time_queryset = teacher_profile_object.first().specific_time.values()
             if len(specific_time_queryset) > 0: # 表示有特定時間
