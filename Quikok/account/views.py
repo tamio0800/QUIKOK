@@ -202,6 +202,14 @@ def return_student_profile_for_oneself_viewing(request):
         the_student_manager.return_student_profile_for_oneself_viewing(teacher_auth_id)
     
     return JsonResponse(response)
+
+
+@require_http_methods(['POST'])
+def edit_student_profile(request):
+    response = dict()
+    student_auth_id = request.POST.get('userID', False)
+    
+
 ##### 老師區 #####
 @require_http_methods(['POST'])
 def create_a_teacher_user(request):

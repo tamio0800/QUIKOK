@@ -11,32 +11,56 @@ class student_manager:
         self.errCode = None
         self.errMsg = None
         self.data = None
-    def return_student_profile_for_oneself_viewing(self, student_auth_id):
-        # 學生編輯個人資料
+    def check_if_student_exist(self, student_auth_id):
         student_profile_object = student_profile.objects.filter(auth_id=student_auth_id)
         if student_profile_object.first() is None:
             self.status = 'failed'
             self.errCode = '1'
             self.errMsg = 'Found No Student.'
-            return (self.status, self.errCode, self.errMsg, self.data)
-        try:
-            _data = dict() 
-            exclude_columns = [
-                'id','auth_id',  'info_folder',
-                'password', 'user_folder', 'date_join']
-            for each_key, each_value in student_profile_object.values()[0].items():
-                if each_key not in exclude_columns:
-                    _data[each_key] = each_value 
             
-            self.status = 'success'
-            self.data = _data
+    def return_student_profile_for_oneself_viewing(self, student_auth_id):
+        # 顯示學生隱私資料for學生編輯個人資料
+        self.check_if_student_exist(student_auth_id)
+        if self.status == 'failed':
             return (self.status, self.errCode, self.errMsg, self.data)
-        except Exception as e:
-            print(e)
-            self.status = 'failed'
-            self.errCode = '2'
-            self.errMsg = 'Querying Data Failed.'
+        else:
+            try:
+                _data = dict() 
+                exclude_columns = [
+                    'id','auth_id',  'info_folder',
+                    'password', 'user_folder', 'date_join']
+                for each_key, each_value in student_profile_object.values()[0].items():
+                    if each_key not in exclude_columns:
+                        _data[each_key] = each_value 
+                
+                self.status = 'success'
+                self.data = _data
+                return (self.status, self.errCode, self.errMsg, self.data)
+            except Exception as e:
+                print(e)
+                self.status = 'failed'
+                self.errCode = '2'
+                self.errMsg = 'Querying Data Failed.'
+                return (self.status, self.errCode, self.errMsg, self.data)
+        
+            
+    def update_student_profile(self, student_auth_id):
+        # 學生資料編輯
+        self.check_if_student_exist(student_auth_id)
+        if self.status == 'failed':
             return (self.status, self.errCode, self.errMsg, self.data)
+        else:
+            try:
+                # 更新資料庫
+    
+                self.status = 'success'
+                return (self.status, self.errCode, self.errMsg, self.data)
+            except Exception as e:
+                print(e)
+                self.status = 'failed'
+                self.errCode = '2'
+                self.errMsg = 'Querying Data Failed.'
+                return (self.status, self.errCode, self.errMsg, self.data)
 class teacher_manager:
     def __init__(self):
         self.status = None
