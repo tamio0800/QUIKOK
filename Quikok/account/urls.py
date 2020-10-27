@@ -23,4 +23,5 @@ urlpatterns = [
     path('get_general_time/', views.get_general_time),
     path('change_general_time/', views.change_general_time),
     path('returnTeacherProfileForOneselfViewing/', views.return_teacher_s_profile_for_oneself_viewing),
+    path('returnTeacherProfileForPublicViewing/', views.return_teacher_s_profile_for_public_viewing),
 ]
