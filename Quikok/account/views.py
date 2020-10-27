@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import auth
 from django.contrib.auth.hashers import make_password, check_password  # 這一行用來加密密碼的
-from .model_tools import user_db_manager, teacher_manager
+from .model_tools import user_db_manager, teacher_manager, student_manager
 from django.contrib.auth.models import User
 from account.models import user_token, student_profile, teacher_profile, specific_available_time, general_available_time
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
@@ -403,7 +403,7 @@ def create_a_teacher_user(request):
     
     return JsonResponse(response)
 
-#老師個人資訊編輯頁(自己看自己)
+#老師個人資訊(自己看自己)
 @require_http_methods(['GET'])
 def return_teacher_s_profile_for_oneself_viewing(request):
     response = dict()
@@ -422,7 +422,7 @@ def return_teacher_s_profile_for_oneself_viewing(request):
     
     return JsonResponse(response)
 
-#老師個人資訊編輯頁(公開)
+#老師個人資訊(公開)
 @require_http_methods(['GET'])
 def return_teacher_s_profile_for_public_viewing(request):
     response = dict()
