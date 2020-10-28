@@ -34,7 +34,6 @@ class lesson_manager:
         self.errCode = None
         self.errMsg = None
         self.data = dict()
-
     def return_lesson_details(self, lesson_id, user_auth_id, for_whom='common_users'):
         # for_whom接收的參數有兩個，'common_users' 以及 'teacher_who_created_it'
         if for_whom == 'common_users':
@@ -57,7 +56,6 @@ class lesson_manager:
         self.status = 'success'
         self.errCode = None
         self.errMsg = None
-
         # 在下面定義API的回傳, 就是回傳資料加工區啦
         exclude_columns = [
             'id', 'teacher_id', 'created_time']      
@@ -66,8 +64,7 @@ class lesson_manager:
                 self.data[each_col] = _data[each_col]
         # 課程的資料加工完畢，來點開課老師本身的資訊
         self.data['is_this_teacher_male'] = \
-            teacher_profile.objects.filter(id=lesson_object.teacher_id).first().is_male
-        
+            teacher_profile.objects.filter(id=lesson_object.teacher_id).first().is_male   
         # 如果for_whom == 'common_users'，要加上資訊: 這門課是不是該user的最愛?   
         # 以及該開課老師的auth_id
         if for_whom == 'common_users':
@@ -82,13 +79,9 @@ class lesson_manager:
             self.data['teacher_auth_id'] = \
                 teacher_profile.objects.filter(id=lesson_object.teacher_id).first().auth_id
         else:
-            # 是要給老師看的，另外加上for老師的資訊
-            
-            self.data['best_sale'] = get_lesson_s_best_sale(lesson_id=lesson_id)
-        
+            # 是要給老師看的，另外加上for老師的資訊    
+            self.data['best_sale'] = get_lesson_s_best_sale(lesson_id=lesson_id)  
         return (self.status, self.errCode, self.errMsg, self.data)
-            
-
     def fetch_lesson_details(self, lesson_id):
         lesson_object = lesson_info.objects.filter(id = lesson_id)
         return lesson_object.values()[0]

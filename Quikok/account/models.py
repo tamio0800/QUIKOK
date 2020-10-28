@@ -78,7 +78,7 @@ class teacher_profile(models.Model):
     is_approved = models.BooleanField(default = False)  # 要讓陳先生看過/審核過
     date_join = models.DateTimeField(auto_now_add = True)
     special_exp = models.CharField(max_length = 300, blank=True)# 其他經歷或特殊專長
-    all_lesson_score_mean = models.IntegerField(default=0)  # 全部課程分數平均
+    all_lesson_score_mean = models.FloatField(default=0.0)  # 全部課程分數平均
     total_number_of_remark = models.IntegerField(default=0) # 評分筆數
 
     def __str__(self):
@@ -121,7 +121,6 @@ class general_available_time(models.Model):
 # 我們可以透過teacher1.general_time來取得該名老師對應的general_available_time物件。
 # ===================
 # 而如果是SQL，我們直接透過user_id，用join方式互串資訊就好囉。
-
 
 
 class specific_available_time(models.Model):
