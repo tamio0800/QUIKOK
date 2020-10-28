@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from itertools import product as pdt
 import pandas as pd
 import os
-
+from django.core.files.storage import FileSystemStorage
 class student_manager:
     def __init__(self):
         self.status = None
@@ -47,13 +47,42 @@ class student_manager:
             return (self.status, self.errCode, self.errMsg, self.data)
         
             
-    def update_student_profile(self, student_auth_id, **kwargs):
+    def update_student_profile(self, **kwargs):
         # 學生資料編輯
-        self.check_if_student_exist(student_auth_id)
+
+        student_auth_id = kwargs['student_auth_id']
+        student_profile_object = self.check_if_student_exist(student_auth_id)
         if self.status == 'failed':
             return (self.status, self.errCode, self.errMsg, self.data)
         else:
             try:
+                student_profile = student_profile_object.first()
+                for k, v in kwargs.items():
+                    #_dict[k] = v
+                    setattr(student_profile, k, v)
+                if kwargs['snapshot'] :
+                    snapshot = kwargs['snapshot']
+                    # 檢查路徑中是否原本已經有大頭照,有的話刪除
+                    file_list = os.listdir('user_upload/students/' + username)
+                    for file_name in file_list:
+                        if re.findall('', file_name):
+                            os.unlink('user_upload/students/' + username + file_name)
+
+                    print('收到學生大頭照: ', snapshot.name)
+                    folder_where_are_uploaded_files_be ='user_upload/students/' + username
+                    fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
+                    file_exten = each_file.name.split('.')[-1]
+                    fs.save('thumbnail'+'.'+ file_exten , each_file) # 檔名統一改成thumbnail開頭
+                    thumbnail_dir = 'user_upload/students/' + username + '/' + 'thumbnail'+'.'+ file_exten
+                
+                #student_profile_object.update(
+                #    nickname = kwargs['nickname'],
+                #    intro = '',
+                #    role = kwargs['role'],
+                #    mobile = kwargs['mobile'],
+                #    picture_folder = kwargs['picture_folder'],
+                #    update_someone_by_email = kwargs['update_someone_by_email'],
+                #).save()
                 # 更新資料庫
     
                 self.status = 'success'

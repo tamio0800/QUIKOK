@@ -111,7 +111,6 @@ def create_a_student_user(request):
             print('學生個人資料夾建立')
            
             # 如果沒東西 會是空的  user_upload 看前端取甚麼名字 
-            # 目前學生暫時沒開放此上傳功能 ?? 10/13 what?
 
             each_file = request.FILES.get("upload_snapshot")
             if each_file :
@@ -206,18 +205,30 @@ def return_student_profile_for_oneself_viewing(request):
 
 #@require_http_methods(['POST'])
 def edit_student_profile(request):
+
+    #cols = [.....]
+    #_dict = dict()
+    #for each_col in cols:
+    #    _dict[each_col] = request.POST.get(each_col, False)
     if request.method == 'POST':
         response = dict()
         #test = request.POST.getlist()
         student_auth_id = request.POST.get('userID', False)
-        mobile = request.POST.get('user_mobile', False)
-        nickname = request.POST.get('user_nickname', False)
-        update_someone_by_email = request.POST.get('user_notifiemail', False)
-        thumbnail_dir = request.POST.get('upload_snapshot', False)
+        mobile = request.POST.get('mobile', False)
+        nickname = request.POST.get('nickname', False)
+        update_someone_by_email = request.POST.get('update_someone_by_email', False)
+        snapshot = request.FILES.get("upload_snapshot", False)
+        intro = request.POST.get('user_Intro', False)
+        
         the_student_manager = student_manager()
-        the_student_manager.update_student_profile()
+        the_student_manager.update_student_profile(student_auth_id, mobile, 
+                                        nickname, update_someone_by_email,
+                                        intro, snapshot)
+    
+        
+        return JsonResponse(response)
     else:
-        return render(request, 'account/signup.html')
+        return render(request, 'test.html')
 ##### 老師區 #####
 @require_http_methods(['POST'])
 def create_a_teacher_user(request):
@@ -253,7 +264,7 @@ def create_a_teacher_user(request):
 
     # origin >> info_folder = request.POST.get('info_folder', False) # 資料夾路徑，存放個人檔案（暫不使用）
     # 我們自己建的，不需要前端/user給我們資料
-    info_folder = 'some/where/we/create/by/username'
+    #info_folder = 'some/where/we/create/by/username'
     tutor_experience = request.POST.get('tutor_experience', False)
     subject_type = request.POST.get('subject_type', False)
     education_1 = request.POST.get('education_1', False) # 沒填的話前端傳空的過來
@@ -456,6 +467,34 @@ def return_teacher_s_profile_for_public_viewing(request):
         the_teacher_manager.return_teacher_profile_for_public_viewing(teacher_auth_id)
     
     return JsonResponse(response)
+
+# 老師編輯個人資料
+@require_http_methods(['POST'])
+def edit_teacher_profile(request):
+ '''   
+            if request.FILES.getlist("upload_snapshot"):
+                for each_file in request.FILES.getlist("upload_snapshot"):
+                    print('收到老師大頭照: ', each_file.name)
+                    folder_where_are_uploaded_files_be ='user_upload/teachers/' + user_folder 
+                    fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
+                    file_exten = each_file.name.split('.')[-1]
+                    fs.save('thumbnail'+'.'+ file_exten , each_file) # 檔名統一改成thumbnail開頭
+                    thumbnail_dir = 'user_upload/teachers/' + user_folder + '/' + each_file.name
+
+    
+            else:
+                print('沒收到老師大頭照')
+                # 可能依照性別使用預設的圖片
+                thumbnail_dir = ''
+
+            # 放未認證證書的資料夾
+            for each_file in request.FILES.getlist("upload_cer"):
+                print('收到老師認證資料: ', each_file.name)
+                folder_where_are_uploaded_files_be ='user_upload/teachers/' + user_folder + '/unaproved_cer'
+                fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
+
+                fs.save(each_file.name, each_file)
+'''
 
 
 # 登入
