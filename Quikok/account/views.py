@@ -199,7 +199,7 @@ def return_student_profile_for_oneself_viewing(request):
         return JsonResponse(response)
     
     response['status'], response['errCode'], response['errMsg'], response['data'] = \
-        the_student_manager.return_student_profile_for_oneself_viewing(teacher_auth_id)
+        the_student_manager.return_student_profile_for_oneself_viewing(student_auth_id)
     
     return JsonResponse(response)
 
@@ -208,13 +208,14 @@ def return_student_profile_for_oneself_viewing(request):
 def edit_student_profile(request):
     if request.method == 'POST':
         response = dict()
-        test = request.POST.getlist()
+        #test = request.POST.getlist()
         student_auth_id = request.POST.get('userID', False)
-        #request.POST.get('user_mobile', False)
-        #request.POST.get('user_nickname', False)
-        #request.POST.get('user_notifiemail', False)
-        #thumbnail_dir = request.POST.get('upload_snapshot', False)
-        print('收到:'+test)
+        mobile = request.POST.get('user_mobile', False)
+        nickname = request.POST.get('user_nickname', False)
+        update_someone_by_email = request.POST.get('user_notifiemail', False)
+        thumbnail_dir = request.POST.get('upload_snapshot', False)
+        the_student_manager = student_manager()
+        the_student_manager.update_student_profile()
     else:
         return render(request, 'account/signup.html')
 ##### 老師區 #####
