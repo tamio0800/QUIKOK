@@ -1,1 +1,1 @@
-sudo apt update -y && sudo apt upgrade -y && conda deactivate && conda env remove --name quikok -y && conda create -n quikok python=3.7 -y && pip install -r requirements_upgraded.txt
+sudo apt update -y && sudo apt upgrade -y && conda deactivate && conda env remove -n quikok && conda create -n quikok python=3.7 -y && pip install -r requirements_upgraded.txt
