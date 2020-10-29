@@ -232,6 +232,33 @@ def edit_student_profile(request):
     else:
         return render(request, 'test.html')
 ##### 老師區 #####
+def edit_teacher_profile(request):
+    edit_data = [userId, nickname, intro, mobile, tutor_experience]
+    #cols = [.....]
+    #_dict = dict()
+    #for each_col in cols:
+    #    _dict[each_col] = request.POST.get(each_col, False)
+    if request.method == 'POST':
+        response = dict()
+        #test = request.POST.getlist()
+        for each_col in cols:
+            _dict[each_col] = request.POST.get(each_col, False)
+
+
+            snapshot = request.FILES.get("upload_snapshot", False)
+            intro = request.POST.get('user_Intro', False)
+            
+            the_student_manager = student_manager()
+            the_student_manager.update_student_profile(student_auth_id, mobile, 
+                                            nickname, update_someone_by_email,
+                                            intro, snapshot)
+        
+            
+            return JsonResponse(response)
+    else:
+        return render(request, 'test.html')
+
+
 @require_http_methods(['POST'])
 def create_a_teacher_user(request):    
     response = {}

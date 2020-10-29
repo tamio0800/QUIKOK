@@ -17,9 +17,11 @@ class student_manager:
             self.status = 'failed'
             self.errCode = '1'
             self.errMsg = 'Found No Student.'
+        else:
+            return(student_profile_object)
     def return_student_profile_for_oneself_viewing(self, student_auth_id):
         # 顯示學生隱私資料for學生編輯個人資料
-        self.check_if_student_exist(student_auth_id)
+        student_profile_object = self.check_if_student_exist(student_auth_id)
         if self.status == 'failed':
             return (self.status, self.errCode, self.errMsg, self.data)
         else:
@@ -53,24 +55,25 @@ class student_manager:
         else:
             try:
                 student_profile = student_profile_object.first()
+                username = student_profile.username
                 for k, v in kwargs.items():
                     #_dict[k] = v
                     setattr(student_profile, k, v)
                 if kwargs['snapshot'] :
                     snapshot = kwargs['snapshot']
-                    # 檢查路徑中是否原本已經有大頭照,有的話刪除
+                    # 檢查路徑中是否原本已經有大頭照,有的話刪除舊圖檔
                     file_list = os.listdir('user_upload/students/' + username)
                     for file_name in file_list:
-                        if re.findall('', file_name):
-                            os.unlink('user_upload/students/' + username + file_name)
+                        if re.findall('thumbnail.*', file_name):
+                            os.unlink('user_upload/students/' + username +'/'+ file_name)
 
                     print('收到學生大頭照: ', snapshot.name)
                     folder_where_are_uploaded_files_be ='user_upload/students/' + username
                     fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
-                    file_exten = each_file.name.split('.')[-1]
-                    fs.save('thumbnail'+'.'+ file_exten , each_file) # 檔名統一改成thumbnail開頭
+                    file_exten = snapshot.name.split('.')[-1]
+                    fs.save('thumbnail'+'.'+ file_exten , snapshot) # 檔名統一改成thumbnail開頭
                     thumbnail_dir = 'user_upload/students/' + username + '/' + 'thumbnail'+'.'+ file_exten
-                
+                    student_profile.update(thumbnail_dir = thumbnail_dir)
                 #student_profile_object.update(
                 #    nickname = kwargs['nickname'],
                 #    intro = '',
