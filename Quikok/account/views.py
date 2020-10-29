@@ -19,6 +19,8 @@ from django.middleware.csrf import get_token
 from datetime import datetime, timedelta
 import shutil
 
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 def is_num(target):
     try:
@@ -231,7 +233,7 @@ def edit_student_profile(request):
         return render(request, 'test.html')
 ##### 老師區 #####
 @require_http_methods(['POST'])
-def create_a_teacher_user(request):
+def create_a_teacher_user(request):    
     response = {}
     username = request.POST.get('regEmail', False) # 當前端值有錯誤傳 null 就會是false 
     password = request.POST.get('regPwd', False)
@@ -524,7 +526,7 @@ def signin(request):
                 # 更新或建立 token
                 time = datetime.now()
                 after_14days = time + timedelta(days = 14)
-                token = make_password(after_14days)
+                token = make_password(str(after_14days))
                 # 如果有這個user, 則 token更新, 沒有則create
                 user_token.objects.update_or_create(authID_object = user_obj, 
                                                 defaults = {'logout_time' : after_14days,
@@ -595,7 +597,7 @@ def auth_check(request):
     user_id = request.POST.get('userId', False)
     print('檢查id格式'+ str(user_id))
     url = request.POST.get('url', False)
-    print('檢查網址'+ url)
+    print('檢查網址'+ str(url))
     #token_from_user = request.POST.get('token', False)
     #token_from_user = request.META.get('Authorization', False)
     token_from_user = request.META['QUERY_STRING']
