@@ -17,18 +17,15 @@ def base_layout(request):
     return render(request, 'base_layout.html')
 
 def test_page(request):
-    from django.core.files.storage import FileSystemStorage
-
+    return HttpResponse("TEST PAGE.")
+    '''from django.core.files.storage import FileSystemStorage
     username = 's1ats1'
     folder_where_are_uploaded_files_be = 'user_upload/'+ username
     if request.method == 'POST':
-        
         user_folder = username
-
         os.mkdir(os.path.join('user_upload', user_folder))
         os.mkdir(os.path.join('user_upload/'+ user_folder, "unaproved_cer"))
         os.mkdir(os.path.join('user_upload/'+ user_folder, "aproved_cer"))
-
         # for迴圈如果沒東西會是空的.  getlist()裡面是看前端的 multiple name
         for each_file in request.FILES.getlist("upload_snapshot"):
             print('收到老師大頭照: ', each_file.name)
@@ -41,8 +38,7 @@ def test_page(request):
             folder_where_are_uploaded_files_be ='user_upload/' + user_folder + '/unaproved_cer'
             fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
             fs.save(each_file.name, each_file)
-
-    return render(request, 'test.html')
+    return render(request, 'test.html')'''
 
     
 
