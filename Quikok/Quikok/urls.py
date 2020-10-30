@@ -18,11 +18,11 @@ urlpatterns = [
     path('api/lesson/', include('lesson.urls')),
     
     # path('api/course/recommendList', views.homepage_api_recommendList),
-    # path('api/getBannerBar', views.homepage_api_getBannerBar),
-    path('api/', include('django_api.urls')),
-    # path('', TemplateView.as_view(template_name="index.html")),
+    path('api/getBannerBar', views.get_banner_bar),
+    # path('api/', include('django_api.urls')),
+    path('', TemplateView.as_view(template_name="index.html")),
     #re_path(r'user_upload.*', views.test_page),
-    re_path(r'^(?!.*?user_upload).*', TemplateView.as_view(template_name="index.html")),  # 新增的
+    re_path(r'^(?!.*?user_upload|.*?website_assets).*', TemplateView.as_view(template_name="index.html")),  # 新增的
 
 ]
 

@@ -47,7 +47,7 @@ def get_banner_bar(request):
     response = {}
     data = []
     try:
-        img_path = 'website_assets/homepage/'
+        img_path = 'website_assets/homepage'
         # 之後再看這個路徑該怎麼修比較好
         for i, desktop_img in enumerate(os.listdir(os.path.join(img_path, 'desktop'))):
             data.append(
