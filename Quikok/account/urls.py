@@ -25,9 +25,5 @@ urlpatterns = [
     path('returnTeacherProfileForOneselfViewing/', views.return_teacher_s_profile_for_oneself_viewing),
     path('returnTeacherProfileForPublicViewing/', views.return_teacher_s_profile_for_public_viewing),
     path('returnStudentProfileForOneselfViewing/', views.return_student_profile_for_oneself_viewing),
-<<<<<<< HEAD
     path('editStudentProfile/', views.edit_student_profile),
-=======
-    path('editTeacherProfile/', views.edit_teacher_profile),
->>>>>>> f0edbbc045cb398054e3a00ce5517ccc67d7d75c
 ]
