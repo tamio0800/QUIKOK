@@ -44,6 +44,7 @@ def test_page(request):
 
 @require_http_methods(['GET'])
 def get_banner_bar(request):
+    print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
     response = {}
     data = []
     try:
