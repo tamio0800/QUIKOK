@@ -33,7 +33,7 @@ class student_manager:
                 for each_key, each_value in student_profile_object.values()[0].items():
                     if each_key not in exclude_columns:
                         _data[each_key] = each_value 
-                
+         
                 self.status = 'success'
                 self.data = _data
                 return (self.status, self.errCode, self.errMsg, self.data)
@@ -47,8 +47,10 @@ class student_manager:
             
     def update_student_profile(self, **kwargs):
         # 學生資料編輯
+        recevive_data_name = ['userID','mobile','nickname','update_someone_by_email',
+        "upload_snapshot", 'intro']
 
-        student_auth_id = kwargs['student_auth_id']
+        student_auth_id = 1 #kwargs['userID']
         student_profile_object = self.check_if_student_exist(student_auth_id)
         if self.status == 'failed':
             return (self.status, self.errCode, self.errMsg, self.data)
@@ -59,8 +61,8 @@ class student_manager:
                 for k, v in kwargs.items():
                     #_dict[k] = v
                     setattr(student_profile, k, v)
-                if kwargs['snapshot'] :
-                    snapshot = kwargs['snapshot']
+                if kwargs['upload_snapshot'] :
+                    snapshot = kwargs['upload_snapshot']
                     # 檢查路徑中是否原本已經有大頭照,有的話刪除舊圖檔
                     file_list = os.listdir('user_upload/students/' + username)
                     for file_name in file_list:

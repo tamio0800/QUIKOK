@@ -212,20 +212,28 @@ def edit_student_profile(request):
     #_dict = dict()
     #for each_col in cols:
     #    _dict[each_col] = request.POST.get(each_col, False)
-    if request.method == 'POST':
+    if request.method == 'PUT':
         response = dict()
         #test = request.POST.getlist()
+        recevive_data_name = ['userID','mobile','nickname','update_someone_by_email',
+        "upload_snapshot", 'intro']
+        #recevive_data_name = [student_auth_id, mobile, nickname,
+        #        update_someone_by_email, snapshot, intro]
+        student_auth_id = request.PUT.get('userID', False)
+        print(student_auth_id)
         student_auth_id = request.POST.get('userID', False)
         mobile = request.POST.get('mobile', False)
         nickname = request.POST.get('nickname', False)
         update_someone_by_email = request.POST.get('update_someone_by_email', False)
         snapshot = request.FILES.get("upload_snapshot", False)
-        intro = request.POST.get('user_Intro', False)
+        intro = request.POST.get('Intro', False)
         
         the_student_manager = student_manager()
-        the_student_manager.update_student_profile(student_auth_id, mobile, 
-                                        nickname, update_someone_by_email,
-                                        intro, snapshot)
+        for data in recevive_data_name:
+            the_student_manager.update_student_profile(data = request.POST.get(data,False))
+        #the_student_manager.update_student_profile(student_auth_id, mobile, 
+        #                                nickname, update_someone_by_email,
+        #                                intro, snapshot)
     
         
         return JsonResponse(response)
@@ -238,7 +246,7 @@ def edit_teacher_profile(request):
     #_dict = dict()
     #for each_col in cols:
     #    _dict[each_col] = request.POST.get(each_col, False)
-    if request.method == 'POST':
+    if request.method == 'PUT':
         response = dict()
         #test = request.POST.getlist()
         for each_col in cols:
@@ -358,7 +366,7 @@ def create_a_teacher_user(request):
                     fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
                     file_exten = each_file.name.split('.')[-1]
                     fs.save('thumbnail'+'.'+ file_exten , each_file) # 檔名統一改成thumbnail開頭
-                    thumbnail_dir = 'user_upload/teachers/' + user_folder + '/' + each_file.name
+                    thumbnail_dir = 'user_upload/teachers/' + user_folder + '/' + 'thumbnail'+'.'+ file_exten 
 
     
             else:
