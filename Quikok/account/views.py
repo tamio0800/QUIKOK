@@ -121,7 +121,7 @@ def create_a_student_user(request):
                 fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
                 file_exten = each_file.name.split('.')[-1]
                 fs.save('thumbnail'+'.'+ file_exten , each_file) # 檔名統一改成thumbnail開頭
-                thumbnail_dir = 'user_upload/students/' + username + '/' + 'thumbnail'+'.'+ file_exten
+                thumbnail_dir = '/user_upload/students/' + username + '/' + 'thumbnail'+'.'+ file_exten
             else:
                 thumbnail_dir = ''
             #存入auth
@@ -366,7 +366,7 @@ def create_a_teacher_user(request):
                     fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
                     file_exten = each_file.name.split('.')[-1]
                     fs.save('thumbnail'+'.'+ file_exten , each_file) # 檔名統一改成thumbnail開頭
-                    thumbnail_dir = 'user_upload/teachers/' + user_folder + '/' + 'thumbnail'+'.'+ file_exten 
+                    thumbnail_dir = '/user_upload/teachers/' + user_folder + '/' + 'thumbnail'+'.'+ file_exten 
 
     
             else:
