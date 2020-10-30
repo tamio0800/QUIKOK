@@ -44,7 +44,6 @@ def test_page(request):
 
 @require_http_methods(['GET'])
 def get_banner_bar(request):
-    print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
     response = {}
     data = []
     try:
@@ -55,7 +54,7 @@ def get_banner_bar(request):
                 {
                     'type': 'pc',
                     'sort': str(i),
-                    'img_url': img_path + '/desktop/' + desktop_img,
+                    'img_url': '/' + img_path + '/desktop/' + desktop_img,
                 }
             )
         for i, mobile_img in enumerate(os.listdir(os.path.join(img_path, 'mobile'))):
@@ -63,7 +62,7 @@ def get_banner_bar(request):
                 {
                     'type': 'mobile',
                     'sort': str(i),
-                    'img_url': img_path + '/mobile/' + mobile_img,
+                    'img_url': '/' + img_path + '/mobile/' + mobile_img,
                 }
             )
         response['status'] = 'success'
