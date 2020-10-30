@@ -65,15 +65,18 @@ class student_manager:
                     if k not in exclude_data_name:
                         setattr(student_profile, k, v)
                 student_profile.save()
-                if kwargs['upload_snapshot'] is not False :
-                    snapshot = kwargs['upload_snapshot']
-                    print('收到學生大頭照: ', snapshot[0].name)
-                    # 檢查路徑中是否原本已經有大頭照,有的話刪除舊圖檔
-                    file_list = os.listdir('user_upload/students/' + username)
-                    for file_name in file_list:
-                        if re.findall('thumbnail.*', file_name):
-                            os.unlink('user_upload/students/' + username +'/'+ file_name)
-
+                if kwargs['upload_snapshot'] is not None :
+                    #print(kwargs['upload_snapshot'])
+                    try:
+                        snapshot = kwargs['upload_snapshot']
+                        print('收到學生大頭照: ', snapshot[0].name)
+                        # 檢查路徑中是否原本已經有大頭照,有的話刪除舊圖檔
+                        file_list = os.listdir('user_upload/students/' + username)
+                        for file_name in file_list:
+                            if re.findall('thumbnail.*', file_name):
+                                os.unlink('user_upload/students/' + username +'/'+ file_name)
+                    except:
+                        print('沒收到大頭照~~')
                     
                     folder_where_are_uploaded_files_be ='user_upload/students/' + username
                     fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
@@ -81,10 +84,8 @@ class student_manager:
                     fs.save('thumbnail'+'.'+ file_exten , snapshot[0]) # 檔名統一改成thumbnail開頭
                     thumbnail_dir = '/user_upload/students/' + username + '/' + 'thumbnail'+'.'+ file_exten
                     student_profile_object.update(thumbnail_dir = thumbnail_dir)
-
-
-
-
+                else:
+                    print('沒收到大頭照')
                 self.status = 'success'
                 return (self.status, self.errCode, self.errMsg, self.data)
             except Exception as e:

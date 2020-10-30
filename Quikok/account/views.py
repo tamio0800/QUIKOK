@@ -221,12 +221,27 @@ def edit_student_profile(request):
         pass_data_to_model_tools[data] = request.POST.get(data,False)
     
     for each_file in userupload_file_kind:
-        if request.FILES.getlist(each_file):
-            pass_data_to_model_tools[each_file] = request.FILES.getlist(each_file)
+        #print(each_file)
+        if len(request.FILES.getlist(each_file)) > 0:
+            #print('收到'+ request.FILES.getlist(each_file))
+            #try:
+            print('test')
+            temp = request.FILES.getlist(each_file)
+            for a in temp:
+                try:
+                    print(a.name)
+            #pass_data_to_model_tools[each_file] = request.FILES.getlist(each_file)
+            #print(pass_data_to_model_tools[each_file])
+                except:
+                    print('user_has_not_upload_file')
+        else:
+            print('user_has_not_upload_file~~')
+    print('有這些檔案')
     print(pass_data_to_model_tools)
+
     response['status'], response['errCode'], response['errMsg'], response['data'] =\
     the_student_manager.update_student_profile(**pass_data_to_model_tools)
-            
+    print('passing data')
     return JsonResponse(response)
 
 ##### 老師區 #####
