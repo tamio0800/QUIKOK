@@ -32,6 +32,12 @@ def is_num(target):
     except:
         return False
 
+def clean_files(folder_path, key_words):
+    for each_file in os.listdir(folder_path):
+        if key_words in each_file:
+            os.unlink(os.path.join(folder_path, each_file))
+
+
 
 def date_string_2_dateformat(target_string):
     if not target_string == False:
@@ -88,7 +94,6 @@ def create_a_student_user(request):
             is_male = False
         else:
             is_male = True
-        
         if obj is None and auth_obj is None:
             
             ### 長出每個學生相對應資料夾 目前要長的有:放大頭照的資料夾
@@ -139,8 +144,6 @@ def create_a_student_user(request):
             # 用create()的寫法是為了知道這個user在auth裡面的id為何
             user_created_object.save()
             print('auth建立')
-
-
             print('建立新學生資料')
             student_profile.objects.create(
                 auth_id = user_created_object.id,
@@ -161,8 +164,6 @@ def create_a_student_user(request):
                 update_someone_by_email = update_someone_by_email
             ).save()
             print('student_profile建立')
-
-
             # 回前端
             response['status'] = 'success'
             response['errCode'] = None
@@ -176,7 +177,6 @@ def create_a_student_user(request):
             response['status'] = 'failed'
             response['errCode'] = '0'
             response['errMsg'] = 'username taken' # 使用者已註冊
-            
     else:
         # 資料傳輸有問題
         response['status'] = 'failed'
@@ -191,17 +191,14 @@ def return_student_profile_for_oneself_viewing(request):
     response = dict()
     student_auth_id = request.GET.get('userID', False)
     the_student_manager = student_manager()
-
     if student_auth_id == False:
         response['status'] = 'failed'
         response['errCode'] = '0'
         response['errMsg'] = 'Received Arguments Failed.'
         response['data'] = None
         return JsonResponse(response)
-    
     response['status'], response['errCode'], response['errMsg'], response['data'] = \
         the_student_manager.return_student_profile_for_oneself_viewing(student_auth_id)
-    
     return JsonResponse(response)
 
 
@@ -213,32 +210,11 @@ def edit_student_profile(request):
     recevived_data_name = ['token','userID','mobile','nickname','update_someone_by_email',
      'intro']
     # 上傳檔案的種類:大頭照
-    userupload_file_kind = ["upload_snapshot"]
-    #for each_recevied_data_key, value in request.POST.items():
-    #    print(each_recevied_data_key, value)
+
     the_student_manager = student_manager()
     for data in recevived_data_name:
-        pass_data_to_model_tools[data] = request.POST.get(data,False)
-    
-    for each_file in userupload_file_kind:
-        #print(each_file)
-        if len(request.FILES.getlist(each_file)) > 0:
-            #print('收到'+ request.FILES.getlist(each_file))
-            #try:
-            print('test')
-            temp = request.FILES.getlist(each_file)
-            for a in temp:
-                try:
-                    print(a.name)
-            #pass_data_to_model_tools[each_file] = request.FILES.getlist(each_file)
-            #print(pass_data_to_model_tools[each_file])
-                except:
-                    print('user_has_not_upload_file')
-        else:
-            print('user_has_not_upload_file~~')
-    print('有這些檔案')
-    print(pass_data_to_model_tools)
-
+        pass_data_to_model_tools[data] = request.POST.get(data, False)
+    pass_data_to_model_tools['request'] = request
     response['status'], response['errCode'], response['errMsg'], response['data'] =\
     the_student_manager.update_student_profile(**pass_data_to_model_tools)
     print('passing data')

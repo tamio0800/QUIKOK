@@ -5,6 +5,13 @@ from itertools import product as pdt
 import pandas as pd
 import os, re
 from django.core.files.storage import FileSystemStorage
+
+def clean_files(folder_path, key_words):
+    for each_file in os.listdir(folder_path):
+        if key_words in each_file:
+            os.unlink(os.path.join(folder_path, each_file))
+
+
 class student_manager:
     def __init__(self):
         self.status = None
@@ -50,10 +57,9 @@ class student_manager:
         _recevived_data_name = ['token','userID','mobile','nickname','update_someone_by_email',
         "upload_snapshot", 'intro']
         # 以下幾個不要直接改資料庫內容
-        exclude_data_name = ['token','userID',"upload_snapshot"]
-        #for a in kwargs.items():
-        #    print(a)
+        exclude_data_name = ['token','userID',"upload_snapshot", 'request']
         student_auth_id = kwargs['userID']
+        request_object = kwargs['request']
         student_profile_object = self.check_if_student_exist(student_auth_id)
         if self.status == 'failed':
             return (self.status, self.errCode, self.errMsg, self.data)
@@ -64,28 +70,22 @@ class student_manager:
                 for k, v in kwargs.items():
                     if k not in exclude_data_name:
                         setattr(student_profile, k, v)
-                student_profile.save()
-                if kwargs['upload_snapshot'] is not None :
-                    #print(kwargs['upload_snapshot'])
-                    try:
-                        snapshot = kwargs['upload_snapshot']
-                        print('收到學生大頭照: ', snapshot[0].name)
-                        # 檢查路徑中是否原本已經有大頭照,有的話刪除舊圖檔
-                        file_list = os.listdir('user_upload/students/' + username)
-                        for file_name in file_list:
-                            if re.findall('thumbnail.*', file_name):
-                                os.unlink('user_upload/students/' + username +'/'+ file_name)
-                    except:
-                        print('沒收到大頭照~~')
-                    
-                    folder_where_are_uploaded_files_be ='user_upload/students/' + username
-                    fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
-                    file_exten = snapshot[0].name.split('.')[-1]
-                    fs.save('thumbnail'+'.'+ file_exten , snapshot[0]) # 檔名統一改成thumbnail開頭
-                    thumbnail_dir = '/user_upload/students/' + username + '/' + 'thumbnail'+'.'+ file_exten
-                    student_profile_object.update(thumbnail_dir = thumbnail_dir)
-                else:
-                    print('沒收到大頭照')
+                snapshot = request_object.FILES['upload_snapshot']
+                if snapshot:
+                    # 如果有收到user上傳的大頭貼資訊
+                    print('收到學生大頭照: ', snapshot.name)
+                    # 檢查路徑中是否原本已經有大頭照,有的話刪除舊圖檔
+                    target_path = 'user_upload/students/' + username
+                    clean_files(target_path, 'thumbnail')
+                    fs = FileSystemStorage(location=target_path)
+                    file_extension = snapshot.name.split('.')[-1]    # << 為甚麼extension都打成exten ??
+                    fs.save('thumbnail' + '.' + file_extension , snapshot) # 檔名統一改成thumbnail開頭
+                    setattr(
+                        student_profile,
+                        'thumbnail_dir',
+                        '/user_upload/students/' + username + '/thumbnail' + '.' + file_extension
+                    )
+                student_profile.save()  # 等全設定完再儲存
                 self.status = 'success'
                 return (self.status, self.errCode, self.errMsg, self.data)
             except Exception as e:
@@ -94,6 +94,7 @@ class student_manager:
                 self.errCode = '2'
                 self.errMsg = 'Querying Data Failed.'
                 return (self.status, self.errCode, self.errMsg, self.data)
+
 class teacher_manager:
     def __init__(self):
         self.status = None
