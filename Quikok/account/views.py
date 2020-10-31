@@ -205,66 +205,69 @@ def return_student_profile_for_oneself_viewing(request):
     return JsonResponse(response)
 
 
-#@require_http_methods(['POST'])
+@require_http_methods(['POST'])
 def edit_student_profile(request):
-
-    #cols = [.....]
-    #_dict = dict()
-    #for each_col in cols:
-    #    _dict[each_col] = request.POST.get(each_col, False)
-    if request.method == 'PUT':
-        response = dict()
-        #test = request.POST.getlist()
-        recevive_data_name = ['userID','mobile','nickname','update_someone_by_email',
-        "upload_snapshot", 'intro']
-        #recevive_data_name = [student_auth_id, mobile, nickname,
-        #        update_someone_by_email, snapshot, intro]
-        student_auth_id = request.PUT.get('userID', False)
-        print(student_auth_id)
-        student_auth_id = request.POST.get('userID', False)
-        mobile = request.POST.get('mobile', False)
-        nickname = request.POST.get('nickname', False)
-        update_someone_by_email = request.POST.get('update_someone_by_email', False)
-        snapshot = request.FILES.get("upload_snapshot", False)
-        intro = request.POST.get('Intro', False)
-        
-        the_student_manager = student_manager()
-        for data in recevive_data_name:
-            the_student_manager.update_student_profile(data = request.POST.get(data,False))
-        #the_student_manager.update_student_profile(student_auth_id, mobile, 
-        #                                nickname, update_someone_by_email,
-        #                                intro, snapshot)
+    response = dict()
+    pass_data_to_model_tools = dict()
+    # 要處理的資料
+    recevived_data_name = ['token','userID','mobile','nickname','update_someone_by_email',
+     'intro']
+    # 上傳檔案的種類:大頭照
+    userupload_file_kind = ["upload_snapshot"]
+    #for each_recevied_data_key, value in request.POST.items():
+    #    print(each_recevied_data_key, value)
+    the_student_manager = student_manager()
+    for data in recevived_data_name:
+        pass_data_to_model_tools[data] = request.POST.get(data,False)
     
-        
-        return JsonResponse(response)
-    else:
-        return render(request, 'test.html')
+    for each_file in userupload_file_kind:
+        #print(each_file)
+        if len(request.FILES.getlist(each_file)) > 0:
+            #print('收到'+ request.FILES.getlist(each_file))
+            #try:
+            print('test')
+            temp = request.FILES.getlist(each_file)
+            for a in temp:
+                try:
+                    print(a.name)
+            #pass_data_to_model_tools[each_file] = request.FILES.getlist(each_file)
+            #print(pass_data_to_model_tools[each_file])
+                except:
+                    print('user_has_not_upload_file')
+        else:
+            print('user_has_not_upload_file~~')
+    print('有這些檔案')
+    print(pass_data_to_model_tools)
+
+    response['status'], response['errCode'], response['errMsg'], response['data'] =\
+    the_student_manager.update_student_profile(**pass_data_to_model_tools)
+    print('passing data')
+    return JsonResponse(response)
+
 ##### 老師區 #####
+# 老師編輯個人資料
+@require_http_methods(['POST'])
 def edit_teacher_profile(request):
-    edit_data = [userId, nickname, intro, mobile, tutor_experience]
-    #cols = [.....]
-    #_dict = dict()
-    #for each_col in cols:
-    #    _dict[each_col] = request.POST.get(each_col, False)
-    if request.method == 'PUT':
-        response = dict()
-        #test = request.POST.getlist()
-        for each_col in cols:
-            _dict[each_col] = request.POST.get(each_col, False)
+    response = dict()
+    pass_data_to_model_tools = dict()
+    for key, value in request.POST.items():
+        pass_data_to_model_tools[key] = request.POST.get(key,False)
+        print(key, value)
+    the_teacher_manager = teacher_manager()
+    #for data in recevived_data_name:
+    #    pass_data_to_model_tools[data] = request.POST.get(data,False)
+    print(pass_data_to_model_tools)
+    # 上傳檔案的種類:大頭照、證書
+    userupload_file_kind = ["upload_snapshot", "upload_cer"]
+    for each_file in userupload_file_kind:
+        if request.FILES.getlist(each_file):
+            pass_data_to_model_tools[each_file] = request.FILES.getlist(each_file)
 
+    response['status'], response['errCode'], response['errMsg'], response['data'] =\
+    the_teacher_manager.update_teacher_profile(**pass_data_to_model_tools)
+ 
+    return JsonResponse(response)
 
-            snapshot = request.FILES.get("upload_snapshot", False)
-            intro = request.POST.get('user_Intro', False)
-            
-            the_student_manager = student_manager()
-            the_student_manager.update_student_profile(student_auth_id, mobile, 
-                                            nickname, update_someone_by_email,
-                                            intro, snapshot)
-        
-            
-            return JsonResponse(response)
-    else:
-        return render(request, 'test.html')
 
 
 @require_http_methods(['POST'])
@@ -505,33 +508,7 @@ def return_teacher_s_profile_for_public_viewing(request):
     
     return JsonResponse(response)
 
-# 老師編輯個人資料
-@require_http_methods(['POST'])
-def edit_teacher_profile(request):
- '''   
-            if request.FILES.getlist("upload_snapshot"):
-                for each_file in request.FILES.getlist("upload_snapshot"):
-                    print('收到老師大頭照: ', each_file.name)
-                    folder_where_are_uploaded_files_be ='user_upload/teachers/' + user_folder 
-                    fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
-                    file_exten = each_file.name.split('.')[-1]
-                    fs.save('thumbnail'+'.'+ file_exten , each_file) # 檔名統一改成thumbnail開頭
-                    thumbnail_dir = 'user_upload/teachers/' + user_folder + '/' + each_file.name
 
-    
-            else:
-                print('沒收到老師大頭照')
-                # 可能依照性別使用預設的圖片
-                thumbnail_dir = ''
-
-            # 放未認證證書的資料夾
-            for each_file in request.FILES.getlist("upload_cer"):
-                print('收到老師認證資料: ', each_file.name)
-                folder_where_are_uploaded_files_be ='user_upload/teachers/' + user_folder + '/unaproved_cer'
-                fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
-
-                fs.save(each_file.name, each_file)
-'''
 
 
 # 登入
