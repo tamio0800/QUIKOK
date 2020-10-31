@@ -355,6 +355,7 @@ def test_create_or_edit_a_lesson(request):
     action = request.POST.get('action', False)
     teacher_auth_id = request.POST.get('userID', False)
     lesson_id = request.POST.get('lessonID', False) # 新增沒有,修改才有
+    print(request.POST.get('background_picture_path', False))
     the_leeson_manager = lesson_manager()
 
     if not check_if_all_variables_are_true(action, teacher_auth_id):

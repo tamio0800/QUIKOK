@@ -1,11 +1,18 @@
 from account.models import teacher_profile, favorite_lessons
 from lesson.models import lesson_info, lesson_reviews, lesson_card
 from django.contrib.auth.models import User
+from django.core.files.storage import FileSystemStorage
 from django.db.models import Avg, Sum  
 # 上面兩個用來對資料庫的資訊做處理，用法如下(有null的話要另外處理)
 # model_name.objects.filter().aggregate(Sum('column_name')) >> {'column_name__sum':?}
 import pandas as pd
 import os
+
+
+def clean_files(folder_path, key_words):
+    for each_file in os.listdir(folder_path):
+        if key_words in each_file:
+            os.unlink(os.path.join(folder_path, each_file))
 
 
 def get_lesson_s_best_sale(lesson_id):
@@ -92,7 +99,7 @@ class lesson_manager:
         _temp_lesson_info = dict()
         exclude_columns = [
             'id', 'teacher', 'created_time', 
-            'lesson_avg_score', 'lesson_reviewed_times']
+            'lesson_avg_score', 'lesson_reviewed_times', 'background_picture_path']
         columns_to_be_read = \
                 [field.name for field in lesson_info._meta.get_fields() if field.name not in exclude_columns]
         
@@ -122,9 +129,33 @@ class lesson_manager:
                 self.errMsg = 'Found No Teacher.'
                 return (self.status, self.errCode, self.errMsg)
             try:
+                # 建立老師的lessons資料夾, 下方的lesson_id資料夾，如
+                # user_uploaded/teachers/username/lessons/3(<< which is the lesson id)
+                lessons_folder_path = \
+                    'user_upload/teachers/' + _temp_lesson_info['teacher'].username + '/lessons'
+                if not os.path.isdir(lessons_folder_path):
+                    os.mkdir(lessons_folder_path)
+                # 判斷老師是否有上傳圖片
+                has_teacher_uploaded_lesson_background_picture = \
+                    int(_temp_lesson_info['background_picture_code']) == 99
+                _temp_lesson_info['background_picture_path'] = ''  # 因為還不知道lesson_id，故先給空字串
                 created_lesson = lesson_info.objects.create(
                     **_temp_lesson_info
                 )  # 建立課程檔案
+                # created_lesson.save()
+                lessons_folder_path = \
+                    lessons_folder_path + '/' + str(created_lesson.id)
+                if not os.path.isdir(lessons_folder_path):
+                    os.mkdir(lessons_folder_path)
+                if has_teacher_uploaded_lesson_background_picture:
+                    # 有上傳圖片
+                    uploaded_background_picture = a_request_object.FILES["background_picture_path"]
+                    print('received bg pic: ', uploaded_background_picture.name)
+                    fs = FileSystemStorage(location=lessons_folder_path)
+                    file_extension = uploaded_background_picture.name.split('.')[-1]
+                    fs.save('customized_lesson_background'+'.'+ file_extension , uploaded_background_picture) # 檔名統一改成thumbnail開頭
+                    created_lesson.background_picture_path = \
+                        '/' + lessons_folder_path + '/customized_lesson_background'+'.'+ file_extension
                 created_lesson.save()
                 the_lesson_card_manager = lesson_card_manager()
                 the_lesson_card_manager.setup_a_lesson_card(
@@ -157,8 +188,32 @@ class lesson_manager:
                     self.errCode = '2'
                     self.errMsg = 'Found No Matched Teacher And The Lesson.'
                     return (self.status, self.errCode, self.errMsg)
+                # 建立老師的lessons資料夾 & 下方lesson_id資料夾(如果沒有建立的話)
+                lessons_folder_path = \
+                    'user_upload/teachers/' + _temp_lesson_info['teacher'].username + '/lessons' 
+                if not os.path.isdir(lessons_folder_path):
+                    os.mkdir(lessons_folder_path)
+                lessons_folder_path = \
+                    lessons_folder_path + '/' + str(edited_lesson.id) 
+                if not os.path.isdir(lessons_folder_path):
+                    os.mkdir(lessons_folder_path)
+                # 判斷老師是否有上傳圖片
+                has_teacher_uploaded_lesson_background_picture = \
+                    int(_temp_lesson_info['background_picture_code']) == 99
+                if has_teacher_uploaded_lesson_background_picture:
+                    # 有上傳圖片
+                    uploaded_background_picture = a_request_object.FILES["background_picture_path"]
+                    print('received bg pic: ', uploaded_background_picture.name)
+                    fs = FileSystemStorage(location=lessons_folder_path)
+                    file_extension = uploaded_background_picture.name.split('.')[-1]
+                    clean_files(lessons_folder_path, 'customized_lesson_background')  # 先清理過舊的背景圖片
+                    fs.save('customized_lesson_background'+'.'+ file_extension , uploaded_background_picture) # 檔名統一改成thumbnail開頭
+                    print('/' + lessons_folder_path + '/customized_lesson_background'+'.'+ file_extension)
+                    _temp_lesson_info['background_picture_path'] = \
+                        '/' + lessons_folder_path + '/customized_lesson_background'+'.'+ file_extension
+
                 for key, item in _temp_lesson_info.items():
-                    setattr(edited_lesson, key, item)  
+                    setattr(edited_lesson, key, item)
                 edited_lesson.save()
                 the_lesson_card_manager = lesson_card_manager()
                 the_lesson_card_manager.setup_a_lesson_card(
