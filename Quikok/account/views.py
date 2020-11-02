@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import auth
 from django.contrib.auth.hashers import make_password, check_password  # 這一行用來加密密碼的
-from .model_tools import user_db_manager, teacher_manager
+from .model_tools import user_db_manager, teacher_manager, student_manager
 from django.contrib.auth.models import User
 from account.models import user_token, student_profile, teacher_profile, specific_available_time, general_available_time
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
@@ -19,6 +19,8 @@ from django.middleware.csrf import get_token
 from datetime import datetime, timedelta
 import shutil
 
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 def is_num(target):
     try:
@@ -29,6 +31,12 @@ def is_num(target):
             return False
     except:
         return False
+
+def clean_files(folder_path, key_words):
+    for each_file in os.listdir(folder_path):
+        if key_words in each_file:
+            os.unlink(os.path.join(folder_path, each_file))
+
 
 
 def date_string_2_dateformat(target_string):
@@ -49,7 +57,7 @@ def date_string_2_dateformat(target_string):
 
 
 ## 0916改成api的版本,之前的另存成views_old, 之後依據該檔把已設計好的功能寫過來
-
+##### 學生區 #####
 @require_http_methods(['POST'])
 def create_a_student_user(request):
     response = {}
@@ -86,7 +94,6 @@ def create_a_student_user(request):
             is_male = False
         else:
             is_male = True
-        
         if obj is None and auth_obj is None:
             
             ### 長出每個學生相對應資料夾 目前要長的有:放大頭照的資料夾
@@ -111,7 +118,6 @@ def create_a_student_user(request):
             print('學生個人資料夾建立')
            
             # 如果沒東西 會是空的  user_upload 看前端取甚麼名字 
-            # 目前學生暫時沒開放此上傳功能 ?? 10/13 what?
 
             each_file = request.FILES.get("upload_snapshot")
             if each_file :
@@ -120,7 +126,7 @@ def create_a_student_user(request):
                 fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
                 file_exten = each_file.name.split('.')[-1]
                 fs.save('thumbnail'+'.'+ file_exten , each_file) # 檔名統一改成thumbnail開頭
-                thumbnail_dir = 'user_upload/students/' + username + '/' + 'thumbnail'+'.'+ file_exten
+                thumbnail_dir = '/user_upload/students/' + username + '/' + 'thumbnail'+'.'+ file_exten
             else:
                 thumbnail_dir = ''
             #存入auth
@@ -138,8 +144,6 @@ def create_a_student_user(request):
             # 用create()的寫法是為了知道這個user在auth裡面的id為何
             user_created_object.save()
             print('auth建立')
-
-
             print('建立新學生資料')
             student_profile.objects.create(
                 auth_id = user_created_object.id,
@@ -160,8 +164,6 @@ def create_a_student_user(request):
                 update_someone_by_email = update_someone_by_email
             ).save()
             print('student_profile建立')
-
-
             # 回前端
             response['status'] = 'success'
             response['errCode'] = None
@@ -175,7 +177,6 @@ def create_a_student_user(request):
             response['status'] = 'failed'
             response['errCode'] = '0'
             response['errMsg'] = 'username taken' # 使用者已註冊
-            
     else:
         # 資料傳輸有問題
         response['status'] = 'failed'
@@ -185,10 +186,68 @@ def create_a_student_user(request):
     return JsonResponse(response)
 
 
+@require_http_methods(['GET'])
+def return_student_profile_for_oneself_viewing(request):
+    response = dict()
+    student_auth_id = request.GET.get('userID', False)
+    the_student_manager = student_manager()
+    if student_auth_id == False:
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = 'Received Arguments Failed.'
+        response['data'] = None
+        return JsonResponse(response)
+    response['status'], response['errCode'], response['errMsg'], response['data'] = \
+        the_student_manager.return_student_profile_for_oneself_viewing(student_auth_id)
+    return JsonResponse(response)
+
+
+@require_http_methods(['POST'])
+def edit_student_profile(request):
+    response = dict()
+    pass_data_to_model_tools = dict()
+    # 要處理的資料
+    recevived_data_name = ['token','userID','mobile','nickname','update_someone_by_email',
+     'intro']
+    # 上傳檔案的種類:大頭照
+
+    the_student_manager = student_manager()
+    for data in recevived_data_name:
+        pass_data_to_model_tools[data] = request.POST.get(data, False)
+    pass_data_to_model_tools['request'] = request
+    response['status'], response['errCode'], response['errMsg'], response['data'] =\
+    the_student_manager.update_student_profile(**pass_data_to_model_tools)
+    print('passing data')
+    return JsonResponse(response)
 
 ##### 老師區 #####
+# 老師編輯個人資料
 @require_http_methods(['POST'])
-def create_a_teacher_user(request):
+def edit_teacher_profile(request):
+    response = dict()
+    pass_data_to_model_tools = dict()
+    for key, value in request.POST.items():
+        pass_data_to_model_tools[key] = request.POST.get(key,False)
+        print(key, value)
+    the_teacher_manager = teacher_manager()
+    #for data in recevived_data_name:
+    #    pass_data_to_model_tools[data] = request.POST.get(data,False)
+    print(pass_data_to_model_tools)
+    # 上傳檔案的種類:大頭照、證書
+    userupload_file_kind = ["upload_snapshot", "upload_cer"]
+    for each_file in userupload_file_kind:
+        if request.FILES.getlist(each_file):
+            pass_data_to_model_tools[each_file] = request.FILES.getlist(each_file)
+
+    response['status'], response['errCode'], response['errMsg'], response['data'] =\
+    the_teacher_manager.update_teacher_profile(**pass_data_to_model_tools)
+ 
+    return JsonResponse(response)
+
+
+
+@require_http_methods(['POST'])
+def create_a_teacher_user(request):    
     response = {}
     username = request.POST.get('regEmail', False) # 當前端值有錯誤傳 null 就會是false 
     password = request.POST.get('regPwd', False)
@@ -221,7 +280,7 @@ def create_a_teacher_user(request):
 
     # origin >> info_folder = request.POST.get('info_folder', False) # 資料夾路徑，存放個人檔案（暫不使用）
     # 我們自己建的，不需要前端/user給我們資料
-    info_folder = 'some/where/we/create/by/username'
+    #info_folder = 'some/where/we/create/by/username'
     tutor_experience = request.POST.get('tutor_experience', False)
     subject_type = request.POST.get('subject_type', False)
     education_1 = request.POST.get('education_1', False) # 沒填的話前端傳空的過來
@@ -286,7 +345,7 @@ def create_a_teacher_user(request):
                     fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
                     file_exten = each_file.name.split('.')[-1]
                     fs.save('thumbnail'+'.'+ file_exten , each_file) # 檔名統一改成thumbnail開頭
-                    thumbnail_dir = 'user_upload/teachers/' + user_folder + '/' + each_file.name
+                    thumbnail_dir = '/user_upload/teachers/' + user_folder + '/' + 'thumbnail'+'.'+ file_exten 
 
     
             else:
@@ -387,7 +446,7 @@ def create_a_teacher_user(request):
     
     return JsonResponse(response)
 
-
+#老師個人資訊(自己看自己)
 @require_http_methods(['GET'])
 def return_teacher_s_profile_for_oneself_viewing(request):
     response = dict()
@@ -405,6 +464,26 @@ def return_teacher_s_profile_for_oneself_viewing(request):
         the_teacher_manager.return_teacher_profile_for_oneself_viewing(teacher_auth_id)
     
     return JsonResponse(response)
+
+#老師個人資訊(公開)
+@require_http_methods(['GET'])
+def return_teacher_s_profile_for_public_viewing(request):
+    response = dict()
+    teacher_auth_id = request.GET.get('userID', False)
+    the_teacher_manager = teacher_manager()
+
+    if teacher_auth_id == False:
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = 'Received Arguments Failed.'
+        response['data'] = None
+        return JsonResponse(response)
+    
+    response['status'], response['errCode'], response['errMsg'], response['data'] = \
+        the_teacher_manager.return_teacher_profile_for_public_viewing(teacher_auth_id)
+    
+    return JsonResponse(response)
+
 
 
 
@@ -435,7 +514,7 @@ def signin(request):
                 # 更新或建立 token
                 time = datetime.now()
                 after_14days = time + timedelta(days = 14)
-                token = make_password(after_14days)
+                token = make_password(str(after_14days))
                 # 如果有這個user, 則 token更新, 沒有則create
                 user_token.objects.update_or_create(authID_object = user_obj, 
                                                 defaults = {'logout_time' : after_14days,
@@ -506,7 +585,7 @@ def auth_check(request):
     user_id = request.POST.get('userId', False)
     print('檢查id格式'+ str(user_id))
     url = request.POST.get('url', False)
-    print('檢查網址'+ url)
+    print('檢查網址'+ str(url))
     #token_from_user = request.POST.get('token', False)
     #token_from_user = request.META.get('Authorization', False)
     token_from_user = request.META['QUERY_STRING']

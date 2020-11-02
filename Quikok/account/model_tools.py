@@ -3,7 +3,14 @@ from chatroom.models import chat_room
 from django.contrib.auth.models import User
 from itertools import product as pdt
 import pandas as pd
-import os
+import os, re
+from django.core.files.storage import FileSystemStorage
+
+def clean_files(folder_path, key_words):
+    for each_file in os.listdir(folder_path):
+        if key_words in each_file:
+            os.unlink(os.path.join(folder_path, each_file))
+
 
 class student_manager:
     def __init__(self):
@@ -11,20 +18,173 @@ class student_manager:
         self.errCode = None
         self.errMsg = None
         self.data = None
-    def return_student_profile_for_oneself_viewing(self, student_auth_id):
-        # 學生編輯個人資料
+    def check_if_student_exist(self, student_auth_id):
         student_profile_object = student_profile.objects.filter(auth_id=student_auth_id)
         if student_profile_object.first() is None:
             self.status = 'failed'
             self.errCode = '1'
             self.errMsg = 'Found No Student.'
+        else:
+            return(student_profile_object)
+    def return_student_profile_for_oneself_viewing(self, student_auth_id):
+        # 顯示學生隱私資料for學生編輯個人資料
+        student_profile_object = self.check_if_student_exist(student_auth_id)
+        if self.status == 'failed':
+            return (self.status, self.errCode, self.errMsg, self.data)
+        else:
+            try:
+                _data = dict() 
+                exclude_columns = [
+                    'id','auth_id',  'info_folder',
+                    'password', 'user_folder', 'date_join']
+                for each_key, each_value in student_profile_object.values()[0].items():
+                    if each_key not in exclude_columns:
+                        _data[each_key] = each_value 
+         
+                self.status = 'success'
+                self.data = _data
+                return (self.status, self.errCode, self.errMsg, self.data)
+            except Exception as e:
+                print(e)
+                self.status = 'failed'
+                self.errCode = '2'
+                self.errMsg = 'Querying Data Failed.'
+                return (self.status, self.errCode, self.errMsg, self.data)
+        
+            
+    def update_student_profile(self, **kwargs):
+        # 學生資料編輯 只是方便對照
+        _recevived_data_name = ['token','userID','mobile','nickname','update_someone_by_email',
+        "upload_snapshot", 'intro']
+        # 以下幾個不要直接改資料庫內容
+        exclude_data_name = ['token','userID',"upload_snapshot", 'request']
+        student_auth_id = kwargs['userID']
+        request_object = kwargs['request']
+        student_profile_object = self.check_if_student_exist(student_auth_id)
+        if self.status == 'failed':
+            return (self.status, self.errCode, self.errMsg, self.data)
+        else:
+            try:
+                student_profile = student_profile_object.first()
+                username = student_profile.username
+                for k, v in kwargs.items():
+                    if k not in exclude_data_name:
+                        setattr(student_profile, k, v)
+                snapshot = request_object.FILES['upload_snapshot']
+                if snapshot:
+                    # 如果有收到user上傳的大頭貼資訊
+                    print('收到學生大頭照: ', snapshot.name)
+                    # 檢查路徑中是否原本已經有大頭照,有的話刪除舊圖檔
+                    target_path = 'user_upload/students/' + username
+                    clean_files(target_path, 'thumbnail')
+                    fs = FileSystemStorage(location=target_path)
+                    file_extension = snapshot.name.split('.')[-1]    # << 為甚麼extension都打成exten ??
+                    fs.save('thumbnail' + '.' + file_extension , snapshot) # 檔名統一改成thumbnail開頭
+                    setattr(
+                        student_profile,
+                        'thumbnail_dir',
+                        '/user_upload/students/' + username + '/thumbnail' + '.' + file_extension
+                    )
+                student_profile.save()  # 等全設定完再儲存
+                self.status = 'success'
+                return (self.status, self.errCode, self.errMsg, self.data)
+            except Exception as e:
+                print(e)
+                self.status = 'failed'
+                self.errCode = '2'
+                self.errMsg = 'Querying Data Failed.'
+                return (self.status, self.errCode, self.errMsg, self.data)
+
+class teacher_manager:
+    def __init__(self):
+        self.status = None
+        self.errCode = None
+        self.errMsg = None
+        self.data = None
+    def check_if_teacher_exist(self, auth_id):
+        teacher_profile_object = teacher_profile.objects.filter(auth_id=auth_id)
+        if teacher_profile_object.first() is None:
+            self.status = 'failed'
+            self.errCode = '1'
+            self.errMsg = 'Found No teacher.'
+        else:
+            return(teacher_profile_object)
+    #  老師個人資訊編輯頁(自己看自己)
+    #  特定時間第一版先不做 10/27
+    def return_teacher_profile_for_oneself_viewing(self, teacher_auth_id):
+        # 老師編輯個人資料
+        teacher_profile_object = teacher_profile.objects.filter(auth_id=teacher_auth_id)
+
+        if teacher_profile_object.first() is None:
+            self.status = 'failed'
+            self.errCode = '1'
+            self.errMsg = 'Found No Teacher.'
             return (self.status, self.errCode, self.errMsg, self.data)
         try:
-            _data = dict() 
+            _data = dict()
+            # 不需要看到的欄位
             exclude_columns = [
-                'id','auth_id',  'info_folder',
-                'password', 'user_folder', 'date_join']
-            for each_key, each_value in student_profile_object.values()[0].items():
+                'teaching_history', 'id', 'teacher_of_the_lesson_snapshot',
+                'teacher_of_the_lesson', 'password', 'user_folder', 'info_folder',
+                'cert_unapproved', 'date_join', 'auth_id', 'cert_approved']
+            for each_key, each_value in teacher_profile_object.values()[0].items():
+                if each_key not in exclude_columns:
+                    _data[each_key] = each_value
+            # 一般時間
+            general_available_time_object_records = \
+                general_available_time.objects.filter(teacher_model__auth_id=teacher_auth_id).values()
+            if len(general_available_time_object_records) > 0:
+                # 代表有找到老師的時間
+                general_available_time_list = list()
+                for each_record in general_available_time_object_records:
+                    general_available_time_list.append(
+                        each_record['week'] + ':' + each_record['time']
+                        )
+                general_available_time_list = ';'.join(general_available_time_list)
+
+            else:
+                general_available_time_list = ''
+            _data['general_available_time'] = general_available_time_list
+            # 特定時間 第一版不做
+            specific_available_time_list = list()
+            specific_time_queryset = teacher_profile_object.first().specific_time.values()
+            if len(specific_time_queryset) > 0: # 表示有特定時間
+                for each_record in specific_time_queryset:
+                    _date = each_record['date']
+                    _time = each_record['time']
+                    specific_available_time_list.append(_date + ':' + _time)
+                specific_available_time_list = ';'.join(specific_available_time_list)
+                _data['specific_available_time'] = specific_available_time_list
+            else:
+                pass # 應該不需要做甚麼事情
+
+            self.status = 'success'
+            self.data = _data
+            return (self.status, self.errCode, self.errMsg, self.data)
+        except Exception as e:
+            print(e)
+            self.status = 'failed'
+            self.errCode = '2'
+            self.errMsg = 'Querying Data Failed.'
+            return (self.status, self.errCode, self.errMsg, self.data)
+    #老師個人資訊公開頁
+    def return_teacher_profile_for_public_viewing(self, teacher_auth_id):
+        teacher_profile_object = teacher_profile.objects.filter(auth_id=teacher_auth_id)
+        if teacher_profile_object.first() is None:
+            self.status = 'failed'
+            self.errCode = '1'
+            self.errMsg = 'Found No Teacher.'
+            return (self.status, self.errCode, self.errMsg, self.data)
+        try:
+            _data = dict()
+            exclude_columns = [
+                'auth_id','username','password','balance', 'withholding_balance',
+                'teaching_history', 'id', 
+                'teacher_of_the_lesson_snapshot',
+                'teacher_of_the_lesson',  'user_folder', 'info_folder',
+                'cert_unapproved', 'date_join',  'cert_approved']
+            
+            for each_key, each_value in teacher_profile_object.values()[0].items():
                 if each_key not in exclude_columns:
                     _data[each_key] = each_value 
             
@@ -37,52 +197,69 @@ class student_manager:
             self.errCode = '2'
             self.errMsg = 'Querying Data Failed.'
             return (self.status, self.errCode, self.errMsg, self.data)
-class teacher_manager:
-    def __init__(self):
-        self.status = None
-        self.errCode = None
-        self.errMsg = None
-        self.data = None
     
-    def return_teacher_profile_for_oneself_viewing(self, teacher_auth_id):
-        # 老師編輯個人資料
-        teacher_profile_object = teacher_profile.objects.filter(auth_id=teacher_auth_id)
-        if teacher_profile_object.first() is None:
-            self.status = 'failed'
-            self.errCode = '1'
-            self.errMsg = 'Found No Teacher.'
+    # 老師編輯個人資訊
+    def update_teacher_profile(self, **kwargs):
+        teacher_profile_all_colname = [a.name for a in teacher_profile._meta.get_fields()] 
+        # 以下幾個不要直接改資料庫內容
+        exclude_data_name = ['token','userID',"upload_snapshot", "upload_cer"]
+        #for a in kwargs.items():
+        #    print(a)
+        auth_id = kwargs['userID']
+        teacher_profile_object = self.check_if_teacher_exist(auth_id)
+        if self.status == 'failed':
             return (self.status, self.errCode, self.errMsg, self.data)
-        try:
-            _data = dict() 
-            exclude_columns = [
-                'specific_time', 'teaching_history', 'id', 'teacher_of_the_lesson_snapshot',
-                'teacher_of_the_lesson', 'password', 'user_folder', 'info_folder',
-                'cert_unapproved', 'date_join', 'auth_id', 'cert_approved']
-            for each_key, each_value in teacher_profile_object.values()[0].items():
-                if each_key not in exclude_columns:
-                    _data[each_key] = each_value 
-            general_available_time_object_records = \
-                general_available_time.objects.filter(teacher_model__auth_id=teacher_auth_id).values()
-            if len(general_available_time_object_records) > 0:
-                # 代表有找到老師的時間
-                general_available_time_list = list()
-                for each_record in general_available_time_object_records:
-                    general_available_time_list.append(
-                        each_record['week'] + ':' + each_record['time']
-                        )
-                general_available_time_list = ';'.join(general_available_time_list)
-            else:
-                general_available_time_list = ''
-            _data['general_available_time'] = general_available_time_list
-            self.status = 'success'
-            self.data = _data
-            return (self.status, self.errCode, self.errMsg, self.data)
-        except Exception as e:
-            print(e)
-            self.status = 'failed'
-            self.errCode = '2'
-            self.errMsg = 'Querying Data Failed.'
-            return (self.status, self.errCode, self.errMsg, self.data)
+        else:
+            try:
+                teacher = teacher_profile_object.first()
+                # 前端給的資料與資料庫colname交集
+                intersection_data = [kwargs.keys() & teacher_profile_all_colname]
+                print(intersection_data)
+                for colname in intersection_data[0]:
+                    if colname not in exclude_data_name:
+                        setattr(teacher, colname, kwargs[colname])
+                teacher.save()
+
+                if kwargs['upload_snapshot'] is not False :
+                    snapshot = kwargs['upload_snapshot']
+                    username = teacher.username
+                    # 檢查路徑中是否原本已經有大頭照,有的話刪除舊圖檔
+                    file_list = os.listdir('user_upload/teachers/' + username)
+                    for file_name in file_list:
+                        if re.findall('thumbnail.*', file_name):
+                            os.unlink('user_upload/teachers/' + username +'/'+ file_name)
+
+                    print('老師更新大頭照: ', snapshot[0].name)
+                    folder_where_are_uploaded_files_be ='user_upload/teachers/' + username
+                    fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
+                    file_exten = snapshot[0].name.split('.')[-1]
+                    fs.save('thumbnail'+'.'+ file_exten , snapshot[0]) # 檔名統一改成thumbnail開頭
+                    thumbnail_dir = '/user_upload/teachers/' + username + '/' + 'thumbnail'+'.'+ file_exten
+                    teacher_profile_object.update(thumbnail_dir = thumbnail_dir)
+
+                 # 未認證證書
+                if kwargs['upload_cer'] is not False :
+                    upload_cer_list = kwargs["upload_cer"]
+                    username = teacher.username
+                    
+                    for each_file in upload_cer_list:
+                        print('收到老師認證資料: ', each_file.name)
+                        folder_where_are_uploaded_files_be ='user_upload/teachers/' + username + '/unaproved_cer'
+                        fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
+                        fs.save(each_file.name, each_file)    
+    
+                self.status = 'success'
+                return (self.status, self.errCode, self.errMsg, self.data)
+            except Exception as e:
+                print(e)
+                self.status = 'failed'
+                self.errCode = '2'
+                self.errMsg = 'Querying Data Failed.'
+                return (self.status, self.errCode, self.errMsg, self.data)
+
+
+
+
 
 class user_db_manager:
     def __init__(self):

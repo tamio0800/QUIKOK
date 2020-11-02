@@ -14,7 +14,6 @@ urlpatterns = [
     
     path('import_lesson/', views.import_lesson),
     path('createLesson/', views.lesson_manage),
-    path('createlesson/', views.lesson_manage),
     path('editLesson/', views.lesson_manage),
     path('showLessonDetail/', views.lesson_manage),
     path('fake_form/', views.fake_form),
