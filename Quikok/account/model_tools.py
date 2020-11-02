@@ -215,23 +215,26 @@ class teacher_manager:
             return (self.status, self.errCode, self.errMsg, self.data)
         else:
             try:
-                print(kwargs['general_available_time'])
+                
                 teacher = teacher_profile_object.first()
-                # 前端給的資料與table:teacher_profile colname 交集
-                # 以及與table teacher_general_availabale_time 交集
-                #teacher_genarl_time = general_available_time.filter(tea)
-               # general_available_time_list = ''
-                #_data['general_available_time'] = general_available_time_list
-                # 特定時間 第一版不做
-                #general_time_list = list()
-                #general_time_queryset = teacher_profile_object.first().general_time.values()
-                #if len(specific_time_queryset) > 0: # 表示有特定時間
-                #    for each_record in specific_time_queryset:
-                #        _date = each_record['date']
-                #        _time = each_record['time']
-                #        specific_available_time_list.append(_date + ':' + _time)
-                #    specific_available_time_list = ';'.join(specific_available_time_list)
-                #    _data['specific_available_time'] = specific_available_time_list
+                #前端給的資料與table:teacher_profile colname 交集
+                #以及與table teacher_general_availabale_time 交集
+                general_time = kwargs['teacher_general_available_time']
+                temp_general_time = general_time.split(';')
+                for lenth_of_time in temp_general_time:
+                    week = temp_general_time.split(':')[0]
+                    time = temp_general_time.split(':')[1]
+                print('一般時間'+ (kwargs['teacher_general_available_time']))
+                # 時間
+                general_available_time_list = list()
+                general_time_queryset = teacher_profile_object.first().general_time.values()
+                if len(general_time_queryset) > 0: # 表示老師之前有存時間
+                    for each_record in general_time_queryset:
+                        week = each_record['week']
+                        time = each_record['time']
+                        general_available_time_list.append(week+ ':' + time)
+                    general_available_time_list = ';'.join(general_available_time_list)
+                    _data['general_available_time'] = general_available_time_list
 
 
                 intersection_data = [kwargs.keys() & teacher_profile_all_colname]
