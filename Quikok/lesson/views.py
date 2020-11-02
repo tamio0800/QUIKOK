@@ -227,7 +227,7 @@ def add_or_remove_favorite_lessons(request):
 @require_http_methods(['GET'])
 def get_all_filtered_keys_and_values(request):
     response = dict()
-    data = list()
+    data = dict()
     the_lesson_manager = lesson_manager()
 
     filtered_subjects = the_lesson_manager.filtered_subjects
@@ -246,7 +246,7 @@ def get_all_filtered_keys_and_values(request):
         #   {text:國文, value:0, select:False},
         #   {text:英文, value:1, select:False},
         # ...]
-        _data_dict = dict()
+        
         _data_dict_content = list()
         for key, value in each_filtering.items():
             _data_dict_content.append(
@@ -256,8 +256,7 @@ def get_all_filtered_keys_and_values(request):
                     'select': False,
                 }
             )
-        _data_dict[mapping_index[i]] = _data_dict_content
-        data.append(_data_dict)
+        data[mapping_index[i]] = _data_dict_content
     response['status'] = 'success'
     response['errCode'] = None
     response['errMsg'] = None
