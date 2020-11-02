@@ -195,7 +195,6 @@ def get_lesson_cards_for_the_teacher_who_created_them(request):
 def add_or_remove_favorite_lessons(request):
     user_auth_id = request.POST.get('userID', False)
     lesson_id = request.POST.get('lessonID', False)
-    
     response = {}
     if not check_if_all_variables_are_true(user_auth_id, lesson_id):
         # 之後等加入條件再改寫法 
@@ -204,15 +203,12 @@ def add_or_remove_favorite_lessons(request):
         response['errCode'] = '0'
         response['errMsg'] = 'Received Arguments Failed'
         return JsonResponse(response)
-    
     if int(user_auth_id) == -1:
         response['status'] = 'failed'
         response['errCode'] = '1'
         response['errMsg'] = 'User Is Anonymous.'
         return JsonResponse(response)
-
     favorite_lessons_object = favorite_lessons.objects.filter(follower_auth_id=user_auth_id).filter(lesson_id=lesson_id).first()
-
     if favorite_lessons_object is None:
         # 代表這門課還不是該user的喜好，我們要加進去
         favorite_lessons.objects.create(
@@ -223,14 +219,50 @@ def add_or_remove_favorite_lessons(request):
     else:
         # 代表這門課已經是該user的喜好，我們要移除
         favorite_lessons_object.delete()
-    
     response['status'] = 'success'
     response['errCode'] = None
     response['errMsg'] = None
     return JsonResponse(response)
 
+@require_http_methods(['GET'])
+def get_all_filtered_keys_and_values(request):
+    response = dict()
+    data = list()
+    the_lesson_manager = lesson_manager()
 
-
+    filtered_subjects = the_lesson_manager.filtered_subjects
+    filtered_target_students = the_lesson_manager.filtered_target_students
+    filtered_times = the_lesson_manager.filtered_times
+    filtered_tutoring_experience = the_lesson_manager.filtered_tutoring_experience
+    mapping_index = {
+        0: 'filtered_subjects',
+        1: 'filtered_target_students',
+        2: 'filtered_times',
+        3: 'filtered_tutoring_experience'
+    }
+    for i, each_filtering in enumerate([filtered_subjects, filtered_target_students,
+    filtered_times, filtered_tutoring_experience]):
+        # 'filtered_subjects': [
+        #   {text:國文, value:0, select:False},
+        #   {text:英文, value:1, select:False},
+        # ...]
+        _data_dict = dict()
+        _data_dict_content = list()
+        for key, value in each_filtering.items():
+            _data_dict_content.append(
+                {
+                    'text': value,
+                    'value': key,
+                    'select': False,
+                }
+            )
+        _data_dict[mapping_index[i]] = _data_dict_content
+        data.append(_data_dict)
+    response['status'] = 'success'
+    response['errCode'] = None
+    response['errMsg'] = None
+    response['data'] = data
+    return JsonResponse(response)
 
 
 def import_lesson(request):
