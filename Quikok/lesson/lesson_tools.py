@@ -41,6 +41,54 @@ class lesson_manager:
         self.errCode = None
         self.errMsg = None
         self.data = dict()
+        self.filtered_subjects = self.get_filtered_subjects()
+        self.filtered_target_students = self.get_filtered_target_students()
+        self.filtered_times = self.get_filtered_times()
+        self.filtered_time_index = self.get_filtered_time_mapping_index()
+        self.filtered_tutoring_experience = self.get_filtered_tutoring_experience()
+    def get_filtered_subjects(self):
+        return {
+            0: '英文',
+            1: '數學',
+            2: '物理',
+            3: '化學',
+            4: '留學相關',
+            5: '語言檢定',
+        }
+    def get_filtered_target_students(self):
+        return {
+            0: '國小',
+            1: '國中',
+            2: '高中職',
+            3: '大專院校',
+            4: '社會人士',
+        }
+    def get_filtered_times(self):
+        return {
+            0: '早上',  # 0500 - 1100
+            1: '上午',  # 0930 - 1300
+            2: '中午',  # 1030 - 1430
+            3: '下午',  # 1230 - 1830
+            4: '晚上',  # 1700 - 2300
+            5: '深夜',  # 2130 - 0530
+        }
+    def get_filtered_time_mapping_index(self):
+        return {
+            0: (10,21),
+            1: (19,25),  # 0930 - 1300
+            2: (21,28),  # 1030 - 1430
+            3: (24,36),  # 1230 - 1830
+            4: (34,45),  # 1700 - 2300
+            5: (42,10),  # 2130 - 0530
+        }
+    def get_filtered_tutoring_experience(self):
+        return {
+            0: '1年以內',
+            1: '1-3年',
+            2: '3-5年',
+            3: '5-10年',
+            4: '10年以上',
+        }
     def return_lesson_details(self, lesson_id, user_auth_id, for_whom='common_users'):
         # for_whom接收的參數有兩個，'common_users' 以及 'teacher_who_created_it'
         if for_whom == 'common_users':
