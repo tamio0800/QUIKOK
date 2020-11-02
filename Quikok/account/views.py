@@ -206,18 +206,30 @@ def return_student_profile_for_oneself_viewing(request):
 def edit_student_profile(request):
     response = dict()
     pass_data_to_model_tools = dict()
-    # 要處理的資料
-    recevived_data_name = ['token','userID','mobile','nickname','update_someone_by_email',
-     'intro']
-    # 上傳檔案的種類:大頭照
 
+    for key, value in request.POST.items():
+        pass_data_to_model_tools[key] = request.POST.get(key,False)
+    # 要處理的資料
+    #recevived_data_name = ['token','userID','mobile','nickname','update_someone_by_email',
+    # 'intro']
+    # 上傳檔案的種類:大頭照
+    userupload_file_kind = ['upload_snapshot']
+    for each_kind_of_upload_file in userupload_file_kind:
+        file_list = request.FILES.getlist(each_kind_of_upload_file)
+        #print('上傳種類')
+        #print(file_list)
+        if len(file_list) > 0 :
+            pass_data_to_model_tools[each_kind_of_upload_file] = request.FILES.getlist(each_kind_of_upload_file)
+            #print(each_kind_of_upload_file+'傳東西')
+        else:
+            pass_data_to_model_tools[each_kind_of_upload_file] = False
+            #print(each_kind_of_upload_file + '沒東西')
     the_student_manager = student_manager()
-    for data in recevived_data_name:
-        pass_data_to_model_tools[data] = request.POST.get(data, False)
-    pass_data_to_model_tools['request'] = request
+
     response['status'], response['errCode'], response['errMsg'], response['data'] =\
     the_student_manager.update_student_profile(**pass_data_to_model_tools)
-    print('passing data')
+    print('passing data' + str(pass_data_to_model_tools))
+    print(response)
     return JsonResponse(response)
 
 ##### 老師區 #####
@@ -228,16 +240,25 @@ def edit_teacher_profile(request):
     pass_data_to_model_tools = dict()
     for key, value in request.POST.items():
         pass_data_to_model_tools[key] = request.POST.get(key,False)
-        print(key, value)
+        print('this is a pair of key, value:' + key + value)
     the_teacher_manager = teacher_manager()
     #for data in recevived_data_name:
     #    pass_data_to_model_tools[data] = request.POST.get(data,False)
     print(pass_data_to_model_tools)
     # 上傳檔案的種類:大頭照、證書
     userupload_file_kind = ["upload_snapshot", "upload_cer"]
-    for each_file in userupload_file_kind:
-        if request.FILES.getlist(each_file):
-            pass_data_to_model_tools[each_file] = request.FILES.getlist(each_file)
+    #each_file = request.FILES.get("upload_snapshot")
+    #    if each_file :
+    for each_kind_of_upload_file in userupload_file_kind:
+        file_list = request.FILES.getlist(each_kind_of_upload_file)
+        #print('上傳種類')
+        #print(file_list)
+        if len(file_list) > 0 :
+            pass_data_to_model_tools[each_kind_of_upload_file] = request.FILES.getlist(each_kind_of_upload_file)
+            #print(each_kind_of_upload_file+'傳東西')
+        else:
+            pass_data_to_model_tools[each_kind_of_upload_file] = False
+            #print(each_kind_of_upload_file + '沒東西')
 
     response['status'], response['errCode'], response['errMsg'], response['data'] =\
     the_teacher_manager.update_teacher_profile(**pass_data_to_model_tools)

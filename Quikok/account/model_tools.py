@@ -53,39 +53,43 @@ class student_manager:
         
             
     def update_student_profile(self, **kwargs):
-        # 學生資料編輯 只是方便對照
-        _recevived_data_name = ['token','userID','mobile','nickname','update_someone_by_email',
-        "upload_snapshot", 'intro']
         # 以下幾個不要直接改資料庫內容
-        exclude_data_name = ['token','userID',"upload_snapshot", 'request']
+        exclude_data_name = ['token','userID',"upload_snapshot"]
         student_auth_id = kwargs['userID']
-        request_object = kwargs['request']
+        
         student_profile_object = self.check_if_student_exist(student_auth_id)
         if self.status == 'failed':
             return (self.status, self.errCode, self.errMsg, self.data)
         else:
             try:
-                student_profile = student_profile_object.first()
-                username = student_profile.username
-                for k, v in kwargs.items():
-                    if k not in exclude_data_name:
-                        setattr(student_profile, k, v)
-                snapshot = request_object.FILES['upload_snapshot']
-                if snapshot:
+                that_student = student_profile_object.first()
+                student_profile_all_colname = [a.name for a in student_profile._meta.get_fields()]
+                # 用student_profile裡的欄位名稱與前端傳來的名稱做交集
+                intersection_data = [kwargs.keys() & student_profile_all_colname]
+                username = that_student.username
+                for colname in intersection_data[0]:
+                    print(colname)
+                    if colname not in exclude_data_name:
+                        setattr(that_student, colname, kwargs[colname])
+
+                if kwargs['upload_snapshot'] is not False:
+                    snapshot = kwargs['upload_snapshot']
                     # 如果有收到user上傳的大頭貼資訊
-                    print('收到學生大頭照: ', snapshot.name)
+                    print('收到學生大頭照: ', snapshot[0].name)
                     # 檢查路徑中是否原本已經有大頭照,有的話刪除舊圖檔
                     target_path = 'user_upload/students/' + username
                     clean_files(target_path, 'thumbnail')
                     fs = FileSystemStorage(location=target_path)
-                    file_extension = snapshot.name.split('.')[-1]    # << 為甚麼extension都打成exten ??
-                    fs.save('thumbnail' + '.' + file_extension , snapshot) # 檔名統一改成thumbnail開頭
+                    file_extension = snapshot[0].name.split('.')[-1]    
+                    fs.save('thumbnail' + '.' + file_extension , snapshot[0]) # 檔名統一改成thumbnail開頭
                     setattr(
-                        student_profile,
+                        that_student,
                         'thumbnail_dir',
                         '/user_upload/students/' + username + '/thumbnail' + '.' + file_extension
                     )
-                student_profile.save()  # 等全設定完再儲存
+                    self.data = dict()
+                    self.data['upload_snapshot'] = 'thumbnail' + '.' + file_extension
+                that_student.save()  # 等全設定完再儲存
                 self.status = 'success'
                 return (self.status, self.errCode, self.errMsg, self.data)
             except Exception as e:
@@ -211,13 +215,35 @@ class teacher_manager:
             return (self.status, self.errCode, self.errMsg, self.data)
         else:
             try:
+                print(kwargs['general_available_time'])
                 teacher = teacher_profile_object.first()
-                # 前端給的資料與資料庫colname交集
+                # 前端給的資料與table:teacher_profile colname 交集
+                # 以及與table teacher_general_availabale_time 交集
+                #teacher_genarl_time = general_available_time.filter(tea)
+               # general_available_time_list = ''
+                #_data['general_available_time'] = general_available_time_list
+                # 特定時間 第一版不做
+                #general_time_list = list()
+                #general_time_queryset = teacher_profile_object.first().general_time.values()
+                #if len(specific_time_queryset) > 0: # 表示有特定時間
+                #    for each_record in specific_time_queryset:
+                #        _date = each_record['date']
+                #        _time = each_record['time']
+                #        specific_available_time_list.append(_date + ':' + _time)
+                #    specific_available_time_list = ';'.join(specific_available_time_list)
+                #    _data['specific_available_time'] = specific_available_time_list
+
+
                 intersection_data = [kwargs.keys() & teacher_profile_all_colname]
                 print(intersection_data)
+
+
                 for colname in intersection_data[0]:
                     if colname not in exclude_data_name:
                         setattr(teacher, colname, kwargs[colname])
+
+
+
                 teacher.save()
 
                 if kwargs['upload_snapshot'] is not False :
@@ -236,7 +262,7 @@ class teacher_manager:
                     fs.save('thumbnail'+'.'+ file_exten , snapshot[0]) # 檔名統一改成thumbnail開頭
                     thumbnail_dir = '/user_upload/teachers/' + username + '/' + 'thumbnail'+'.'+ file_exten
                     teacher_profile_object.update(thumbnail_dir = thumbnail_dir)
-
+                
                  # 未認證證書
                 if kwargs['upload_cer'] is not False :
                     upload_cer_list = kwargs["upload_cer"]
