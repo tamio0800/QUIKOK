@@ -11,7 +11,7 @@ from account.models import teacher_profile, favorite_lessons
 from lesson.models import lesson_info, lesson_reviews, lesson_card
 from lesson.lesson_tools import lesson_manager, lesson_card_manager
 from django.contrib.auth.decorators import login_required
-
+from django.db.models import Q
 
 def check_if_all_variables_are_true(*args):
     print(args)
@@ -41,20 +41,18 @@ def lessons_main_page(request):
 def get_lesson_cards_for_common_users(request):
     # 20200911 暫時不開發排序、篩選部分
     # 接收：需要多少小卡(int)、排序依據(string)、篩選依據(string)、觀看的用戶
+    # 20201103 加入篩選機制，未來再重構此一api
     qty = request.POST.get('qty', False) # 暫定六堂課
+    filtered_by = request.POST.get('filtered_by', False)
     user_auth_id = request.POST.get('userID', False)
     keywords = request.POST.get('keywords', False)
     only_show_ones_favorites = request.POST.get('only_show_ones_favorites', False)
     only_show_lessons_by_this_teacher_s_auth_id = \
         request.POST.get('only_show_lessons_by_this_teacher_s_auth_id', False)
-
-    #ordered_by = request.POST.get('ordered_by', False)
-    #filtered_by = request.POST.get('filtered_by', False)
     response = {}
-    print(qty)
-
     if not check_if_all_variables_are_true(qty, user_auth_id,
-    keywords, only_show_ones_favorites, only_show_lessons_by_this_teacher_s_auth_id):
+    keywords, only_show_ones_favorites, only_show_lessons_by_this_teacher_s_auth_id,
+    filtered_by):
         # 之後等加入條件再改寫法 
         # 收取的資料不正確
         response['status'] = 'failed'
@@ -72,7 +70,46 @@ def get_lesson_cards_for_common_users(request):
             qty = int(qty)
         only_show_ones_favorites = only_show_ones_favorites == 'true'
         _data = []
-        selling_lessons_ids = lesson_info.objects.filter(selling_status='selling').values_list('id', flat=True)
+        lesson_info_selling_objects = lesson_info.objects.filter(selling_status='selling')
+        the_lesson_manager = lesson_manager()
+        if_there_was_any_filtering = the_lesson_manager.parse_filtered_conditions(filtered_by)
+        if if_there_was_any_filtering:
+            # 代表user有輸入篩選資訊
+            if the_lesson_manager.current_filtered_price_per_hour is not None:
+                lesson_info_selling_objects = lesson_info_selling_objects.filter(price_per_hour__gt=the_lesson_manager.current_filtered_price_per_hour[0]-1).filter(price_per_hour__lt=the_lesson_manager.current_filtered_price_per_hour[1]+1)
+                # 限制鐘點費需要介於(含)最高與最低之間
+            if the_lesson_manager.current_filtered_subjects is not None:
+                for i, each_subject in enumerate(the_lesson_manager.current_filtered_subjects):
+                    if i == 0:
+                        query = Q(lesson_attributes__contains=each_subject)
+                    else:
+                        query.add(Q(lesson_attributes__contains=each_subject), Q.OR)
+                lesson_info_selling_objects = lesson_info_selling_objects.filter(query)
+            if the_lesson_manager.current_filtered_target_students is not None:
+                for i, each_target_student in enumerate(the_lesson_manager.current_filtered_target_students):
+                    if i == 0:
+                        query = Q(lesson_attributes__contains=each_target_student)
+                    else:
+                        query.add(Q(lesson_attributes__contains=each_target_student), Q.OR)
+                lesson_info_selling_objects = lesson_info_selling_objects.filter(query)
+            if the_lesson_manager.current_filtered_tutoring_experience is not None:
+                for i, each_tutoring_experience in enumerate(the_lesson_manager.current_filtered_tutoring_experience):
+                    if i == 0:
+                        query = Q(tutor_experience=each_tutoring_experience)
+                    else:
+                        query.add(Q(tutor_experience=each_tutoring_experience), Q.OR)
+                matched_teacher_ids = teacher_profile.objects.filter(query).values_list('id', flat=True)
+                lesson_info_selling_objects = lesson_info_selling_objects.filter(teacher_id__in = matched_teacher_ids)
+            if the_lesson_manager.current_filtered_times is not None:
+                # current_filtered_times >>
+                # [
+                #   [1, 2, 3, 4, 5],
+                #   [10, 22, 35, 44], ...
+                # ]
+                print(the_lesson_manager.current_filtered_times)
+                pass
+        selling_lessons_ids = lesson_info_selling_objects.values_list('id', flat=True)
+
         user_s_all_favorite_lessons_ids = \
             favorite_lessons.objects.filter(follower_auth_id = user_auth_id).values_list('lesson_id', flat=True)
         if int(only_show_lessons_by_this_teacher_s_auth_id) == -1:
@@ -90,6 +127,12 @@ def get_lesson_cards_for_common_users(request):
                     _data.append(lesson_attributes)
             else:
                 # show出所有上架中的課程小卡
+                # 理論上，只有這一區會有搜尋或是篩選的需求
+                
+
+
+
+
                 lesson_card_objects_values_set = lesson_card.objects.filter(corresponding_lesson_id__in = selling_lessons_ids)[:qty].values()
                 for each_lesson_card_object_values in lesson_card_objects_values_set:
                     lesson_attributes = each_lesson_card_object_values

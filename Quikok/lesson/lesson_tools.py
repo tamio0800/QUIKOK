@@ -81,13 +81,15 @@ class lesson_manager:
             5: '深夜',  # 2130 - 0530
         }
     def get_filtered_time_mapping_index(self):
+        _list5 = [_ for _ in range(42, 48)]
+        _list5.extend([_ for _ in range(11)])
         return {
-            0: (10,21),
-            1: (19,25),  # 0930 - 1300
-            2: (21,28),  # 1030 - 1430
-            3: (24,36),  # 1230 - 1830
-            4: (34,45),  # 1700 - 2300
-            5: (42,10),  # 2130 - 0530
+            0: [_ for _ in range(10, 22)],
+            1: [_ for _ in range(19, 26)],
+            2: [_ for _ in range(21, 29)],
+            3: [_ for _ in range(24, 37)],
+            4: [_ for _ in range(34, 46)],
+            5: _list5
         }
     def get_filtered_tutoring_experience(self):
         return {
@@ -104,7 +106,7 @@ class lesson_manager:
         #  若沒有該篩選條件則不show出來，filtered_price_per_hour的部份先低後高，若只有一邊的話會以,high或是low,的形式做呈現。
         if len(filtered_by_in_string) == 0:
             # 沒有任何篩選條件
-            pass
+            return False
         else:
             for each_filtering in filtered_by_in_string.split(';'):
                 if 'filtered_subjects' in each_filtering:
@@ -126,7 +128,7 @@ class lesson_manager:
                     self.current_filtered_times = list()
                     for each_key_in_list in keys_in_list:
                         self.current_filtered_times.append(
-                            self.filtered_times[int(each_key_in_list)]
+                            self.filtered_time_index[int(each_key_in_list)]
                         )
                 elif 'filtered_tutoring_experience' in each_filtering:
                     keys_in_list = each_filtering.split(':')[-1].split(',')
@@ -141,6 +143,7 @@ class lesson_manager:
                     max_func = lambda x: 99999 if x == '' else int(x)
                     self.current_filtered_price_per_hour = \
                         (min_func(keys_in_list[0]), max_func(keys_in_list[1]))
+            return True
                
     def return_lesson_details(self, lesson_id, user_auth_id, for_whom='common_users'):
         # for_whom接收的參數有兩個，'common_users' 以及 'teacher_who_created_it'
@@ -399,6 +402,8 @@ class lesson_card_manager:
             print('setup lesson card error:  ', e)
             return False
     
+    def return_lesson_cards_for_common_users(self, user_auth_id, lesson_ids_in_list):
+        pass
     
 
 

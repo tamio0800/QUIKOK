@@ -268,16 +268,16 @@ class teacher_manager:
                         fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
                         fs.save(each_file.name, each_file)  
 
-                lesson_card_objects = the_lesson_card_manager.filter(teacher_auth_id=auth_id)
-                for each_lesson_card_object in lesson_card_objects:
-                    setattr(each_lesson_card_object, 'teacher_nickname', teacher.nickname)
-                    setattr(each_lesson_card_object, 'teacher_thumbnail_path', teacher.thumbnail_dir)
-                    setattr(each_lesson_card_object, 'teacher_nickname', teacher.nickname)
-                    setattr(each_lesson_card_object, 'education', teacher.education_1)
-                    setattr(each_lesson_card_object, 'education_is_approved', teacher.education_approved)
-                    setattr(each_lesson_card_object, 'working_experience', teacher.company)
-                    setattr(each_lesson_card_object, 'working_experience_is_approved', teacher.work_approved)
-                print("課程小卡更新成功")
+                #lesson_card_objects = the_lesson_card_manager.filter(teacher_auth_id=auth_id)
+                #for each_lesson_card_object in lesson_card_objects:
+                #    setattr(each_lesson_card_object, 'teacher_nickname', teacher.nickname)
+                #    setattr(each_lesson_card_object, 'teacher_thumbnail_path', teacher.thumbnail_dir)
+                #    setattr(each_lesson_card_object, 'teacher_nickname', teacher.nickname)
+                #    setattr(each_lesson_card_object, 'education', teacher.education_1)
+                #    setattr(each_lesson_card_object, 'education_is_approved', teacher.education_approved)
+                #    setattr(each_lesson_card_object, 'working_experience', teacher.company)
+                #    setattr(each_lesson_card_object, 'working_experience_is_approved', teacher.work_approved)
+                #print("課程小卡更新成功")
                 self.status = 'success'
                 return (self.status, self.errCode, self.errMsg, self.data)
             except Exception as e:
