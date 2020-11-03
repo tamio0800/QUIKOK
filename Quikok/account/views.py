@@ -112,7 +112,7 @@ def create_a_student_user(request):
             os.mkdir(os.path.join('user_upload/students', username))
             os.mkdir(os.path.join('user_upload/students/'+ username, 'info_folder'))
             # 存到 user_upload 該使用者的資料夾
-            
+
             #大頭照
             print('學生個人資料夾建立')
            

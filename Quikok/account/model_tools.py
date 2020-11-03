@@ -5,7 +5,7 @@ from itertools import product as pdt
 import pandas as pd
 import os, re
 from django.core.files.storage import FileSystemStorage
-from lesson.lesson_tools import *
+from lesson.models import lesson_card
 
 def clean_files(folder_path, key_words):
     for each_file in os.listdir(folder_path):
@@ -278,7 +278,7 @@ class teacher_manager:
                         fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
                         fs.save(each_file.name, each_file)  
 
-                lesson_card_objects = the_lesson_card_manager.filter(teacher_auth_id=auth_id)
+                lesson_card_objects = lesson_card.objects.filter(teacher_auth_id=auth_id)
                 for each_lesson_card_object in lesson_card_objects:
                     setattr(each_lesson_card_object, 'teacher_nickname', teacher.nickname)
                     setattr(each_lesson_card_object, 'teacher_thumbnail_path', teacher.thumbnail_dir)
