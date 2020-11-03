@@ -217,6 +217,7 @@ class teacher_manager:
             return (self.status, self.errCode, self.errMsg, self.data)
         else:
             try:
+                self.data = dict()
                 teacher = teacher_profile_object.first()
                 #temp_recevied_time_dict = dict()
                 received_general_time = kwargs['teacher_general_availabale_time']
@@ -263,7 +264,8 @@ class teacher_manager:
                     fs.save('thumbnail'+'.'+ file_exten , snapshot[0]) # 檔名統一改成thumbnail開頭
                     thumbnail_dir = '/user_upload/teachers/' + username + '/' + 'thumbnail'+'.'+ file_exten
                     teacher_profile_object.update(thumbnail_dir = thumbnail_dir)
-                
+                    self.data['upload_snapshot'] = thumbnail_dir
+
                  # 未認證證書
                 else:
                     print('沒收到更新大頭貼')
