@@ -5,6 +5,13 @@ from itertools import product as pdt
 import pandas as pd
 import os, re
 from django.core.files.storage import FileSystemStorage
+
+def clean_files(folder_path, key_words):
+    for each_file in os.listdir(folder_path):
+        if key_words in each_file:
+            os.unlink(os.path.join(folder_path, each_file))
+
+
 class student_manager:
     def __init__(self):
         self.status = None
@@ -46,41 +53,43 @@ class student_manager:
         
             
     def update_student_profile(self, **kwargs):
-        # 學生資料編輯 只是方便對照
-        _recevived_data_name = ['token','userID','mobile','nickname','update_someone_by_email',
-        "upload_snapshot", 'intro']
         # 以下幾個不要直接改資料庫內容
         exclude_data_name = ['token','userID',"upload_snapshot"]
-        #for a in kwargs.items():
-        #    print(a)
         student_auth_id = kwargs['userID']
+        
         student_profile_object = self.check_if_student_exist(student_auth_id)
         if self.status == 'failed':
             return (self.status, self.errCode, self.errMsg, self.data)
         else:
             try:
-                student_profile = student_profile_object.first()
-                username = student_profile.username
-                for k, v in kwargs.items():
-                    if k not in exclude_data_name:
-                        setattr(student_profile, k, v)
-                student_profile.save()
-                if kwargs['upload_snapshot'] is not False :
+                that_student = student_profile_object.first()
+                student_profile_all_colname = [a.name for a in student_profile._meta.get_fields()]
+                # 用student_profile裡的欄位名稱與前端傳來的名稱做交集
+                intersection_data = [kwargs.keys() & student_profile_all_colname]
+                username = that_student.username
+                for colname in intersection_data[0]:
+                    print(colname)
+                    if colname not in exclude_data_name:
+                        setattr(that_student, colname, kwargs[colname])
+
+                if kwargs['upload_snapshot'] is not False:
                     snapshot = kwargs['upload_snapshot']
-                    # 檢查路徑中是否原本已經有大頭照,有的話刪除舊圖檔
-                    file_list = os.listdir('user_upload/students/' + username)
-                    for file_name in file_list:
-                        if re.findall('thumbnail.*', file_name):
-                            os.unlink('user_upload/students/' + username +'/'+ file_name)
-
+                    # 如果有收到user上傳的大頭貼資訊
                     print('收到學生大頭照: ', snapshot[0].name)
-                    folder_where_are_uploaded_files_be ='user_upload/students/' + username
-                    fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
-                    file_exten = snapshot[0].name.split('.')[-1]
-                    fs.save('thumbnail'+'.'+ file_exten , snapshot[0]) # 檔名統一改成thumbnail開頭
-                    thumbnail_dir = '/user_upload/students/' + username + '/' + 'thumbnail'+'.'+ file_exten
-                    student_profile_object.update(thumbnail_dir = thumbnail_dir)
-
+                    # 檢查路徑中是否原本已經有大頭照,有的話刪除舊圖檔
+                    target_path = 'user_upload/students/' + username
+                    clean_files(target_path, 'thumbnail')
+                    fs = FileSystemStorage(location=target_path)
+                    file_extension = snapshot[0].name.split('.')[-1]    
+                    fs.save('thumbnail' + '.' + file_extension , snapshot[0]) # 檔名統一改成thumbnail開頭
+                    setattr(
+                        that_student,
+                        'thumbnail_dir',
+                        '/user_upload/students/' + username + '/thumbnail' + '.' + file_extension
+                    )
+                    self.data = dict()
+                    self.data['upload_snapshot'] = 'thumbnail' + '.' + file_extension
+                that_student.save()  # 等全設定完再儲存
                 self.status = 'success'
                 return (self.status, self.errCode, self.errMsg, self.data)
             except Exception as e:
@@ -89,6 +98,7 @@ class student_manager:
                 self.errCode = '2'
                 self.errMsg = 'Querying Data Failed.'
                 return (self.status, self.errCode, self.errMsg, self.data)
+
 class teacher_manager:
     def __init__(self):
         self.status = None
@@ -205,13 +215,38 @@ class teacher_manager:
             return (self.status, self.errCode, self.errMsg, self.data)
         else:
             try:
+                
                 teacher = teacher_profile_object.first()
-                # 前端給的資料與資料庫colname交集
+                #前端給的資料與table:teacher_profile colname 交集
+                #以及與table teacher_general_availabale_time 交集
+                general_time = kwargs['teacher_general_available_time']
+                temp_general_time = general_time.split(';')
+                for lenth_of_time in temp_general_time:
+                    week = temp_general_time.split(':')[0]
+                    time = temp_general_time.split(':')[1]
+                print('一般時間'+ (kwargs['teacher_general_available_time']))
+                # 時間
+                general_available_time_list = list()
+                general_time_queryset = teacher_profile_object.first().general_time.values()
+                if len(general_time_queryset) > 0: # 表示老師之前有存時間
+                    for each_record in general_time_queryset:
+                        week = each_record['week']
+                        time = each_record['time']
+                        general_available_time_list.append(week+ ':' + time)
+                    general_available_time_list = ';'.join(general_available_time_list)
+                    _data['general_available_time'] = general_available_time_list
+
+
                 intersection_data = [kwargs.keys() & teacher_profile_all_colname]
                 print(intersection_data)
+
+
                 for colname in intersection_data[0]:
                     if colname not in exclude_data_name:
                         setattr(teacher, colname, kwargs[colname])
+
+
+
                 teacher.save()
 
                 if kwargs['upload_snapshot'] is not False :
@@ -230,7 +265,7 @@ class teacher_manager:
                     fs.save('thumbnail'+'.'+ file_exten , snapshot[0]) # 檔名統一改成thumbnail開頭
                     thumbnail_dir = '/user_upload/teachers/' + username + '/' + 'thumbnail'+'.'+ file_exten
                     teacher_profile_object.update(thumbnail_dir = thumbnail_dir)
-
+                
                  # 未認證證書
                 if kwargs['upload_cer'] is not False :
                     upload_cer_list = kwargs["upload_cer"]

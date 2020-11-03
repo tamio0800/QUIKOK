@@ -25,7 +25,7 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     background_picture_code = models.IntegerField() 
     # 這個用來儲存user選擇了什麼樣的上架背景圖，舉例來說99代表user自己上傳的圖，這時我們要找到對應的路徑回傳給前端；
     # 如果今天這個值是1、2、3之類的Quikok預設圖片，那我們直接回傳代號給前端即可。
-    background_picture_path = models.CharField(max_length = 400) # 指向上傳圖的路徑
+    background_picture_path = models.TextField(blank=True) # 指向上傳圖的路徑
     lesson_title = models.CharField(max_length = 14) # 課程的名稱
     price_per_hour = models.IntegerField()  # 該門課程的鐘點費
     lesson_has_one_hour_package = models.BooleanField()  # 該門課程是否可以單堂出售
@@ -78,7 +78,7 @@ class lesson_card(models.Model):
     # 之後直接query就好。
     corresponding_lesson_id = models.IntegerField()  # 所對應的課程id
 
-    teacher_thumbnail_path = models.CharField(max_length = 400)  # 老師的大頭照路徑
+    teacher_thumbnail_path = models.TextField(blank=True)  # 老師的大頭照路徑
     teacher_nickname = models.CharField(max_length = 40)
     teacher_auth_id = models.IntegerField()
     is_this_teacher_male = models.BooleanField(default=True)
@@ -86,7 +86,7 @@ class lesson_card(models.Model):
     little_title = models.CharField(max_length = 10)  # 背景圖片的小標題
     title_color = models.CharField(max_length = 7)    
     background_picture_code = models.IntegerField()
-    background_picture_path = models.CharField(max_length = 400) # 指向上傳圖的路徑
+    background_picture_path = models.TextField(blank=True) # 指向上傳圖的路徑
 
     lesson_title = models.CharField(max_length = 14) # 課程的名稱
     highlight_1 = models.CharField(max_length = 10)  # 亮點介紹1，不要超過10個字元長

@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+
 class user_token(models.Model):
     authID_object = models.ForeignKey(User, on_delete=models.CASCADE)
     token = models.CharField(max_length=128) # hash密碼
@@ -32,9 +33,9 @@ class student_profile(models.Model):
     role = models.CharField(max_length = 40)
     mobile = models.CharField(max_length = 12)
     # picture_folder = models.ImageField(default = 'snapshop_default.png', blank =True)
-    user_folder = models.CharField(max_length = 400) #該user最外層的資料夾路徑  從 picture_folder 改名,與老師的命名統一
-    info_folder = models.CharField(max_length = 400)  # 資料夾路徑，存放個人檔案（暫不使用）
-    thumbnail_dir = models.CharField(max_length = 150)
+    user_folder = models.TextField(blank=True) #該user最外層的資料夾路徑  從 picture_folder 改名,與老師的命名統一
+    info_folder = models.TextField(blank=True)  # 資料夾路徑，存放個人檔案（暫不使用）
+    thumbnail_dir = models.TextField(blank=True)
     update_someone_by_email = models.CharField(max_length = 405, blank=True)
     date_join = models.DateTimeField(auto_now_add=True)
     # 為了使回傳platform名稱而不是object
@@ -57,11 +58,11 @@ class teacher_profile(models.Model):
     is_male = models.BooleanField()
     intro = models.CharField(max_length = 150)  # 簡短介紹，不要超過150個字元長
     mobile = models.CharField(max_length = 12)
-    thumbnail_dir = models.CharField(max_length = 150) # 老師頭像完整路徑 thumbnail_dir
-    user_folder = models.CharField(max_length = 400)  # 該user最外層的資料夾路徑
-    info_folder = models.CharField(max_length = 400)  # 資料夾路徑，存放個人檔案目前暫沒使用
+    thumbnail_dir = models.TextField(blank=True) # 老師頭像完整路徑 thumbnail_dir
+    user_folder = models.TextField(blank=True)  # 該user最外層的資料夾路徑
+    info_folder = models.TextField(blank=True)  # 資料夾路徑，存放個人檔案目前暫沒使用
     tutor_experience = models.CharField(max_length = 12)  # 改成下拉式選單 五種分類
-    subject_type = models.CharField(max_length = 400) # 科目名稱也可包含教課對象
+    subject_type = models.TextField(blank=True) # 科目名稱也可包含教課對象
     # id_cert = models.CharField(max_length = 150) 整合進下方的cert..裡面
     education_1 = models.CharField(max_length = 60, blank=True)
     education_2 = models.CharField(max_length = 60, blank=True)

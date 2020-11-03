@@ -32,6 +32,12 @@ def is_num(target):
     except:
         return False
 
+def clean_files(folder_path, key_words):
+    for each_file in os.listdir(folder_path):
+        if key_words in each_file:
+            os.unlink(os.path.join(folder_path, each_file))
+
+
 
 def date_string_2_dateformat(target_string):
     if not target_string == False:
@@ -88,7 +94,6 @@ def create_a_student_user(request):
             is_male = False
         else:
             is_male = True
-        
         if obj is None and auth_obj is None:
             
             ### 長出每個學生相對應資料夾 目前要長的有:放大頭照的資料夾
@@ -121,7 +126,7 @@ def create_a_student_user(request):
                 fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
                 file_exten = each_file.name.split('.')[-1]
                 fs.save('thumbnail'+'.'+ file_exten , each_file) # 檔名統一改成thumbnail開頭
-                thumbnail_dir = 'user_upload/students/' + username + '/' + 'thumbnail'+'.'+ file_exten
+                thumbnail_dir = '/user_upload/students/' + username + '/' + 'thumbnail'+'.'+ file_exten
             else:
                 thumbnail_dir = ''
             #存入auth
@@ -139,8 +144,6 @@ def create_a_student_user(request):
             # 用create()的寫法是為了知道這個user在auth裡面的id為何
             user_created_object.save()
             print('auth建立')
-
-
             print('建立新學生資料')
             student_profile.objects.create(
                 auth_id = user_created_object.id,
@@ -161,8 +164,6 @@ def create_a_student_user(request):
                 update_someone_by_email = update_someone_by_email
             ).save()
             print('student_profile建立')
-
-
             # 回前端
             response['status'] = 'success'
             response['errCode'] = None
@@ -176,7 +177,6 @@ def create_a_student_user(request):
             response['status'] = 'failed'
             response['errCode'] = '0'
             response['errMsg'] = 'username taken' # 使用者已註冊
-            
     else:
         # 資料傳輸有問題
         response['status'] = 'failed'
@@ -191,17 +191,14 @@ def return_student_profile_for_oneself_viewing(request):
     response = dict()
     student_auth_id = request.GET.get('userID', False)
     the_student_manager = student_manager()
-
     if student_auth_id == False:
         response['status'] = 'failed'
         response['errCode'] = '0'
         response['errMsg'] = 'Received Arguments Failed.'
         response['data'] = None
         return JsonResponse(response)
-    
     response['status'], response['errCode'], response['errMsg'], response['data'] = \
         the_student_manager.return_student_profile_for_oneself_viewing(student_auth_id)
-    
     return JsonResponse(response)
 
 
@@ -209,24 +206,30 @@ def return_student_profile_for_oneself_viewing(request):
 def edit_student_profile(request):
     response = dict()
     pass_data_to_model_tools = dict()
+
+    for key, value in request.POST.items():
+        pass_data_to_model_tools[key] = request.POST.get(key,False)
     # 要處理的資料
-    recevived_data_name = ['token','userID','mobile','nickname','update_someone_by_email',
-     'intro']
+    #recevived_data_name = ['token','userID','mobile','nickname','update_someone_by_email',
+    # 'intro']
     # 上傳檔案的種類:大頭照
-    userupload_file_kind = ["upload_snapshot"]
-    #for each_recevied_data_key, value in request.POST.items():
-    #    print(each_recevied_data_key, value)
+    userupload_file_kind = ['upload_snapshot']
+    for each_kind_of_upload_file in userupload_file_kind:
+        file_list = request.FILES.getlist(each_kind_of_upload_file)
+        #print('上傳種類')
+        #print(file_list)
+        if len(file_list) > 0 :
+            pass_data_to_model_tools[each_kind_of_upload_file] = request.FILES.getlist(each_kind_of_upload_file)
+            #print(each_kind_of_upload_file+'傳東西')
+        else:
+            pass_data_to_model_tools[each_kind_of_upload_file] = False
+            #print(each_kind_of_upload_file + '沒東西')
     the_student_manager = student_manager()
-    for data in recevived_data_name:
-        pass_data_to_model_tools[data] = request.POST.get(data,False)
-    
-    for each_file in userupload_file_kind:
-        if request.FILES.getlist(each_file):
-            pass_data_to_model_tools[each_file] = request.FILES.getlist(each_file)
-    print(pass_data_to_model_tools)
+
     response['status'], response['errCode'], response['errMsg'], response['data'] =\
     the_student_manager.update_student_profile(**pass_data_to_model_tools)
-            
+    print('passing data' + str(pass_data_to_model_tools))
+    print(response)
     return JsonResponse(response)
 
 ##### 老師區 #####
@@ -237,16 +240,25 @@ def edit_teacher_profile(request):
     pass_data_to_model_tools = dict()
     for key, value in request.POST.items():
         pass_data_to_model_tools[key] = request.POST.get(key,False)
-        print(key, value)
+        print('this is a pair of key, value:' + key + value)
     the_teacher_manager = teacher_manager()
     #for data in recevived_data_name:
     #    pass_data_to_model_tools[data] = request.POST.get(data,False)
     print(pass_data_to_model_tools)
     # 上傳檔案的種類:大頭照、證書
     userupload_file_kind = ["upload_snapshot", "upload_cer"]
-    for each_file in userupload_file_kind:
-        if request.FILES.getlist(each_file):
-            pass_data_to_model_tools[each_file] = request.FILES.getlist(each_file)
+    #each_file = request.FILES.get("upload_snapshot")
+    #    if each_file :
+    for each_kind_of_upload_file in userupload_file_kind:
+        file_list = request.FILES.getlist(each_kind_of_upload_file)
+        #print('上傳種類')
+        #print(file_list)
+        if len(file_list) > 0 :
+            pass_data_to_model_tools[each_kind_of_upload_file] = request.FILES.getlist(each_kind_of_upload_file)
+            #print(each_kind_of_upload_file+'傳東西')
+        else:
+            pass_data_to_model_tools[each_kind_of_upload_file] = False
+            #print(each_kind_of_upload_file + '沒東西')
 
     response['status'], response['errCode'], response['errMsg'], response['data'] =\
     the_teacher_manager.update_teacher_profile(**pass_data_to_model_tools)
@@ -354,7 +366,7 @@ def create_a_teacher_user(request):
                     fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
                     file_exten = each_file.name.split('.')[-1]
                     fs.save('thumbnail'+'.'+ file_exten , each_file) # 檔名統一改成thumbnail開頭
-                    thumbnail_dir = 'user_upload/teachers/' + user_folder + '/' + 'thumbnail'+'.'+ file_exten 
+                    thumbnail_dir = '/user_upload/teachers/' + user_folder + '/' + 'thumbnail'+'.'+ file_exten 
 
     
             else:
