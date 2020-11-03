@@ -203,8 +203,10 @@ class teacher_manager:
             return (self.status, self.errCode, self.errMsg, self.data)
     
     # 老師編輯個人資訊
-    def update_teacher_profile(self, **kwargs):
+    def edit_teacher_profile_tool(self, **kwargs):
+
         teacher_profile_all_colname = [a.name for a in teacher_profile._meta.get_fields()] 
+        
         # 以下幾個不要直接改資料庫內容
         exclude_data_name = ['token','userID',"upload_snapshot", "upload_cer"]
         #for a in kwargs.items():
@@ -215,38 +217,34 @@ class teacher_manager:
             return (self.status, self.errCode, self.errMsg, self.data)
         else:
             try:
-                
                 teacher = teacher_profile_object.first()
-                #前端給的資料與table:teacher_profile colname 交集
-                #以及與table teacher_general_availabale_time 交集
-                general_time = kwargs['teacher_general_available_time']
-                temp_general_time = general_time.split(';')
-                for lenth_of_time in temp_general_time:
-                    week = temp_general_time.split(':')[0]
-                    time = temp_general_time.split(':')[1]
-                print('一般時間'+ (kwargs['teacher_general_available_time']))
-                # 時間
-                general_available_time_list = list()
+                #temp_recevied_time_dict = dict()
+                received_general_time = kwargs['teacher_general_availabale_time']
+                print(received_general_time)
+                temp_received_general_time_list = received_general_time.split(';')[0:-1] # ['1:22','3:1,33';] split 之後最後一個會是空的所以去掉
+                print(temp_received_general_time_list)
                 general_time_queryset = teacher_profile_object.first().general_time.values()
-                if len(general_time_queryset) > 0: # 表示老師之前有存時間
-                    for each_record in general_time_queryset:
-                        week = each_record['week']
-                        time = each_record['time']
-                        general_available_time_list.append(week+ ':' + time)
-                    general_available_time_list = ';'.join(general_available_time_list)
-                    _data['general_available_time'] = general_available_time_list
-
+                print(general_time_queryset)
+                for received_week_and_time in temp_received_general_time_list : 
+                    #for data_in_db in general_time_queryset :
+                    queryset_week_match = general_time_queryset.filter(week = received_week_and_time.split(':')[0])    
+                    # 這個時段已存在於db,則覆蓋
+                    if len(queryset_week_match) > 0 : 
+                        queryset_week_match.first()['time'] = received_week_and_time.split(':')[1]
+                        print('覆蓋原本時段')
+                    else:
+                        general_available_time.objects.create(
+                            week = received_week_and_time.split(':')[0],
+                            time = received_week_and_time.split(':')[1],
+                            teacher_model = teacher
+                        ).save()
+                        print('新增時段')
 
                 intersection_data = [kwargs.keys() & teacher_profile_all_colname]
                 print(intersection_data)
-
-
                 for colname in intersection_data[0]:
                     if colname not in exclude_data_name:
                         setattr(teacher, colname, kwargs[colname])
-
-
-
                 teacher.save()
 
                 if kwargs['upload_snapshot'] is not False :
@@ -267,6 +265,8 @@ class teacher_manager:
                     teacher_profile_object.update(thumbnail_dir = thumbnail_dir)
                 
                  # 未認證證書
+                else:
+                    print('沒收到更新大頭貼')
                 if kwargs['upload_cer'] is not False :
                     upload_cer_list = kwargs["upload_cer"]
                     username = teacher.username

@@ -240,10 +240,8 @@ def edit_teacher_profile(request):
     pass_data_to_model_tools = dict()
     for key, value in request.POST.items():
         pass_data_to_model_tools[key] = request.POST.get(key,False)
-        print('this is a pair of key, value:' + key + value)
+        #print('this is a pair of key, value:' + key + value)
     the_teacher_manager = teacher_manager()
-    #for data in recevived_data_name:
-    #    pass_data_to_model_tools[data] = request.POST.get(data,False)
     print(pass_data_to_model_tools)
     # 上傳檔案的種類:大頭照、證書
     userupload_file_kind = ["upload_snapshot", "upload_cer"]
@@ -261,7 +259,7 @@ def edit_teacher_profile(request):
             #print(each_kind_of_upload_file + '沒東西')
 
     response['status'], response['errCode'], response['errMsg'], response['data'] =\
-    the_teacher_manager.update_teacher_profile(**pass_data_to_model_tools)
+    the_teacher_manager.edit_teacher_profile_tool(**pass_data_to_model_tools)
  
     return JsonResponse(response)
 
