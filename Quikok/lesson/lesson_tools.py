@@ -41,11 +41,19 @@ class lesson_manager:
         self.errCode = None
         self.errMsg = None
         self.data = dict()
+        # 以下是指篩選條件共有哪一些種類
         self.filtered_subjects = self.get_filtered_subjects()
         self.filtered_target_students = self.get_filtered_target_students()
         self.filtered_times = self.get_filtered_times()
         self.filtered_time_index = self.get_filtered_time_mapping_index()
         self.filtered_tutoring_experience = self.get_filtered_tutoring_experience()
+        # current打頭的是指目前的篩選條件
+        self.current_filtered_subjects = None
+        self.current_filtered_target_students = None
+        self.current_filtered_times = None
+        self.current_filtered_tutoring_experience = None
+        self.current_filtered_price_per_hour = None
+
     def get_filtered_subjects(self):
         return {
             0: '英文',
@@ -89,6 +97,51 @@ class lesson_manager:
             3: '5-10年',
             4: '10年以上',
         }
+
+    def parse_filtered_conditions(self, filtered_by_in_string):
+        # API: filtered_by >>  
+        #   filtered_subjects:0,2,3;filtered_target_students:0,1,2;filtered_tutoring_experience:0,2;'filtered_price_per_hour:200,400 
+        #  若沒有該篩選條件則不show出來，filtered_price_per_hour的部份先低後高，若只有一邊的話會以,high或是low,的形式做呈現。
+        if len(filtered_by_in_string) == 0:
+            # 沒有任何篩選條件
+            pass
+        else:
+            for each_filtering in filtered_by_in_string.split(';'):
+                if 'filtered_subjects' in each_filtering:
+                    keys_in_list = each_filtering.split(':')[-1].split(',')
+                    self.current_filtered_subjects = list()
+                    for each_key_in_list in keys_in_list:
+                        self.current_filtered_subjects.append(
+                            self.filtered_subjects[int(each_key_in_list)]
+                        )
+                elif 'filtered_target_students' in each_filtering:
+                    keys_in_list = each_filtering.split(':')[-1].split(',')
+                    self.current_filtered_target_students = list()
+                    for each_key_in_list in keys_in_list:
+                        self.current_filtered_target_students.append(
+                            self.filtered_target_students[int(each_key_in_list)]
+                        )
+                elif 'filtered_times' in each_filtering:
+                    keys_in_list = each_filtering.split(':')[-1].split(',')
+                    self.current_filtered_times = list()
+                    for each_key_in_list in keys_in_list:
+                        self.current_filtered_times.append(
+                            self.filtered_times[int(each_key_in_list)]
+                        )
+                elif 'filtered_tutoring_experience' in each_filtering:
+                    keys_in_list = each_filtering.split(':')[-1].split(',')
+                    self.current_filtered_tutoring_experience = list()
+                    for each_key_in_list in keys_in_list:
+                        self.current_filtered_tutoring_experience.append(
+                            self.filtered_tutoring_experience[int(each_key_in_list)]
+                        )
+                elif 'filtered_price_per_hour' in each_filtering:
+                    keys_in_list = each_filtering.split(':')[-1].split(',')
+                    min_func = lambda x: 0 if x == '' else int(x)
+                    max_func = lambda x: 99999 if x == '' else int(x)
+                    self.current_filtered_price_per_hour = \
+                        (min_func(keys_in_list[0]), max_func(keys_in_list[1]))
+               
     def return_lesson_details(self, lesson_id, user_auth_id, for_whom='common_users'):
         # for_whom接收的參數有兩個，'common_users' 以及 'teacher_who_created_it'
         if for_whom == 'common_users':

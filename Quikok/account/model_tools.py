@@ -5,6 +5,7 @@ from itertools import product as pdt
 import pandas as pd
 import os, re
 from django.core.files.storage import FileSystemStorage
+from lesson.lesson_tools import *
 
 def clean_files(folder_path, key_words):
     for each_file in os.listdir(folder_path):
@@ -215,7 +216,7 @@ class teacher_manager:
             return (self.status, self.errCode, self.errMsg, self.data)
         else:
             try:
-                
+                the_lesson_card_manager = lesson_card_manager()
                 teacher = teacher_profile_object.first()
                 #前端給的資料與table:teacher_profile colname 交集
                 #以及與table teacher_general_availabale_time 交集
@@ -235,20 +236,12 @@ class teacher_manager:
                         general_available_time_list.append(week+ ':' + time)
                     general_available_time_list = ';'.join(general_available_time_list)
                     _data['general_available_time'] = general_available_time_list
-
-
                 intersection_data = [kwargs.keys() & teacher_profile_all_colname]
                 print(intersection_data)
-
-
                 for colname in intersection_data[0]:
                     if colname not in exclude_data_name:
                         setattr(teacher, colname, kwargs[colname])
-
-
-
                 teacher.save()
-
                 if kwargs['upload_snapshot'] is not False :
                     snapshot = kwargs['upload_snapshot']
                     username = teacher.username
@@ -257,15 +250,13 @@ class teacher_manager:
                     for file_name in file_list:
                         if re.findall('thumbnail.*', file_name):
                             os.unlink('user_upload/teachers/' + username +'/'+ file_name)
-
                     print('老師更新大頭照: ', snapshot[0].name)
                     folder_where_are_uploaded_files_be ='user_upload/teachers/' + username
                     fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
                     file_exten = snapshot[0].name.split('.')[-1]
                     fs.save('thumbnail'+'.'+ file_exten , snapshot[0]) # 檔名統一改成thumbnail開頭
                     thumbnail_dir = '/user_upload/teachers/' + username + '/' + 'thumbnail'+'.'+ file_exten
-                    teacher_profile_object.update(thumbnail_dir = thumbnail_dir)
-                
+                    teacher_profile_object.update(thumbnail_dir = thumbnail_dir)  
                  # 未認證證書
                 if kwargs['upload_cer'] is not False :
                     upload_cer_list = kwargs["upload_cer"]
@@ -275,8 +266,18 @@ class teacher_manager:
                         print('收到老師認證資料: ', each_file.name)
                         folder_where_are_uploaded_files_be ='user_upload/teachers/' + username + '/unaproved_cer'
                         fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
-                        fs.save(each_file.name, each_file)    
-    
+                        fs.save(each_file.name, each_file)  
+
+                lesson_card_objects = the_lesson_card_manager.filter(teacher_auth_id=auth_id)
+                for each_lesson_card_object in lesson_card_objects:
+                    setattr(each_lesson_card_object, 'teacher_nickname', teacher.nickname)
+                    setattr(each_lesson_card_object, 'teacher_thumbnail_path', teacher.thumbnail_dir)
+                    setattr(each_lesson_card_object, 'teacher_nickname', teacher.nickname)
+                    setattr(each_lesson_card_object, 'education', teacher.education_1)
+                    setattr(each_lesson_card_object, 'education_is_approved', teacher.education_approved)
+                    setattr(each_lesson_card_object, 'working_experience', teacher.company)
+                    setattr(each_lesson_card_object, 'working_experience_is_approved', teacher.work_approved)
+                print("課程小卡更新成功")
                 self.status = 'success'
                 return (self.status, self.errCode, self.errMsg, self.data)
             except Exception as e:

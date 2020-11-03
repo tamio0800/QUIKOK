@@ -229,7 +229,6 @@ def get_all_filtered_keys_and_values(request):
     response = dict()
     data = dict()
     the_lesson_manager = lesson_manager()
-
     filtered_subjects = the_lesson_manager.filtered_subjects
     filtered_target_students = the_lesson_manager.filtered_target_students
     filtered_times = the_lesson_manager.filtered_times
@@ -246,7 +245,6 @@ def get_all_filtered_keys_and_values(request):
         #   {text:國文, value:0, select:False},
         #   {text:英文, value:1, select:False},
         # ...]
-        
         _data_dict_content = list()
         for key, value in each_filtering.items():
             _data_dict_content.append(
