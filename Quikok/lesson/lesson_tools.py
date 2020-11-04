@@ -302,8 +302,16 @@ class lesson_manager:
                 if not os.path.isdir(lessons_folder_path):
                     os.mkdir(lessons_folder_path)
                 # 判斷老師是否有上傳圖片
-                has_teacher_uploaded_lesson_background_picture = \
-                    int(_temp_lesson_info['background_picture_code']) == 99 and len(temp_lesson_info['background_picture_path']) > 0
+                try:
+                    # 為了要知道user有沒有上傳新的圖片
+                    # 當有上傳圖片時，a_request_object.FILES["background_picture_path"]不會是None，
+                    # 但沒上傳圖片時，不會有"background_picture_path"這個參數存在於FILES中，
+                    # 所以會發生錯誤，這時候我們就知道user沒有上傳圖片了。
+                    if int(_temp_lesson_info['background_picture_code']) == 99 and \
+                        a_request_object.FILES["background_picture_path"] is not None:
+                        has_teacher_uploaded_lesson_background_picture = True
+                except:
+                    has_teacher_uploaded_lesson_background_picture = False
                 if has_teacher_uploaded_lesson_background_picture:
                     # 有上傳圖片
                     uploaded_background_picture = a_request_object.FILES["background_picture_path"]
