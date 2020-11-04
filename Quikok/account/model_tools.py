@@ -301,6 +301,7 @@ class teacher_manager:
                 self.errMsg = 'Querying Data Failed.'
                 return (self.status, self.errCode, self.errMsg, self.data)
 
+
 class auth_manager:
     def check_if_user_exist(self, auth_id):
         user_object = User.objects.filter(auth_id= auth_id)
@@ -314,7 +315,6 @@ class auth_manager:
         pass
     def member_forgot_password(self, auth_id):
         pass
-
 
 
 class user_db_manager:

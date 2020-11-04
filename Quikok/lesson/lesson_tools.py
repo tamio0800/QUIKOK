@@ -303,7 +303,7 @@ class lesson_manager:
                     os.mkdir(lessons_folder_path)
                 # 判斷老師是否有上傳圖片
                 has_teacher_uploaded_lesson_background_picture = \
-                    int(_temp_lesson_info['background_picture_code']) == 99
+                    int(_temp_lesson_info['background_picture_code']) == 99 and len(temp_lesson_info['background_picture_path']) > 0
                 if has_teacher_uploaded_lesson_background_picture:
                     # 有上傳圖片
                     uploaded_background_picture = a_request_object.FILES["background_picture_path"]

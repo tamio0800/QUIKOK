@@ -81,8 +81,10 @@ def get_lesson_cards_for_common_users(request):
                 #   [1, 2, 3, 4, 5],
                 #   [10, 22, 35, 44], ...
                 # ]
-                print(the_lesson_manager.current_filtered_times)
+                # 先看哪一些老師符合裡面的時段，然後列出這些老師所有的課程id即可
+                
                 pass
+
 
             if the_lesson_manager.current_filtered_price_per_hour is not None:
                 lesson_info_selling_objects = lesson_info_selling_objects.filter(price_per_hour__gt=the_lesson_manager.current_filtered_price_per_hour[0]-1).filter(price_per_hour__lt=the_lesson_manager.current_filtered_price_per_hour[1]+1)
