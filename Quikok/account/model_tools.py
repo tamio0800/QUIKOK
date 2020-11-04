@@ -5,7 +5,7 @@ from itertools import product as pdt
 import pandas as pd
 import os, re
 from django.core.files.storage import FileSystemStorage
-from lesson.lesson_tools import *
+from lesson.models import lesson_card
 
 def clean_files(folder_path, key_words):
     for each_file in os.listdir(folder_path):
@@ -259,9 +259,9 @@ class teacher_manager:
                     print('老師更新大頭照: ', snapshot[0].name)
                     folder_where_are_uploaded_files_be ='user_upload/teachers/' + username
                     fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
-                    file_exten = snapshot[0].name.split('.')[-1]
-                    fs.save('thumbnail'+'.'+ file_exten , snapshot[0]) # 檔名統一改成thumbnail開頭
-                    thumbnail_dir = '/user_upload/teachers/' + username + '/' + 'thumbnail'+'.'+ file_exten
+                    file_extentsion = snapshot[0].name.split('.')[-1]
+                    fs.save('thumbnail'+'.'+ file_extentsion , snapshot[0]) # 檔名統一改成thumbnail開頭
+                    thumbnail_dir = '/user_upload/teachers/' + username + '/' + 'thumbnail'+'.'+ file_extentsion
                     teacher_profile_object.update(thumbnail_dir = thumbnail_dir)
                     self.data['upload_snapshot'] = thumbnail_dir
 
@@ -271,14 +271,15 @@ class teacher_manager:
                 if kwargs['upload_cer'] is not False :
                     upload_cer_list = kwargs["upload_cer"]
                     username = teacher.username
-                    
                     for each_file in upload_cer_list:
                         print('收到老師認證資料: ', each_file.name)
                         folder_where_are_uploaded_files_be ='user_upload/teachers/' + username + '/unaproved_cer'
                         fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
                         fs.save(each_file.name, each_file)  
 
-                lesson_card_objects = the_lesson_card_manager.filter(teacher_auth_id=auth_id)
+                lesson_card_objects = lesson_card.objects.filter(teacher_auth_id=auth_id)
+                print('current teacher nickname:', teacher.nickname)
+                print('current teacher thumbnail_dir:', teacher.thumbnail_dir)
                 for each_lesson_card_object in lesson_card_objects:
                     setattr(each_lesson_card_object, 'teacher_nickname', teacher.nickname)
                     setattr(each_lesson_card_object, 'teacher_thumbnail_path', teacher.thumbnail_dir)
@@ -287,6 +288,8 @@ class teacher_manager:
                     setattr(each_lesson_card_object, 'education_is_approved', teacher.education_approved)
                     setattr(each_lesson_card_object, 'working_experience', teacher.company)
                     setattr(each_lesson_card_object, 'working_experience_is_approved', teacher.work_approved)
+                    each_lesson_card_object.save()
+                 
                 print("課程小卡更新成功")
                 self.status = 'success'
                 return (self.status, self.errCode, self.errMsg, self.data)
