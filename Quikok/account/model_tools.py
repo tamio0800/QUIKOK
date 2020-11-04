@@ -290,8 +290,7 @@ class teacher_manager:
                     setattr(each_lesson_card_object, 'education_is_approved', teacher.education_approved)
                     setattr(each_lesson_card_object, 'working_experience', teacher.company)
                     setattr(each_lesson_card_object, 'working_experience_is_approved', teacher.work_approved)
-                    each_lesson_card_object.save()
-                 
+                    each_lesson_card_object.save() 
                 print("課程小卡更新成功")
                 self.status = 'success'
                 return (self.status, self.errCode, self.errMsg, self.data)

@@ -75,6 +75,15 @@ def get_lesson_cards_for_common_users(request):
         if_there_was_any_filtering = the_lesson_manager.parse_filtered_conditions(filtered_by)
         if if_there_was_any_filtering:
             # 代表user有輸入篩選資訊
+            if the_lesson_manager.current_filtered_times is not None:
+                # current_filtered_times >>
+                # [
+                #   [1, 2, 3, 4, 5],
+                #   [10, 22, 35, 44], ...
+                # ]
+                print(the_lesson_manager.current_filtered_times)
+                pass
+
             if the_lesson_manager.current_filtered_price_per_hour is not None:
                 lesson_info_selling_objects = lesson_info_selling_objects.filter(price_per_hour__gt=the_lesson_manager.current_filtered_price_per_hour[0]-1).filter(price_per_hour__lt=the_lesson_manager.current_filtered_price_per_hour[1]+1)
                 # 限制鐘點費需要介於(含)最高與最低之間
@@ -100,14 +109,7 @@ def get_lesson_cards_for_common_users(request):
                         query.add(Q(tutor_experience=each_tutoring_experience), Q.OR)
                 matched_teacher_ids = teacher_profile.objects.filter(query).values_list('id', flat=True)
                 lesson_info_selling_objects = lesson_info_selling_objects.filter(teacher_id__in = matched_teacher_ids)
-            if the_lesson_manager.current_filtered_times is not None:
-                # current_filtered_times >>
-                # [
-                #   [1, 2, 3, 4, 5],
-                #   [10, 22, 35, 44], ...
-                # ]
-                print(the_lesson_manager.current_filtered_times)
-                pass
+                
         selling_lessons_ids = lesson_info_selling_objects.values_list('id', flat=True)
 
         user_s_all_favorite_lessons_ids = \
@@ -127,12 +129,6 @@ def get_lesson_cards_for_common_users(request):
                     _data.append(lesson_attributes)
             else:
                 # show出所有上架中的課程小卡
-                # 理論上，只有這一區會有搜尋或是篩選的需求
-                
-
-
-
-
                 lesson_card_objects_values_set = lesson_card.objects.filter(corresponding_lesson_id__in = selling_lessons_ids)[:qty].values()
                 for each_lesson_card_object_values in lesson_card_objects_values_set:
                     lesson_attributes = each_lesson_card_object_values
