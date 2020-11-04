@@ -220,7 +220,7 @@ class teacher_manager:
             try:
                 self.data = dict()
                 teacher = teacher_profile_object.first()
-                #temp_recevied_time_dict = dict()
+                # 修改上課時間
                 received_general_time = kwargs['teacher_general_availabale_time']
                 print(received_general_time)
                 temp_received_general_time_list = received_general_time.split(';')[0:-1] # ['1:22','3:1,33';] split 之後最後一個會是空的所以去掉
@@ -280,6 +280,8 @@ class teacher_manager:
                 lesson_card_objects = lesson_card.objects.filter(teacher_auth_id=auth_id)
                 print('current teacher nickname:', teacher.nickname)
                 print('current teacher thumbnail_dir:', teacher.thumbnail_dir)
+                teacher = teacher_profile.objects.filter(auth_id=auth_id).first()
+                print('teacher2 thumbnail_dir:',teacher.thumbnail_dir)
                 for each_lesson_card_object in lesson_card_objects:
                     setattr(each_lesson_card_object, 'teacher_nickname', teacher.nickname)
                     setattr(each_lesson_card_object, 'teacher_thumbnail_path', teacher.thumbnail_dir)
@@ -311,7 +313,8 @@ class auth_manager:
             return(user_object)
     def token_maker(self, auth_id):
         pass
-    def member_forgot_password
+    def member_forgot_password(self, auth_id):
+        pass
 
 
 
