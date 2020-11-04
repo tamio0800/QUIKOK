@@ -239,7 +239,7 @@ def edit_teacher_profile(request):
     pass_data_to_model_tools = dict()
     for key, value in request.POST.items():
         pass_data_to_model_tools[key] = request.POST.get(key,False)
-        #print('this is a pair of key, value:' + key + value)
+        print('this is a pair of key, value:' + key + value)
     the_teacher_manager = teacher_manager()
     print(pass_data_to_model_tools)
     # 上傳檔案的種類:大頭照、證書
@@ -248,8 +248,6 @@ def edit_teacher_profile(request):
     #    if each_file :
     for each_kind_of_upload_file in userupload_file_kind:
         file_list = request.FILES.getlist(each_kind_of_upload_file)
-        #print('上傳種類')
-        #print(file_list)
         if len(file_list) > 0 :
             pass_data_to_model_tools[each_kind_of_upload_file] = request.FILES.getlist(each_kind_of_upload_file)
             #print(each_kind_of_upload_file+'傳東西')
@@ -261,8 +259,6 @@ def edit_teacher_profile(request):
     the_teacher_manager.edit_teacher_profile_tool(**pass_data_to_model_tools)
  
     return JsonResponse(response)
-
-
 
 @require_http_methods(['POST'])
 def create_a_teacher_user(request):    
@@ -596,7 +592,7 @@ def signin(request):
     return JsonResponse(response)    
 
 
-# 頁面權限檢查 目前身分有:老師/學生/訪客
+# 頁面權限檢查 目前身分有:老師/學生/訪客/會員(老師+學生)
 #@require_http_methods(['POST'])
 def auth_check(request):
     response = {}
@@ -673,8 +669,22 @@ def auth_check(request):
 
         
 
+def member_forgot_password(request):
+    #pass_data_to_model_tools = dict()
+    #for key, value in request.POST.items():
+    #    if
+    #    pass_data_to_model_tools[key] = request.POST.get(key,False)
+    #    if value is False:
 
-
+    response = dict()
+    response['status'] = 'success'
+    response['errCode'] = None
+    response['errMsg'] = None
+    response['data'] = {
+        'userID' : userID,
+        'token' : token
+    }
+    return JsonResponse(response)
 
 
 
