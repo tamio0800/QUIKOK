@@ -310,6 +310,8 @@ class lesson_manager:
                     if int(_temp_lesson_info['background_picture_code']) == 99 and \
                         a_request_object.FILES["background_picture_path"] is not None:
                         has_teacher_uploaded_lesson_background_picture = True
+                    else:
+                        has_teacher_uploaded_lesson_background_picture = False
                 except:
                     has_teacher_uploaded_lesson_background_picture = False
                 if has_teacher_uploaded_lesson_background_picture:
