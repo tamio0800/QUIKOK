@@ -82,6 +82,9 @@ def get_lesson_cards_for_common_users(request):
                 #   [10, 22, 35, 44], ...
                 # ]
                 # 先看哪一些老師符合裡面的時段，然後列出這些老師所有的課程id即可
+                #   step1: 先列出每一個老師的總和unique_time
+                the_general_available_time = general_available_time()
+                
                 
                 pass
 

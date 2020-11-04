@@ -5,9 +5,11 @@ from itertools import product as pdt
 import pandas as pd
 import os, re
 from django.core.files.storage import FileSystemStorage
-from lesson.models import lesson_card
 from django.contrib.auth.hashers import make_password
 from datetime import datetime, timedelta
+
+from lesson.models import lesson_card, lesson_info
+
 
 def clean_files(folder_path, key_words):
     for each_file in os.listdir(folder_path):
@@ -108,6 +110,7 @@ class teacher_manager:
         self.errCode = None
         self.errMsg = None
         self.data = None
+
     def check_if_teacher_exist(self, auth_id):
         teacher_profile_object = teacher_profile.objects.filter(auth_id=auth_id)
         if teacher_profile_object.first() is None:
@@ -116,6 +119,35 @@ class teacher_manager:
             self.errMsg = 'Found No teacher.'
         else:
             return(teacher_profile_object)
+
+    def get_teacher_ids_who_have_lessons_on_sale(self):
+        live_lesson_objects = lesson_info.objects.filter(selling_status='selling')
+        return sorted(list(set(
+            live_lesson_objects.values_list('teacher__auth_id', flat=True)
+        )))
+
+    def get_teacher_s_available_time(self, teacher_auth_ids):
+        # 將老師們的空閒時間以下列方式呈現
+        # {auth_id1: [time_list1],
+        #   auth_id2: [time_list2]...}
+        result = dict()
+        try:
+            len(teacher_auth_ids)
+        except:
+            teacher_auth_ids = [teacher_auth_ids,]
+        for each_auth_id in teacher_auth_ids:
+            time_query_set = \
+                general_available_time.objects.filter(
+                    teacher_model__auth_id=each_auth_id
+                ).values_list('time', flat=True)
+            sub_results = list()
+            for each_element_set in time_query_set:
+                for each_element in eval(each_element_set):
+                    sub_results.append(each_element)
+            sub_results = list(set(sub_results))
+            result[each_auth_id] = sub_results
+        return result
+
     #  老師個人資訊編輯頁(自己看自己)
     #  特定時間第一版先不做 10/27
     def return_teacher_profile_for_oneself_viewing(self, teacher_auth_id):
