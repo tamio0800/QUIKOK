@@ -5,7 +5,11 @@ from itertools import product as pdt
 import pandas as pd
 import os, re
 from django.core.files.storage import FileSystemStorage
+from django.contrib.auth.hashers import make_password
+from datetime import datetime, timedelta
+
 from lesson.models import lesson_card, lesson_info
+
 
 def clean_files(folder_path, key_words):
     for each_file in os.listdir(folder_path):
@@ -255,14 +259,19 @@ class teacher_manager:
                 print(received_general_time)
                 temp_received_general_time_list = received_general_time.split(';')[0:-1] # ['1:22','3:1,33';] split 之後最後一個會是空的所以去掉
                 print(temp_received_general_time_list)
+                # 尋找老師一般時間的資料
                 general_time_queryset = teacher_profile_object.first().general_time.values()
                 print(general_time_queryset)
                 for received_week_and_time in temp_received_general_time_list : 
-                    #for data_in_db in general_time_queryset :
+                    # 用week來比對是否老師有這個時段的資料
                     queryset_week_match = general_time_queryset.filter(week = received_week_and_time.split(':')[0])    
-                    # 這個時段已存在於db,則覆蓋
+                    # 有,則這個時段已存在於db,則覆蓋
                     if len(queryset_week_match) > 0 : 
-                        queryset_week_match.first()['time'] = received_week_and_time.split(':')[1]
+                        #week = received_week_and_time.split(':')[0] 
+                        #time = received_week_and_time.split(':')[1]
+                        #the_teacher_time_queryset = general_available_time.objects.filter(teacher_model= teacher.id).filter(week = week)
+                        #the_teacher_time_queryset.update(time = time)
+                        queryset_week_match.update(time = received_week_and_time.split(':')[1])
                         print('覆蓋原本時段')
                     else:
                         general_available_time.objects.create(
@@ -272,7 +281,7 @@ class teacher_manager:
                         ).save()
                         print('新增時段')
 
-                intersection_data = [kwargs.keys() & teacher_profile_all_colname]
+                intersection_data = [kwargs.keys() & teacher_profile_all_colname] # is a dictionary
                 print(intersection_data)
                 for colname in intersection_data[0]:
                     if colname not in exclude_data_name:
@@ -333,6 +342,12 @@ class teacher_manager:
 
 
 class auth_manager:
+    def __init__(self):
+        self.status = None
+        self.errCode = None
+        self.errMsg = None
+        self.data = None
+
     def check_if_user_exist(self, auth_id):
         user_object = User.objects.filter(auth_id= auth_id)
         if user_object.first() is None:
@@ -341,10 +356,35 @@ class auth_manager:
             self.errMsg = 'Found No UserID.'
         else:
             return(user_object)
-    def token_maker(self, auth_id):
-        pass
-    def member_forgot_password(self, auth_id):
-        pass
+
+    def token_maker(self):
+        time = datetime.now()
+        after_14days = time + timedelta(days = 14)
+        token = make_password(str(after_14days))
+        return(token)
+
+    def member_forgot_password(self, **kwargs):
+        try:
+            temporary_token = self.token_maker()
+            user_record = User.objects.filter(username = kwargs['username']).first()
+            # 假設有找到這個人, 接著要找他是老師還是學生並且拿他的生日以及手機來做確認
+            #
+            if len(user_record) > 0:
+                pass
+
+            self.status = 'success'
+            self.data = dict()
+            self.data['token'] = temporary_token
+            self.data['userID'] = auth_id
+
+            return (self.status, self.errCode, self.errMsg, self.data)
+        except Exception as e:
+            print(e)
+            self.status = 'failed'
+            self.errCode = '2'
+            self.errMsg = 'Querying Data Failed.'
+            return (self.status, self.errCode, self.errMsg, self.data)
+
 
 
 class user_db_manager:
