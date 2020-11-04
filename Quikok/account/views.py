@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import auth
 from django.contrib.auth.hashers import make_password, check_password  # 這一行用來加密密碼的
-from .model_tools import user_db_manager, teacher_manager, student_manager
+from .model_tools import user_db_manager, teacher_manager, student_manager, auth_manager
 from django.contrib.auth.models import User
 from account.models import user_token, student_profile, teacher_profile, specific_available_time, general_available_time
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
@@ -670,20 +670,18 @@ def auth_check(request):
         
 
 def member_forgot_password(request):
-    #pass_data_to_model_tools = dict()
-    #for key, value in request.POST.items():
-    #    if
-    #    pass_data_to_model_tools[key] = request.POST.get(key,False)
-    #    if value is False:
-
+    user_data_type_frontend = ['userName', 'userBirth', 'userMobile']
+    pass_data_to_model_tools = dict()
     response = dict()
-    response['status'] = 'success'
-    response['errCode'] = None
-    response['errMsg'] = None
-    response['data'] = {
-        'userID' : userID,
-        'token' : token
-    }
+    for data_type in user_data_type_frontend: 
+        pass_data_to_model_tools[data_type] = request.POST.get(data_type,False)
+    
+    the_auth_manager = auth_manager()
+    
+    response['status'], response['errCode'], response['errMsg'], response['data'] = \
+    the_auth_manager.member_forgot_password(**pass_data_to_model_tools)
+
+
     return JsonResponse(response)
 
 
