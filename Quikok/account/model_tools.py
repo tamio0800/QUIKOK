@@ -257,7 +257,9 @@ class teacher_manager:
                 # 修改上課時間
                 received_general_time = kwargs['teacher_general_availabale_time']
                 print(received_general_time)
-                temp_received_general_time_list = received_general_time.split(';')[0:-1] # ['1:22','3:1,33';] split 之後最後一個會是空的所以去掉
+                temp_received_general_time_list = received_general_time.split(';')[0:-1] 
+                # ['1:22','3:1,33';] split 之後最後一個會是空的所以去掉
+                # 例外情況:傳來整串空的時候
                 print(temp_received_general_time_list)
                 # 尋找老師一般時間的資料
                 general_time_queryset = teacher_profile_object.first().general_time.values()
@@ -348,42 +350,85 @@ class auth_manager:
         self.errMsg = None
         self.data = None
 
-    def check_if_user_exist(self, auth_id):
-        user_object = User.objects.filter(auth_id= auth_id)
-        if user_object.first() is None:
-            self.status = 'failed'
-            self.errCode = '1'
-            self.errMsg = 'Found No UserID.'
-        else:
-            return(user_object)
-
     def token_maker(self):
         time = datetime.now()
         after_14days = time + timedelta(days = 14)
         token = make_password(str(after_14days))
         return(token)
 
+# 忘記密碼 身分驗證
     def member_forgot_password(self, **kwargs):
+        print('hi')
         try:
-            temporary_token = self.token_maker()
-            user_record = User.objects.filter(username = kwargs['username']).first()
+            user_record = User.objects.filter(username = kwargs['username'])
             # 假設有找到這個人, 接著要找他是老師還是學生並且拿他的生日以及手機來做確認
-            #
             if len(user_record) > 0:
-                pass
+                the_user_record = user_record.first()
+                # 產生暫時性token供改密碼驗證
+                temporary_token = self.token_maker()
+                user_auth_id = the_user_record.id
+                find_teacher = teacher_profile.objects.filter(auth_id = user_auth_id)
+                birth_date_unchecked = kwargs['userBirth']
+                mobile_unchecked = kwargs['userMobile']
+                
+                if len(find_teacher) > 0:
+                    print('find ~~~!',find_teacher)
+                    birth_date_record = str(find_teacher.first().birth_date)
+                    mobile_record = find_teacher.first().mobile
+                    print(birth_date_record,mobile_record,birth_date_unchecked,mobile_unchecked)
+                    if birth_date_record == birth_date_unchecked:
+                        if mobile_record == mobile_unchecked:
+                            check_result = 1
+                        else:
+                            check_result = 2
+                    else:
+                        check_result = 2
+                else:
+                    print('user is student')
+                    user_is_student = student_profile.objects.filter(auth_id = user_auth_id).first()
+                    birth_date_record = str(user_is_student.birth_date)
+                    mobile_record = user_is_student.mobile
+                    print(birth_date_record,mobile_record,birth_date_unchecked,mobile_unchecked)
+                    if birth_date_record == birth_date_unchecked:
+                        if mobile_record == mobile_unchecked:
+                            check_result = 1
+                        else:
+                            print('a')
+                            check_result = 2
+                    else:
+                        print('b')
+                        check_result = 2
 
-            self.status = 'success'
-            self.data = dict()
-            self.data['token'] = temporary_token
-            self.data['userID'] = auth_id
+                if check_result == 1:
+                    self.status = 'success'
+                    self.data = dict()
+                    self.data['token'] = temporary_token                        
+                    self.data['userID'] = user_auth_id
+                elif check_result == 2:
+                    self.status = 'failed'
+                    self.errCode = '2'
+                    self.errMsg = 'Birth Date or Mobile Unmatch'
+                else:
+                    pass
+                
+            
+            else:
+                self.status = 'failed'
+                self.errCode = '1'
+                self.errMsg = 'Found No UserID'
 
-            return (self.status, self.errCode, self.errMsg, self.data)
+                #return (self.status, self.errCode, self.errMsg, self.data)
+        
         except Exception as e:
             print(e)
             self.status = 'failed'
-            self.errCode = '2'
+            self.errCode = '3'
             self.errMsg = 'Querying Data Failed.'
-            return (self.status, self.errCode, self.errMsg, self.data)
+            #return (self.status, self.errCode, self.errMsg, self.data)
+        #print(check_result, len(check_result),type(check_result))
+
+
+        return (self.status, self.errCode, self.errMsg, self.data)
 
 
 
