@@ -28,4 +28,5 @@ path('returnStudentProfileForOneselfViewing/', views.return_student_profile_for_
 path('editStudentProfile/', views.edit_student_profile),
 path('editTeacherProfile/', views.edit_teacher_profile),
 path('memberForgotPassword/', views.member_forgot_password),
+path('memberResetPassword/', views.member_reset_password),
 ]

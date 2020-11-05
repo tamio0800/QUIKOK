@@ -1,4 +1,4 @@
-from account.models import dev_db, student_profile, teacher_profile, general_available_time
+from account.models import dev_db, student_profile, teacher_profile, general_available_time, user_token
 from chatroom.models import chat_room
 from django.contrib.auth.models import User
 from itertools import product as pdt
@@ -349,42 +349,55 @@ class auth_manager:
         self.errCode = None
         self.errMsg = None
         self.data = None
-
+        self.after_14days =None
+        self.token = None
     def token_maker(self):
-        time = datetime.now()
-        after_14days = time + timedelta(days = 14)
-        token = make_password(str(after_14days))
-        return(token)
-
+        self.after_14days = datetime.now() + timedelta(days = 14)
+        self.token = make_password(str(self.after_14days))
+        #return(self.after_14days, self.token) # 這個有必要寫嗎?
 # 忘記密碼 身分驗證
     def member_forgot_password(self, **kwargs):
-        print('hi')
+        def response_to_frontend(check_result):
+            if check_result == 1:
+                self.status = 'success'
+                self.data = dict()
+                self.data['token'] = temporary_token                        
+                self.data['userID'] = user_auth_id
+            elif check_result == 2:
+                self.status = 'failed'
+                self.errCode = '2'
+                self.errMsg = 'Birth Date or Mobile Unmatch'
+            else:
+                pass
         try:
-            user_record = User.objects.filter(username = kwargs['username'])
+            user_record = User.objects.filter(username = kwargs['userName'])
             # 假設有找到這個人, 接著要找他是老師還是學生並且拿他的生日以及手機來做確認
             if len(user_record) > 0:
                 the_user_record = user_record.first()
                 # 產生暫時性token供改密碼驗證
-                temporary_token = self.token_maker()
+                self.token_maker()
+                temporary_token = self.token
                 user_auth_id = the_user_record.id
                 find_teacher = teacher_profile.objects.filter(auth_id = user_auth_id)
                 birth_date_unchecked = kwargs['userBirth']
                 mobile_unchecked = kwargs['userMobile']
                 
                 if len(find_teacher) > 0:
-                    print('find ~~~!',find_teacher)
                     birth_date_record = str(find_teacher.first().birth_date)
                     mobile_record = find_teacher.first().mobile
                     print(birth_date_record,mobile_record,birth_date_unchecked,mobile_unchecked)
                     if birth_date_record == birth_date_unchecked:
                         if mobile_record == mobile_unchecked:
-                            check_result = 1
+                            user_token.objects.update_or_create(authID_object = user_record.first(), 
+                                    defaults = {'logout_time' : self.after_14days,
+                                                'token' : self.token
+                                                },)
+                            response_to_frontend(1)
                         else:
-                            check_result = 2
+                            response_to_frontend(2)
                     else:
-                        check_result = 2
+                        response_to_frontend(2)
                 else:
-                    print('user is student')
                     user_is_student = student_profile.objects.filter(auth_id = user_auth_id).first()
                     birth_date_record = str(user_is_student.birth_date)
                     mobile_record = user_is_student.mobile
@@ -392,44 +405,65 @@ class auth_manager:
                     if birth_date_record == birth_date_unchecked:
                         if mobile_record == mobile_unchecked:
                             check_result = 1
+                            user_token.objects.update_or_create(authID_object = user_record.first(), 
+                                                                defaults = {'logout_time' : self.after_14days,
+                                                                            'token' : self.token
+                                                                            },)
+                            response_to_frontend(check_result)
                         else:
-                            print('a')
-                            check_result = 2
+                            response_to_frontend(2)
                     else:
-                        print('b')
-                        check_result = 2
-
-                if check_result == 1:
-                    self.status = 'success'
-                    self.data = dict()
-                    self.data['token'] = temporary_token                        
-                    self.data['userID'] = user_auth_id
-                elif check_result == 2:
-                    self.status = 'failed'
-                    self.errCode = '2'
-                    self.errMsg = 'Birth Date or Mobile Unmatch'
-                else:
-                    pass
-                
-            
+                        response_to_frontend(2)
             else:
                 self.status = 'failed'
                 self.errCode = '1'
                 self.errMsg = 'Found No UserID'
-
-                #return (self.status, self.errCode, self.errMsg, self.data)
         
         except Exception as e:
             print(e)
             self.status = 'failed'
             self.errCode = '3'
             self.errMsg = 'Querying Data Failed.'
-            #return (self.status, self.errCode, self.errMsg, self.data)
-        #print(check_result, len(check_result),type(check_result))
-
 
         return (self.status, self.errCode, self.errMsg, self.data)
+# 忘記密碼 身分驗證2 + 與重置密碼
+    def member_reset_password(self, **kwargs):
+        def response_to_frontend(check_result):
+            if check_result == 1:
+                self.status = 'failed'
+                self.errCode = '1'
+                self.errMsg = 'Token Unmatch'
+        user_record = User.objects.filter(id = kwargs['userID'])
+        if len(user_record) > 0:
+            user_token_record = user_token.objects.filter(authID_object = user_record.first())
+            if len(user_token_record) > 0:
+                try:
+                    if user_token_record.first().token == kwargs['token']:
+                        user_record.update(password = kwargs['newUserPwd'])
+                        self.status = 'success'
+                        #self.data = dict()
+                        #self.data['token'] = temporary_token                        
+                        #self.data['userID'] = user_auth_id
+                    else:
+                        check_result = 1
+                        response_to_frontend(check_result)
+ 
+                except Exception as e:
+                    print(e)
+                    self.status = 'failed'
+                    self.errCode = '2'
+                    self.errMsg = 'Querying Data Failed.'
+            else:
+                check_result = 1
+                response_to_frontend(check_result)
+        else:
+            self.status = 'failed'
+            self.errCode = '0'
+            self.errMsg = 'Found No UserID'
 
+
+        
+        return (self.status, self.errCode, self.errMsg, self.data)
 
 
 class user_db_manager:

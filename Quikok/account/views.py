@@ -668,7 +668,7 @@ def auth_check(request):
     return JsonResponse(response)'''
 
         
-
+@require_http_methods(['POST'])
 def member_forgot_password(request):
     user_data_type_frontend = ['userName', 'userBirth', 'userMobile']
     pass_data_to_model_tools = dict()
@@ -680,11 +680,21 @@ def member_forgot_password(request):
     
     response['status'], response['errCode'], response['errMsg'], response['data'] = \
     the_auth_manager.member_forgot_password(**pass_data_to_model_tools)
-
-
     return JsonResponse(response)
 
-
+@require_http_methods(['POST'])
+def member_reset_password(request):
+    user_data_type_frontend = ['userID', 'newUserPwd ', 'token']
+    pass_data_to_model_tools = dict()
+    response = dict()
+    for data_type in user_data_type_frontend: 
+        pass_data_to_model_tools[data_type] = request.POST.get(data_type,False)
+    
+    the_auth_manager = auth_manager()
+    
+    response['status'], response['errCode'], response['errMsg'], response['data'] = \
+    the_auth_manager.member_forgot_password(**pass_data_to_model_tools)
+    return JsonResponse(response)
 
 #########以下是舊的views先貼過來以免 server跑不起來
 
