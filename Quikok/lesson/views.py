@@ -11,6 +11,7 @@ from account.models import teacher_profile, favorite_lessons
 from lesson.models import lesson_info, lesson_reviews, lesson_card
 from lesson.lesson_tools import lesson_manager, lesson_card_manager
 from django.contrib.auth.decorators import login_required
+from account.model_tools import *
 from django.db.models import Q
 
 def check_if_all_variables_are_true(*args):
@@ -77,17 +78,24 @@ def get_lesson_cards_for_common_users(request):
             # 代表user有輸入篩選資訊
             if the_lesson_manager.current_filtered_times is not None:
                 # current_filtered_times >>
-                # [
-                #   [1, 2, 3, 4, 5],
-                #   [10, 22, 35, 44], ...
-                # ]
+                # [1, 2, 3, 4, 5, 10, 22, 35, 44....]
                 # 先看哪一些老師符合裡面的時段，然後列出這些老師所有的課程id即可
                 #   step1: 先列出每一個老師的總和unique_time
-                the_general_available_time = general_available_time()
-                
-                
-                pass
-
+                the_teacher_manager = teacher_manager()
+                teacher_auth_ids_with_live_lessons = \
+                    the_teacher_manager.get_teacher_ids_who_have_lessons_on_sale()
+                live_teacher_auth_ids_and_times_dict = \
+                    the_teacher_manager.get_teacher_s_available_time(teacher_auth_ids_with_live_lessons)
+                matched_teacher_auth_ids = list()
+                for key_auth_id, value_time in live_teacher_auth_ids_and_times_dict.items():
+                    for each_teacher_s_time in value_time:
+                        if each_teacher_s_time in the_lesson_manager.current_filtered_times:
+                            # 老師的時間跟user篩選的時段重疊，這個老師的課程可以被顯示
+                            matched_teacher_auth_ids.append(key_auth_id)
+                            break
+                # 已經取得了所有符合條件的老師，接著只要把這些老師的課程id回傳到下一個篩選機制就好了
+                lesson_info_selling_objects = \
+                    lesson_info_selling_objects.filter(teacher__auth_id__in = matched_teacher_auth_ids)     
 
             if the_lesson_manager.current_filtered_price_per_hour is not None:
                 lesson_info_selling_objects = lesson_info_selling_objects.filter(price_per_hour__gt=the_lesson_manager.current_filtered_price_per_hour[0]-1).filter(price_per_hour__lt=the_lesson_manager.current_filtered_price_per_hour[1]+1)

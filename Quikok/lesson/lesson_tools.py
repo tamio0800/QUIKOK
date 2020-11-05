@@ -127,9 +127,11 @@ class lesson_manager:
                     keys_in_list = each_filtering.split(':')[-1].split(',')
                     self.current_filtered_times = list()
                     for each_key_in_list in keys_in_list:
-                        self.current_filtered_times.append(
+                        self.current_filtered_times.extend(
                             self.filtered_time_index[int(each_key_in_list)]
                         )
+                    self.current_filtered_times = \
+                        list(set(self.current_filtered_times))
                 elif 'filtered_tutoring_experience' in each_filtering:
                     keys_in_list = each_filtering.split(':')[-1].split(',')
                     self.current_filtered_tutoring_experience = list()
