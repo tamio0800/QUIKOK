@@ -445,6 +445,7 @@ class auth_manager:
                     print('資料庫裡的token: '+ user_token_record.first().token)
                     print('前端傳來的token: '+ str(kwargs['token']))
                     if user_token_record.first().token == kwargs['token']:
+                        
                         user_record.update(password = kwargs['newUserPwd'])
                         self.status = 'success'
                         #self.data = dict()
