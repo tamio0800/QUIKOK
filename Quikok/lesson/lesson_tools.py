@@ -7,13 +7,13 @@ from django.db.models import Avg, Sum
 # model_name.objects.filter().aggregate(Sum('column_name')) >> {'column_name__sum':?}
 import pandas as pd
 import os
+import re
 
 
 def clean_files(folder_path, key_words):
     for each_file in os.listdir(folder_path):
         if key_words in each_file:
             os.unlink(os.path.join(folder_path, each_file))
-
 
 def get_lesson_s_best_sale(lesson_id):
     lesson_object = lesson_info.objects.filter(id=lesson_id).first()
@@ -33,6 +33,33 @@ def get_lesson_s_best_sale(lesson_id):
             best_discount = min(all_discounts)
             return str(100 - best_discount) + '% off'
             # 反之則回傳  xx% off
+
+
+class sea_man:
+    def __init__(self):
+        self.delimiters = r' |,'   # 目前只有「空格」跟「,」
+    def get_key_words(self, key_words):
+        if type(key_words) is str:
+            # split後轉成elements in a list
+            key_words = re.split(self.delimiters, key_words)
+        return key_words
+    def a_is_in_b(self, key_words, target_texts):
+        key_words = self.get_key_words(key_words)
+        for each_key_word in key_words:
+            if each_key_word in target_texts:
+                return True
+        return False
+    def get_model_key_value_where_a_is_in_its_specific_columns(self, key_words, column_names_as_list, returned_key, the_model_objects):
+        matched_key_value_in_model = list()
+        model_object_values_as_dicts_in_list = the_model_objects.values()
+        for each_dict in model_object_values_as_dicts_in_list:
+            for each_column_name in column_names_as_list:
+                if self.a_is_in_b(key_words, each_dict[each_column_name]):
+                    matched_key_value_in_model.append(
+                        each_dict[returned_key]
+                    )
+                    break
+        return matched_key_value_in_model
 
 
 class lesson_manager:

@@ -9,7 +9,7 @@ from django.core.files.storage import FileSystemStorage
 import pandas as pd
 from account.models import teacher_profile, favorite_lessons
 from lesson.models import lesson_info, lesson_reviews, lesson_card
-from lesson.lesson_tools import lesson_manager, lesson_card_manager
+from lesson.lesson_tools import *
 from django.contrib.auth.decorators import login_required
 from account.model_tools import *
 from django.db.models import Q
@@ -58,6 +58,7 @@ def get_lesson_cards_for_common_users(request):
     # 20201103 加入篩選機制，未來再重構此一api
     qty = request.POST.get('qty', False) # 暫定六堂課
     filtered_by = request.POST.get('filtered_by', False)
+    keywords = request.POST.get('keywords', False)
     ordered_by = request.POST.get('ordered_by', False)
     user_auth_id = request.POST.get('userID', False)
     keywords = request.POST.get('keywords', False)
@@ -195,6 +196,28 @@ def get_lesson_cards_for_common_users(request):
                     lesson_attributes.pop('corresponding_lesson_id', None)
                     # 以上drop掉這兩個keys  
                     _data.append(lesson_attributes)
+        
+        
+        if len(keywords) > 0:
+            seaman = sea_man()
+            #the_lesson_info = lesson_info()
+            '''['teacher__nickname', 'teacher__name', 'intro', 'subject_type',
+                    'education_1', 'education_2', 'education_3', 'company', 'special_exp',
+                    'big_title', 'little_title', 'lesson_title', 'highlight_1', 'highlight_2', 'highlight_3',
+                    'how_does_lesson_go', 'target_students', 'lesson_remarks', 'syllabus',
+                    'lesson_attributes']'''
+            matched_lesson_ids = \
+                seaman.get_model_key_value_where_a_is_in_its_specific_columns(
+                    keywords, 
+                    ['big_title', 'little_title', 'lesson_title', 'highlight_1', 'highlight_2', 'highlight_3',
+                    'how_does_lesson_go', 'target_students', 'lesson_remarks', 'syllabus', 'lesson_attributes'],
+                    'id',
+                    lesson_info_selling_objects
+                )
+            for each_dict in _data:
+                if each_dict['lessonID'] not in matched_lesson_ids:
+                    _data.remove(each_dict)
+            print(len(_data))
         if len(ordered_by) > 0:
             the_lesson_card_manager = lesson_card_manager()
             sorted_lesson_ids = the_lesson_card_manager.sort_lessons_id_by(
@@ -204,6 +227,7 @@ def get_lesson_cards_for_common_users(request):
                 'lessonID', 
                 sorted_lesson_ids,
                 _data)
+        
         response['status'] = 'success'
         response['errCode'] = None
         response['errMsg'] = None
