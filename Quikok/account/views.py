@@ -603,6 +603,7 @@ def auth_check(request):
     #token_from_user = request.POST.get('token', False)
     #token_from_user = request.META.get('Authorization', False)
     token_from_user = request.META['QUERY_STRING']
+    print(token_from_user)
     token_clean =  token_from_user.split('=')[0]
     print('token is :'+ str(token_clean))
     response['status'] = 'success'
@@ -688,7 +689,7 @@ def member_reset_password(request):
     pass_data_to_model_tools = dict()
     response = dict()
     token_from_user = request.META['QUERY_STRING']
-    print(token_from_user)
+    print('前端收來的token確認第一次:' + str(token_from_user))
     token_clean =  token_from_user.split('=')[0]
     print('token is :'+ str(token_clean))
     pass_data_to_model_tools['token'] = token_clean
