@@ -179,11 +179,15 @@ class teacher_manager:
                     general_available_time_list.append(
                         each_record['week'] + ':' + each_record['time']
                         )
+               
                 general_available_time_list = ';'.join(general_available_time_list)
-
+                general_available_time_list = general_available_time_list + ';' # 加分號到最後面
+                print('回傳給前端的一般時間:')
+                print(general_available_time_list)
             else:
                 general_available_time_list = ''
             _data['general_available_time'] = general_available_time_list
+
             # 特定時間 第一版不做
             specific_available_time_list = list()
             specific_time_queryset = teacher_profile_object.first().specific_time.values()
