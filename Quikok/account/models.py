@@ -42,7 +42,6 @@ class student_profile(models.Model):
     def __str__(self):
         return self.username
 
-
 class teacher_profile(models.Model):
     # 這是for存放老師的額外資訊
     auth_id = models.IntegerField()  # 將用戶的auth_id聯動過來，方便進行query
@@ -81,7 +80,6 @@ class teacher_profile(models.Model):
     special_exp = models.CharField(max_length = 300, blank=True)# 其他經歷或特殊專長
     all_lesson_score_mean = models.FloatField(default=0.0)  # 全部課程分數平均
     total_number_of_remark = models.IntegerField(default=0) # 評分筆數
-
     def __str__(self):
         return self.username
 
@@ -151,6 +149,7 @@ class favorite_lessons(models.Model):
     follower_auth_id = models.IntegerField()
     lesson_id = models.IntegerField()
     teacher_auth_id = models.IntegerField()  # 這個用來表示這門課是誰開的
+    created_time = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return str(self.follower_auth_id)
 

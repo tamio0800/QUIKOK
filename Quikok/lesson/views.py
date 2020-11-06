@@ -21,6 +21,19 @@ def check_if_all_variables_are_true(*args):
             return False
     return True
 
+def sort_dictionaries_in_a_list_by_specific_key(specific_key, followed_by_values_in_list, the_list):
+    _new_mapping_dict = dict()
+    for each_dict in the_list:
+        _new_mapping_dict[
+            each_dict[specific_key]
+        ] = each_dict
+    _data = list()
+    for each_value in followed_by_values_in_list:
+        _data.append(_new_mapping_dict[each_value])
+    return _data
+    
+
+
 
 @login_required
 def lessons_main_page(request):
@@ -45,6 +58,7 @@ def get_lesson_cards_for_common_users(request):
     # 20201103 加入篩選機制，未來再重構此一api
     qty = request.POST.get('qty', False) # 暫定六堂課
     filtered_by = request.POST.get('filtered_by', False)
+    ordered_by = request.POST.get('ordered_by', False)
     user_auth_id = request.POST.get('userID', False)
     keywords = request.POST.get('keywords', False)
     only_show_ones_favorites = request.POST.get('only_show_ones_favorites', False)
@@ -53,7 +67,7 @@ def get_lesson_cards_for_common_users(request):
     response = {}
     if not check_if_all_variables_are_true(qty, user_auth_id,
     keywords, only_show_ones_favorites, only_show_lessons_by_this_teacher_s_auth_id,
-    filtered_by):
+    filtered_by, ordered_by):
         # 之後等加入條件再改寫法 
         # 收取的資料不正確
         response['status'] = 'failed'
@@ -181,7 +195,15 @@ def get_lesson_cards_for_common_users(request):
                     lesson_attributes.pop('corresponding_lesson_id', None)
                     # 以上drop掉這兩個keys  
                     _data.append(lesson_attributes)
-            
+        if len(ordered_by) > 0:
+            the_lesson_card_manager = lesson_card_manager()
+            sorted_lesson_ids = the_lesson_card_manager.sort_lessons_id_by(
+                [_['lessonID'] for _ in _data],
+                ordered_by)
+            _data = sort_dictionaries_in_a_list_by_specific_key(
+                'lessonID', 
+                sorted_lesson_ids,
+                _data)
         response['status'] = 'success'
         response['errCode'] = None
         response['errMsg'] = None
