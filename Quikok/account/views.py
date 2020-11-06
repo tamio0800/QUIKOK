@@ -693,7 +693,7 @@ def member_reset_password(request):
     the_auth_manager = auth_manager()
     
     response['status'], response['errCode'], response['errMsg'], response['data'] = \
-    the_auth_manager.member_forgot_password(**pass_data_to_model_tools)
+    the_auth_manager.member_reset_password(**pass_data_to_model_tools)
     return JsonResponse(response)
 
 #########以下是舊的views先貼過來以免 server跑不起來

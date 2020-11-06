@@ -438,6 +438,8 @@ class auth_manager:
             user_token_record = user_token.objects.filter(authID_object = user_record.first())
             if len(user_token_record) > 0:
                 try:
+                    print('資料庫裡的token: '+ user_token_record.first().token)
+                    print('前端傳來的token: '+ str(kwargs['token']))
                     if user_token_record.first().token == kwargs['token']:
                         user_record.update(password = kwargs['newUserPwd'])
                         self.status = 'success'
