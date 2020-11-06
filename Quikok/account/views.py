@@ -597,7 +597,7 @@ def signin(request):
 def auth_check(request):
     response = {}
     user_id = request.POST.get('userId', False)
-    print('檢查id格式'+ str(user_id))
+    print('auth_check 檢查id:'+ str(user_id))
     url = request.POST.get('url', False)
     print('檢查網址'+ str(url))
     #token_from_user = request.POST.get('token', False)
@@ -684,9 +684,14 @@ def member_forgot_password(request):
 
 @require_http_methods(['POST'])
 def member_reset_password(request):
-    user_data_type_frontend = ['userID', 'newUserPwd ', 'token']
+    user_data_type_frontend = ['userID', 'newUserPwd ']
     pass_data_to_model_tools = dict()
     response = dict()
+    token_from_user = request.META['QUERY_STRING']
+    print(token_from_user)
+    token_clean =  token_from_user.split('=')[0]
+    print('token is :'+ str(token_clean))
+    pass_data_to_model_tools['token'] = token_clean
     for data_type in user_data_type_frontend: 
         pass_data_to_model_tools[data_type] = request.POST.get(data_type,False)
     
