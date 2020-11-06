@@ -602,9 +602,9 @@ def auth_check(request):
     print('檢查網址'+ str(url))
     #token_from_user3 = request.META['QUERY_STRING']
     token_from_user_raw = request.headers.get('Authorization', False)
-    
+    token_from_user = token_from_user_raw.split(' ')[1]
     #token_clean =  token_from_user.split('=')[0]
-    print('token is :'+ str(token_from_user_raw))
+    print('token is :'+ str(token_from_user))
     response['status'] = 'success'
     response['errCode'] = None
     response['errMsg'] = None
@@ -691,11 +691,11 @@ def member_reset_password(request):
     token_from_user_raw = request.headers.get('Authorization', False)
     print('get到token')
     print(token_from_user_raw)
-    #token_from_user = token_from_user_raw.split(' ')[1]
+    token_from_user = token_from_user_raw.split(' ')[1]
     
     #print('前端收來的token確認第一次:' + str(token_from_user))
     print('新密碼確認:', request.POST.get('newUserPwd', False))
-    #pass_data_to_model_tools['token'] = token_from_user
+    pass_data_to_model_tools['token'] = token_from_user
     for data_type in user_data_type_frontend: 
         pass_data_to_model_tools[data_type] = request.POST.get(data_type,False)
     print(pass_data_to_model_tools)
