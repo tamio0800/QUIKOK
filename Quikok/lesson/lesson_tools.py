@@ -171,7 +171,7 @@ class lesson_manager:
         self.errMsg = None
         # 在下面定義API的回傳, 就是回傳資料加工區啦
         exclude_columns = [
-            'id', 'teacher_id', 'created_time']      
+            'id', 'teacher_id', 'created_time', 'edited_time']      
         for each_col in _data.keys():
             if each_col not in exclude_columns:
                 self.data[each_col] = _data[each_col]
@@ -204,7 +204,7 @@ class lesson_manager:
         # 全新的課程建立
         _temp_lesson_info = dict()
         exclude_columns = [
-            'id', 'teacher', 'created_time', 
+            'id', 'teacher', 'created_time', 'edited_time',
             'lesson_avg_score', 'lesson_reviewed_times', 'background_picture_path']
         columns_to_be_read = \
                 [field.name for field in lesson_info._meta.get_fields() if field.name not in exclude_columns]
@@ -413,7 +413,49 @@ class lesson_card_manager:
         except Exception as e:
             print('setup lesson card error:  ', e)
             return False
-    
+
+    def sort_lessons_id_by(self, lesson_ids, ordered_by):
+        # lesson_ids as a list
+        # ordered_by as a string 暫時是這樣
+        # best_sales, reach_rate_asc, reach_rate_desc, price_per_hour_asc, price_per_hour_desc, lesson_scores_asc, lesson_scores_desc
+        def ordered_by_best_sales(lesson_ids, ordered_by):
+            # 先以評分的次數來當作熱門的指標
+            _sorted_ids = \
+                lesson_info.objects.filter(id__in = lesson_ids).order_by('-lesson_reviewed_times').values_list('id', flat=True)
+            return _sorted_ids
+        def ordered_by_reach_rate(lesson_ids, ordered_by):
+            if ordered_by[-5:] == '_desc':
+                return lesson_ids
+            else:
+                return lesson_ids
+        def ordered_by_price_per_hour(lesson_ids, ordered_by):
+            if ordered_by[-5:] == '_desc':
+                _sorted_ids = \
+                    lesson_info.objects.filter(id__in = lesson_ids).order_by('-price_per_hour').values_list('id', flat=True)
+            else:
+                _sorted_ids = \
+                    lesson_info.objects.filter(id__in = lesson_ids).order_by('price_per_hour').values_list('id', flat=True)
+            return _sorted_ids
+        def ordered_by_lesson_scores(lesson_ids, ordered_by):
+            if ordered_by[-5:] == '_desc':
+                _sorted_ids = \
+                    lesson_info.objects.filter(id__in = lesson_ids).order_by('-lesson_avg_score').values_list('id', flat=True)
+            else:
+                _sorted_ids = \
+                    lesson_info.objects.filter(id__in = lesson_ids).order_by('lesson_avg_score').values_list('id', flat=True)
+            return _sorted_ids
+        sorting_methods = {
+            'best_sales': ordered_by_best_sales,
+            'reach_rate_asc': ordered_by_reach_rate,
+            'reach_rate_desc': ordered_by_reach_rate,
+            'price_per_hour_asc': ordered_by_price_per_hour,
+            'price_per_hour_desc': ordered_by_price_per_hour,
+            'lesson_scores_asc': ordered_by_lesson_scores,
+            'lesson_scores_desc': ordered_by_lesson_scores,
+        }
+        return sorting_methods[ordered_by](lesson_ids, ordered_by)
+
+
     def return_lesson_cards_for_common_users(self, user_auth_id, lesson_ids_in_list):
         pass
     

@@ -30,7 +30,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'chatroom',
     'Quikok',
-    'account',   # 用來進行開發  註冊/個人訊息的呈現app
+    'account',   # 用來處理註冊/個人訊息的呈現app
+    'account_finance',  # 用來處理帳務(財務)資訊，如課程購買、退貨等等
     'lesson', # 課程商品頁
     'django_api', # 用來放api們
     
