@@ -18,7 +18,7 @@ urlpatterns = [
     path('test/', views.test_page),
     path('api/getBannerBar/', views.get_banner_bar),
     path('api/', include('django_api.urls')),
-    #re_path(r'^(?!.*?user_upload|.*?website_assets).*', TemplateView.as_view(template_name="index.html")),  # 新增的
+    re_path(r'^(?!.*?user_upload|.*?website_assets).*', TemplateView.as_view(template_name="index.html")),  # 新增的
 
 ]
 
