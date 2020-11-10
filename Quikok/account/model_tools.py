@@ -139,12 +139,17 @@ class teacher_manager:
             time_query_set = \
                 general_available_time.objects.filter(
                     teacher_model__auth_id=each_auth_id
+                ).exclude(
+                    time=''
                 ).values_list('time', flat=True)
+            # 'original time_query_set'
+            #<QuerySet ['14,15,32,33,34,35', '', '', '', '', '', '']>
             sub_results = list()
             for each_element_set in time_query_set:
-                for each_element in eval(each_element_set):
-                    sub_results.append(each_element)
+                for each_element in each_element_set.split(','):
+                    sub_results.append(eval(each_element))
             sub_results = list(set(sub_results))
+            # print('sub_results', sub_results)
             result[each_auth_id] = sub_results
         return result
 

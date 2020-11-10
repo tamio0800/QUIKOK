@@ -8,9 +8,7 @@ class chat_room(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE,related_name='student_set')
     teacher = models.ForeignKey(User, on_delete=models.CASCADE,related_name='teacher_set')
     date= models.DateTimeField(auto_now_add=True)
-
     def __str__(self):
-      
         return 'member:{},{}'.format(self.student,self.teacher)
 
 
