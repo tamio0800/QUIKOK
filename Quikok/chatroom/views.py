@@ -57,8 +57,8 @@ def chat(request, user_url):
                 friend_nick_list.append(friend_temp.nickname)
                 roomid_list.append(room.id)
                 #print("測試"+ str(friend_temp.picture_folder.url))
-                thumb_nail_list.append(friend_temp.picture_folder)
-                print(friend_temp.picture_folder)
+                thumb_nail_list.append(friend_temp.thumbnail_dir)
+            ###    print(friend_temp.picture_folder)
                 
             else:    
                 print("好友:"+ room.teacher.username + "不是老師也不是學生，可能是測試帳號或漏加帳號")    
@@ -75,7 +75,7 @@ def chat(request, user_url):
                 print("加了一個學生到好友名單:"+ friend_temp.nickname)
                 friend_nick_list.append(friend_temp.nickname)
                 roomid_list.append(room.id)
-                thumb_nail_list.append(friend_temp.picture_folder)
+                thumb_nail_list.append(friend_temp.thumbnail_dir)
             else:    
                 print("好友:"+ room.student.username + "不是老師也不是學生，可能是測試帳號或漏加帳號")    
             #else:
@@ -86,9 +86,10 @@ def chat(request, user_url):
 
     for friend in friend_nick_list:
         print('好友暱稱表:'+ friend)
-    print(thumb_nail_list)
+    ###print(thumb_nail_list)
         
     roomid_and_friend_list = zip(roomid_list, friend_nick_list, thumb_nail_list)
+    ###roomid_and_friend_list = zip(roomid_list, friend_nick_list)
     # 將房間id, 好友暱稱, 大頭貼資訊給前端
     
 
@@ -117,6 +118,8 @@ def chat(request, user_url):
 
         else :
             room=''
+    else :
+        print('沒有收到房間id')
 
     print('\n\ncurrent_user:\n'+str(user))
     print('\n\nchat_messages:\n'+str(chat_messages))
