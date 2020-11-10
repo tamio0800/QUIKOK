@@ -602,7 +602,8 @@ def auth_check(request):
     print('檢查網址'+ str(url))
     #token_from_user3 = request.META['QUERY_STRING']
     token_from_user_raw = request.headers.get('Authorization', False)
-    token_from_user = token_from_user_raw.split(' ')[1]
+    print(token_from_user_raw) 
+    token_from_user = token_from_user_raw  #.split(' ')[1]  因為不知效用，又會導致程式出錯，所以先註解掉
     #token_clean =  token_from_user.split('=')[0]
     print('token is :'+ str(token_from_user))
     response['status'] = 'success'
