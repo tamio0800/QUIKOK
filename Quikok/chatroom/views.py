@@ -7,9 +7,11 @@ from django.db.models import Q
 from .models import Messages, chat_room
 from account.models import student_profile, teacher_profile
 
-# Create your views here.
-
-
+# 
+def chat_room(request):
+    response = {}
+    # 目前要回傳的資訊有
+    keys = ['status', 'errCode']
 def chat(request, user_url):
     user = User.objects.get(username= user_url)
     username = user.username
