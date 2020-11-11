@@ -22,11 +22,13 @@ class chat_room_manager:
     def create_chat_room(self,**kwargs):
         student_authID = kwargs['user1']
         teacher_authID = kwargs['user2']
-        parent_authID = None #暫時未使用
+        parent_authID = -1 #暫時未使用
+        chatroom_type = teacher2student # 暫時只有這種
         chatroom = chatroom_info_user2user.objects.filter(Q(student_auth_id=student_authID)&Q(teacher_auth_id=teacher_authID))
         if len(chatroom) == 0 :
             chatroom_info_user2user.objects.create(student_auth_id=student_authID,
-            teacher_auth_id=teacher_authID, parent_auth_id = parent_authID)
+            teacher_auth_id=teacher_authID, parent_auth_id = parent_authID,
+            chatroom_type = chatroom_type)
             print('create new chatroom')
         else:
             print('their chatroom already exist')
