@@ -1,6 +1,4 @@
 from django.shortcuts import render
-
-# Create your views here.
 from django.contrib.auth.models import User
 from django.shortcuts import render
 from django.db.models import Q
@@ -10,8 +8,15 @@ from account.models import student_profile, teacher_profile
 # 
 def chat_room(request):
     response = {}
-    # 目前要回傳的資訊有
-    keys = ['status', 'errCode']
+    pass_data_to_model_tools = dict()
+    # 目前要回傳的資訊
+    response_keys = ['status', 'errCode']
+    user_authID = User.objects.get(username= user_url)
+    for key, value in request.POST.items():
+        pass_data_to_model_tools[key] = request.POST.get(key,False)
+    
+    return JsonResponse(response)
+
 def chat(request, user_url):
     user = User.objects.get(username= user_url)
     username = user.username

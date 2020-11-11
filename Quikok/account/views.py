@@ -608,7 +608,8 @@ def auth_check(request):
         # 從前端拿來的token格式: "bearer token", 為了只拿"token"因此用split切開拿後面
         print('token is :'+ str(token_from_user))
     except:
-        pass
+        print('沒有收到token')
+
     response['status'] = 'success'
     response['errCode'] = None
     response['errMsg'] = None

@@ -363,7 +363,7 @@ class auth_manager:
     def token_maker(self):
         self.after_14days = datetime.now() + timedelta(days = 14)
         self.token = make_password(str(self.after_14days))
-        #return(self.after_14days, self.token) # 這個有必要寫嗎?
+        #return(self.after_14days, self.token) # 這個有必要寫嗎? 
 # 忘記密碼 身分驗證
     def member_forgot_password(self, **kwargs):
         def response_to_frontend(check_result):
