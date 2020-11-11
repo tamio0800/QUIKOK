@@ -142,10 +142,58 @@ class lesson_reviews(models.Model):
     teacher_auth_id = models.IntegerField()
     score_given = models.IntegerField() # 評分介於1~5分
     remark_given = models.TextField(blank=True, null=True)
-    picture_folder = models.CharField(blank=True, max_length=400) # 加上真的有上課的圖以資證明（學蝦皮
+    picture_folder = models.TextField # 加上真的有上課的圖以資證明（學蝦皮
     created_time = models.DateTimeField(auto_now_add=True)
     edited_time = models.DateTimeField(auto_now=True)
     def __str__(self):
         return str(self.id)
 
+
+class lesson_booking_info(models.Model):
+    '''
+    課程的預約管理table，這個model是用來管理「每一則booking」的狀態與profile
+    '''
+    lesson_id = models.IntegerField()  # 所對應的課程id
+    teacher_auth_id = models.IntegerField()
+    student_auth_id = models.IntegerField()
+    parent_auth_id = models.IntegerField()
+    booked_by = models.CharField(max_length = 20)  # teacher or student or parent
+    last_changed_by = models.CharField(max_length = 20)  # teacher or student or parent
+    booking_set = models.IntegerField()
+    # 預約使用的是該課程的哪一個方案（ID），這個之後會另外建立一個「每個課程的方案table」來做串連。
+    remaining_minutes = models.TimeField()
+    booking_date_and_time = models.CharField(max_length=400)  
+    # Example: 2020821:1,2,3,4;20200822:3,4,5,6 之類的
+    booking_status = models.CharField(max_length = 20)  # to_be_confirmed or confirmed or canceled
+    created_time = models.DateTimeField(auto_now_add=True)
+    last_changed_time = models.DateTimeField(auto_now=True)
+    def __str__(self):
+        return str(self.id)
+
+
+class lesson_sales_sets(models.Model):
+    '''
+    課程的方案table，這個只能一直往下疊加狀態，
+    原因是不能讓之前購買課程的user受到影響，舉例來說： 
+        1. 學生s購買了老師t的「30小時：優惠7折方案」 
+        2. 老師t將「30小時：優惠7折方案」改成 >> 「30小時：優惠9折方案」 
+        3. 但因為學生s之前已經付款成功了，這時候不應該改變他已購買方案的狀態。
+    '''
+    lesson_id = models.IntegerField()
+    teacher_auth_id = models.IntegerField()
+    price_per_hour = models.IntegerField()  # 老師原始的鐘點費
+    sales_set = models.CharField(max_length = 20)
+    #  試課優惠：'trial'
+    #  單堂原價：'no_discount'
+    #  30小時7折優惠：'30:70'
+    total_hours_of_the_sales_set = models.IntegerField()  # 該方案的總時數(小時)
+    total_amount_of_the_sales_set = models.IntegerField()  # 該方案的總價
+    price_per_hour_after_discount = models.IntegerField()  # 折扣後，該方案的鐘點費
+    selling_volume = models.IntegerField()  # 銷售的總量
+    taking_lesson_volume = models.IntegerField()  # 上課中的總量(曾預約成功過)
+    fulfilled_volume = models.IntegerField()  # 已完成課程的總量
+    created_time = models.DateTimeField(auto_now_add=True)
+    last_sold_time = models.DateTimeField(auto_now=True)
+    def __str__(self):
+        return str(self.id)
 

@@ -226,7 +226,6 @@ class lesson_manager:
         lesson_object = lesson_info.objects.filter(id = lesson_id)
         return lesson_object.values()[0]
     
-
     def setup_a_lesson(self, teacher_auth_id, a_request_object, lesson_id, action):
         # 全新的課程建立
         _temp_lesson_info = dict()
@@ -481,7 +480,6 @@ class lesson_card_manager:
             'lesson_scores_desc': ordered_by_lesson_scores,
         }
         return sorting_methods[ordered_by](lesson_ids, ordered_by)
-
 
     def return_lesson_cards_for_common_users(self, user_auth_id, lesson_ids_in_list):
         pass
