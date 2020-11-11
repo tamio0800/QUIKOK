@@ -600,12 +600,15 @@ def auth_check(request):
     print('auth_check 檢查id:'+ str(user_id))
     url = request.POST.get('url', False)
     print('檢查網址'+ str(url))
-    #token_from_user3 = request.META['QUERY_STRING']
-    token_from_user_raw = request.headers.get('Authorization', False)
-    print(token_from_user_raw) 
-    token_from_user = token_from_user_raw  #.split(' ')[1]  因為不知效用，又會導致程式出錯，所以先註解掉
-    #token_clean =  token_from_user.split('=')[0]
-    print('token is :'+ str(token_from_user))
+    try:
+        #token_from_user3 = request.META['QUERY_STRING']
+        token_from_user_raw = request.headers.get('Authorization', False)
+        print(token_from_user_raw) 
+        token_from_user = token_from_user_raw  .split(' ')[1]  
+        # 從前端拿來的token格式: "bearer token", 為了只拿"token"因此用split切開拿後面
+        print('token is :'+ str(token_from_user))
+    except:
+        pass
     response['status'] = 'success'
     response['errCode'] = None
     response['errMsg'] = None
