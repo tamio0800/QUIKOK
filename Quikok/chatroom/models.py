@@ -46,8 +46,8 @@ class chatroom_info_user2user(models.Model):
     '''
     teacher_auth_id = models.IntegerField()
     student_auth_id = models.IntegerField()
-    parent_auth_id = models.IntegerField(blank=True, null=True)
-    chatroom_type = models.CharField(max_length=30)
+    parent_auth_id = models.IntegerField()
+    chatroom_type = models.CharField(max_length=30) 
     # teacher2student  or  teacher2parent
     created_time = models.DateTimeField(auto_now_add=True)
     def __str__(self):
