@@ -5,7 +5,7 @@ from django.db.models import Q
 from .models import Messages, chat_room
 from account.models import student_profile, teacher_profile
 
-# 
+@require_http_methods(['POST'])
 def check_if_chatroom_exist(request):
     response = dict()
     pass_data_to_chat_tools = dict()
