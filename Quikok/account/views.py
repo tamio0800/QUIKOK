@@ -196,9 +196,10 @@ def return_student_profile_for_oneself_viewing(request):
         response['errMsg'] = 'Received Arguments Failed.'
         response['data'] = None
         return JsonResponse(response)
-    response['status'], response['errCode'], response['errMsg'], response['data'] = \
-        the_student_manager.return_student_profile_for_oneself_viewing(student_auth_id)
-    return JsonResponse(response)
+    else:    
+        response['status'], response['errCode'], response['errMsg'], response['data'] = \
+            the_student_manager.return_student_profile_for_oneself_viewing(student_auth_id)
+        return JsonResponse(response)
 
 
 @require_http_methods(['POST'])

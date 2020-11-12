@@ -6,6 +6,26 @@ from .models import Messages, chat_room
 from account.models import student_profile, teacher_profile
 
 # 
+def check_if_chatroom_exist(request):
+    response = dict()
+    pass_data_to_chat_tools = dict()
+    #key_from_request = ['token', 'userID', 'chatUserID'] 
+    for key, value in request.POST.items(): 
+        # 可以請前端故意製造一個false讓我測試一下嗎?
+        if value == False:
+            response['status'] = 'failed'
+            response['errCode'] = '0'
+            response['errMsg'] = 'Received Arguments Failed.'
+            response['data'] = None
+            return JsonResponse(response)
+        else:
+            pass_data_to_chat_tools[key] = request.POST.get(key,False)
+    if len(pass_data_to_chat_tools) > 0:
+        chat_manager = chat_room_manager()
+        response['status'], response['errCode'], response['errMsg'], response['data'] =\
+        chat_manager.check_and_create_chat_room(**pass_data_to_chat_tools)
+        return JsonResponse(response)
+
 def chat_room(request):
     response = {}
     pass_data_to_model_tools = dict()
