@@ -54,7 +54,7 @@ class chatroom_info_user2user(models.Model):
         return str(self.id)
 
 
-class chatroom_info_system2user(models.Model):
+class chatroom_info_Mr_Q2user(models.Model):
     '''
     用來管理「我們(Quikok)對user聊天室的table」，
     如果user在這個聊天室中傳訊息給我們我們或許也可以透過類似客服的機制來給予回應，
@@ -86,7 +86,7 @@ class chat_history_user2user(models.Model):
         return str(self.id)
 
 
-class chat_history_system2user(models.Model):
+class chat_history_Mr_Q2user(models.Model):
     '''
     系統與user的對話紀錄
     '''
