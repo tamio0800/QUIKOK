@@ -3,34 +3,42 @@ from django.contrib.auth.models import User
 from django.shortcuts import render
 from django.db.models import Q
 from .models import Messages, chat_room
+from .chat_tools import chat_room_manager
 from account.models import student_profile, teacher_profile
-from django.views.decorators.http import require_http_methods
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
+# FOR API
+from django.views.decorators.http import require_http_methods
+from django.core import serializers
+from django.http import JsonResponse
+import json
+from django.middleware.csrf import get_token
+from datetime import datetime, timedelta
+import shutil
 
 @require_http_methods(['POST'])
 def check_if_chatroom_exist(request):
     response = dict()
     pass_data_to_chat_tools = dict()
-    #key_from_request = ['token', 'userID', 'chatUserID'] 
-    for key, value in request.POST.items(): 
-        # 可以請前端故意製造一個false讓我測試一下嗎?
-        if value == False:
-            response['status'] = 'failed'
-            response['errCode'] = '0'
-            response['errMsg'] = 'Received Arguments Failed.'
-            response['data'] = None
-            return JsonResponse(response)
-        else:
-            pass_data_to_chat_tools[key] = request.POST.get(key,False)
-    if len(pass_data_to_chat_tools) > 0:
+    key_from_request = ['token', 'userID', 'chatUserID'] 
+    for key_name in key_from_request:
+        value = request.POST.get(key_name ,False)
+        pass_data_to_chat_tools[key_name] = value
+
+    if False in pass_data_to_chat_tools.values():    
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = 'Received Arguments Failed.'
+        response['data'] = None
+        return JsonResponse(response)
+    else:
         chat_manager = chat_room_manager()
         response['status'], response['errCode'], response['errMsg'], response['data'] =\
         chat_manager.check_and_create_chat_room(**pass_data_to_chat_tools)
         return JsonResponse(response)
 
-def chat_room(request):
-    response = {}
+def chatroom_content(request):
+    response = dict()
     pass_data_to_model_tools = dict()
     # 目前要回傳的資訊
     response_keys = ['status', 'errCode']
