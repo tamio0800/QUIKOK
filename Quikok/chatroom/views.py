@@ -69,7 +69,7 @@ def chatroom_content(request):
                 {
                     'userID': 2,
                     'messageType' : 0,
-                    'messageText' : '訊息1:哈囉~你好嗎~珍重再見',
+                    'messageText' : '系統訊息1:哈囉~你好嗎~珍重再見',
                     'bookingRelatedMessage':{
                         'bookingID': 1,
                         'bookingLeesonID': 1,
@@ -109,7 +109,7 @@ def chatroom_content(request):
                 {
                     'userID': 2,
                     'messageType' : 0,
-                    'messageText' : '2號房間訊息1',
+                    'messageText' : '2號房間系統訊息1',
                     'bookingRelatedMessage':{
                         'bookingID': 1,
                         'bookingLeesonID': 1,
