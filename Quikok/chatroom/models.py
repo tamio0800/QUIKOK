@@ -47,6 +47,10 @@ class chatroom_info_user2user(models.Model):
     teacher_auth_id = models.IntegerField()
     student_auth_id = models.IntegerField()
     parent_auth_id = models.IntegerField()
+    # 這些auth_id，萬一裡面是空的的話就先塞-1，
+    # 舉例來說，某聊天室teacher_auth_id是1，student_auth_id是3，
+    # 則parent_auth_id
+
     chatroom_type = models.CharField(max_length=30) 
     # teacher2student  or  teacher2parent
     created_time = models.DateTimeField(auto_now_add=True)

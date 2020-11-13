@@ -15,7 +15,6 @@ class ChatConsumer(WebsocketConsumer):
         print('\n\nconnect_info:\n'+str(self.scope)+'\n\n')
         self.room_group_name =self.scope["url_route"]["kwargs"]["room_url"].split('_')[2]
         
-        
         print(self.room_group_name)
         # Join room group
         async_to_sync(self.channel_layer.group_add)(
