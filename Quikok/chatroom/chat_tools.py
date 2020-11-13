@@ -11,12 +11,32 @@ class chat_room_manager:
         self.errCode = None
         self.errMsg = None
         self.data = None
+        chatroom_key = ['chatID','chatUnreadMessageQty', 'chatUserID', 'chatUserType',
+                        'chatUserName', 'chatUserPath', 'messageInfo']
+        self.chat_content = dict()
+        for key in chatroom_key:
+            self.chat_content[key] = None
+            
+        booking_related_message_key = ['bookingID', 'bookingLeesonID', 'bookingStatus',
+                                        'bookingDate', 'bookingTime', 'bookingUpdateTime']
+        self.booking_related_message_dict = dict()
+        for key in booking_related_message_key:
+            self.booking_related_message[key] = None
+        a_message_info_dict_keys = ['userID','messageType','messageText','bookingRelatedMessage', 
+                                    'systemCode', 'messageCreateTime']
+        self.a_message_dict =dict()
+        for key in a_message_info_dict_keys:
+            self.a_message_dict[key] = None
+        self.a_message_dict['bookingRelatedMessage'] = self.booking_related_message_dict
+
+        self.chat_content['messageInfo'] = self.a_message_dict
+
     # 建立一些error回應
     def response_to_frontend(check_result):
         if check_result == 1:
             self.status = 'failed'
             self.errCode = '1'
-            self.errMsg = 'Token Unmatch'
+            self.errMsg = 'Query failed'
 
     # 建立聊天室
     def check_and_create_chat_room(self,**kwargs):

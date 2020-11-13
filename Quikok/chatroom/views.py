@@ -107,17 +107,16 @@ def chatroom_content(request):
             'chatUserPath' : '/students/88@1111.com/thumbnail.jpg',
             'messageInfo':[
                 {
-                    'userID': 2,
-                    'messageType' : 0,
-                    'messageText' : '2號房間系統訊息1',
-                    'bookingRelatedMessage':{
-                        'bookingID': 1,
-                        'bookingLeesonID': 1,
-                        'bookingStatus' : 'wait',
-                        'bookingDate': '2020-11-11',
-                        'bookingTime': '13:00-15:00',
-                        'bookingUpdateTime' : str(datetime.now()),
-                },
+                'userID': 2,
+                'messageType' : 0,
+                'messageText' : '2號房間系統訊息1',
+                'bookingRelatedMessage':{
+                    'bookingID': 1,
+                    'bookingLeesonID': 1,
+                    'bookingStatus' : 'wait',
+                    'bookingDate': '2020-11-11',
+                    'bookingTime': '13:00-15:00',
+                    'bookingUpdateTime' : str(datetime.now()),},
                 'systemCode':0,
                 'messageCreateTime':str(datetime.now())
                 }
