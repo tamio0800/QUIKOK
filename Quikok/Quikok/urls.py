@@ -10,6 +10,7 @@ from django.views.generic import TemplateView  # 新增的
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/chat/', include('chatroom.urls')),
     path('chat/', include('chatroom.urls')),
     path('homepage/', views.homepage, name='home'),
     path('base_layout/', views.base_layout),
