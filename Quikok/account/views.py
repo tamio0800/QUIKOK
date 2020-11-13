@@ -997,7 +997,6 @@ def change_general_time(request):
     new_time=request.GET['new_time']
     week=request.GET['week']
     user=teacher_profile.objects.get(username=username)
-
     try:
         if(general_available_time.objects.filter(week=week).filter(user=user).exists()):
             general_available_time.objects.filter(week=week).filter(user=user).update(time=new_time)
@@ -1007,3 +1006,220 @@ def change_general_time(request):
     except Exception as e:
         print(e)
         return HttpResponse('失敗!請再試一次!')
+
+
+
+def create_batch_student_users():
+    response = {}
+    print('StARt')
+    for i in range(0, 200):
+        username = 's' + str(i).rjust(5, '0') + '@edony_test.com'
+        name = 'test_student_' + str(i).rjust(5, '0')
+        if np.random.rand() > 0.5:
+            nickname = 'ts_' + str(i).rjust(5, '0')
+        else:
+            nickname = name
+        birth_date = date_string_2_dateformat('2000-01-01')
+        is_male =  np.random.rand() > 0.5
+        role = 'oneself'
+        mobile = '0900-000000'
+        update_someone_by_email = ''
+        password = '8B6FA01313CE51AFC09E610F819250DA501778AD363CBA4F9E312A6EC823D42A'
+        # 此處的password已經經過前端加密，故無需再加密
+        obj = student_profile.objects.filter(username=username).first()
+        auth_obj = User.objects.filter(username=username).first()
+        if obj is None and auth_obj is None:
+            if not os.path.isdir('user_upload/students'):
+                os.mkdir(os.path.join('user_upload/students'))
+            if os.path.isdir(os.path.join('user_upload/students', username)):
+                # 如果已經有了這個資料夾，就刪除裡面所有項目並且重建
+                shutil.rmtree(os.path.join('user_upload/students', username))
+                print('User Folder Already Existed >> Rebuild It.')
+            os.mkdir(os.path.join('user_upload/students', username))
+            os.mkdir(os.path.join('user_upload/students/'+ username, 'info_folder'))
+            # 存到 user_upload 該使用者的資料夾
+            #大頭照
+            if np.random.rand() > 0.5:
+                pic_path = '/mnt/c/Users/User/Desktop/thumbnail'
+                pic_name, pic_ext = np.random.choice(os.listdir(pic_path)).split('.')
+                thumbnail_dir = '/user_upload/students/' + username + '/' + 'thumbnail'+'.'+ pic_ext
+                shutil.copy(
+                    os.path.join(pic_path, pic_name + '.' + pic_ext),
+                    thumbnail_dir[1:]
+                )
+            else:
+                thumbnail_dir = ''
+            user_created_object = \
+                User.objects.create(
+                    username = username,
+                    password = password,
+                    is_superuser = 0,
+                    first_name = '',
+                    last_name = '',
+                    email = '',
+                    is_staff = 0,
+                    is_active = 1,
+                )
+            # 用create()的寫法是為了知道這個user在auth裡面的id為何
+            user_created_object.save()
+            print('auth建立')
+            print('建立新學生資料')
+            student_profile.objects.create(
+                auth_id = user_created_object.id,
+                username = username,
+                password = password,
+                balance = 0,
+                withholding_balance = 0,
+                name = name,
+                nickname = nickname,
+                birth_date = birth_date,
+                is_male = is_male,
+                intro = '',
+                role = role,
+                mobile = mobile,
+                user_folder = 'user_upload/'+ username,
+                info_folder = 'user_upload/'+ username+ '/info_folder',
+                thumbnail_dir = thumbnail_dir ,
+                update_someone_by_email = update_someone_by_email
+            ).save()
+            print('student_profile建立: ', username)
+            # 回前端
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+            #response['data'] = None
+        else:
+            if obj is not None:
+                print('此帳號已註冊過學生類別!')
+            elif auth_obj is not None:
+                print('此帳號已註冊到全站資料中!')
+            response['status'] = 'failed'
+            response['errCode'] = '0'
+            response['errMsg'] = 'username taken' # 使用者已註冊
+    return JsonResponse(response)
+
+txt = '與三部曲不同，《銀河修理員》說的不再是小情小愛，而是像銀河寬闊的愛。在亂世中的香港，聽起來有點隱隱作痛。「平安」二字，過去這 11 個月對過多少人講？面對千瘡百孔的生活，我們想身邊所愛安好，「平安」變成了最好的祈願。香港人由烽烽火火到疫症蔓延，微小的願望看似脆弱怯懦，但道出了我們對現實的無力。\
+    即使歌詞裏也描述到「誰能望穿我這種堅壯非堅壯」，死頂而已。偏偏這種死頂就是最捨身的愛。而我最喜歡的是最後一段：\
+    第一次合作，黃偉文為 Dear Jane 帶來了《銀河修理員》，在這個壞透的世界，它正來得合時。本以為是一首溝女小情歌（當然看著 MV 男主角都有被迷倒一下，哈哈），但聽了幾次後有種被療癒的力量。無論經歷任何風霜，都總會一起逆風對抗。「跨宇宙又橫越洪荒」的守護，震撼之餘又帶浪漫。我們每個人都期待生命中，面對生活裡的煩惱，世界的不公，出現一位屬於自己的銀河修理員。祝你在亂流下平安。'
+txt = [_ for _ in txt]
+def get_text(txt_list, num=150):
+    return ''.join(list(np.random.choice(txt_list, num, True)))
+
+
+
+def create_batch_teacher_users():    
+    for i in range(45, 200):
+        username = 't' + str(i).rjust(5, '0') + '@edony_test.com'
+        name = 'test_teacher_' + str(i).rjust(5, '0')
+        if np.random.rand() > 0.5:
+            nickname = 'tt_' + str(i).rjust(5, '0')
+        else:
+            nickname = name
+        password = '8B6FA01313CE51AFC09E610F819250DA501778AD363CBA4F9E312A6EC823D42A'
+        birth_date = date_string_2_dateformat('2000-01-01')
+        is_male = np.random.rand() > 0.5
+        intro = get_text(txt, 150)
+        mobile = '0900-000999'
+        tutor_experience = np.random.choice(['1年以內','1-3年','3-5年','5-10年','10年以上'])
+        subject_type = get_text(txt, 60)
+        education_1 = get_text(txt, 22) # 沒填的話前端傳空的過來
+        education_2 = get_text(txt, 22)
+        education_3 = get_text(txt, 22)
+        company = get_text(txt, 22)
+        special_exp = get_text(txt, 22)
+        # 一般開課時間
+        user_folder = username 
+        print('收到老師註冊資料', username)
+        # print('判斷收到老師資料是正常的')
+        # 先檢查有沒有這個username存在，存在的話會return None給obj
+        obj = teacher_profile.objects.filter(username=username).first()
+        auth_obj = User.objects.filter(username=username).first()
+        # 下面這個條件式>> 皆非(a為空 或是 b為空) >> a跟b都不能為空>> annie0918:應該是兩個都要空才對
+        if obj is None and auth_obj is None :
+            print('還沒註冊過,建立 teacher_profile')
+            ### 長出老師相對應資料夾 
+            # 目前要長的有:放一般圖檔的資料夾user_folder(大頭照、可能之後可放宣傳圖)、未認證的資料夾unaproved_cer、
+            # 已認證過的證書aproved_cer、user_info 將來可能可以放考卷檔案夾之類的、課程統一資料夾lessons、 
+            if not os.path.isdir('user_upload/teachers'):
+                os.mkdir(os.path.join('user_upload/teachers'))
+            if os.path.isdir(os.path.join('user_upload/teachers', user_folder)):
+                # 如果已經有了這個資料夾，就刪除裡面所有項目並且重建
+                shutil.rmtree(os.path.join('user_upload/teachers', user_folder))
+                print('User Folder Already Existed >> Rebuild It.')
+            os.mkdir(os.path.join('user_upload/teachers', user_folder))
+            os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "unaproved_cer"))
+            os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "aproved_cer"))
+            os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "user_info")) # models裡的info_folder
+            os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "lessons"))
+            print('已幫老師建立5個資料夾')
+            # for迴圈如果沒東西會是空的.  getlist()裡面是看前端的 multiple name
+            if np.random.rand() > 0.5:
+                pic_path = '/mnt/c/Users/User/Desktop/thumbnail'
+                pic_name, pic_ext = np.random.choice(os.listdir(pic_path)).split('.')
+                thumbnail_dir = '/user_upload/teachers/' + user_folder + '/' + 'thumbnail'+'.'+ pic_ext
+                shutil.copy(
+                    os.path.join(pic_path, pic_name + '.' + pic_ext),
+                    thumbnail_dir[1:]
+                )
+            else:
+                thumbnail_dir = ''
+            user_created_object = \
+                User.objects.create(
+                    username = username,
+                    password = password,
+                    is_superuser = 0,
+                    first_name = '',
+                    last_name = '',
+                    email = '',
+                    is_staff = 0,
+                    is_active = 1,
+                )
+            user_created_object.save()
+            print('老師成功建立 User.objects')
+            teacher_profile.objects.create(
+                    auth_id = user_created_object.id,
+                    username = username,
+                    password = password,
+                    balance = 0,
+                    unearned_balance = 0, # 帳戶預進帳金額，改成會計用語
+                    withholding_balance = 0,
+                    name = name,
+                    nickname = nickname,
+                    birth_date = birth_date,
+                    is_male = is_male,
+                    intro = intro,
+                    mobile = mobile,
+                    thumbnail_dir = thumbnail_dir,
+                    user_folder = 'user_upload/'+ user_folder ,
+                    info_folder = 'user_upload/'+ user_folder + '/user_info', 
+                    tutor_experience = tutor_experience,
+                    subject_type = subject_type,
+                    education_1 = education_1,
+                    education_2 = education_2,
+                    education_3 = education_3 ,
+                    cert_unapproved = 'user_upload/'+ user_folder + '/unaproved_cer',
+                    cert_approved = 'user_upload/'+ user_folder + '/aproved_cer',
+                    id_approved = 0,
+                    education_approved = 0,
+                    work_approved = 0,
+                    other_approved = 0, #其他類別的認證勳章
+                    #occupation = if_false_return_empty_else_do_nothing(occupation), 
+                    company = company,
+                    special_exp = special_exp
+            ).save()
+            print('成功建立 teacher_profile')
+            ## 寫入一般時間table
+            # 因為models設定general_available_time與 teacher_profile 
+            # 的teacher_name有foreignkey的關係
+            # 因此必須用teacher_profile.objects 來建立這邊的teacher_name
+            # (否則無法建立)
+            teacher_object = teacher_profile.objects.get(username=username)
+            for every_week in range(7):
+                temp_time = ','.join([ str(_) for _ in sorted(np.random.randint(0, 48, np.random.randint(0, 48, 1)))])
+                if len(temp_time) > 0:
+                    general_available_time.objects.create(
+                        teacher_model = teacher_object,
+                        week = every_week,
+                        time = temp_time
+                                    ).save()
+            print('老師成功建立 一般時間')
