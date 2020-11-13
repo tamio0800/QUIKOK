@@ -19,21 +19,39 @@ class chat_room_manager:
             self.errMsg = 'Token Unmatch'
 
     # 建立聊天室
-    def create_chat_room(self,**kwargs):
-        student_authID = kwargs['user1']
-        teacher_authID = kwargs['user2']
+    def check_and_create_chat_room(self,**kwargs):
+        student_authID = kwargs['userID']
+        teacher_authID = kwargs['chatUserID']
         parent_authID = -1 #暫時未使用
-        chatroom_type = teacher2student # 暫時只有這種
-        chatroom = chatroom_info_user2user.objects.filter(Q(student_auth_id=student_authID)&Q(teacher_auth_id=teacher_authID))
-        if len(chatroom) == 0 :
-            chatroom_info_user2user.objects.create(student_auth_id=student_authID,
-            teacher_auth_id=teacher_authID, parent_auth_id = parent_authID,
-            chatroom_type = chatroom_type)
-            print('create new chatroom')
-        else:
-            print('their chatroom already exist')
-            pass
-        
+        chatroom_type = 'teacher2student' # 暫時只有這種
+        try:
+            chatroom = chatroom_info_user2user.objects.filter(Q(student_auth_id=student_authID)&Q(teacher_auth_id=teacher_authID))
+            if len(chatroom) == 0 :
+                new_chatroom = chatroom_info_user2user.objects.create(student_auth_id=student_authID,
+                teacher_auth_id=teacher_authID, parent_auth_id = parent_authID,
+                chatroom_type = chatroom_type)
+                print('create new chatroom')
+                self.status = 'success'
+                self.errCode = None
+                self.errMsg = None
+                self.data = list()
+                data = {'data' : new_chatroom.id}
+                self.data.append(data)
+                return (self.status, self.errCode, self.errMsg, self.data)               
+            else:
+                print('their chatroom already exist')
+                self.status = 'success'
+                self.errCode = None
+                self.errMsg = None
+                self.data = list()
+                data = {'data' : chatroom.id}
+                self.data.append(data)
+                return (self.status, self.errCode, self.errMsg, self.data)
+        except Exception as e:
+            print(e)
+            self.status = 'failed'
+            self.errCode = '1'
+            self.errMsg = 'Querying Data Failed.'
 
     # 調出主對話框全部內容
     def chat_main_content(self, userID):

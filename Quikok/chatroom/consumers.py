@@ -11,7 +11,7 @@ from django.contrib.auth.models import User
 
 class ChatConsumer(WebsocketConsumer):
     def connect(self):
-        
+        print('成功!')
         print('\n\nconnect_info:\n'+str(self.scope)+'\n\n')
         self.room_group_name =self.scope["url_route"]["kwargs"]["room_url"].split('_')[2]
         
