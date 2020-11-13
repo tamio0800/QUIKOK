@@ -39,14 +39,96 @@ def check_if_chatroom_exist(request):
 
 def chatroom_content(request):
     response = dict()
-    pass_data_to_model_tools = dict()
-    # 目前要回傳的資訊
-    response_keys = ['status', 'errCode']
-    user_authID = User.objects.get(username= user_url)
-    for key, value in request.POST.items():
-        pass_data_to_model_tools[key] = request.POST.get(key,False)
-    
-    return JsonResponse(response)
+    pass_data_to_chat_tools = dict()
+    key_from_request = ['token', 'userID', 'chatUserID'] 
+    for key_name in key_from_request:
+        value = request.POST.get(key_name ,False)
+        pass_data_to_chat_tools[key_name] = value
+
+    if False in pass_data_to_chat_tools.values():    
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = 'Received Arguments Failed.'
+        response['data'] = None
+        return JsonResponse(response)
+    # 先做假的成功給前端串
+    else:        
+        response['status'] = 'success'
+        response['errCode'] = None
+        response['errMsg'] = None
+        
+        # data裡面的{} 是一個聊天室, [] 裡面的是一則訊息
+        response_msg_data = { #1號聊天室
+            'chatID' :1,
+            'chatUnreadMessageQty':1,
+            'chatUserID':1,
+            'chatUserType': 'student',
+            'chatUserName': '小明',
+            'chatUserPath' : '/students/7@1111.com/thumbnail.jpg',
+            'messageInfo':[
+                {
+                    'userID': 2,
+                    'messageType' : 0,
+                    'messageText' : '訊息1:哈囉~你好嗎~珍重再見',
+                    'bookingRelatedMessage':{
+                        'bookingID': 1,
+                        'bookingLeesonID': 1,
+                        'bookingStatus' : 'wait',
+                        'bookingDate': '2020-11-11',
+                        'bookingTime': '13:00-15:00',
+                        'bookingUpdateTime' : str(datetime.now()),
+                    },
+                'systemCode':0,
+                'messageCreateTime':str(datetime.now())
+                },
+                {
+                    'userID': 2,
+                    'messageType' : 0,
+                    'messageText' : '訊息2:哈囉~你好嗎~珍重再見',
+                    'bookingRelatedMessage':{
+                        'bookingID': None,
+                        'bookingLeesonID': None,
+                        'bookingStatus' : None,
+                        'bookingDate': None,
+                        'bookingTime': None,
+                        'bookingUpdateTime' : None,
+                    },
+                'systemCode':0,
+                'messageCreateTime':str(datetime.now())
+                }
+            ]
+        }, # 2號聊天室
+        {
+            'chatID' :2,
+            'chatUnreadMessageQty':1,
+            'chatUserID':3,
+            'chatUserType': 'student',
+            'chatUserName': '小花',
+            'chatUserPath' : '/students/88@1111.com/thumbnail.jpg',
+            'messageInfo':[
+                {
+                    'userID': 2,
+                    'messageType' : 0,
+                    'messageText' : '2號房間訊息1',
+                    'bookingRelatedMessage':{
+                        'bookingID': 1,
+                        'bookingLeesonID': 1,
+                        'bookingStatus' : 'wait',
+                        'bookingDate': '2020-11-11',
+                        'bookingTime': '13:00-15:00',
+                        'bookingUpdateTime' : str(datetime.now()),
+                },
+                'systemCode':0,
+                'messageCreateTime':str(datetime.now())
+                }
+            ]
+        }
+        response['data'] = [response_msg_data]
+        
+        #chat_manager = chat_room_manager()
+        #response['status'], response['errCode'], response['errMsg'], response['data'] =\
+        #chat_manager.check_and_create_chat_room(**pass_data_to_chat_tools)
+        return JsonResponse(response)
 
 def chat(request, user_url):
     user = User.objects.get(username= user_url)
