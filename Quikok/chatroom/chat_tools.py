@@ -61,15 +61,17 @@ class chat_room_manager:
                 data = {'data' : new_chatroom.id}
                 self.data.append(data)
                 return (self.status, self.errCode, self.errMsg, self.data)               
-            else:
+            elif:
                 print('their chatroom already exist')
                 self.status = 'success'
                 self.errCode = None
                 self.errMsg = None
                 self.data = list()
-                data = {'data' : chatroom.id}
+                data = {'data' : chatroom[0].id}
                 self.data.append(data)
                 return (self.status, self.errCode, self.errMsg, self.data)
+            else:
+                print('something wrong...find multi chatrooms')
         except Exception as e:
             print(e)
             self.status = 'failed'
