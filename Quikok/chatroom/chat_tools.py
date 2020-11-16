@@ -75,6 +75,7 @@ class chat_room_manager:
             self.status = 'failed'
             self.errCode = '1'
             self.errMsg = 'Querying Data Failed.'
+            return (self.status, self.errCode, self.errMsg, self.data)
 
     # 調出主對話框全部內容
     def chat_main_content(self, **kwargs):
