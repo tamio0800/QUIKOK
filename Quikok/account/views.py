@@ -605,7 +605,7 @@ def auth_check(request):
         #token_from_user3 = request.META['QUERY_STRING']
         token_from_user_raw = request.headers.get('Authorization', False)
         print(token_from_user_raw) 
-        token_from_user = token_from_user_raw  .split(' ')[1]  
+        token_from_user = token_from_user_raw.split(' ')[1]  
         # 從前端拿來的token格式: "bearer token", 為了只拿"token"因此用split切開拿後面
         print('token is :'+ str(token_from_user))
     except:

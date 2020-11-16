@@ -16,14 +16,19 @@ from django.middleware.csrf import get_token
 from datetime import datetime, timedelta
 import shutil
 
+# 確認聊天室是否存在、不存在的話建立聊天室
 @require_http_methods(['POST'])
 def check_if_chatroom_exist(request):
     response = dict()
     pass_data_to_chat_tools = dict()
-    key_from_request = ['token', 'userID', 'chatUserID'] 
+    key_from_request = ['userID', 'chatUserID']
+    token_from_user_raw = request.headers.get('Authorization', False)
+    token = token_from_user_raw.split(' ')[1]
+
     for key_name in key_from_request:
         value = request.POST.get(key_name ,False)
         pass_data_to_chat_tools[key_name] = value
+    pass_data_to_chat_tools['token'] = token
 
     if False in pass_data_to_chat_tools.values():    
         response['status'] = 'failed'
@@ -67,7 +72,7 @@ def chatroom_content(request):
             'chatUserPath' : '/students/7@1111.com/thumbnail.jpg',
             'messageInfo':[
                 {
-                    'userID': 2,
+                    'senderID': 2, # 訊息發送方ID
                     'messageType' : 0,
                     'messageText' : '系統訊息1:哈囉~你好嗎~珍重再見',
                     'bookingRelatedMessage':{
@@ -82,7 +87,7 @@ def chatroom_content(request):
                 'messageCreateTime':str(datetime.now())
                 },
                 {
-                    'userID': 2,
+                    'senderID': 2,
                     'messageType' : 0,
                     'messageText' : '訊息2:哈囉~你好嗎~珍重再見',
                     'bookingRelatedMessage':{
@@ -107,7 +112,7 @@ def chatroom_content(request):
             'chatUserPath' : '/students/88@1111.com/thumbnail.jpg',
             'messageInfo':[
                 {
-                'userID': 2,
+                'senderID': 2,
                 'messageType' : 0,
                 'messageText' : '2號房間系統訊息1',
                 'bookingRelatedMessage':{
