@@ -32,7 +32,7 @@ class chat_room_manager:
             self.booking_related_message_dict[key] = None
         self.message_info['bookingRelatedMessage'] = self.booking_related_message_dict
         # 因為booking資訊是在message裡面，先更新message字典再把message字典更新到info大字典
-        self.response_msg['messageInfo'] = self.a_message_dict
+        self.response_msg['messageInfo'] = self.message_info
 
     # 建立一些error回應
     def response_to_frontend(check_result):
