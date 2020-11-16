@@ -61,7 +61,7 @@ class chat_room_manager:
                 data = {'data' : new_chatroom.id}
                 self.data.append(data)
                 return (self.status, self.errCode, self.errMsg, self.data)               
-            elif:
+            elif len(chatroom) == 1 :
                 print('their chatroom already exist')
                 self.status = 'success'
                 self.errCode = None
