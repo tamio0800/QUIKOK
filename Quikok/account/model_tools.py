@@ -139,12 +139,17 @@ class teacher_manager:
             time_query_set = \
                 general_available_time.objects.filter(
                     teacher_model__auth_id=each_auth_id
+                ).exclude(
+                    time=''
                 ).values_list('time', flat=True)
+            # 'original time_query_set'
+            #<QuerySet ['14,15,32,33,34,35', '', '', '', '', '', '']>
             sub_results = list()
             for each_element_set in time_query_set:
-                for each_element in eval(each_element_set):
-                    sub_results.append(each_element)
+                for each_element in each_element_set.split(','):
+                    sub_results.append(eval(each_element))
             sub_results = list(set(sub_results))
+            # print('sub_results', sub_results)
             result[each_auth_id] = sub_results
         return result
 
@@ -358,7 +363,7 @@ class auth_manager:
     def token_maker(self):
         self.after_14days = datetime.now() + timedelta(days = 14)
         self.token = make_password(str(self.after_14days))
-        #return(self.after_14days, self.token) # 這個有必要寫嗎?
+        #return(self.after_14days, self.token) # 這個有必要寫嗎? 
 # 忘記密碼 身分驗證
     def member_forgot_password(self, **kwargs):
         def response_to_frontend(check_result):

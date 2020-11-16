@@ -8,13 +8,10 @@ from django.db.models import Avg, Sum
 import pandas as pd
 import os
 import re
-
-
 def clean_files(folder_path, key_words):
     for each_file in os.listdir(folder_path):
         if key_words in each_file:
             os.unlink(os.path.join(folder_path, each_file))
-
 def get_lesson_s_best_sale(lesson_id):
     lesson_object = lesson_info.objects.filter(id=lesson_id).first()
     trial_class_price = lesson_object.trial_class_price
@@ -33,8 +30,6 @@ def get_lesson_s_best_sale(lesson_id):
             best_discount = min(all_discounts)
             return str(100 - best_discount) + '% off'
             # 反之則回傳  xx% off
-
-
 class sea_man:
     def __init__(self):
         self.delimiters = r' |,'   # 目前只有「空格」跟「,」
@@ -60,8 +55,6 @@ class sea_man:
                     )
                     break
         return matched_key_value_in_model
-
-
 class lesson_manager:
     def __init__(self):
         self.status = ''
@@ -80,7 +73,6 @@ class lesson_manager:
         self.current_filtered_times = None
         self.current_filtered_tutoring_experience = None
         self.current_filtered_price_per_hour = None
-
     def get_filtered_subjects(self):
         return {
             0: '英文',
@@ -126,7 +118,6 @@ class lesson_manager:
             3: '5-10年',
             4: '10年以上',
         }
-
     def parse_filtered_conditions(self, filtered_by_in_string):
         # API: filtered_by >>  
         #   filtered_subjects:0,2,3;filtered_target_students:0,1,2;filtered_tutoring_experience:0,2;'filtered_price_per_hour:200,400 
@@ -172,8 +163,7 @@ class lesson_manager:
                     max_func = lambda x: 99999 if x == '' else int(x)
                     self.current_filtered_price_per_hour = \
                         (min_func(keys_in_list[0]), max_func(keys_in_list[1]))
-            return True
-               
+            return True         
     def return_lesson_details(self, lesson_id, user_auth_id, for_whom='common_users'):
         # for_whom接收的參數有兩個，'common_users' 以及 'teacher_who_created_it'
         if for_whom == 'common_users':
@@ -225,8 +215,6 @@ class lesson_manager:
     def fetch_lesson_details(self, lesson_id):
         lesson_object = lesson_info.objects.filter(id = lesson_id)
         return lesson_object.values()[0]
-    
-
     def setup_a_lesson(self, teacher_auth_id, a_request_object, lesson_id, action):
         # 全新的課程建立
         _temp_lesson_info = dict()
@@ -235,7 +223,6 @@ class lesson_manager:
             'lesson_avg_score', 'lesson_reviewed_times', 'background_picture_path']
         columns_to_be_read = \
                 [field.name for field in lesson_info._meta.get_fields() if field.name not in exclude_columns]
-        
         for each_column_to_be_read in columns_to_be_read:
             _arg = a_request_object.POST.get(each_column_to_be_read, 'was_None')
             if _arg == 'was_None':
@@ -252,7 +239,6 @@ class lesson_manager:
             # 代表其非為空值，且非為None
         #    _temp_lesson_info['lesson_has_one_hour_package'] = True
         _temp_lesson_info['teacher'] = teacher_profile.objects.filter(auth_id=teacher_auth_id).first()
-
         if action == 'createLesson':
             _temp_lesson_info['lesson_avg_score'] = 0
             _temp_lesson_info['lesson_reviewed_times'] = 0
@@ -295,7 +281,6 @@ class lesson_manager:
                     corresponding_lesson_id = created_lesson.id,
                     teacher_auth_id = teacher_auth_id
                 )  # 建立課程小卡資訊
-
                 self.status = 'success'
                 self.errCode = None
                 self.errMsg = None
@@ -306,7 +291,6 @@ class lesson_manager:
                 self.errCode = '3'
                 self.errMsg = 'Error While Writting In Database.'
                 return (self.status, self.errCode, self.errMsg)
-        
         elif action == 'editLesson':
             if _temp_lesson_info['teacher'] is None:
                 self.status = 'failed'
@@ -354,7 +338,6 @@ class lesson_manager:
                     print('/' + lessons_folder_path + '/customized_lesson_background'+'.'+ file_extension)
                     _temp_lesson_info['background_picture_path'] = \
                         '/' + lessons_folder_path + '/customized_lesson_background'+'.'+ file_extension
-
                 for key, item in _temp_lesson_info.items():
                     setattr(edited_lesson, key, item)
                 edited_lesson.save()
@@ -363,7 +346,6 @@ class lesson_manager:
                     corresponding_lesson_id = lesson_id,
                     teacher_auth_id = teacher_auth_id
                 )  # 更新課程小卡資訊
-
                 self.status = 'success'
                 self.errCode = None
                 self.errMsg = None
@@ -374,12 +356,110 @@ class lesson_manager:
                 self.errCode = '3'
                 self.errMsg = 'Error While Writting In Database.'
                 return (self.status, self.errCode, self.errMsg)
-
-
+    def setup_batch_lessons(self, teacher_auth_ids, nums_of_lesson):
+        from account.models import teacher_profile
+        import numpy as np
+        txt = '與三部曲不同，《銀河修理員》說的不再是小情小愛，而是像銀河寬闊的愛。在亂世中的香港，聽起來有點隱隱作痛。「平安」二字，過去這 11 個月對過多少人講？面對千瘡百孔的生活，我們想身邊所愛安好，「平安」變成了最好的祈願。香港人由烽烽火火到疫症蔓延，微小的願望看似脆弱怯懦，但道出了我們對現實的無力。\
+    即使歌詞裏也描述到「誰能望穿我這種堅壯非堅壯」，死頂而已。偏偏這種死頂就是最捨身的愛。而我最喜歡的是最後一段：\
+    第一次合作，黃偉文為 Dear Jane 帶來了《銀河修理員》，在這個壞透的世界，它正來得合時。本以為是一首溝女小情歌（當然看著 MV 男主角都有被迷倒一下，哈哈），但聽了幾次後有種被療癒的力量。無論經歷任何風霜，都總會一起逆風對抗。「跨宇宙又橫越洪荒」的守護，震撼之餘又帶浪漫。我們每個人都期待生命中，面對生活裡的煩惱，世界的不公，出現一位屬於自己的銀河修理員。祝你在亂流下平安。'
+        txt = [_ for _ in txt]
+        def get_text(txt_list, num=150):
+            return ''.join(list(np.random.choice(txt_list, num, True)))
+        # 全新的課程建立
+        _temp_lesson_info = dict()
+        for each_teacher_auth_id in teacher_auth_ids:
+            class_nums = np.random.randint(1, 6)
+            for each_class in range(class_nums):
+                _temp_lesson_info['teacher'] = teacher_profile.objects.filter(auth_id = each_teacher_auth_id).first()
+                print(_temp_lesson_info['teacher'].username, 'is building a class', each_class, 'for', class_nums)
+                _temp_lesson_info['lesson_avg_score'] = 0
+                _temp_lesson_info['lesson_reviewed_times'] = 0
+                _temp_lesson_info['big_title'] = get_text(txt, np.random.randint(0, 11))
+                _temp_lesson_info['little_title']  = get_text(txt, np.random.randint(0, 11))
+                if np.random.rand() > 0.5:
+                    _temp_lesson_info['title_color'] = '#ffffff'
+                else:
+                    _temp_lesson_info['title_color'] = '#000000'
+                if np.random.rand() < 0.15:
+                    _temp_lesson_info['background_picture_code'] = 1
+                elif np.random.rand() < 0.3:
+                    _temp_lesson_info['background_picture_code'] = 2
+                elif np.random.rand() < 0.45:
+                    _temp_lesson_info['background_picture_code'] = 3
+                else:
+                    _temp_lesson_info['background_picture_code'] = 99
+                _temp_lesson_info['lesson_title'] = get_text(txt, np.random.randint(0, 15))
+                _temp_lesson_info['price_per_hour'] = np.random.randint(0, 2601)
+                _temp_lesson_info['lesson_has_one_hour_package'] = np.random.rand() > 0.1
+                if np.random.rand() < 0.45:
+                    _temp_lesson_info['trial_class_price']  = -1
+                else:
+                    _temp_lesson_info['trial_class_price'] = np.random.randint(0, 501)
+                dice = np.random.rand()
+                if dice < 0.3:
+                    # 1 package
+                    _temp_lesson_info['discount_price'] = str(np.random.randint(5, 50)) + ":" + \
+                        str(np.random.randint(55, 100)) + ';'
+                elif dice < 0.6:
+                    _temp_lesson_info['discount_price'] = str(np.random.randint(5, 50)) + ":" + \
+                        str(np.random.randint(55, 100)) + ';' + \
+                        str(np.random.randint(5, 50)) + ":" + \
+                        str(np.random.randint(55, 100)) + ';'
+                elif dice < 0.9:
+                    _temp_lesson_info['discount_price'] = str(np.random.randint(5, 50)) + ":" + \
+                        str(np.random.randint(55, 100)) + ';' + \
+                        str(np.random.randint(5, 50)) + ":" + \
+                        str(np.random.randint(55, 100)) + ';' + \
+                        str(np.random.randint(5, 50)) + ":" + \
+                        str(np.random.randint(55, 100))
+                elif _temp_lesson_info['lesson_has_one_hour_package']:
+                    _temp_lesson_info['discount_price'] = ''
+                else:
+                    _temp_lesson_info['discount_price'] = str(np.random.randint(5, 50)) + ":" + \
+                        str(np.random.randint(55, 100)) + ';' + \
+                        str(np.random.randint(5, 50)) + ":" + \
+                        str(np.random.randint(55, 100)) + ';' + \
+                        str(np.random.randint(5, 50)) + ":" + \
+                        str(np.random.randint(55, 100))
+                _temp_lesson_info['highlight_1'], _temp_lesson_info['highlight_2'], _temp_lesson_info['highlight_3'] = \
+                    get_text(txt, np.random.randint(0, 11)), get_text(txt, np.random.randint(0, 11)), get_text(txt, np.random.randint(0, 11))
+                _temp_lesson_info['lesson_intro'] = get_text(txt, np.random.randint(20, 400))
+                _temp_lesson_info['how_does_lesson_go'] = get_text(txt, np.random.randint(20, 200))
+                _temp_lesson_info['target_students'] = get_text(txt, np.random.randint(20, 200))
+                _temp_lesson_info['lesson_remarks']  = get_text(txt, np.random.randint(20, 200))
+                _temp_lesson_info['syllabus'] = '<div class="area"><div class="chapter"><div>第1章</div><div></div></div><div class="subsection"><div>1-1</div><div></div></div></div>'
+                _temp_lesson_info['lesson_attributes'] = \
+                ' '.join(['#'+get_text(txt, np.random.randint(1, 11)) for _temp in range(np.random.randint(1, 11))])
+                _temp_lesson_info['selling_status'] = np.random.choice([
+                    'selling', 'notSelling', 'draft'
+                ])
+                lessons_folder_path = \
+                    'user_upload/teachers/' + _temp_lesson_info['teacher'].username + '/lessons'
+                if not os.path.isdir(lessons_folder_path):
+                    os.mkdir(lessons_folder_path)
+                _temp_lesson_info['background_picture_path'] = ''  # 因為還不知道lesson_id，故先給空字串
+                created_lesson = lesson_info.objects.create(
+                    **_temp_lesson_info
+                )  # 建立課程檔案
+                if _temp_lesson_info['background_picture_code'] == 99:
+                    pic_path = '/mnt/c/Users/User/Desktop/background'
+                    pic_name, pic_ext = np.random.choice(os.listdir(pic_path)).split('.')
+                    _temp_lesson_info['background_picture_code'] = \
+                        '/' + lessons_folder_path + '/customized_lesson_background'+'.'+ pic_ext
+                    shutil.copy(
+                        os.path.join(pic_path, pic_name + '.' + pic_ext),
+                        _temp_lesson_info['background_picture_code'][1:]
+                    )
+                    created_lesson.background_picture_path = _temp_lesson_info['background_picture_code']
+                created_lesson.save()
+                the_lesson_card_manager = lesson_card_manager()
+                the_lesson_card_manager.setup_a_lesson_card(
+                    corresponding_lesson_id = created_lesson.id,
+                    teacher_auth_id = each_teacher_auth_id
+                )  # 建立課程小卡資訊
 class lesson_card_manager: 
     def __init__(self):
         self.lesson_card_info = dict()
-
     def setup_a_lesson_card(self, **kwargs):
         # 當課程建立或是修改時，同步編修課程小卡資料
         print("Activate setup_a_lesson_card!!!!")
@@ -388,7 +468,6 @@ class lesson_card_manager:
         try:
             teacher_object = teacher_profile.objects.filter(auth_id = kwargs['teacher_auth_id']).first()
             lesson_object = lesson_info.objects.filter(id = kwargs['corresponding_lesson_id']).first()
-
             review_objects = lesson_reviews.objects.filter(corresponding_lesson_id = kwargs['corresponding_lesson_id'])
             # 先取得課程本身的資訊
             self.lesson_card_info['corresponding_lesson_id'] =  kwargs['corresponding_lesson_id']
@@ -403,18 +482,15 @@ class lesson_card_manager:
             self.lesson_card_info['highlight_2'] =  lesson_object.highlight_2
             self.lesson_card_info['highlight_3'] =  lesson_object.highlight_3
             self.lesson_card_info['best_sale'] = get_lesson_s_best_sale(kwargs['corresponding_lesson_id'])
-        
             # 再取得老師資訊與評價資訊
             self.lesson_card_info['teacher_auth_id'] =  kwargs['teacher_auth_id']
             self.lesson_card_info['teacher_nickname'] =  teacher_object.nickname
             self.lesson_card_info['teacher_thumbnail_path'] =  teacher_object.thumbnail_dir
             self.lesson_card_info['is_this_teacher_male'] =  teacher_object.is_male
-            
             self.lesson_card_info['education'] =  teacher_object.education_1
             self.lesson_card_info['education_is_approved'] =  teacher_object.education_approved
             self.lesson_card_info['working_experience'] =  teacher_object.company
             self.lesson_card_info['working_experience_is_approved'] =  teacher_object.work_approved
-  
             if len(review_objects) == 0:
                 # 這是一個新上架的課程或是沒有人給予過評論
                 self.lesson_card_info['lesson_reviewed_times'] = 0
@@ -422,7 +498,6 @@ class lesson_card_manager:
             else:
                 self.lesson_card_info['lesson_reviewed_times'] = len(review_objects)
                 self.lesson_card_info['lesson_avg_score'] = review_objects.aggregate(_avg = Avg('score_given'))['_avg']
-            
             # 先確認這個課程小卡是否存在，不存在的話建立，存在的話修改
             lesson_card_object = lesson_card.objects.filter(corresponding_lesson_id=self.lesson_card_info['corresponding_lesson_id']).first()
             if lesson_card_object is None:
@@ -440,7 +515,6 @@ class lesson_card_manager:
         except Exception as e:
             print('setup lesson card error:  ', e)
             return False
-
     def sort_lessons_id_by(self, lesson_ids, ordered_by):
         # lesson_ids as a list
         # ordered_by as a string 暫時是這樣
@@ -481,8 +555,6 @@ class lesson_card_manager:
             'lesson_scores_desc': ordered_by_lesson_scores,
         }
         return sorting_methods[ordered_by](lesson_ids, ordered_by)
-
-
     def return_lesson_cards_for_common_users(self, user_auth_id, lesson_ids_in_list):
         pass
     

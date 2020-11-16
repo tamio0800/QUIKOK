@@ -83,8 +83,8 @@ DATABASES = {
         # 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         'NAME': 'quikok_db',  # 資料庫/schema的名稱
         'USER': 'root',
-        'PASSWORD': '0800',
-        'HOST': '127.0.0.1',
+        'PASSWORD': '@Annie0800_GaryWx2003_tamiotsiu+#YT#',
+        'HOST': '61.222.157.152',
         'PORT': '3306',
     }
 }

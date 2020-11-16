@@ -56,6 +56,21 @@ def get_lesson_cards_for_common_users(request):
     # 20200911 暫時不開發排序、篩選部分
     # 接收：需要多少小卡(int)、排序依據(string)、篩選依據(string)、觀看的用戶
     # 20201103 加入篩選機制，未來再重構此一api
+    def get_teacher_auth_ids_who_have_set_available_times():
+            the_teacher_manager = teacher_manager()
+            teacher_auth_ids_with_live_lessons = \
+                the_teacher_manager.get_teacher_ids_who_have_lessons_on_sale()
+            live_teacher_auth_ids_and_times_dict = \
+                the_teacher_manager.get_teacher_s_available_time(teacher_auth_ids_with_live_lessons)
+            matched_teacher_auth_ids = list()
+            for key_auth_id, value_time in live_teacher_auth_ids_and_times_dict.items():
+                print('get_teacher_auth_ids_who_have_set_available_times',
+                key_auth_id, value_time, len(value_time))
+                if not len(value_time) == 0:
+                    # 如果沒有空閒時間就可以直接跳過了
+                    matched_teacher_auth_ids.append(key_auth_id)
+            return matched_teacher_auth_ids
+
     qty = request.POST.get('qty', False) # 暫定六堂課
     filtered_by = request.POST.get('filtered_by', False)
     keywords = request.POST.get('keywords', False)
@@ -89,6 +104,9 @@ def get_lesson_cards_for_common_users(request):
         lesson_info_selling_objects = lesson_info.objects.filter(selling_status='selling')
         the_lesson_manager = lesson_manager()
         if_there_was_any_filtering = the_lesson_manager.parse_filtered_conditions(filtered_by)
+        
+        # 即使沒有設定空閒時間參數或篩選資訊，也只回傳有空閒時段的老師
+        
         if if_there_was_any_filtering:
             # 代表user有輸入篩選資訊
             if the_lesson_manager.current_filtered_times is not None:
@@ -103,11 +121,13 @@ def get_lesson_cards_for_common_users(request):
                     the_teacher_manager.get_teacher_s_available_time(teacher_auth_ids_with_live_lessons)
                 matched_teacher_auth_ids = list()
                 for key_auth_id, value_time in live_teacher_auth_ids_and_times_dict.items():
-                    for each_teacher_s_time in value_time:
-                        if each_teacher_s_time in the_lesson_manager.current_filtered_times:
-                            # 老師的時間跟user篩選的時段重疊，這個老師的課程可以被顯示
-                            matched_teacher_auth_ids.append(key_auth_id)
-                            break
+                    if len(value_time) > 0:
+                        # 如果沒有空閒時間就可以直接跳過了
+                        for each_teacher_s_time in value_time:
+                            if each_teacher_s_time in the_lesson_manager.current_filtered_times:
+                                # 老師的時間跟user篩選的時段重疊，這個老師的課程可以被顯示
+                                matched_teacher_auth_ids.append(key_auth_id)
+                                break
                 # 已經取得了所有符合條件的老師，接著只要把這些老師的課程id回傳到下一個篩選機制就好了
                 lesson_info_selling_objects = \
                     lesson_info_selling_objects.filter(teacher__auth_id__in = matched_teacher_auth_ids)     
@@ -197,6 +217,29 @@ def get_lesson_cards_for_common_users(request):
                     # 以上drop掉這兩個keys  
                     _data.append(lesson_attributes)
         
+
+        # 刪掉沒有「設定空閒時間的老師」的課程
+        lesson_ids_with_teacher_setting_available_times = \
+            lesson_info.objects.filter(
+                teacher__auth_id__in = \
+                    get_teacher_auth_ids_who_have_set_available_times()
+                ).values_list('id', flat=True)
+        #print('lesson_ids_with_teacher_setting_available_times',
+        lesson_ids_with_teacher_setting_available_times,
+        #len(lesson_ids_with_teacher_setting_available_times))
+
+        if len(lesson_ids_with_teacher_setting_available_times) == 0:
+            # 萬一沒有老師有空，自然就不用show課程了
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+            response['data'] = list()
+            return JsonResponse(response)
+        else:
+            _data = \
+                list(filter(
+                    lambda x: x['lessonID'] in lesson_ids_with_teacher_setting_available_times,
+                    _data))
         
         if len(keywords) > 0:
             seaman = sea_man()
@@ -484,14 +527,12 @@ def test_create_or_edit_a_lesson(request):
     lesson_id = request.POST.get('lessonID', False) # 新增沒有,修改才有
     print(request.POST.get('background_picture_path', False))
     the_leeson_manager = lesson_manager()
-
     if not check_if_all_variables_are_true(action, teacher_auth_id):
         # 萬一有變數沒有傳到後端來的話...
         response['status'] = 'failed'
         response['errCode'] = 0
         response['errMsg'] = 'Received Arguments Failed.'
         return JsonResponse(response)
-
     if action == 'createLesson':
         response['status'], response['errCode'], response['errMsg']= \
             the_leeson_manager.setup_a_lesson(
