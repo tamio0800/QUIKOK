@@ -58,8 +58,8 @@ class chat_room_manager:
                 self.errCode = None
                 self.errMsg = None
                 self.data = list()
-                self.data = [new_chatroom.id]
-                #self.data.append(data)
+                self.data = {'chatID' : new_chatroom.id}
+                self.data.append(data)
                 return (self.status, self.errCode, self.errMsg, self.data)               
             elif len(chatroom) == 1 :
                 print('their chatroom already exist')
@@ -67,7 +67,7 @@ class chat_room_manager:
                 self.errCode = None
                 self.errMsg = None
                 self.data = list()
-                self.data = [chatroom[0].id]
+                self.data = {'chatID' : chatroom[0].id}
                 #self.data.append(data)
                 return (self.status, self.errCode, self.errMsg, self.data)
             else:

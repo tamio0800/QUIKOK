@@ -24,12 +24,13 @@ def check_if_chatroom_exist(request):
     key_from_request = ['userID', 'chatUserID']
     token_from_user_raw = request.headers.get('Authorization', False)
     token = token_from_user_raw.split(' ')[1]
-
+    
     for key_name in key_from_request:
         value = request.POST.get(key_name ,False)
         pass_data_to_chat_tools[key_name] = value
+    
     pass_data_to_chat_tools['token'] = token
-
+    print(pass_data_to_chat_tools)
     if False in pass_data_to_chat_tools.values():    
         response['status'] = 'failed'
         response['errCode'] = '0'
