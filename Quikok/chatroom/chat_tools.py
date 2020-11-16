@@ -121,7 +121,8 @@ class chat_room_manager:
             all_messages = chat_history_user2user.objects.filter(chatroom_info_user2user_id=chatroomID).order_by("timestamp")
             for a_message in all_messages:
                 msg_sender = a_message.who_is_sender
-                if msg_sender == 
+                if msg_sender == 1:
+                    pass
                 
         
     def chat_customer_service_messeage(self):
