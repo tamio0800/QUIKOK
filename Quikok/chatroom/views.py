@@ -70,7 +70,7 @@ def chatroom_content(request):
         
         # data裡面的{} 是一個聊天室, [] 裡面的是一則訊息
         response_msg_data = { #1號聊天室
-            'chatID' :1,
+            'chatroomID' :1,
             'chatUnreadMessageQty':1,
             'chatUserID':1,
             'chatUserType': 'student',
@@ -81,36 +81,23 @@ def chatroom_content(request):
                     'senderID': 2, # 訊息發送方ID
                     'messageType' : 0,
                     'messageText' : '系統訊息1:哈囉~你好嗎~珍重再見',
-                    'bookingRelatedMessage':{
-                        'bookingID': 1,
-                        'bookingLeesonID': 1,
-                        'bookingStatus' : 'wait',
-                        'bookingDate': '2020-11-11',
-                        'bookingTime': '13:00-15:00',
-                        'bookingUpdateTime' : str(datetime.now()),
-                    },
-                'systemCode':0,
-                'messageCreateTime':str(datetime.now())
+                    'systemCode':0,
+                    'messageCreateTime':str(datetime.now())
                 },
                 {
-                    'senderID': 2,
-                    'messageType' : 0,
-                    'messageText' : '訊息2:哈囉~你好嗎~珍重再見',
-                    'bookingRelatedMessage':{
-                        'bookingID': None,
-                        'bookingLeesonID': None,
-                        'bookingStatus' : None,
-                        'bookingDate': None,
-                        'bookingTime': None,
-                        'bookingUpdateTime' : None,
-                    },
+                'senderID': 2,
+                'messageType' : 2,
+                'messageText' : 'bookingID: 1; bookingLeesonID: 1;\
+                    bookingStatus: wait; bookingDate: 2020-11-11; \
+                    bookingTime: 13:00-15:00; \
+                    bookingUpdateTime: '+ str(datetime.now()),
                 'systemCode':0,
                 'messageCreateTime':str(datetime.now())
                 }
             ]
         }, # 2號聊天室
         {
-            'chatID' :2,
+            'chatroomID' :2,
             'chatUnreadMessageQty':1,
             'chatUserID':3,
             'chatUserType': 'student',
@@ -121,13 +108,6 @@ def chatroom_content(request):
                 'senderID': 2,
                 'messageType' : 0,
                 'messageText' : '2號房間系統訊息1',
-                'bookingRelatedMessage':{
-                    'bookingID': 1,
-                    'bookingLeesonID': 1,
-                    'bookingStatus' : 'wait',
-                    'bookingDate': '2020-11-11',
-                    'bookingTime': '13:00-15:00',
-                    'bookingUpdateTime' : str(datetime.now()),},
                 'systemCode':0,
                 'messageCreateTime':str(datetime.now())
                 }
