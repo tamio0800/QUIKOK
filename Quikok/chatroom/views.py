@@ -46,7 +46,12 @@ def check_if_chatroom_exist(request):
 def chatroom_content(request):
     response = dict()
     pass_data_to_chat_tools = dict()
-    key_from_request = ['token', 'userID', 'chatUserID'] 
+    key_from_request = ['userID', 'chatUserID'] 
+    token_from_user_raw = request.headers.get('Authorization', False)
+    token = token_from_user_raw.split(' ')[1]
+    pass_data_to_chat_tools['token'] = token
+    print(pass_data_to_chat_tools)
+
     for key_name in key_from_request:
         value = request.POST.get(key_name ,False)
         pass_data_to_chat_tools[key_name] = value
@@ -70,7 +75,7 @@ def chatroom_content(request):
             'chatUserID':1,
             'chatUserType': 'student',
             'chatUserName': '小明',
-            'chatUserPath' : '/students/7@1111.com/thumbnail.jpg',
+            'chatUserPath' : '/students/s1@s.com/thumbnail.png',
             'messageInfo':[
                 {
                     'senderID': 2, # 訊息發送方ID
@@ -110,7 +115,7 @@ def chatroom_content(request):
             'chatUserID':3,
             'chatUserType': 'student',
             'chatUserName': '小花',
-            'chatUserPath' : '/students/88@1111.com/thumbnail.jpg',
+            'chatUserPath' : '/students/s00007@edony_test.com/thumbnail.jpg',
             'messageInfo':[
                 {
                 'senderID': 2,
