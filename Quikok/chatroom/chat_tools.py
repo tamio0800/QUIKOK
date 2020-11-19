@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.db.models import Q
 from .models import *
 from account.models import student_profile, teacher_profile
-
+import datetime
 
 class chat_room_manager:
     def __init__(self):
@@ -115,16 +115,17 @@ class chat_room_manager:
                     chatroomID = a_chatroom.id
                     if user_type == 'teacher':
                         chatUserID = a_chatroom.student_auth_id
-                        chat_user = student_profile.objects.filter(auth_id = a_chatroom.student_auth_id).first()
+                        chat_user = student_profile.objects.filter(auth_id = chatUserID).first()
                         chatUserType = 'student'
                     elif user_type == 'student':
                         chatUserID = a_chatroom.teacher_auth_id
-                        chat_user = student_profile.objects.filter(auth_id = a_chatroom.teacher_auth_id).first()
+                        chat_user = teacher_profile.objects.filter(auth_id = chatUserID).first()
                         chatUserType = 'teacher'
                     else: # 將來可能有其他類別
                         pass
                     # 對方可能會沒有大頭貼
                     if len(chat_user.thumbnail_dir) > 0:
+                        print(chat_user.thumbnail_dir)
                         chatUserPath = chat_user.thumbnail_dir
                     else:
                         chatUserPath = ''
@@ -187,4 +188,23 @@ class websocket_manager:
         sender = kwargs['sender']
         message = kwargs['message']
         messageType = kwargs['messageType']
-
+        chatroom_info = chatroom_info_user2user.objects.filter(id = chatroom_id).first()
+        if sender == chatroom_info.student_auth_id:
+            # 發送者是學生
+            teacher_auth_id = chatroom_info.teacher_auth_id
+            student_auth_id = sender
+        elif sender == chatroom_info.teacher_auth_id:
+            teacher_auth_id = sender
+            student_auth_id= chatroom_info.student_auth_id
+        parent_auth_id = -1 # 目前先給-1
+        chat_history_user2user.objects.create(
+            chatroom_info_user2user_id= chatroom_id,
+            teacher_auth_id =teacher_auth_id,
+            student_auth_id= student_auth_id,
+            parent_auth_id =parent_auth_id,
+            message = message,
+            message_type= message_type,
+            who_is_sender= sender,
+            is_read= 0,
+            created_time=datetime.now()
+        )

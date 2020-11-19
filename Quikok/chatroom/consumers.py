@@ -23,10 +23,8 @@ class ChatConsumer(WebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
-        
         self.accept()
         print('websocket connect success')
-
     def disconnect(self, close_code):
         # Leave room group
         async_to_sync(self.channel_layer.group_discard)(
@@ -37,6 +35,7 @@ class ChatConsumer(WebsocketConsumer):
     # Receive message from WebSocket
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
+        print('ws load jason收到的資料')
         print('\n\nreceive_data:\n'+str(text_data_json))
         message = text_data_json['message']
         
