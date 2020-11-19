@@ -123,6 +123,8 @@ class chat_room_manager:
                         chatUserID = a_chatroom.teacher_auth_id
                         chat_user = student_profile.objects.filter(auth_id = a_chatroom.teacher_auth_id).first()
                         chatUserType = 'teacher'
+                    else: # 將來可能會有更多種類的user
+                        pass
                     # 對方可能會沒有大頭貼
                     if len(chat_user.thumbnail_dir) > 0:
                         chatUserPath = chat_user.thumbnail_dir
