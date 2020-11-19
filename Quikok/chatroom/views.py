@@ -52,19 +52,19 @@ def chatroom_content(request):
     pass_data_to_chat_tools['token'] = token
     print('聊天室收到的token')
     print(token)
-    print(pass_data_to_chat_tools)
 
     for key_name in key_from_request:
         value = request.POST.get(key_name ,False)
         pass_data_to_chat_tools[key_name] = value
-
+    
+    print(pass_data_to_chat_tools)
     if False in pass_data_to_chat_tools.values():    
         response['status'] = 'failed'
         response['errCode'] = '0'
         response['errMsg'] = 'Received Arguments Failed.'
         response['data'] = None
         return JsonResponse(response)
-    # 先做假的成功給前端串
+
     else:        
         chat_manager = chat_room_manager()
         response['status'], response['errCode'], response['errMsg'], response['data'] =\

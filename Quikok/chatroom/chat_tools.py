@@ -64,8 +64,7 @@ class chat_room_manager:
                 self.errCode = None
                 self.errMsg = None
                 self.data = list()
-                self.data = {'chatID' : new_chatroom.id}
-                self.data.append(data)
+                self.data.append({'chatID' : new_chatroom.id})
                 return (self.status, self.errCode, self.errMsg, self.data)               
             elif len(chatroom) == 1 :
                 print('their chatroom already exist')
@@ -73,8 +72,7 @@ class chat_room_manager:
                 self.errCode = None
                 self.errMsg = None
                 self.data = list()
-                self.data = {'chatID' : chatroom[0].id}
-                #self.data.append(data)
+                self.data.append({'chatID' : new_chatroom.id})
                 return (self.status, self.errCode, self.errMsg, self.data)
             else:
                 print('something wrong...find multi chatrooms')
@@ -190,4 +188,3 @@ class websocket_manager:
         message = kwargs['message']
         messageType = kwargs['messageType']
 
-        
