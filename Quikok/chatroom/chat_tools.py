@@ -70,7 +70,7 @@ class chat_room_manager:
                 self.status = 'success'
                 self.errCode = None
                 self.errMsg = None
-                self.data = {'chatID' : new_chatroom.id}
+                self.data = {'chatID' : chatroom[0].id}
                 return (self.status, self.errCode, self.errMsg, self.data)
             else:
                 print('something wrong...find multi chatrooms')
