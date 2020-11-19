@@ -18,6 +18,7 @@ class ChatConsumer(WebsocketConsumer):
         self.room_group_name =self.scope["url_route"]["kwargs"]["room_url"].split('_')[2]
         
         print(self.room_group_name)
+        
         # Join room group
         async_to_sync(self.channel_layer.group_add)(
             self.room_group_name,
@@ -34,17 +35,37 @@ class ChatConsumer(WebsocketConsumer):
 
     # Receive message from WebSocket
     def receive(self, text_data):
+        response = dict()
+        pass_data_to_chat_tools = dict()
+        
         text_data_json = json.loads(text_data)
         print('ws load jason收到的資料')
         print('\n\nreceive_data:\n'+str(text_data_json))
-        message = text_data_json['message']
         
+        pass_data_to_chat_tools = {
+        'userID' : text_data_json['userID'],
+        'chatID' : text_data_json['chatID'],
+        'messageType' : text_data_json['messageType'],
+        'message' : text_data_json['messageText']}
+
         now_time = datetime.datetime.now().strftime('%H:%M')
-        
-        if not message:
-            return
-        user_id =self.scope["url_route"]["kwargs"]["room_url"].split('_')[0]
-        group_id = self.room_group_name
+
+        #if False in pass_data_to_chat_tools.values(): 
+        #    response['status'] = 'failed'
+        #    response['errCode'] = '0'
+        #    response['errMsg'] = 'Received Arguments Failed.'
+        #    response['data'] = None
+        #    return JsonResponse(response)
+
+        #else:
+        ws_manager = websocket_manager()
+        #response['status'], response['errCode'], response['errMsg'], response['data'] =\
+        ws_manager.chat_storge(**pass_data_to_chat_tools)
+        #return JsonResponse(response)
+
+
+        #user_id =self.scope["url_route"]["kwargs"]["room_url"].split('_')[0]
+        #group_id = self.room_group_name
         ### 新增結構
         #pass_data_to_chat_tools = dict()
         #key_from_frontend = ['userID', 'chatID','messageType','messageText']
@@ -53,19 +74,21 @@ class ChatConsumer(WebsocketConsumer):
         #ws_manager.chat_storge(chatID = group_id,sender=userID,message=messageText,
         #messageType = messageType )
         ###
-        group=chat_room.objects.get(id=group_id)
-        group.date=datetime.datetime.now()
-        group.save()
+        #group=chat_room.objects.get(id=group_id)
+        #group.date=datetime.datetime.now()
+        #group.save()
         print('\n\nstorge message')
-        user=User.objects.get(id=user_id)
-        Messages.objects.create(sender=user, message=message, group=group)
+        #user = 
+        user=User.objects.get(id=pass_data_to_chat_tools['userID'])
+        #Messages.objects.create(sender=user, message=pass_data_to_chat_tools['message'], 
+        #                        group=pass_data_to_chat_tools['chatID'])
 
         # Send message to room group
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
                 'type': 'chat_message',
-                'message': message,
+                'message': pass_data_to_chat_tools['message'],
                 'user': user.username,
                 'now_time': now_time
             }
