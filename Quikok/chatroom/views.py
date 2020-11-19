@@ -46,10 +46,12 @@ def check_if_chatroom_exist(request):
 def chatroom_content(request):
     response = dict()
     pass_data_to_chat_tools = dict()
-    key_from_request = ['userID', 'chatUserID'] 
+    key_from_request = ['userID', 'user_type''] 
     token_from_user_raw = request.headers.get('Authorization', False)
     token = token_from_user_raw.split(' ')[1]
     pass_data_to_chat_tools['token'] = token
+    print('聊天室收到的token')
+    print(token)
     print(pass_data_to_chat_tools)
 
     for key_name in key_from_request:

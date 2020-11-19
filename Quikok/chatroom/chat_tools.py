@@ -182,3 +182,12 @@ class chat_room_manager:
     # 以及發送訊息
     def system_2user(self):
         pass
+
+class websocket_manager:
+    def chat_storge(self, **kwargs):
+        chatroom_id = kwargs['chatID']
+        sender = kwargs['sender']
+        message = kwargs['message']
+        messageType = kwargs['messageType']
+
+        

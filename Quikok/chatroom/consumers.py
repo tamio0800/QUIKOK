@@ -3,8 +3,10 @@ import json
 import datetime
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
-from .models import Messages, chat_room
+from .models import *
 from django.contrib.auth.models import User
+from account.models import *
+from .chat_tools import websocket_manager
 
 # backend for websocket
 
@@ -44,12 +46,21 @@ class ChatConsumer(WebsocketConsumer):
             return
         user_id =self.scope["url_route"]["kwargs"]["room_url"].split('_')[0]
         group_id = self.room_group_name
+        ### 新增結構
+        #pass_data_to_chat_tools = dict()
+        #key_from_frontend = ['userID', 'chatID','messageType','messageText']
+
+        #ws_manager = websocket_manager()
+        #ws_manager.chat_storge(chatID = group_id,sender=userID,message=messageText,
+        #messageType = messageType )
+        ###
         group=chat_room.objects.get(id=group_id)
         group.date=datetime.datetime.now()
         group.save()
         print('\n\nstorge message')
         user=User.objects.get(id=user_id)
         Messages.objects.create(sender=user, message=message, group=group)
+
         # Send message to room group
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
