@@ -63,16 +63,14 @@ class chat_room_manager:
                 self.status = 'success'
                 self.errCode = None
                 self.errMsg = None
-                self.data = list()
-                self.data.append({'chatID' : new_chatroom.id})
+                self.data = {'chatID' : new_chatroom.id}
                 return (self.status, self.errCode, self.errMsg, self.data)               
             elif len(chatroom) == 1 :
                 print('their chatroom already exist')
                 self.status = 'success'
                 self.errCode = None
                 self.errMsg = None
-                self.data = list()
-                self.data.append({'chatID' : new_chatroom.id})
+                self.data = {'chatID' : new_chatroom.id}
                 return (self.status, self.errCode, self.errMsg, self.data)
             else:
                 print('something wrong...find multi chatrooms')
@@ -101,14 +99,14 @@ class chat_room_manager:
             elif user_type == 'student':
                 #user_student = student_profile.objects.filter(username= kwargs['userID'])
                 user_chatrooms_with_user = chatroom_info_user2user.objects.filter(student_auth_id=kwargs['userID'])
-            
+            else: # 之後會有其他種type
+                pass
             room_queryset= chatroom_info_user2user.objects.filter(Q(student_auth_id=kwargs['userID'])|Q(teacher_auth_id=kwargs['userID'])).order_by("created_time")
             print('使用者有這些聊天室')
             print(room_queryset)
             # 如果有資料的前提..
             # 包成可以回傳給前端的格式
             if len(room_queryset) >0:
-                
                 response_data = list()
                 for a_chatroom in room_queryset:
                     a_chatroom_info = dict()
@@ -123,7 +121,7 @@ class chat_room_manager:
                         chatUserID = a_chatroom.teacher_auth_id
                         chat_user = student_profile.objects.filter(auth_id = a_chatroom.teacher_auth_id).first()
                         chatUserType = 'teacher'
-                    else: # 將來可能會有更多種類的user
+                    else: # 將來可能有其他類別
                         pass
                     # 對方可能會沒有大頭貼
                     if len(chat_user.thumbnail_dir) > 0:
@@ -163,7 +161,7 @@ class chat_room_manager:
                 #print(response_data)
                 self.status = 'success'
                 self.data = response_data
-            else:
+            else: # 尚未建立任何聊天室
                 self.status = 'success'
             return (self.status, self.errCode, self.errMsg, self.data)
         
