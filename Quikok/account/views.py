@@ -1098,16 +1098,14 @@ def create_batch_student_users():
             response['errMsg'] = 'username taken' # 使用者已註冊
     return JsonResponse(response)
 
-txt = '與三部曲不同，《銀河修理員》說的不再是小情小愛，而是像銀河寬闊的愛。在亂世中的香港，聽起來有點隱隱作痛。「平安」二字，過去這 11 個月對過多少人講？面對千瘡百孔的生活，我們想身邊所愛安好，「平安」變成了最好的祈願。香港人由烽烽火火到疫症蔓延，微小的願望看似脆弱怯懦，但道出了我們對現實的無力。\
+
+def create_batch_teacher_users():
+    txt = '與三部曲不同，《銀河修理員》說的不再是小情小愛，而是像銀河寬闊的愛。在亂世中的香港，聽起來有點隱隱作痛。「平安」二字，過去這 11 個月對過多少人講？面對千瘡百孔的生活，我們想身邊所愛安好，「平安」變成了最好的祈願。香港人由烽烽火火到疫症蔓延，微小的願望看似脆弱怯懦，但道出了我們對現實的無力。\
     即使歌詞裏也描述到「誰能望穿我這種堅壯非堅壯」，死頂而已。偏偏這種死頂就是最捨身的愛。而我最喜歡的是最後一段：\
     第一次合作，黃偉文為 Dear Jane 帶來了《銀河修理員》，在這個壞透的世界，它正來得合時。本以為是一首溝女小情歌（當然看著 MV 男主角都有被迷倒一下，哈哈），但聽了幾次後有種被療癒的力量。無論經歷任何風霜，都總會一起逆風對抗。「跨宇宙又橫越洪荒」的守護，震撼之餘又帶浪漫。我們每個人都期待生命中，面對生活裡的煩惱，世界的不公，出現一位屬於自己的銀河修理員。祝你在亂流下平安。'
-txt = [_ for _ in txt]
-def get_text(txt_list, num=150):
-    return ''.join(list(np.random.choice(txt_list, num, True)))
-
-
-
-def create_batch_teacher_users():    
+    txt = [_ for _ in txt]
+    def get_text(txt_list, num=150):
+        return ''.join(list(np.random.choice(txt_list, num, True)))    
     for i in range(45, 200):
         username = 't' + str(i).rjust(5, '0') + '@edony_test.com'
         name = 'test_teacher_' + str(i).rjust(5, '0')
@@ -1223,3 +1221,9 @@ def create_batch_teacher_users():
                         time = temp_time
                                     ).save()
             print('老師成功建立 一般時間')
+
+def test_connect_time(request):
+    from time import time
+    s_time = time()
+    _ = teacher_profile.objects.all().count()
+    return HttpResponse(str(time() - s_time) + ' seconds,   for' + str(_) + ' teachers.')

@@ -64,8 +64,8 @@ def get_lesson_cards_for_common_users(request):
                 the_teacher_manager.get_teacher_s_available_time(teacher_auth_ids_with_live_lessons)
             matched_teacher_auth_ids = list()
             for key_auth_id, value_time in live_teacher_auth_ids_and_times_dict.items():
-                print('get_teacher_auth_ids_who_have_set_available_times',
-                key_auth_id, value_time, len(value_time))
+                # print('get_teacher_auth_ids_who_have_set_available_times',
+                # key_auth_id, value_time, len(value_time))
                 if not len(value_time) == 0:
                     # 如果沒有空閒時間就可以直接跳過了
                     matched_teacher_auth_ids.append(key_auth_id)

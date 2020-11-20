@@ -80,10 +80,11 @@ class chat_history_user2user(models.Model):
     chatroom_info_user2user_id = models.IntegerField()
     teacher_auth_id = models.IntegerField()
     student_auth_id = models.IntegerField()
-    parent_auth_id = models.IntegerField()
+    parent_auth_id = models.IntegerField()       # 現在parent_auth_id預設都是-1
     message = models.TextField()
     message_type = models.CharField(max_length=30) # 0:一般文字, 1:系統訊息, 2:預約方塊
-    who_is_sender = models.CharField(max_length=20)    # teacher/student/parent/system
+    who_is_sender = models.CharField(max_length=20)    # teacher/student/parent/systemw
+    sender_auth_id = models.IntegerField()    
     is_read = models.BooleanField()
     created_time = models.DateTimeField(auto_now_add=True)
     def __str__(self):
@@ -106,6 +107,7 @@ class chat_history_Mr_Q2user(models.Model):
     message = models.TextField()
     message_type = models.CharField(max_length=30)
     who_is_sender = models.CharField(max_length=20)  # teacher  or  student  or parent or system_user
+    sender_auth_id = models.IntegerField()
     is_read = models.BooleanField()
     created_time = models.DateTimeField(auto_now_add=True)
     def __str__(self):
