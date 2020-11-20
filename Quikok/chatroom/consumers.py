@@ -50,7 +50,7 @@ class ChatConsumer(WebsocketConsumer):
 
         #now_time = datetime.datetime.now().strftime('%H:%M')
         ws_manager = websocket_manager()
-        new_msg_id, now_time= ws_manager.chat_storge(**self.pass_data_to_chat_tools)
+        new_msg_id, now_time = ws_manager.chat_storge(**self.pass_data_to_chat_tools)
 
         # systemCode 暫時沒有作用,統一給0
         if text_data_json['messageType'] == 1:
@@ -69,7 +69,7 @@ class ChatConsumer(WebsocketConsumer):
                 'messageText': self.pass_data_to_chat_tools['message'],
                 'messageType': self.pass_data_to_chat_tools['messageType'],
                 'systemCode':systemCode,
-                'messageCreateTime': now_time
+                'messageCreateTime': str(now_time)
             })
         print('send_somthing to somewhere')
 
