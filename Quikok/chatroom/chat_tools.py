@@ -208,19 +208,19 @@ class websocket_manager:
         self.check_authID_type(self.sender)
         try:
             chatroom_info = chatroom_info_user2user.objects.filter(id = self.chatroom_id).first()
-            if self.sender == chatroom_info.student_auth_id:
+            if self.user_type == 'student':
                 # 發送者是學生
-                teacher_auth_id = chatroom_info.teacher_auth_id
-                student_auth_id = self.sender
-            elif self.sender == chatroom_info.teacher_auth_id:
-                teacher_auth_id = self.sender
-                student_auth_id= chatroom_info.student_auth_id
+                teacher_id = chatroom_info.teacher_auth_id
+                student_id = self.sender
+            elif self.user_type == 'student':
+                teacher_id = self.sender
+                student_id= chatroom_info.student_auth_id
             parent_auth_id = -1 # 目前先給-1
 
             new_msg = chat_history_user2user.objects.create(
                 chatroom_info_user2user_id= self.chatroom_id,
-                teacher_auth_id =teacher_auth_id,
-                student_auth_id= student_auth_id,
+                teacher_auth_id =teacher_id,
+                student_auth_id= student_id,
                 parent_auth_id =parent_auth_id,
                 message = message,
                 message_type= messageType,
