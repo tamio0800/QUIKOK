@@ -208,11 +208,12 @@ class websocket_manager:
         self.check_authID_type(self.sender)
         try:
             chatroom_info = chatroom_info_user2user.objects.filter(id = self.chatroom_id).first()
+            print(chatroom_info.id)
             if self.user_type == 'student':
                 # 發送者是學生
                 teacher_id = chatroom_info.teacher_auth_id
                 student_id = self.sender
-            elif self.user_type == 'student':
+            elif self.user_type == 'teacher':
                 teacher_id = self.sender
                 student_id= chatroom_info.student_auth_id
             parent_auth_id = -1 # 目前先給-1

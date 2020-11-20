@@ -50,8 +50,8 @@ class ChatConsumer(WebsocketConsumer):
 
         #now_time = datetime.datetime.now().strftime('%H:%M')
         ws_manager = websocket_manager()
-        new_msg_id, now_time= ws_manager.chat_storge(**self.pass_data_to_chat_tools)
-
+        msgID, time = ws_manager.chat_storge(**self.pass_data_to_chat_tools)
+        now_time = str(time)
         # systemCode 暫時沒有作用,統一給0
         if text_data_json['messageType'] == 1:
             systemCode = 0
@@ -63,7 +63,7 @@ class ChatConsumer(WebsocketConsumer):
         # 會發到下面的chat_message (雖然不曉得怎麼發的)
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name, # channel_name
-            {
+            {   'type' : "chat.message", # channel要求必填
                 'chatID':self.pass_data_to_chat_tools['chatID'],
                 'userID': self.pass_data_to_chat_tools['userID'],
                 'messageText': self.pass_data_to_chat_tools['message'],
@@ -79,11 +79,11 @@ class ChatConsumer(WebsocketConsumer):
     def chat_message(self, event):
         return_to_ws =dict()
         #for k,v in event.values()
-        print(event)
+        print('收到event')
+        #event['messageCreateTime'] = str(now_time)
         #message = event['message']
         #now_time = event['now_time']
         #user = event['user']
-        
         # Send message to WebSocket
         self.send(text_data=json.dumps(event))
         print('send to WebSocket')
