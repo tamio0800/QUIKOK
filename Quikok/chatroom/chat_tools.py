@@ -206,6 +206,7 @@ class websocket_manager:
         message = kwargs['message']
         messageType = kwargs['messageType']
         self.check_authID_type(self.sender)
+
         try:
             chatroom_info = chatroom_info_user2user.objects.filter(id = self.chatroom_id).first()
             print(chatroom_info.id)
@@ -216,24 +217,27 @@ class websocket_manager:
             elif self.user_type == 'teacher':
                 teacher_id = self.sender
                 student_id= chatroom_info.student_auth_id
+            else:
+                pass
             parent_auth_id = -1 # 目前先給-1
 
             new_msg = chat_history_user2user.objects.create(
-                chatroom_info_user2user_id= self.chatroom_id,
-                teacher_auth_id =teacher_id,
-                student_auth_id= student_id,
-                parent_auth_id =parent_auth_id,
-                message = message,
-                message_type= messageType,
-                who_is_sender= self.user_type,
-                sender_auth_id = self.sender,
-                is_read= 0,
-                created_time=datetime.now()
-                )
+                    chatroom_info_user2user_id= self.chatroom_id,
+                    teacher_auth_id =teacher_id,
+                    student_auth_id= student_id,
+                    parent_auth_id =parent_auth_id,
+                    message = message,
+                    message_type= messageType,
+                    who_is_sender= self.user_type,
+                    sender_auth_id = self.sender,
+                    is_read= 0,
+                    )
             new_msg.save()
-
-
-            return(new_msg.id,new_msg.created_time)
+            return(new_msg.id, new_msg.created_time)
+            
+            #else:
+            #    print('Found no chatroom_info_user2user id == ', self.chatroom_id)
+            #    return(None, None)
 
         except Exception as e:
             print(e)

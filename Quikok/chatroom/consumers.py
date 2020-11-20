@@ -69,7 +69,7 @@ class ChatConsumer(WebsocketConsumer):
                 'messageText': self.pass_data_to_chat_tools['message'],
                 'messageType': self.pass_data_to_chat_tools['messageType'],
                 'systemCode':systemCode,
-                'messageCreateTime': now_time
+                'messageCreateTime': str(now_time)
             })
         print('send_somthing to somewhere')
 
