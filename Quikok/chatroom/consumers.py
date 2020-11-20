@@ -85,14 +85,30 @@ class ChatConsumer(WebsocketConsumer):
 
         # Send message to room group
         async_to_sync(self.channel_layer.group_send)(
-            self.room_group_name,
+            self.room_group_name, # channel_name
             {
                 'type': 'chat_message',
                 'message': pass_data_to_chat_tools['message'],
                 'user': user.username,
-                'now_time': now_time
+                'now_time': now_time,
+                'test_msg' : 1
             }
         )
+        print('send_somthing1')
+    async def chat_message(self, event):
+        """
+        Called when someone has messaged our chat.
+        """
+    # Send a message down to the client
+        await self.send_json(
+            {
+                "msg_type": settings.MSG_TYPE_MESSAGE,
+                "room": event["room_id"],
+                "username": user.username,
+                "message": pass_data_to_chat_tools['message'],
+            },
+        )
+        print('send_somthing2')
 
     # Receive message from room group
     def chat_message(self, event):
@@ -105,7 +121,9 @@ class ChatConsumer(WebsocketConsumer):
             'message': message,
             'user': user,
             'now_time': now_time,
+            'test_msg' : 2
         }))
+        print('send_somthing3')
 
 '''
 

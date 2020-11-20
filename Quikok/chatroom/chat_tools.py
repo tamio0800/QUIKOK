@@ -30,6 +30,11 @@ class chat_room_manager:
         # 預約message 的keys的keys
         booking_related_message_key = ['bookingID', 'bookingLeesonID', 'bookingStatus',
                                       'bookingDate', 'bookingTime', 'bookingUpdateTime']
+        # 預約功能還沒做但先制定好會回傳的格式
+        booking_pattern = 'bookingID:1 ; bookingLeesonID:1; bookingStatus:wait;\
+                                      bookingDate:2020-10-10; bookingTime: 12:00-1:00; bookingUpdateTime:'+ str(datetime.now())
+        system_msg_pattern = 'bookingDate:2020-10-10; bookingTime: 12:00-1:00'
+        
         self.booking_related_message_dict = dict()
         for key in booking_related_message_key:
             self.booking_related_message_dict[key] = None
