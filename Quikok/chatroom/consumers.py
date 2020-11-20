@@ -99,6 +99,7 @@ class ChatConsumer(WebsocketConsumer):
         message = event['message']
         now_time = event['now_time']
         user = event['user']
+        
         # Send message to WebSocket
         self.send(text_data=json.dumps({
             'message': message,
