@@ -83,15 +83,16 @@ class chat_history_user2user(models.Model):
     parent_auth_id = models.IntegerField()
     message = models.TextField()
     message_type = models.CharField(max_length=30) # 0:一般文字, 1:系統訊息, 2:預約方塊
-    who_is_sender = models.CharField(max_length=20)    # teacher/student/parent/system
+    who_is_sender = models.CharField(max_length=20) # teacher/student/parent/system
     is_read = models.BooleanField()
     created_time = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return str(self.id)
 
     # 預約資訊message儲存格式如下:{'bookingID': 1;
-                #    'bookingLeesonID': 1;
-                #    'bookingStatus' : 'wait';
+                #    'lesson_name': '好棒'
+                #    'lesson_id': 1;
+                #    'booking_status' : 'wait';
                 #    'bookingDate': '2020-11-11';
                 #    'bookingTime': '13:00-15:00';'bookingUpdateTime' : str(datetime.now()),};
     # 系統訊息message儲存格式如下: {'bookingDate': 2020-11-11; 'bookingTime': 13:00-15:00'}

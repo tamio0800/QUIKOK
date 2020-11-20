@@ -36,19 +36,57 @@ class ChatConsumer(WebsocketConsumer):
     # Receive message from WebSocket
     def receive(self, text_data):
         response = dict()
-        pass_data_to_chat_tools = dict()
+        self.pass_data_to_chat_tools = dict()
         
         text_data_json = json.loads(text_data)
         print('ws load jason收到的資料')
         print('\n\nreceive_data:\n'+str(text_data_json))
         
-        pass_data_to_chat_tools = {
+        self.pass_data_to_chat_tools = {
         'userID' : text_data_json['userID'],
         'chatID' : text_data_json['chatID'],
         'messageType' : text_data_json['messageType'],
         'message' : text_data_json['messageText']}
 
-        now_time = datetime.datetime.now().strftime('%H:%M')
+        #now_time = datetime.datetime.now().strftime('%H:%M')
+        ws_manager = websocket_manager()
+        new_msg_id, now_time= ws_manager.chat_storge(**self.pass_data_to_chat_tools)
+
+        # systemCode 暫時沒有作用,統一給0
+        if text_data_json['messageType'] == 1:
+            systemCode = 0
+        else:
+            systemCode = None
+        print('\n\nstorge message')
+        #user=User.objects.get(id=self.pass_data_to_chat_tools['userID'])
+        # Send message to room group
+        # 會發到下面的chat_message (雖然不曉得怎麼發的)
+        async_to_sync(self.channel_layer.group_send)(
+            self.room_group_name, # channel_name
+            {
+                'chatID':self.pass_data_to_chat_tools['chatID'],
+                'userID': self.pass_data_to_chat_tools['userID'],
+                'messageText': self.pass_data_to_chat_tools['message'],
+                'messageType': self.pass_data_to_chat_tools['messageType'],
+                'systemCode':systemCode,
+                'messageCreateTime': now_time
+            })
+        print('send_somthing to somewhere')
+
+    # Receive message from room group
+    # 收到的字典叫 "event"
+    # 這個會回給前端
+    def chat_message(self, event):
+        return_to_ws =dict()
+        #for k,v in event.values()
+        print(event)
+        #message = event['message']
+        #now_time = event['now_time']
+        #user = event['user']
+        
+        # Send message to WebSocket
+        self.send(text_data=json.dumps(event))
+        print('send to WebSocket')
 
         #if False in pass_data_to_chat_tools.values(): 
         #    response['status'] = 'failed'
@@ -58,73 +96,7 @@ class ChatConsumer(WebsocketConsumer):
         #    return JsonResponse(response)
 
         #else:
-        ws_manager = websocket_manager()
         #response['status'], response['errCode'], response['errMsg'], response['data'] =\
-        ws_manager.chat_storge(**pass_data_to_chat_tools)
-        #return JsonResponse(response)
-
-
-        #user_id =self.scope["url_route"]["kwargs"]["room_url"].split('_')[0]
-        #group_id = self.room_group_name
-        ### 新增結構
-        #pass_data_to_chat_tools = dict()
-        #key_from_frontend = ['userID', 'chatID','messageType','messageText']
-
-        #ws_manager = websocket_manager()
-        #ws_manager.chat_storge(chatID = group_id,sender=userID,message=messageText,
-        #messageType = messageType )
-        ###
-        #group=chat_room.objects.get(id=group_id)
-        #group.date=datetime.datetime.now()
-        #group.save()
-        print('\n\nstorge message')
-        #user = 
-        user=User.objects.get(id=pass_data_to_chat_tools['userID'])
-        #Messages.objects.create(sender=user, message=pass_data_to_chat_tools['message'], 
-        #                        group=pass_data_to_chat_tools['chatID'])
-
-        # Send message to room group
-        async_to_sync(self.channel_layer.group_send)(
-            self.room_group_name, # channel_name
-            {
-                'type': 'chat_message',
-                'message': pass_data_to_chat_tools['message'],
-                'user': user.username,
-                'now_time': now_time,
-                'test_msg' : 1
-            }
-        )
-        print('send_somthing1')
-    async def chat_message(self, event):
-        """
-        Called when someone has messaged our chat.
-        """
-    # Send a message down to the client
-        await self.send_json(
-            {
-                "msg_type": settings.MSG_TYPE_MESSAGE,
-                "room": event["room_id"],
-                "username": user.username,
-                "message": pass_data_to_chat_tools['message'],
-            },
-        )
-        print('send_somthing2')
-
-    # Receive message from room group
-    def chat_message(self, event):
-        message = event['message']
-        now_time = event['now_time']
-        user = event['user']
-        
-        # Send message to WebSocket
-        self.send(text_data=json.dumps({
-            'message': message,
-            'user': user,
-            'now_time': now_time,
-            'test_msg' : 2
-        }))
-        print('send_somthing3')
-
 '''
 
 asynchronous version
