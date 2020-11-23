@@ -11,6 +11,7 @@ class chat_room_manager:
         self.errCode = None
         self.errMsg = None
         self.data = None
+        self.user_type = ''
         # 依據要回傳給前端的字典格式建立空的self字典
         # response_msg字典裏面又包含兩層字典
         # 因為感覺之後會直接叫裡面的字典來修改、再更新較外層的字典,
@@ -97,13 +98,15 @@ class chat_room_manager:
             # 首先篩選出所有這個人的聊天室
             user_type = kwargs['user_type']
             if user_type == 'teacher':
+                self.user_type = 'teacher'
                 #user_teacher = teacher_profile.objects.filter(username= kwargs['userID'])
                 user_chatrooms_with_user = chatroom_info_user2user.objects.filter(teacher_auth_id=kwargs['userID'])
             elif user_type == 'student':
+                self.user_type = 'student'
                 #user_student = student_profile.objects.filter(username= kwargs['userID'])
                 user_chatrooms_with_user = chatroom_info_user2user.objects.filter(student_auth_id=kwargs['userID'])
             else: # 之後會有其他種type
-                pass
+                self.user_type = ''
             room_queryset= chatroom_info_user2user.objects.filter(Q(student_auth_id=kwargs['userID'])|Q(teacher_auth_id=kwargs['userID'])).order_by("created_time")
             print('使用者有這些聊天室')
             print(room_queryset)
@@ -119,7 +122,6 @@ class chat_room_manager:
                     if user_type == 'teacher':
                         chatUserID = a_chatroom.student_auth_id
                         chat_user = student_profile.objects.filter(auth_id = chatUserID).first()
-
                         chatUserType = 'student'
                     elif user_type == 'student':
                         chatUserID = a_chatroom.teacher_auth_id
@@ -149,7 +151,7 @@ class chat_room_manager:
                         message_info_group = list()
                         for a_message in all_messages:
                             temp_info = dict()
-                            temp_info['senderID'] = a_message.who_is_sender
+                            temp_info['senderID'] = a_message.sender_auth_id
                             temp_info['messageType'] = a_message.message_type
                             temp_info['messegText'] = a_message.message
                             temp_info['messageCreateTime'] = a_message.created_time
