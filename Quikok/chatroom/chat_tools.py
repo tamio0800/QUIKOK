@@ -5,6 +5,10 @@ from .models import *
 from account.models import student_profile, teacher_profile
 from datetime import datetime
 
+class system_msg_producer:
+    # 傳訊息代碼進來, 回應相對的資訊
+    def wellcome_msg(self):
+        pass
 class chat_room_manager:
     def __init__(self):
         self.status = None
@@ -63,6 +67,17 @@ class chat_room_manager:
                 new_chatroom = chatroom_info_user2user.objects.create(student_auth_id=student_authID,
                 teacher_auth_id=teacher_authID, parent_auth_id = parent_authID,
                 chatroom_type = chatroom_type)
+                # 當聊天室建立時, 系統自動產生一筆訊息, 以便前端推播到最前面
+                first_system_msg = chat_history_user2user.objects.create(    
+                    chatroom_info_user2user_id = new_chatroom.id,    
+                    teacher_auth_id = teacher_authID,    
+                    student_auth_id = student_authID, parent_auth_id = -1,       # 現在parent_auth_id預設都是-1
+                    message = '於'+ datetime.now().strftime('%H:%M') +'創立聊天室',
+                    message_type = 1 ,# 0:一般文字, 1:系統訊息, 2:預約方塊
+                    who_is_sender = 'system' ,   # teacher/student/parent/system
+                    sender_auth_id = 404,
+                    is_read = 0)
+
                 print('create new chatroom')
                 self.status = 'success'
                 self.errCode = None
@@ -97,16 +112,16 @@ class chat_room_manager:
         try:
             # 首先篩選出所有這個人的聊天室
             user_type = kwargs['user_type']
-            if user_type == 'teacher':
-                self.user_type = 'teacher'
+            #if user_type == 'teacher':
+            #    self.user_type = 'teacher'
                 #user_teacher = teacher_profile.objects.filter(username= kwargs['userID'])
-                user_chatrooms_with_user = chatroom_info_user2user.objects.filter(teacher_auth_id=kwargs['userID'])
-            elif user_type == 'student':
-                self.user_type = 'student'
+            #    user_chatrooms_with_user = chatroom_info_user2user.objects.filter(teacher_auth_id=kwargs['userID'])
+            #elif user_type == 'student':
+            #    self.user_type = 'student'
                 #user_student = student_profile.objects.filter(username= kwargs['userID'])
-                user_chatrooms_with_user = chatroom_info_user2user.objects.filter(student_auth_id=kwargs['userID'])
-            else: # 之後會有其他種type
-                self.user_type = ''
+            #    user_chatrooms_with_user = chatroom_info_user2user.objects.filter(student_auth_id=kwargs['userID'])
+            #else: # 之後會有其他種type
+            #    self.user_type = ''
             room_queryset= chatroom_info_user2user.objects.filter(Q(student_auth_id=kwargs['userID'])|Q(teacher_auth_id=kwargs['userID'])).order_by("created_time")
             print('使用者有這些聊天室')
             print(room_queryset)
