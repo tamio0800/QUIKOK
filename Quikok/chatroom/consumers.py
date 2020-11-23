@@ -63,9 +63,9 @@ class ChatConsumer(WebsocketConsumer):
         # 會發到下面的chat_message (雖然不曉得怎麼發的)
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name, # channel_name
-            {   'type' : "chat.message", # channel要求必填
-                'chatID':self.pass_data_to_chat_tools['chatID'],
-                'userID': self.pass_data_to_chat_tools['userID'],
+            {   'type' : "chat.message", # channel要求必填,不填channel會收不到
+                'chatroomID':self.pass_data_to_chat_tools['chatID'],
+                'senderID': self.pass_data_to_chat_tools['userID'],
                 'messageText': self.pass_data_to_chat_tools['message'],
                 'messageType': self.pass_data_to_chat_tools['messageType'],
                 'systemCode':systemCode,
@@ -79,7 +79,7 @@ class ChatConsumer(WebsocketConsumer):
     def chat_message(self, event):
         return_to_ws =dict()
         #for k,v in event.values()
-        print('收到event')
+        print('')
         #event['messageCreateTime'] = str(now_time)
         #message = event['message']
         #now_time = event['now_time']
