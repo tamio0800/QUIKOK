@@ -51,6 +51,7 @@ class ChatConsumer(WebsocketConsumer):
         user=User.objects.get(id=user_id)
         Messages.objects.create(sender=user, message=message, group=group)
         # Send message to room group
+        
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
