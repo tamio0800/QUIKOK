@@ -79,7 +79,7 @@ class ChatConsumer(WebsocketConsumer):
     def chat_message(self, event):
         return_to_ws =dict()
         #for k,v in event.values()
-        print('收到event')
+        print('')
         #event['messageCreateTime'] = str(now_time)
         #message = event['message']
         #now_time = event['now_time']
