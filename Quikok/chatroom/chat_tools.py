@@ -9,6 +9,8 @@ class system_msg_producer:
     # 傳訊息代碼進來, 回應相對的資訊
     def wellcome_msg(self):
         pass
+    def first_system_msg(self):
+        pass
 class chat_room_manager:
     def __init__(self):
         self.status = None
@@ -168,7 +170,7 @@ class chat_room_manager:
                             temp_info = dict()
                             temp_info['senderID'] = a_message.sender_auth_id
                             temp_info['messageType'] = a_message.message_type
-                            temp_info['messegText'] = a_message.message
+                            temp_info['messageText'] = a_message.message
                             temp_info['messageCreateTime'] = a_message.created_time
                             if a_message.message_type == 1:
                                 temp_info['systemCode'] = 0
