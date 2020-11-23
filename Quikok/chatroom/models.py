@@ -80,15 +80,23 @@ class chat_history_user2user(models.Model):
     chatroom_info_user2user_id = models.IntegerField()
     teacher_auth_id = models.IntegerField()
     student_auth_id = models.IntegerField()
-    parent_auth_id = models.IntegerField()
+    parent_auth_id = models.IntegerField()       # 現在parent_auth_id預設都是-1
     message = models.TextField()
-    message_type = models.CharField(max_length=30)
-    who_is_sender = models.CharField(max_length=20)    # teacher  or  student  or parent
+    message_type = models.CharField(max_length=30) # 0:一般文字, 1:系統訊息, 2:預約方塊
+    who_is_sender = models.CharField(max_length=20)    # teacher/student/parent/systemw
+    sender_auth_id = models.IntegerField()
     is_read = models.BooleanField()
     created_time = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return str(self.id)
 
+    # 預約資訊message儲存格式如下:{'bookingID': 1;
+                #    'lesson_name': '好棒'
+                #    'lesson_id': 1;
+                #    'booking_status' : 'wait';
+                #    'bookingDate': '2020-11-11';
+                #    'bookingTime': '13:00-15:00';'bookingUpdateTime' : str(datetime.now()),};
+    # 系統訊息message儲存格式如下: {'bookingDate': 2020-11-11; 'bookingTime': 13:00-15:00'}
 
 class chat_history_Mr_Q2user(models.Model):
     '''
@@ -98,14 +106,9 @@ class chat_history_Mr_Q2user(models.Model):
     user_auth_id = models.IntegerField()
     system_user_auth_id = models.IntegerField()  # 為了一致性及未來的客服需求而生的
     message = models.TextField()
-    # 預約資訊message儲存格式如下:'bookingID': 1;
-                #    'bookingLeesonID': 1;
-                #    'bookingStatus' : 'wait';
-                #    'bookingDate': '2020-11-11';
-                #    'bookingTime': '13:00-15:00';
-                #    'bookingUpdateTime' : str(datetime.now()),};
     message_type = models.CharField(max_length=30)
     who_is_sender = models.CharField(max_length=20)  # teacher  or  student  or parent or system_user
+    sender_auth_id = models.IntegerField()
     is_read = models.BooleanField()
     created_time = models.DateTimeField(auto_now_add=True)
     def __str__(self):

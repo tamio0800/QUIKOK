@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.db.models import Q
 from .models import *
 from account.models import student_profile, teacher_profile
-
+from datetime import datetime
 
 class chat_room_manager:
     def __init__(self):
@@ -15,26 +15,33 @@ class chat_room_manager:
         # response_msg字典裏面又包含兩層字典
         # 因為感覺之後會直接叫裡面的字典來修改、再更新較外層的字典,
         # 因此先將這幾層字典都設 self 
-        response_msg_key = ['chatroomID','chatUnreadMessageQty', 'chatUserID', 'chatUserType',
-                        'chatUserName', 'chatUserPath', 'messageInfo']
+        self.response_msg_key = ['chatroomID','chatUnreadMessageQty', 'chatUserID', 'chatUserType',
+                        'chatUserName', 'chatUsergender','chatUserPath', 'messageInfo']
+        
         self.response_msg = dict()
-        for key in response_msg_key:
+        for key in self.response_msg_key:
             self.response_msg[key] = None
         a_message_info_dict_keys = ['userID','messageType','messageText','bookingRelatedMessage', 
                                     'systemCode', 'messageCreateTime']
-        self.message_info =dict()
+        self.message_info_group = list()
+        self.a_message_info = dict()
         for key in a_message_info_dict_keys:
-            self.message_info[key] = None  
+            self.a_message_info[key] = None  
         # 預約message 的keys的keys
         booking_related_message_key = ['bookingID', 'bookingLeesonID', 'bookingStatus',
                                       'bookingDate', 'bookingTime', 'bookingUpdateTime']
+        # 預約功能還沒做但先制定好會回傳的格式
+        booking_pattern = 'bookingID:1 ; bookingLeesonID:1; bookingStatus:wait;\
+                                      bookingDate:2020-10-10; bookingTime: 12:00-1:00; bookingUpdateTime:'+ str(datetime.now())
+        system_msg_pattern = 'bookingDate:2020-10-10; bookingTime: 12:00-1:00'
+        
         self.booking_related_message_dict = dict()
         for key in booking_related_message_key:
             self.booking_related_message_dict[key] = None
         #self.message_info['bookingRelatedMessage'] = self.booking_related_message_dict
         # 註解掉因為現在回傳用不到這個字典
         # 因為booking資訊是在message裡面，先更新message字典再把message字典更新到info大字典
-        self.response_msg['messageInfo'] = self.message_info
+        self.response_msg['messageInfo'] = self.message_info_group
 
     # 建立一些error回應
     def response_to_frontend(check_result):
@@ -59,18 +66,14 @@ class chat_room_manager:
                 self.status = 'success'
                 self.errCode = None
                 self.errMsg = None
-                self.data = list()
                 self.data = {'chatID' : new_chatroom.id}
-                self.data.append(data)
                 return (self.status, self.errCode, self.errMsg, self.data)               
             elif len(chatroom) == 1 :
                 print('their chatroom already exist')
                 self.status = 'success'
                 self.errCode = None
                 self.errMsg = None
-                self.data = list()
                 self.data = {'chatID' : chatroom[0].id}
-                #self.data.append(data)
                 return (self.status, self.errCode, self.errMsg, self.data)
             else:
                 print('something wrong...find multi chatrooms')
@@ -99,49 +102,73 @@ class chat_room_manager:
             elif user_type == 'student':
                 #user_student = student_profile.objects.filter(username= kwargs['userID'])
                 user_chatrooms_with_user = chatroom_info_user2user.objects.filter(student_auth_id=kwargs['userID'])
-            
-            room_queryset= chatroom_info_user2user.objects.filter(Q(student_auth_id=kwargs['userID'])|Q(teacher_auth_id=kwargs['userID'])).order_by("-created_time")
+            else: # 之後會有其他種type
+                pass
+            room_queryset= chatroom_info_user2user.objects.filter(Q(student_auth_id=kwargs['userID'])|Q(teacher_auth_id=kwargs['userID'])).order_by("created_time")
             print('使用者有這些聊天室')
             print(room_queryset)
             # 如果有資料的前提..
             # 包成可以回傳給前端的格式
-            for a_chatroom in room_queryset:
-                #temp_chat_room_info = dict()
-                chatroomID = a_chatroom.id
-                if user_type == 'teacher':
-                    chatUserID = a_chatroom.student_auth_id
-                    chat_user = student_profile.objects.filter(auth_id = a_chatroom.student_auth_id).first()
-                    chatUserType = 'student'
-                elif user_type == 'student':
-                    chatUserID = a_chatroom.teacher_auth_id
-                    chat_user = student_profile.objects.filter(auth_id = a_chatroom.teacher_auth_id).first()
-                    chatUserType = 'teacher'
-                
-                chatUserPath = chat_user.thumbnail_dir
-                chatUserName = chat_user.nickname
-                ### 紀錄一下最外層目前已有這些資訊 response_value = [chatroomID, chatUserID, chatUserType, chatUserName]
-                # chatUnreadMessageQty 歷史訊息的id = roomid,且發送者不是 user, 且未讀 = 0
-                chat_history_obj = chat_history_user2user.objects.filter(Q(chatroom_info_user2user_id=chatroomID)&Q(is_read = 0)& ~Q(who_is_sender = kwargs['userID']))
-                chatUnreadMessageQty = len(chat_history_obj)
-                update_response_msg = {'chatroomID':chatroomID,'chatUnreadMessageQty':chatUnreadMessageQty,
-                'chatUserID' : chatUserID, 'chatUserType': chatUserType ,
-                            'chatUserName' : chatUserName, 'chatUserPath' : chatUserPath}
-                            #測試看看用下面的selfinfo 訊息是否可以直接更新到self.response 
-                            # 如果不行再加這段 'messageInfo' = message_info} #並且移到最下面
-                self.response_msg.update(update_response_msg)
+            if len(room_queryset) >0:
+                response_data = list()
+                for a_chatroom in room_queryset:
+                    a_chatroom_info = dict()
+                    for key in self.response_msg_key:
+                        a_chatroom_info[key] = None
+                    chatroomID = a_chatroom.id
+                    if user_type == 'teacher':
+                        chatUserID = a_chatroom.student_auth_id
+                        chat_user = student_profile.objects.filter(auth_id = chatUserID).first()
 
+                        chatUserType = 'student'
+                    elif user_type == 'student':
+                        chatUserID = a_chatroom.teacher_auth_id
+                        chat_user = teacher_profile.objects.filter(auth_id = chatUserID).first()
+                        chatUserType = 'teacher'
+                    else: # 將來可能有其他類別
+                        pass
+                    # 對方可能會沒有大頭貼
+                    if len(chat_user.thumbnail_dir) > 0:
+                        print(chat_user.thumbnail_dir)
+                        chatUserPath = chat_user.thumbnail_dir
+                    else:
+                        chatUserPath = ''
+                    chatUserName = chat_user.nickname
+                    chatUsergender = chat_user.is_male
+                     # chatUnreadMessageQty 歷史訊息的id = roomid,且發送者不是 user, 且未讀 = 0
+                    chat_history_obj = chat_history_user2user.objects.filter(Q(chatroom_info_user2user_id=chatroomID)&Q(is_read = 0)& ~Q(who_is_sender = kwargs['userID']))
+                    chatUnreadMessageQty = len(chat_history_obj)
+                    update_response_msg = {'chatroomID':chatroomID,'chatUnreadMessageQty':chatUnreadMessageQty,
+                    'chatUserID' : chatUserID, 'chatUserType': chatUserType ,'chatUsergender':chatUsergender,
+                                'chatUserName' : chatUserName, 'chatUserPath' : chatUserPath}
+                    a_chatroom_info.update(update_response_msg)
                 # messageInfo 每一則訊息的資訊
                 # messageType: 訊息類別(0:一般文字, 1:系統訊息, 2:預約方塊)
-                all_messages = chat_history_user2user.objects.filter(chatroom_info_user2user_id=chatroomID).order_by("created_time")
-                for a_message in all_messages:
-                    temp_info = dict()
-                    temp_info['senderID'] = a_message.who_is_sender
-                    temp_info['messageType'] = a_message.message_type
-                    temp_info['messegText'] = a_message.message
-                    temp_info['messageCreateTime'] = a_message.created_time
-                    self.message_info.append(temp_info)
-                
-                self.data.append(self.response_msg)
+                    all_messages = chat_history_user2user.objects.filter(chatroom_info_user2user_id=chatroomID).order_by("created_time")
+                    if len(all_messages) > 0:
+                        message_info_group = list()
+                        for a_message in all_messages:
+                            temp_info = dict()
+                            temp_info['senderID'] = a_message.who_is_sender
+                            temp_info['messageType'] = a_message.message_type
+                            temp_info['messegText'] = a_message.message
+                            temp_info['messageCreateTime'] = a_message.created_time
+                            if a_message.message_type == 1:
+                                temp_info['systemCode'] = 0
+                            else:
+                                temp_info['systemCode'] = -1
+                            message_info_group.append(temp_info)
+                    else:
+                        #print('本聊天室沒有任何訊息')
+                        message_info_group = list()
+
+                    a_chatroom_info['messageInfo'] = message_info_group 
+                    response_data.append(a_chatroom_info)
+                #print(response_data)
+                self.status = 'success'
+                self.data = response_data
+            else: # 尚未建立任何聊天室
+                self.status = 'success'
             return (self.status, self.errCode, self.errMsg, self.data)
         
         except Exception as e:
@@ -159,3 +186,63 @@ class chat_room_manager:
     # 以及發送訊息
     def system_2user(self):
         pass
+
+class websocket_manager:
+    def check_authID_type(self, authID):
+        # 判斷某個ID的身分
+        _find_teacher = teacher_profile.objects.filter(auth_id=authID)
+        _find_student = student_profile.objects.filter(auth_id=authID)
+
+        if len(_find_teacher)>0:
+            self.user_type = 'teacher'
+        elif len(_find_student)>0 :
+            self.user_type = 'student'
+        else: # 等到預約寫了這邊還會再加上預約(system)
+            self.user_type = 'unknown'
+
+    def chat_storge(self, **kwargs):
+        self.chatroom_id = kwargs['chatID']
+        self.sender = kwargs['userID']
+        message = kwargs['message']
+        messageType = kwargs['messageType']
+        self.check_authID_type(self.sender)
+
+        try:
+            chatroom_info = chatroom_info_user2user.objects.filter(id = self.chatroom_id).first()
+            print(chatroom_info.id)
+            if self.user_type == 'student':
+                # 發送者是學生
+                teacher_id = chatroom_info.teacher_auth_id
+                student_id = self.sender
+            elif self.user_type == 'teacher':
+                teacher_id = self.sender
+                student_id= chatroom_info.student_auth_id
+            else:
+                pass
+            parent_auth_id = -1 # 目前先給-1
+
+            new_msg = chat_history_user2user.objects.create(
+                    chatroom_info_user2user_id= self.chatroom_id,
+                    teacher_auth_id =teacher_id,
+                    student_auth_id= student_id,
+                    parent_auth_id =parent_auth_id,
+                    message = message,
+                    message_type= messageType,
+                    who_is_sender= self.user_type,
+                    sender_auth_id = self.sender,
+                    is_read= 0,
+                    )
+            new_msg.save()
+            return(new_msg.id, new_msg.created_time)
+            
+            #else:
+            #    print('Found no chatroom_info_user2user id == ', self.chatroom_id)
+            #    return(None, None)
+
+        except Exception as e:
+            print(e)
+    def return_to_websocket(self):
+        pass
+
+            
+    
