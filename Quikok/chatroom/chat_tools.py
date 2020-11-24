@@ -62,7 +62,7 @@ class chat_room_manager:
     # 建立聊天室
         user_authID = kwargs['userID']
         user_type = kwargs['user_type']
-        systemID = 404 # 404 暫定為系統專用
+        systemID = 404 # 404 暫定為系統專用auth_id
         chatroom_type = 'system2users'
         new_chatroom = chatroom_info_mr_q2user.objects.create(user_auth_id=user_authID,
                 usre_type = user_type, system_user_auth_id = systemID,
