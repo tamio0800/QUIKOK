@@ -9,6 +9,7 @@ from django.core.files.storage import FileSystemStorage
 from account.models import dev_db
 from datetime import date as date_function
 import pandas as pd
+from chat_tools import chat_room_manager
 import os
 # FOR API
 from django.views.decorators.http import require_http_methods
