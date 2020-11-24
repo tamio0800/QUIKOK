@@ -144,7 +144,7 @@ def create_a_student_user(request):
             user_created_object.save()
             print('auth建立')
             print('建立新學生資料')
-            student_profile.objects.create(
+            new_student = student_profile.objects.create(
                 auth_id = user_created_object.id,
                 username = username,
                 password = password,
@@ -161,9 +161,16 @@ def create_a_student_user(request):
                 info_folder = 'user_upload/'+ username+ '/info_folder',
                 thumbnail_dir = thumbnail_dir ,
                 update_someone_by_email = update_someone_by_email
-            ).save()
+            )
             print('student_profile建立')
             # 回前端
+            # 建立學生與system的聊天室
+            chat_tool = chat_room_manager()
+            chat_tool.create_system2user_chatroom(userID=new_student.id, user_type = 'student')
+            print('建立學生與Mr.Q 聊天室')
+  
+
+
             response['status'] = 'success'
             response['errCode'] = None
             response['errMsg'] = None
@@ -440,7 +447,12 @@ def create_a_teacher_user(request):
                     week = temp_every_week[0],
                     time = temp_every_week[1]
                                 ).save()
-            print('老師成功建立 一般時間')    
+            print('老師成功建立 一般時間') 
+
+            # 建立老師與system的聊天室
+            chat_tool = chat_room_manager()
+            chat_tool.create_system2user_chatroom(userID=teacher_object.id, user_type = 'teacher')
+            print('建立老師與Mr.Q 聊天室')
 
             response['status'] = 'success'
             response['errCode'] = None
