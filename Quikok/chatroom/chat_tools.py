@@ -51,21 +51,21 @@ class chat_room_manager:
         self.response_msg['messageInfo'] = self.message_info_group
 
     # 建立一些error回應
-    def response_to_frontend(check_result):
+    def response_to_frontend(self, check_result):
         if check_result == 1:
             self.status = 'failed'
             self.errCode = '1'
             self.errMsg = 'Query failed'
     # 為了讓user之後能即時收到第一次建立聊天室時的資訊,
     # 要先建立與系統的聊天室作為通道
-    def create_user_system_chatroom(self,**kwargs):
+    def create_system2user_chatroom(self,**kwargs):
     # 建立聊天室
         user_authID = kwargs['userID']
         user_type = kwargs['user_type']
         systemID = 404 # 404 暫定為系統專用auth_id
         chatroom_type = 'system2users'
-        new_chatroom = chatroom_info_mr_q2user.objects.create(user_auth_id=user_authID,
-                usre_type = user_type, system_user_auth_id = systemID,
+        new_chatroom = chatroom_info_Mr_Q2user.objects.create(user_auth_id=user_authID,
+                user_type = user_type, system_user_auth_id = systemID,
                 chatroom_type = chatroom_type)
                 
     def check_and_create_chat_room(self,**kwargs):
@@ -89,6 +89,11 @@ class chat_room_manager:
                     who_is_sender = 'system' ,   # teacher/student/parent/system
                     sender_auth_id = 404,
                     is_read = 0)
+                
+                # 當聊天室建立時, 為了及時通知老師(否則除非老師重新整理、會看不到此訊息),
+                # 由系統主動發一個ws給他
+                #send_msg = ChatConsumer()
+                #send_msg.
 
                 print('create new chatroom')
                 self.status = 'success'
@@ -251,7 +256,10 @@ class websocket_manager:
             else:
                 pass
             parent_auth_id = -1 # 目前先給-1
-
+            
+            #temp_chat_msg = 
+            is_first_msg = str(1)
+            
             new_msg = chat_history_user2user.objects.create(
                     chatroom_info_user2user_id= self.chatroom_id,
                     teacher_auth_id =teacher_id,
@@ -264,7 +272,8 @@ class websocket_manager:
                     is_read= 0,
                     )
             new_msg.save()
-            return(new_msg.id, new_msg.created_time)
+
+            return(new_msg.id, new_msg.created_time, is_first_msg)
             
             #else:
             #    print('Found no chatroom_info_user2user id == ', self.chatroom_id)

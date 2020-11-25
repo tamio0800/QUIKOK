@@ -16,7 +16,9 @@ class ChatConsumer(WebsocketConsumer):
         print('成功!')
         print('\n\nconnect_info:\n'+str(self.scope)+'\n\n')
         self.room_group_name =self.scope["url_route"]["kwargs"]["room_url"].split('_')[2]
-        
+        print('channel name:')
+        print(self.channel_name)
+        print('room_group_name')
         print(self.room_group_name)
         
         # Join room group
@@ -48,9 +50,13 @@ class ChatConsumer(WebsocketConsumer):
         'messageType' : text_data_json['messageType'],
         'message' : text_data_json['messageText']}
 
+        # 查詢老師跟學生是否為第一次聊天
+        #chatroom = chatroom_info_user2user.objects.filter(Q(student_auth_id=pass_data_to_chat_tools['userID'])|Q(teacher_auth_id=teacher_authID))
+
+
         #now_time = datetime.datetime.now().strftime('%H:%M')
         ws_manager = websocket_manager()
-        msgID, time = ws_manager.chat_storge(**self.pass_data_to_chat_tools)
+        msgID, time, is_first_msg = ws_manager.chat_storge(**self.pass_data_to_chat_tools)
         now_time = str(time)
         # systemCode 暫時沒有作用,統一給0
         if text_data_json['messageType'] == 1:
@@ -61,6 +67,8 @@ class ChatConsumer(WebsocketConsumer):
         #user=User.objects.get(id=self.pass_data_to_chat_tools['userID'])
         # Send message to room group
         # 會發到下面的chat_message (雖然不曉得怎麼發的)
+        print('this is self.channel_layer.group_send')
+        print(self.channel_layer.group_send)
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name, # channel_name
             {   'type' : "chat.message", # channel要求必填,不填channel會收不到
@@ -71,32 +79,31 @@ class ChatConsumer(WebsocketConsumer):
                 'systemCode':systemCode,
                 'messageCreateTime': str(now_time)
             })
+        #async_to_sync('21')(
+        #    self.room_group_name, # channel_name
+        #    {   'type' : "chat.message", # channel要求必填,不填channel會收不到
+        #        'chatroomID':21,
+        #        'senderID': 204,
+        #        'messageText': 'test',
+        #        'messageType': self.pass_data_to_chat_tools['messageType'],
+        #        'systemCode':systemCode,
+        #        'messageCreateTime': str(now_time)
+        #    })
+
         print('send_somthing to somewhere')
 
     # Receive message from room group
-    # 收到的字典叫 "event"
-    # 這個會回給前端
+    # 收到的字典叫 "event",會回給前端
     def chat_message(self, event):
-        return_to_ws =dict()
-        #for k,v in event.values()
-        print('')
-        #event['messageCreateTime'] = str(now_time)
-        #message = event['message']
-        #now_time = event['now_time']
-        #user = event['user']
         # Send message to WebSocket
         self.send(text_data=json.dumps(event))
         print('send to WebSocket')
+    
+    # 測試是否可以同時發兩個聊天室
+#    def chat_send_system_msg(self,event):
+#        self.send(text_data=json.dumps(event))
+#        print('system send to WebSocket')
 
-        #if False in pass_data_to_chat_tools.values(): 
-        #    response['status'] = 'failed'
-        #    response['errCode'] = '0'
-        #    response['errMsg'] = 'Received Arguments Failed.'
-        #    response['data'] = None
-        #    return JsonResponse(response)
-
-        #else:
-        #response['status'], response['errCode'], response['errMsg'], response['data'] =\
 '''
 
 asynchronous version
