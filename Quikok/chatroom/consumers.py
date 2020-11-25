@@ -15,7 +15,10 @@ class ChatConsumer(WebsocketConsumer):
     def connect(self):
         print('成功!')
         print('\n\nconnect_info:\n'+str(self.scope)+'\n\n')
-        self.room_group_name =self.scope["url_route"]["kwargs"]["room_url"].split('_')[2]
+        if self.scope["url_route"]["kwargs"]["room_url"].split('_') == 2:
+            self.room_group_name =self.scope["url_route"]["kwargs"]["room_url"].split('_')[2]
+        if self.scope["url_route"]["kwargs"]["room_url"].split('_') == 3:
+            self.room_group_name =system+ str(self.scope["url_route"]["kwargs"]["room_url"].split('_')[3])
         print('channel name:')
         print(self.channel_name)
         print('room_group_name')
@@ -103,6 +106,10 @@ class ChatConsumer(WebsocketConsumer):
 #    def chat_send_system_msg(self,event):
 #        self.send(text_data=json.dumps(event))
 #        print('system send to WebSocket')
+
+
+#class ChatSystem(ChatConsumer):
+#    self.room_group_name =self.scope["url_route"]["kwargs"]["room_url"].split('_')[2]
 
 '''
 
