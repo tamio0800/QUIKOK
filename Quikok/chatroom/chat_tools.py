@@ -172,8 +172,10 @@ class chat_room_manager:
                             temp_info['messageType'] = a_message.message_type
                             temp_info['messageText'] = a_message.message
                             temp_info['messageCreateTime'] = a_message.created_time
+                            # 這個system code目前暫時沒有作用, 只是讓前端知道是系統訊息而已
+                            # 前端預想之後可能依照這個號碼來做不同動作
                             if a_message.message_type == 1:
-                                temp_info['systemCode'] = 0
+                                temp_info['systemCode'] = 0 
                             else:
                                 temp_info['systemCode'] = -1
                             message_info_group.append(temp_info)
