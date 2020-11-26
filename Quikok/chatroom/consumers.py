@@ -20,7 +20,7 @@ class ChatConsumer(WebsocketConsumer):
             self.room_group_name = self.scope["url_route"]["kwargs"]["room_url"].split('_')[2]
         # 接收格式 'kwargs': {'room_url': '204_chatroom_4_1'}
         elif self.scope["url_route"]["kwargs"]["room_url"].split('_')[3] == 1:
-            self.room_group_name = 'system'+ str(self.scope["url_route"]["kwargs"]["room_url"].split('_')[3])
+            self.room_group_name = 'system'+ str(self.scope["url_route"]["kwargs"]["room_url"].split('_')[2])
             print(type(self.room_group_name))
         else: #以後聊天室如果有更多種類可以加這
             pass
