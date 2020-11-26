@@ -42,13 +42,13 @@ class chat_room_manager:
                                       bookingDate:2020-10-10; bookingTime: 12:00-1:00; bookingUpdateTime:'+ str(datetime.now())
         system_msg_pattern = 'bookingDate:2020-10-10; bookingTime: 12:00-1:00'
         
-        self.booking_related_message_dict = dict()
-        for key in booking_related_message_key:
-            self.booking_related_message_dict[key] = None
+        #self.booking_related_message_dict = dict()
+        #for key in booking_related_message_key:
+        #    self.booking_related_message_dict[key] = None
         #self.message_info['bookingRelatedMessage'] = self.booking_related_message_dict
         # 註解掉因為現在回傳用不到這個字典
         # 因為booking資訊是在message裡面，先更新message字典再把message字典更新到info大字典
-        self.response_msg['messageInfo'] = self.message_info_group
+        #self.response_msg['messageInfo'] = self.message_info_group
 
     # 建立一些error回應
     def response_to_frontend(self, check_result):

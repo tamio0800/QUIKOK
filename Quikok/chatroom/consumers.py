@@ -7,6 +7,7 @@ from .models import *
 from django.contrib.auth.models import User
 from account.models import *
 from .chat_tools import websocket_manager
+import copy
 
 # backend for websocket
 
@@ -19,9 +20,13 @@ class ChatConsumer(WebsocketConsumer):
         # 接收格式 'kwargs': {'room_url': '204_chatroom_4_0'}
         if self.scope["url_route"]["kwargs"]["room_url"].split('_')[3] == '0':
             self.room_group_name = self.scope["url_route"]["kwargs"]["room_url"].split('_')[2]
-        # 接收格式 'kwargs': {'room_url': '204_chatroom_4_1'}
+            self.chatroom_type = 'user2user'
+        # 系統與user接收格式 'kwargs': {'room_url': '204_chatroom_4_1'}
         elif self.scope["url_route"]["kwargs"]["room_url"].split('_')[3] == '1':
             self.room_group_name = 'system'+ str(self.scope["url_route"]["kwargs"]["room_url"].split('_')[2])
+            self.chatroom_type = 'system2user'
+            # 測試對一個使用者來說, self變數是否會留存,還是我得另存db
+            self.system_room_group_name = copy.deepcopy(self.room_group_name.copy)
             print(type(self.room_group_name))
         else: #以後聊天室如果有更多種類可以加這
             pass
@@ -52,7 +57,8 @@ class ChatConsumer(WebsocketConsumer):
         text_data_json = json.loads(text_data)
         print('ws load jason收到的資料')
         print('\n\nreceive_data:\n'+str(text_data_json))
-        
+        print('測試系統訊息還在不在')
+        print(self.system_room_group_name)
         self.pass_data_to_chat_tools = {
         'userID' : text_data_json['userID'],
         'chatID' : text_data_json['chatID'],
