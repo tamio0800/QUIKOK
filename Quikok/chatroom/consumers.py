@@ -15,12 +15,13 @@ class ChatConsumer(WebsocketConsumer):
     def connect(self):
         print('成功!')
         print('\n\nconnect_info:\n'+str(self.scope)+'\n\n')
-        if self.scope["url_route"]["kwargs"]["room_url"].split('_') == 2:
-            self.room_group_name =self.scope["url_route"]["kwargs"]["room_url"].split('_')[2]
-            #print(type(self.room_group_name))
-        elif self.scope["url_route"]["kwargs"]["room_url"].split('_') == 3:
+        # 接收格式 'kwargs': {'room_url': '204_chatroom_4_0'}
+        if self.scope["url_route"]["kwargs"]["room_url"].split('_')[3] == 0:
+            self.room_group_name = self.scope["url_route"]["kwargs"]["room_url"].split('_')[2]
+        # 接收格式 'kwargs': {'room_url': '204_chatroom_4_1'}
+        elif self.scope["url_route"]["kwargs"]["room_url"].split('_')[3] == 1:
             self.room_group_name = 'system'+ str(self.scope["url_route"]["kwargs"]["room_url"].split('_')[3])
-            #print(type(self.room_group_name))
+            print(type(self.room_group_name))
         else: #以後聊天室如果有更多種類可以加這
             pass
         print('channel name:')
