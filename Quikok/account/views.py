@@ -9,6 +9,7 @@ from django.core.files.storage import FileSystemStorage
 from account.models import dev_db
 from datetime import date as date_function
 import pandas as pd
+from chatroom.models import chatroom_info_Mr_Q2user
 from chatroom.chat_tools import chat_room_manager
 import os
 # FOR API
@@ -565,6 +566,13 @@ def signin(request):
                     nickname = user_is_student.nickname
                     is_male = user_is_student.is_male
                     balance = user_is_student.balance
+                
+                user_group = list()
+                _user_group_set = user_obj.groups.all()
+                for group_obj in _user_group_set:
+                    user_group.append(group_obj.name)
+                # 死與系統的聊天室id
+                system_chatrooID = chatroom_info_Mr_Q2user.objects.filter(user_auth_id=user_obj.id).first().id
 
                 response['status'] = 'success'
                 response['errCode'] = None
@@ -579,6 +587,8 @@ def signin(request):
                     'user_token': token,
                     'deposit': balance,
                     'message': '', # 是否有未讀聊天室訊息, 這邊等聊天室做了再補
+                    'system_chatrooID' :system_chatrooID,
+                    'user_group': user_group
                     }
                 print('成功登入', response)
 

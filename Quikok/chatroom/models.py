@@ -68,6 +68,7 @@ class chatroom_info_Mr_Q2user(models.Model):
     user_type = models.CharField(max_length=20)    # teacher  or  student  or parent
     system_user_auth_id = models.IntegerField()  # 為了一致性及未來的客服需求而生的
     chatroom_type = models.CharField(max_length=30)  # 為了一致性及未來的客服需求而生的
+    # system2student system2teacher
     created_time = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return str(self.id)
