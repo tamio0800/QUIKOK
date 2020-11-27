@@ -23,10 +23,11 @@ class ChatConsumer(WebsocketConsumer):
             self.chatroom_type = 'user2user'
         # 系統與user接收格式 'kwargs': {'room_url': '204_chatroom_4_1'}
         elif self.scope["url_route"]["kwargs"]["room_url"].split('_')[3] == '1':
-            self.room_group_name = 'system'+ str(self.scope["url_route"]["kwargs"]["room_url"].split('_')[2])
+            self.room_group_name = self.scope["url_route"]["kwargs"]["room_url"].split('_')[2]
+            #self.room_group_name = 'system'+ str(self.scope["url_route"]["kwargs"]["room_url"].split('_')[2])
             self.chatroom_type = 'system2user'
             # 測試對一個使用者來說, self變數是否會留存,還是我得另存db
-            self.system_room_group_name = copy.deepcopy(self.room_group_name.copy)
+            self.system_room_group_name = copy.deepcopy(self.room_group_name)
             print(type(self.room_group_name))
         else: #以後聊天室如果有更多種類可以加這
             pass
@@ -85,7 +86,7 @@ class ChatConsumer(WebsocketConsumer):
         print('this is self.channel_layer.group_send')
         print(self.channel_layer.group_send)
         async_to_sync(self.channel_layer.group_send)(
-            self.room_group_name, # channel_name
+            self.room_group_name, 
             {   'type' : "chat.message", # channel要求必填,不填channel會收不到
                 'chatroomID':self.pass_data_to_chat_tools['chatID'],
                 'senderID': self.pass_data_to_chat_tools['userID'],
@@ -93,7 +94,16 @@ class ChatConsumer(WebsocketConsumer):
                 'messageType': self.pass_data_to_chat_tools['messageType'],
                 'systemCode':systemCode,
                 'messageCreateTime': str(now_time)
-            })
+            },)
+            #self.system_room_group_name,
+            #{   'type' : "chat.message", # channel要求必填,不填channel會收不到
+                #'chatroomID':self.pass_data_to_chat_tools['chatID'],
+                #'senderID': self.pass_data_to_chat_tools['userID'],
+            #    'messageText': 'test: has system_msg send?',
+                #'messageType': self.pass_data_to_chat_tools['messageType'],
+                #'systemCode':systemCode,
+                #'messageCreateTime': str(now_time)
+            #})
         #async_to_sync('21')(
         #    self.room_group_name, # channel_name
         #    {   'type' : "chat.message", # channel要求必填,不填channel會收不到
