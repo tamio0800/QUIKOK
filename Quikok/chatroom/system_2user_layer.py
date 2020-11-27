@@ -6,17 +6,16 @@
 
 class layer_info_maneger:
 #用來管理 system與user的channel_layer物件
-
     def __init__(self):
         self.channel_layer_info = dict()
 
-    def add_layer_info(userID, channel_layer):
+    def add_layer_info(self,userID, channel_layer):
         self.channel_layer_info[userID] = channel_layer 
         print('寫入channel_layer資訊')
 
-    def del_layer_info(userID):
+    def del_layer_info(self,userID):
         self.channel_layer_info.pop(userID)
         print('成功刪除channel_layer資訊')
     
-    def show_channel_layer_info(userID):
+    def show_channel_layer_info(self,userID):
         return(self.channel_layer_info[userID])

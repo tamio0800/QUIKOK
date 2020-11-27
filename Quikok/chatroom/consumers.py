@@ -85,7 +85,8 @@ class ChatConsumer(WebsocketConsumer):
         self.accept()
         # 如果是系統連線,儲存user與system的layer資訊
         if self.chatroom_type == 'system2user':
-            layer_info_maneger.add_layer_info(userID=self.userID, channel_layer= self.channel_layer)
+            layer_maneger = layer_info_maneger()
+            layer_maneger.add_layer_info(userID=self.userID, channel_layer= self.channel_layer)
 
         print('websocket connect success')
     def disconnect(self, close_code):
@@ -106,8 +107,8 @@ class ChatConsumer(WebsocketConsumer):
         text_data_json = json.loads(text_data)
         print('ws load jason收到的資料')
         print('\n\nreceive_data:\n'+str(text_data_json))
-        print('測試系統訊息還在不在')
-        print(self.system_room_group_name)
+        
+        # print(self.system_room_group_name) 
         self.pass_data_to_chat_tools = {
         'userID' : text_data_json['userID'],
         'chatID' : text_data_json['chatID'],
@@ -143,8 +144,9 @@ class ChatConsumer(WebsocketConsumer):
                 'messageType': self.pass_data_to_chat_tools['messageType'],
                 'systemCode':systemCode,
                 'messageCreateTime': str(now_time)
-            },
-            'system1',
+            },)
+        async_to_sync(self.channel_layer.group_send)(
+                'system1',
             {   'type' : "chat.message", # channel要求必填,不填channel會收不到
                 #'chatroomID':self.pass_data_to_chat_tools['chatID'],
                 #'senderID': self.pass_data_to_chat_tools['userID'],
@@ -152,7 +154,7 @@ class ChatConsumer(WebsocketConsumer):
                 #'messageType': self.pass_data_to_chat_tools['messageType'],
                 #'systemCode':systemCode,
                 #'messageCreateTime': str(now_time)
-            })
+            },)
         #async_to_sync('21')(
         #    self.room_group_name, # channel_name
         #    {   'type' : "chat.message", # channel要求必填,不填channel會收不到
