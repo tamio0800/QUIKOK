@@ -4,6 +4,7 @@ from django.db.models import Q
 from .models import *
 from account.models import student_profile, teacher_profile
 from datetime import datetime
+from .system_2user_layer import layer_info_maneger
 
 class system_msg_producer:
     # 傳訊息代碼進來, 回應相對的資訊
@@ -58,6 +59,7 @@ class chat_room_manager:
             self.errMsg = 'Query failed'
     # 為了讓user之後能即時收到第一次建立聊天室時的資訊,
     # 要先建立與系統的聊天室作為通道
+    # account建立時會叫這個def
     def create_system2user_chatroom(self,**kwargs):
     # 建立聊天室
         user_authID = kwargs['userID']
@@ -235,10 +237,12 @@ class websocket_manager:
             self.user_type = 'student'
         else: # 等到預約寫了這邊還會再加上預約(system)
             self.user_type = 'unknown'
+    
 
+    # 儲存聊天訊息到 db
     def chat_storge(self, **kwargs):
         self.chatroom_id = kwargs['chatID']
-        self.sender = kwargs['userID']
+        self.sender = kwargs['userID'] # 發訊息者
         message = kwargs['message']
         messageType = kwargs['messageType']
         self.check_authID_type(self.sender)
@@ -248,11 +252,11 @@ class websocket_manager:
             print(chatroom_info.id)
             if self.user_type == 'student':
                 # 發送者是學生
-                teacher_id = chatroom_info.teacher_auth_id
-                student_id = self.sender
+                self.teacher_id = chatroom_info.teacher_auth_id
+                self.student_id = self.sender
             elif self.user_type == 'teacher':
-                teacher_id = self.sender
-                student_id= chatroom_info.student_auth_id
+                self.teacher_id = self.sender
+                self.student_id= chatroom_info.student_auth_id
             else:
                 pass
             parent_auth_id = -1 # 目前先給-1
@@ -262,8 +266,8 @@ class websocket_manager:
             
             new_msg = chat_history_user2user.objects.create(
                     chatroom_info_user2user_id= self.chatroom_id,
-                    teacher_auth_id =teacher_id,
-                    student_auth_id= student_id,
+                    teacher_auth_id =self.teacher_id,
+                    student_auth_id= self.student_id,
                     parent_auth_id =parent_auth_id,
                     message = message,
                     message_type= messageType,
@@ -281,8 +285,26 @@ class websocket_manager:
 
         except Exception as e:
             print(e)
-    def return_to_websocket(self):
-        pass
+    
+    # 找尋user和user是不是第一次聊天(目前只有學生對老師需做此特殊處理)
+    # 如果是, 查詢他找的新老師與系統的channel_layer資訊並回傳
+    def query_chat_history(self, parameter_list):
+        if self.user_type == 'student':
+            total = chat_history_user2user.objects.filter(Q(student_auth_id=self.student_id)&Q(teacher_auth_id=self.teacher_id))
+            # 第一筆是系統在聊天室建立時自動發送的訊息
+            # 第二筆是學生剛發送的訊息, 所以小於3筆的話表示是新老師
+            if len(total)<3:
+                find_layer = layer_info_maneger.show_channel_layer_info(self.teacher_id)
+                
+                return(find_layer)
+
+
+            else:
+                return(None)
+        else:
+            pass    
+    
+
 
             
     
