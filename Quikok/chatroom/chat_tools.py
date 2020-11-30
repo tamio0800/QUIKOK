@@ -4,6 +4,7 @@ from django.db.models import Q
 from .models import *
 from account.models import student_profile, teacher_profile
 from datetime import datetime
+from .system_2user_layer import layer_info_maneger
 
 class system_msg_producer:
     # 傳訊息代碼進來, 回應相對的資訊
@@ -42,22 +43,33 @@ class chat_room_manager:
                                       bookingDate:2020-10-10; bookingTime: 12:00-1:00; bookingUpdateTime:'+ str(datetime.now())
         system_msg_pattern = 'bookingDate:2020-10-10; bookingTime: 12:00-1:00'
         
-        self.booking_related_message_dict = dict()
-        for key in booking_related_message_key:
-            self.booking_related_message_dict[key] = None
+        #self.booking_related_message_dict = dict()
+        #for key in booking_related_message_key:
+        #    self.booking_related_message_dict[key] = None
         #self.message_info['bookingRelatedMessage'] = self.booking_related_message_dict
         # 註解掉因為現在回傳用不到這個字典
         # 因為booking資訊是在message裡面，先更新message字典再把message字典更新到info大字典
-        self.response_msg['messageInfo'] = self.message_info_group
+        #self.response_msg['messageInfo'] = self.message_info_group
 
     # 建立一些error回應
-    def response_to_frontend(check_result):
+    def response_to_frontend(self, check_result):
         if check_result == 1:
             self.status = 'failed'
             self.errCode = '1'
             self.errMsg = 'Query failed'
-
+    # 為了讓user之後能即時收到第一次建立聊天室時的資訊,
+    # 要先建立與系統的聊天室作為通道
+    # account建立時會叫這個def
+    def create_system2user_chatroom(self,**kwargs):
     # 建立聊天室
+        user_authID = kwargs['userID']
+        user_type = kwargs['user_type']
+        systemID = 404 # 404 暫定為系統專用auth_id
+        chatroom_type = 'system2users'
+        new_chatroom = chatroom_info_Mr_Q2user.objects.create(user_auth_id=user_authID,
+                user_type = user_type, system_user_auth_id = systemID,
+                chatroom_type = chatroom_type)
+                
     def check_and_create_chat_room(self,**kwargs):
         student_authID = kwargs['userID']
         teacher_authID = kwargs['chatUserID']
@@ -79,6 +91,11 @@ class chat_room_manager:
                     who_is_sender = 'system' ,   # teacher/student/parent/system
                     sender_auth_id = 404,
                     is_read = 0)
+                
+                # 當聊天室建立時, 為了及時通知老師(否則除非老師重新整理、會看不到此訊息),
+                # 由系統主動發一個ws給他
+                #send_msg = ChatConsumer()
+                #send_msg.
 
                 print('create new chatroom')
                 self.status = 'success'
@@ -172,8 +189,10 @@ class chat_room_manager:
                             temp_info['messageType'] = a_message.message_type
                             temp_info['messageText'] = a_message.message
                             temp_info['messageCreateTime'] = a_message.created_time
+                            # 這個system code目前暫時沒有作用, 只是讓前端知道是系統訊息而已
+                            # 前端預想之後可能依照這個號碼來做不同動作
                             if a_message.message_type == 1:
-                                temp_info['systemCode'] = 0
+                                temp_info['systemCode'] = 0 
                             else:
                                 temp_info['systemCode'] = -1
                             message_info_group.append(temp_info)
@@ -218,10 +237,12 @@ class websocket_manager:
             self.user_type = 'student'
         else: # 等到預約寫了這邊還會再加上預約(system)
             self.user_type = 'unknown'
+    
 
+    # 儲存聊天訊息到 db
     def chat_storge(self, **kwargs):
         self.chatroom_id = kwargs['chatID']
-        self.sender = kwargs['userID']
+        self.sender = kwargs['userID'] # 發訊息者
         message = kwargs['message']
         messageType = kwargs['messageType']
         self.check_authID_type(self.sender)
@@ -231,19 +252,22 @@ class websocket_manager:
             print(chatroom_info.id)
             if self.user_type == 'student':
                 # 發送者是學生
-                teacher_id = chatroom_info.teacher_auth_id
-                student_id = self.sender
+                self.teacher_id = chatroom_info.teacher_auth_id
+                self.student_id = self.sender
             elif self.user_type == 'teacher':
-                teacher_id = self.sender
-                student_id= chatroom_info.student_auth_id
+                self.teacher_id = self.sender
+                self.student_id= chatroom_info.student_auth_id
             else:
                 pass
             parent_auth_id = -1 # 目前先給-1
-
+            
+            #temp_chat_msg = 
+            is_first_msg = str(1)
+            
             new_msg = chat_history_user2user.objects.create(
                     chatroom_info_user2user_id= self.chatroom_id,
-                    teacher_auth_id =teacher_id,
-                    student_auth_id= student_id,
+                    teacher_auth_id =self.teacher_id,
+                    student_auth_id= self.student_id,
                     parent_auth_id =parent_auth_id,
                     message = message,
                     message_type= messageType,
@@ -252,7 +276,8 @@ class websocket_manager:
                     is_read= 0,
                     )
             new_msg.save()
-            return(new_msg.id, new_msg.created_time)
+
+            return(new_msg.id, new_msg.created_time, is_first_msg)
             
             #else:
             #    print('Found no chatroom_info_user2user id == ', self.chatroom_id)
@@ -260,8 +285,26 @@ class websocket_manager:
 
         except Exception as e:
             print(e)
-    def return_to_websocket(self):
-        pass
+    
+    # 找尋user和user是不是第一次聊天(目前只有學生對老師需做此特殊處理)
+    # 如果是, 查詢他找的新老師與系統的channel_layer資訊並回傳
+    def query_chat_history(self, parameter_list):
+        if self.user_type == 'student':
+            total = chat_history_user2user.objects.filter(Q(student_auth_id=self.student_id)&Q(teacher_auth_id=self.teacher_id))
+            # 第一筆是系統在聊天室建立時自動發送的訊息
+            # 第二筆是學生剛發送的訊息, 所以小於3筆的話表示是新老師
+            if len(total)<3:
+                find_layer = layer_info_maneger.show_channel_layer_info(self.teacher_id)
+                
+                return(find_layer)
+
+
+            else:
+                return(None)
+        else:
+            pass    
+    
+
 
             
     

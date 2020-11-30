@@ -9,6 +9,8 @@ from django.core.files.storage import FileSystemStorage
 from account.models import dev_db
 from datetime import date as date_function
 import pandas as pd
+from chatroom.models import chatroom_info_Mr_Q2user
+from chatroom.chat_tools import chat_room_manager
 import os
 # FOR API
 from django.views.decorators.http import require_http_methods
@@ -144,7 +146,7 @@ def create_a_student_user(request):
             user_created_object.save()
             print('auth建立')
             print('建立新學生資料')
-            student_profile.objects.create(
+            new_student = student_profile.objects.create(
                 auth_id = user_created_object.id,
                 username = username,
                 password = password,
@@ -161,9 +163,16 @@ def create_a_student_user(request):
                 info_folder = 'user_upload/'+ username+ '/info_folder',
                 thumbnail_dir = thumbnail_dir ,
                 update_someone_by_email = update_someone_by_email
-            ).save()
+            )
             print('student_profile建立')
             # 回前端
+            # 建立學生與system的聊天室
+            chat_tool = chat_room_manager()
+            chat_tool.create_system2user_chatroom(userID=new_student.id, user_type = 'student')
+            print('建立學生與Mr.Q 聊天室')
+  
+
+
             response['status'] = 'success'
             response['errCode'] = None
             response['errMsg'] = None
@@ -440,7 +449,12 @@ def create_a_teacher_user(request):
                     week = temp_every_week[0],
                     time = temp_every_week[1]
                                 ).save()
-            print('老師成功建立 一般時間')    
+            print('老師成功建立 一般時間') 
+
+            # 建立老師與system的聊天室
+            chat_tool = chat_room_manager()
+            chat_tool.create_system2user_chatroom(userID=teacher_object.id, user_type = 'teacher')
+            print('建立老師與Mr.Q 聊天室')
 
             response['status'] = 'success'
             response['errCode'] = None
@@ -552,6 +566,13 @@ def signin(request):
                     nickname = user_is_student.nickname
                     is_male = user_is_student.is_male
                     balance = user_is_student.balance
+                
+                user_group = list()
+                _user_group_set = user_obj.groups.all()
+                for group_obj in _user_group_set:
+                    user_group.append(group_obj.name)
+                # 死與系統的聊天室id
+                system_chatrooID = chatroom_info_Mr_Q2user.objects.filter(user_auth_id=user_obj.id).first().id
 
                 response['status'] = 'success'
                 response['errCode'] = None
@@ -566,6 +587,8 @@ def signin(request):
                     'user_token': token,
                     'deposit': balance,
                     'message': '', # 是否有未讀聊天室訊息, 這邊等聊天室做了再補
+                    'system_chatrooID' :system_chatrooID,
+                    'user_group': user_group
                     }
                 print('成功登入', response)
 

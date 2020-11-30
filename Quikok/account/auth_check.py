@@ -1,18 +1,24 @@
 # 跟權限確認有關係的功能
-class auth_ckeck(**kwargs):
-    # tata: 這裏上面其實不用加 (**kwargs)沒關係xd, 因為在下面的__init__做定義了。
+class auth_ckeck:
     def __init__(self):
         self.url_category_rules = self.create_url_rules()
          
         url = ''
         user_id = ''
     # read tabel
+    def check_user_type(self, userID):
+        if len(teacher_profile.objects.filter(auth_id=userID))> 0:
+            return('teacher')
+        elif len(student_profile.objects.filter(auth_id=userID)) > 0:
+            return('student')
+        else:
+            pass
     def create_url_rules(self):
         # 目前有的各個網站的結構以及權限分類
         url_category_rules = {
             '老師會員中心': ('^/account/info/teacherS+', 'teacher'),
             '課程管理' : ('^/account/lessonS+','teacher'),
-            '課程上架': ('^/lesson/ready/addS+','teacher'),}  # tata: < 這裏多打了一個 {
+            '課程上架': ('^/lesson/ready/addS+','teacher'), 
             '課程編輯': ('^/lesson/ready/edit/S+','teacher'),
             '課程預覽' : ('^/lesson/main/preview/S+','teacher'),
             '上課live_house' : ('', 'member_only'), # 還沒做到
@@ -30,19 +36,19 @@ class auth_ckeck(**kwargs):
             '註冊新學生' : ('^/account/register/studentS+', 'public')
         }
         return url_category_rules
-    def check_url_belong_to_which_category(self, url):
-        for url_category_name, url_pattern_and_auth_type in self.url_category_rules.items()
-        pass
-    def write_into_db(self):
+    #def check_url_belong_to_which_category(self, url):
+    #    for url_category_name, url_pattern_and_auth_type in self.url_category_rules.items()
+    #    pass
+    #def write_into_db(self):
         #from .models import auth_check
-        for url_category_name, url_pattern_and_auth_type in self.url_category_rules.items():
-            auth_check.objects.update_or_create(
-                category_name = url_category_name, 
-                defaults = {'url_pattern' : url_pattern_and_auth_type[0],
-                            'url_auth_type' : url_pattern_and_auth_type[1]
-                                            },)
+        #for url_category_name, url_pattern_and_auth_type in self.url_category_rules.items():
+            #auth_check.objects.update_or_create(
+                #category_name = url_category_name, 
+                #defaults = {'url_pattern' : url_pattern_and_auth_type[0],
+                #            'url_auth_type' : url_pattern_and_auth_type[1]
+                #                            },)
 
-        for category in self.url_category_rules.keys():
+        #for category in self.url_category_rules.keys():
             
 #re.findall('^/account/info/teacherS+','/account/info/teacherS+')
     # 先拿 url 找 url的type
