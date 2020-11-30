@@ -119,23 +119,10 @@ class chat_room_manager:
     def chat_main_content(self, **kwargs):
         # 目前先設定0~100之後這個變數可以給前端傳
         # 希望可以達到假設user滑到頂一次給100之類的效果(前端告訴後端user是第幾次滑到頂)
-        #number_of_history_start = 0
-        #number_of_history_end = 100
-        #chat_messages = Messages.objects.filter(group=room_id).order_by("timestamp")[number_of_history_start:number_of_history_end] 
         self.data = list()
         try:
             # 首先篩選出所有這個人的聊天室
             user_type = kwargs['user_type']
-            #if user_type == 'teacher':
-            #    self.user_type = 'teacher'
-                #user_teacher = teacher_profile.objects.filter(username= kwargs['userID'])
-            #    user_chatrooms_with_user = chatroom_info_user2user.objects.filter(teacher_auth_id=kwargs['userID'])
-            #elif user_type == 'student':
-            #    self.user_type = 'student'
-                #user_student = student_profile.objects.filter(username= kwargs['userID'])
-            #    user_chatrooms_with_user = chatroom_info_user2user.objects.filter(student_auth_id=kwargs['userID'])
-            #else: # 之後會有其他種type
-            #    self.user_type = ''
             room_queryset= chatroom_info_user2user.objects.filter(Q(student_auth_id=kwargs['userID'])|Q(teacher_auth_id=kwargs['userID'])).order_by("created_time")
             print('使用者有這些聊天室')
             print(room_queryset)
@@ -227,9 +214,9 @@ class websocket_manager:
     
     # 儲存聊天訊息到 db
     def chat_storge(self, **kwargs):
-        self.chatroom_id = kwargs['chatroom']
-        self.sender = kwargs['sender'] # 發訊息者
-        message = kwargs['message']
+        self.chatroom_id = kwargs['chatroomID']
+        self.sender = kwargs['senderID'] # 發訊息者
+        message = kwargs['messageText']
         messageType = kwargs['messageType']
         self.check_authID_type(self.sender)
 
@@ -277,8 +264,10 @@ class websocket_manager:
             # 第一筆是系統在聊天室建立時自動發送的訊息
             # 第二筆是學生剛發送的訊息, 所以小於3筆的話表示是新老師
             if len(total)<3:
+                print('self.teacher_id:')
+                print(self.teacher_id)
                 #find_layer = layer_info_maneger.show_channel_layer_info(self.teacher_id)
-                chatroomID = chatroom_info_Mr_Q2user.objects.filter(system_user_auth_id =  self.teacher_id).first()
+                chatroomID = chatroom_info_Mr_Q2user.objects.filter(user_auth_id =  self.teacher_id).first()
                 self.system_chatroomID = 'system'+ str(chatroomID.id)
                 return(self.system_chatroomID)
             else:

@@ -141,7 +141,7 @@ class ChatConsumer(WebsocketConsumer):
             {   'type' : "chat.message", # channel要求必填,不填channel會收不到
                 'chatroomID':pass_to_chat_tools['chatroomID'],
                 'senderID': pass_to_chat_tools['senderID'],
-                'messageText': pass_to_chat_tools['message'],
+                'messageText': pass_to_chat_tools['messageText'],
                 'messageType': pass_to_chat_tools['messageType'],
                 'systemCode':systemCode,
                 'messageCreateTime': now_time
