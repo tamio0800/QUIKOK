@@ -61,7 +61,7 @@ class chat_room_manager:
     # 要先建立與系統的聊天室作為通道
     # account建立時會叫這個def
     def create_system2user_chatroom(self,**kwargs):
-    # 建立聊天室
+    # user註冊時call來建立聊天室
         user_authID = kwargs['userID']
         user_type = kwargs['user_type']
         systemID = 404 # 404 暫定為系統專用auth_id
@@ -91,11 +91,6 @@ class chat_room_manager:
                     who_is_sender = 'system' ,   # teacher/student/parent/system
                     sender_auth_id = 404,
                     is_read = 0)
-                
-                # 當聊天室建立時, 為了及時通知老師(否則除非老師重新整理、會看不到此訊息),
-                # 由系統主動發一個ws給他
-                #send_msg = ChatConsumer()
-                #send_msg.
 
                 print('create new chatroom')
                 self.status = 'success'
@@ -216,14 +211,6 @@ class chat_room_manager:
             self.errMsg = 'Querying Data Failed.'
             return (self.status, self.errCode, self.errMsg, self.data)
 
-        
-        
-    def chat_customer_service_messeage(self):
-        pass
-    # 偵測是否有系統該發送訊息到room情況
-    # 以及發送訊息
-    def system_2user(self):
-        pass
 
 class websocket_manager:
     def check_authID_type(self, authID):
@@ -238,7 +225,6 @@ class websocket_manager:
         else: # 等到預約寫了這邊還會再加上預約(system)
             self.user_type = 'unknown'
     
-
     # 儲存聊天訊息到 db
     def chat_storge(self, **kwargs):
         self.chatroom_id = kwargs['chatID']
@@ -260,10 +246,7 @@ class websocket_manager:
             else:
                 pass
             parent_auth_id = -1 # 目前先給-1
-            
-            #temp_chat_msg = 
             is_first_msg = str(1)
-            
             new_msg = chat_history_user2user.objects.create(
                     chatroom_info_user2user_id= self.chatroom_id,
                     teacher_auth_id =self.teacher_id,
@@ -287,22 +270,49 @@ class websocket_manager:
             print(e)
     
     # 找尋user和user是不是第一次聊天(目前只有學生對老師需做此特殊處理)
-    # 如果是, 查詢他找的新老師與系統的channel_layer資訊並回傳
-    def query_chat_history(self, parameter_list):
+    # 如果是, 查詢他找的新老師與系統的聊天室id資訊並回傳
+    def query_chat_history(self, userID):
         if self.user_type == 'student':
             total = chat_history_user2user.objects.filter(Q(student_auth_id=self.student_id)&Q(teacher_auth_id=self.teacher_id))
             # 第一筆是系統在聊天室建立時自動發送的訊息
             # 第二筆是學生剛發送的訊息, 所以小於3筆的話表示是新老師
             if len(total)<3:
-                find_layer = layer_info_maneger.show_channel_layer_info(self.teacher_id)
-                
-                return(find_layer)
-
-
+                #find_layer = layer_info_maneger.show_channel_layer_info(self.teacher_id)
+                chatroomID = chatroom_info_Mr_Q2user.objects.filter(system_user_auth_id =  self.teacher_id).first()
+                self.system_chatroomID = 'system'+ str(chatroomID.id)
+                return(self.system_chatroomID)
             else:
-                return(None)
-        else:
-            pass    
+                return('0')
+        else: 
+            return('0')    
+
+    # 特殊情況1的系統回傳
+    def msg_maker1_system_2teacher(self, chatroomID):
+
+        send_to_ws = {
+            'type' : "chat.message",
+            'chatroomID':self.system_chatroomID, # 老師與系統聊天室
+            'senderID': 404, # 系統的auth_id
+            'messageText':'',
+            'messageType': 2, # 系統方塊
+            'systemCode':1, # 建立聊天室
+            'messageCreateTime': str(datetime.now())
+            }
+
+        messageText = {
+            'Aim':'聊天室資訊', #系統方塊標的
+            'Title':'新學生通知', #系統方塊標題文字
+            'Subtitle':'', #系統方塊副標文字
+            'Content': '有新學生已透過聊天室向您聯繫', #系統方塊內容文字
+            'BtnText': '立即前往', #系統方塊按鈕文字
+            'BtnCode': chatroomID #系統方塊按鈕代碼(學生與老師新聊天室序號)
+        }
+        send_to_ws['messageText']= messageText 
+
+        return(send_to_ws)
+
+        
+
     
 
 

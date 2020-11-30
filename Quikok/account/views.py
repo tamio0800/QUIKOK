@@ -566,12 +566,13 @@ def signin(request):
                     nickname = user_is_student.nickname
                     is_male = user_is_student.is_male
                     balance = user_is_student.balance
-                
+                    
+                # 使用者所屬的權限群組,未來一個人可能同時有好幾個所以傳list
                 user_group = list()
                 _user_group_set = user_obj.groups.all()
                 for group_obj in _user_group_set:
                     user_group.append(group_obj.name)
-                # 死與系統的聊天室id
+                # 與系統的聊天室id
                 system_chatrooID = chatroom_info_Mr_Q2user.objects.filter(user_auth_id=user_obj.id).first().id
 
                 response['status'] = 'success'

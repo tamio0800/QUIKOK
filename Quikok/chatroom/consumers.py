@@ -84,9 +84,9 @@ class ChatConsumer(WebsocketConsumer):
         )
         self.accept()
         # 如果是系統連線,儲存user與system的layer資訊
-        if self.chatroom_type == 'system2user':
-            layer_maneger = layer_info_maneger()
-            layer_maneger.add_layer_info(userID=self.userID, channel_layer= self.channel_layer)
+        #if self.chatroom_type == 'system2user':
+        #    layer_maneger = layer_info_maneger()
+        #    layer_maneger.add_layer_info(userID=self.userID, channel_layer= self.channel_layer)
 
         print('websocket connect success')
     def disconnect(self, close_code):
@@ -96,39 +96,40 @@ class ChatConsumer(WebsocketConsumer):
             self.channel_name
         )
         # 刪掉儲存user與system的layer資訊
-        if self.chatroom_type == 'system2user':
-            layer_info_maneger.del_layer_info(userID=self.userID, channel_layer= self.channel_layer)
+        #if self.chatroom_type == 'system2user':
+        #    layer_info_maneger.del_layer_info(userID=self.userID, channel_layer= self.channel_layer)
 
     # Receive message from WebSocket
     def receive(self, text_data):
-        response = dict()
-        self.pass_data_to_chat_tools = dict()
+        #response = dict()
+        #self.pass_to_chat_tools = dict()
         
         text_data_json = json.loads(text_data)
         print('ws load jason收到的資料')
         print('\n\nreceive_data:\n'+str(text_data_json))
         
         # print(self.system_room_group_name) 
-        self.pass_data_to_chat_tools = {
-        'userID' : text_data_json['userID'],
-        'chatID' : text_data_json['chatID'],
+        pass_to_chat_tools = {
+        'senderID' : text_data_json['senderID'],
+        'chatroomID' : text_data_json['chatroomID'],
         'messageType' : text_data_json['messageType'],
-        'message' : text_data_json['messageText']}
-        
-        # 查詢老師跟學生是否為第一次聊天
-        #chatroom = chatroom_info_user2user.objects.filter(Q(student_auth_id=pass_data_to_chat_tools['userID'])|Q(teacher_auth_id=teacher_authID))
-
-
+        'messageText' : text_data_json['messageText']}
         #now_time = datetime.datetime.now().strftime('%H:%M')
         # 儲存對話紀錄到db
         ws_manager = websocket_manager()
-        msgID, time, is_first_msg = ws_manager.chat_storge(**self.pass_data_to_chat_tools)
+        msgID, time, is_first_msg = ws_manager.chat_storge(**pass_to_chat_tools)
         now_time = str(time)
         # systemCode 暫時沒有作用,統一給0
         if text_data_json['messageType'] == 1:
             systemCode = 0
         else:
             systemCode = None
+
+        # 在學生第一次聯絡老師此一特殊情況下，才需要同步發送訊息
+        # 到第二個聊天室(也就是老師與系統的聊天室), 特殊形況的判斷寫在chat_tool
+        # 若條件有滿足, 回傳聊天室的id, 若沒有滿足則回傳0
+        system_chatroomID = ws_manager.query_chat_history(pass_to_chat_tools['userID'])
+        
         print('\n\nstorge message')
         #user=User.objects.get(id=self.pass_data_to_chat_tools['userID'])
         # Send message to room group
@@ -138,35 +139,25 @@ class ChatConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name, 
             {   'type' : "chat.message", # channel要求必填,不填channel會收不到
-                'chatroomID':self.pass_data_to_chat_tools['chatID'],
-                'senderID': self.pass_data_to_chat_tools['userID'],
-                'messageText': self.pass_data_to_chat_tools['message'],
-                'messageType': self.pass_data_to_chat_tools['messageType'],
+                'chatroomID':pass_to_chat_tools['chatroomID'],
+                'senderID': pass_to_chat_tools['senderID'],
+                'messageText': pass_to_chat_tools['message'],
+                'messageType': pass_to_chat_tools['messageType'],
                 'systemCode':systemCode,
-                'messageCreateTime': str(now_time)
+                'messageCreateTime': now_time
             },)
-        async_to_sync(self.channel_layer.group_send)(
-                'system1',
-            {   'type' : "chat.message", # channel要求必填,不填channel會收不到
-                #'chatroomID':self.pass_data_to_chat_tools['chatID'],
-                #'senderID': self.pass_data_to_chat_tools['userID'],
-                'messageText': 'test: has system_msg send?',
-                #'messageType': self.pass_data_to_chat_tools['messageType'],
-                #'systemCode':systemCode,
-                #'messageCreateTime': str(now_time)
-            },)
-        #async_to_sync('21')(
-        #    self.room_group_name, # channel_name
-        #    {   'type' : "chat.message", # channel要求必填,不填channel會收不到
-        #        'chatroomID':21,
-        #        'senderID': 204,
-        #        'messageText': 'test',
-        #        'messageType': self.pass_data_to_chat_tools['messageType'],
-        #        'systemCode':systemCode,
-        #        'messageCreateTime': str(now_time)
-        #    })
+        print('send no.1 msg')
+        # 若符合才會>1並在學生傳msg給老師時同步發到系統聊天室
+        if len(system_chatroomID) > 1:
+            # 傳給ws的內容
+            content = ws_manager.msg_maker1_system_2teacher(pass_to_chat_tools['chatroomID'])
+            async_to_sync(self.channel_layer.group_send)(
+                    system_chatroomID, content ,)
+            print('send no.2 msg')
+        else:
+            pass
 
-        print('send_somthing to somewhere')
+        
 
     # Receive message from room group
     # 收到的字典叫 "event",會回給前端
