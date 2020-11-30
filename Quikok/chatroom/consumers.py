@@ -128,7 +128,7 @@ class ChatConsumer(WebsocketConsumer):
         # 在學生第一次聯絡老師此一特殊情況下，才需要同步發送訊息
         # 到第二個聊天室(也就是老師與系統的聊天室), 特殊形況的判斷寫在chat_tool
         # 若條件有滿足, 回傳聊天室的id, 若沒有滿足則回傳0
-        system_chatroomID = ws_manager.query_chat_history(pass_to_chat_tools['userID'])
+        system_chatroomID = ws_manager.query_chat_history(pass_to_chat_tools['senderID'])
         
         print('\n\nstorge message')
         #user=User.objects.get(id=self.pass_data_to_chat_tools['userID'])

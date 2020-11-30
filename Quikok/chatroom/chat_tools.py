@@ -227,8 +227,8 @@ class websocket_manager:
     
     # 儲存聊天訊息到 db
     def chat_storge(self, **kwargs):
-        self.chatroom_id = kwargs['chatID']
-        self.sender = kwargs['userID'] # 發訊息者
+        self.chatroom_id = kwargs['chatroom']
+        self.sender = kwargs['sender'] # 發訊息者
         message = kwargs['message']
         messageType = kwargs['messageType']
         self.check_authID_type(self.sender)
@@ -271,7 +271,7 @@ class websocket_manager:
     
     # 找尋user和user是不是第一次聊天(目前只有學生對老師需做此特殊處理)
     # 如果是, 查詢他找的新老師與系統的聊天室id資訊並回傳
-    def query_chat_history(self, userID):
+    def query_chat_history(self, senderID):
         if self.user_type == 'student':
             total = chat_history_user2user.objects.filter(Q(student_auth_id=self.student_id)&Q(teacher_auth_id=self.teacher_id))
             # 第一筆是系統在聊天室建立時自動發送的訊息
