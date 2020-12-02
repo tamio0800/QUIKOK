@@ -1,5 +1,5 @@
 from django.contrib.auth.models import Permission, User, Group
-from account.models import student_profile, teacher_profile
+from account.models import student_profile, teacher_profile, user_token
 from chatroom.models import chatroom_info_Mr_Q2user
 import re
 # 跟權限確認有關係的功能
@@ -35,19 +35,33 @@ class auth_check_manager:
         }
     # 一次一個url檢查權限
     def find_which_page(self,url):
-        keys_bag = {}
+        self.auth_bag = {}
         for key, value in self.url_category_rules.items():
-            #print(value[0])
             if len(re.findall(value[0], url)) > 0:
-                keys_bag[key] = value
-        print(keys_bag)
-                #pass
-    def responce_to_frontend(self,num):
-        #response['status'] = 'failed'
-        #response['errCode'] = '0'
-        #response['errMsg'] = 'Received Arguments Failed.'
-        #response['data'] = None
-        pass
+                self.autj_bag[key] = value
+        print(self.auth_bag)
+        #if len(self.auth_bag) < 1:
+
+    # 管理給前端的回應
+    def response_to_frontend(self,num):
+        response = dict()
+        if num == 0:
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+            response['data'] = {'authority' : True }
+            
+        elif num == 1:
+            response['status'] = 'failed'
+            response['errCode'] = '0'
+            response['errMsg'] = 'Received Arguments Failed.'
+            response['data'] = None
+        elif num == 2:
+            response['status'] = 'failed'
+            response['errCode'] = '1'
+            response['errMsg'] = 'Query Data Failed.'
+            response['data'] = None
+        return(response)
     def check_user_type(self, userID):
 
         if len(teacher_profile.objects.filter(auth_id=userID))> 0:
@@ -56,6 +70,13 @@ class auth_check_manager:
             return('student')
         else:
             pass
+    def check_user_token(self, userID, token):
+        user_token = user_token.objects.filter(authID_object=userID)
+        #token_in_db = user.token
+        #logout_date = user.logout_time
+        #logout_only_date = logout_date.split(' ')[0] # 0是日期, 1是小時
+        #logout_datetime_type = datetime.strptime(logout_only_date,"%Y-%m-%d")
+        #time_has_passed = logout_datetime_type - time 
     def get_user_group_and_permisstion_group(self,userID):
         a_user = User.objects.get(userID)
         
