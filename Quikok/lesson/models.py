@@ -197,3 +197,43 @@ class lesson_sales_sets(models.Model):
     def __str__(self):
         return str(self.id)
 
+
+
+class lesson_info_for_users_not_signed_up(models.Model): 
+    # 因為有一個先期導入版本，我們利用一個暫存的lesson_info先存放這些資訊，
+    # 差別是 >> 
+        # 1.「teacher」這個foreign key 被 dummy_teacher_id (char) 取代 
+        # 2. 將一些一定不會有的資訊column刪掉留待用戶註冊後再用正式table加上去，像是：
+            # 課程評分、瀏覽人數、販售狀態、之類的～
+    dummy_teacher_id = models.CharField(max_length=100)
+    big_title = models.CharField(max_length = 10)  # 背景圖片的大標題
+    little_title = models.CharField(max_length = 10)  # 背景圖片的小標題
+    title_color = models.CharField(max_length = 7) # 標題顏色 以色碼存入，  >> #\d{6}
+    background_picture_code = models.IntegerField() 
+    # 這個用來儲存user選擇了什麼樣的上架背景圖，舉例來說99代表user自己上傳的圖，這時我們要找到對應的路徑回傳給前端；
+    # 如果今天這個值是1、2、3之類的Quikok預設圖片，那我們直接回傳代號給前端即可。
+    background_picture_path = models.TextField(blank=True) # 指向上傳圖的路徑
+    lesson_title = models.CharField(max_length = 14) # 課程的名稱
+    price_per_hour = models.IntegerField()  # 該門課程的鐘點費
+    lesson_has_one_hour_package = models.BooleanField()  # 該門課程是否可以單堂出售
+    trial_class_price = models.IntegerField()  # 該門課程的試上鐘點費
+
+    highlight_1 = models.CharField(max_length = 10)  # 亮點介紹1，不要超過10個字元長
+    highlight_2 = models.CharField(max_length = 10)  # 亮點介紹2，不要超過10個字元長
+    highlight_3 = models.CharField(max_length = 10)  # 亮點介紹3，不要超過10個字元長
+    lesson_intro = models.TextField(blank=True, null=True)
+    how_does_lesson_go = models.TextField(blank=True, null=True)
+    # 課程方式/教學方式，舉例來說：「本堂課前十分鐘小考，測驗上次的內容吸收程度，
+    # 接著正式上課兩小時，最後15分鐘溫習。」
+    target_students = models.TextField(blank=True, null=True) # 授課對象
+    lesson_remarks = models.TextField(blank=True, null=True) # 備註，目前是用來儲存「給學生的注意事項」
+    syllabus = models.TextField(blank=True, null=True) 
+    # 存放課程的綱要或架構，預計會以html的方式傳遞/儲存 格式:大標/小標:內容; 
+    # 目前版本用不到本col 如果將來有相關附件，可以儲存在這個資料夾中
+    # 這裡還要記得把老師的有空時段連過來
+    lesson_attributes = models.TextField(blank = True)  
+    # 這個是放課程的標籤，一開始先人工(老師)給，之後再交給機器學習模型來判斷
+    created_time = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return str(self.id)
+        # 理論上一個老師在這張table只會有一個row的資料，所以這樣寫比較好看
