@@ -34,7 +34,7 @@ INSTALLED_APPS = [
     'account_finance',  # 用來處理帳務(財務)資訊，如課程購買、退貨等等
     'lesson', # 課程商品頁
     'django_api', # 用來放api們
-    
+    'blog',  # quikok的文章專區
 ]
 
 MIDDLEWARE = [
