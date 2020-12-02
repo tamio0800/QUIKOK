@@ -1,3 +1,6 @@
+from django.contrib.auth.models import Permission, User, Group
+from account.models import student_profile, teacher_profile
+from chatroom.models import chatroom_info_Mr_Q2user
 # 跟權限確認有關係的功能
 class auth_ckeck:
     def __init__(self):
@@ -13,6 +16,12 @@ class auth_ckeck:
             return('student')
         else:
             pass
+    def get_user_group_and_permisstion_group(self,userID):
+        a_user = User.objects.get(userID)
+        user_per_group = list()
+        for group_num in a_user.groups.all():
+            user_per_group.append(group_num.id) # 該使用者的auth_group
+
     def create_url_rules(self):
         # 目前有的各個網站的結構以及權限分類
         url_category_rules = {
