@@ -8,6 +8,7 @@ import re
 # 只要有一個沒過就會回傳0,並不再繼續檢查
 # 這是因為現在做測試版本每個user都會至少有兩個群組,例如:pilot_test, student
 # 由於測試群組不能看到未開放的頁面,因此會優先檢查
+# 群組權限如果都過最後檢查個人權限,只有個人可以看到的頁面
 class auth_check_manager:
     def __init__(self):
         self.user_auth_group = list()
@@ -27,17 +28,25 @@ class auth_check_manager:
             #'課程預約': ('', 4),
             # 以下為公開頁面
             '首頁' : ('/home', 'public'),
-            '課程搜尋頁' : ('^/lesson/search?q=.', 'public'),
+            '課程搜尋頁' : ('^/lesson/search[?]q=.', 'public'),
             '課程資訊頁' : ('^/lesson/main/view/.', 'public'),
             '註冊新老師' : ('/account/register/teacher.', 'public'),
             '註冊新學生' : ('^/account/register/student.', 'public'),
         }
-    # read tabel
+    # 一次一個url檢查權限
     def find_which_page(self,url):
-        for rule in self.url_category_rules:
-            if len(re.findall('^/account/info/teacherS+', url)) > 0:
-                pass
+        keys_bag = {}
+        for key, value in self.url_category_rules.items():
+            #print(value[0])
+            if len(re.findall(value[0], url)) > 0:
+                keys_bag[key] = value
+        print(keys_bag)
+                #pass
     def responce_to_frontend(self,num):
+        #response['status'] = 'failed'
+        #response['errCode'] = '0'
+        #response['errMsg'] = 'Received Arguments Failed.'
+        #response['data'] = None
         pass
     def check_user_type(self, userID):
 
