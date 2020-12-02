@@ -520,12 +520,12 @@ def return_lesson_details_for_browsing(request):
 
 
 @require_http_methods(['POST'])
-def test_create_or_edit_a_lesson(request):
+def create_or_edit_a_lesson(request):
     response = dict()
     action = request.POST.get('action', False)
     teacher_auth_id = request.POST.get('userID', False)
     lesson_id = request.POST.get('lessonID', False) # 新增沒有,修改才有
-    print(request.POST.get('background_picture_path', False))
+    # print(request.POST.get('background_picture_path', False))
     the_leeson_manager = lesson_manager()
     if not check_if_all_variables_are_true(action, teacher_auth_id):
         # 萬一有變數沒有傳到後端來的話...
@@ -854,4 +854,32 @@ def lesson_manage(request):
     print(response)
     return JsonResponse(response)    
 
-
+@require_http_methods(['POST'])
+def before_signing_up_create_or_edit_a_lesson(request):
+    response = dict()
+    action = request.POST.get('action', False)
+    teacher_auth_id = request.POST.get('userID', False)
+    lesson_id = request.POST.get('lessonID', False) # 新增沒有,修改才有
+    # print(request.POST.get('background_picture_path', False))
+    the_leeson_manager = lesson_manager()
+    if not check_if_all_variables_are_true(action, teacher_auth_id):
+        # 萬一有變數沒有傳到後端來的話...
+        response['status'] = 'failed'
+        response['errCode'] = 0
+        response['errMsg'] = 'Received Arguments Failed.'
+        return JsonResponse(response)
+    if action == 'createLesson':
+        response['status'], response['errCode'], response['errMsg']= \
+            the_leeson_manager.setup_a_lesson(
+                teacher_auth_id, request, None, action)
+        return JsonResponse(response)
+    elif action == 'editLesson':
+        response['status'], response['errCode'], response['errMsg']= \
+            the_leeson_manager.setup_a_lesson(
+                teacher_auth_id, request, lesson_id, action)
+        return JsonResponse(response)
+    else:
+        response['status'] = 'failed'
+        response['errCode'] = 1
+        response['errMsg'] = 'Unknown Action.'
+        return JsonResponse(response)
