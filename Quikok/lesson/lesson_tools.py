@@ -8,10 +8,12 @@ from django.db.models import Avg, Sum
 import pandas as pd
 import os
 import re
+
 def clean_files(folder_path, key_words):
     for each_file in os.listdir(folder_path):
         if key_words in each_file:
             os.unlink(os.path.join(folder_path, each_file))
+            
 def get_lesson_s_best_sale(lesson_id):
     lesson_object = lesson_info.objects.filter(id=lesson_id).first()
     trial_class_price = lesson_object.trial_class_price
