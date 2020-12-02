@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 from account.models import *
 from .chat_tools import websocket_manager
 import copy
-from account.auth_check import auth_ckeck
+from account.auth_check import auth_check_manager
 from .system_2user_layer import layer_info_maneger
 
 # backend for websocket

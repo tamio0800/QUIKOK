@@ -13,27 +13,31 @@ class auth_check_manager:
         self.user_auth_group = list()
         # value = (前端給的url格式, 有權限的 auth_group_id)
         self.url_category_rules = {
-            '老師會員中心': ('^/account/info/teacherS+', 1,3),
-            '課程管理' : ('^/account/lessonS+', 1,3),
-            '課程上架': ('^/lesson/ready/addS+', 1,3), 
-            '課程編輯': ('^/lesson/ready/edit/S+', 1,3),
-            '課程預覽' : ('^/lesson/main/preview/S+', 1,3),
-            '上課live_house' : ('', 'member_only'), # 還沒做到
-            '聊天室主頁' : ('', 'member_only'), # 還沒做到
-            '學生會員中心' : ('^/account/info/studentS+', 1,4),
-            '學生帳務中心' : ('', 4),
-            '學習歷程': ('', 4),
-            '方案購買': ('', 4),
-            '課程預約': ('', 4),
+            '老師會員中心': ('^/account/info/teacher.', 1,3),
+            '課程管理' : ('^/account/lesson.', 1,3),
+            '課程上架': ('^/lesson/ready/add.', 1,3), 
+            '課程編輯': ('^/lesson/ready/edit/.', 1,3),
+            '課程預覽' : ('^/lesson/main/preview/.', 1,3),
+            #'上課live_house' : ('', 'member_only'), # 還沒做到
+            #'聊天室主頁' : ('', 'member_only'), # 還沒做到
+            '學生會員中心' : ('^/account/info/student.', 1,4),
+            #'學生帳務中心' : ('', 4),
+            #'學習歷程': ('', 4),
+            #'方案購買': ('', 4),
+            #'課程預約': ('', 4),
             # 以下為公開頁面
             '首頁' : ('/home', 'public'),
-            '課程搜尋頁' : ('^/lesson/search?q=S+', 'public'),
-            '課程資訊頁' : ('^/lesson/main/view/S+', 'public'),
-            '註冊新老師' : ('/account/register/teacherS+', 'public'),
-            '註冊新學生' : ('^/account/register/studentS+', 'public'),
+            '課程搜尋頁' : ('^/lesson/search?q=.', 'public'),
+            '課程資訊頁' : ('^/lesson/main/view/.', 'public'),
+            '註冊新老師' : ('/account/register/teacher.', 'public'),
+            '註冊新學生' : ('^/account/register/student.', 'public'),
         }
     # read tabel
     def find_which_page(self,url):
+        for rule in self.url_category_rules:
+            if len(re.findall('^/account/info/teacherS+', url)) > 0:
+                pass
+    def responce_to_frontend(self,num):
         pass
     def check_user_type(self, userID):
 
