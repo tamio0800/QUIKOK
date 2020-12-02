@@ -417,7 +417,7 @@ def create_a_teacher_user(request):
                     info_folder = 'user_upload/'+ user_folder + '/user_info', 
                     tutor_experience = tutor_experience,
                     subject_type = subject_type,
-                    education_1 = education_1,
+                    education_1 = education_1, 
                     education_2 = education_2,
                     education_3 = education_3 ,
                     cert_unapproved = 'user_upload/'+ user_folder + '/unaproved_cer',
@@ -513,9 +513,6 @@ def return_teacher_s_profile_for_public_viewing(request):
     
     return JsonResponse(response)
 
-
-
-
 # 登入
 @require_http_methods(['POST'])
 def signin(request):
@@ -600,12 +597,6 @@ def signin(request):
                 response['errMsg'] = 'wrong password'
                 response['data'] = None
                 print('password error')
-        #else:
-        #    response['status'] = 'failed'
-        #    response['errCode'] = '3'
-        #    response['errMsg'] = 'get nothing'
-        #    response['data'] = None
-        #    print('get nothing')
     else:
         # 不是拿到post
         response['status'] = 'failed'
@@ -642,8 +633,6 @@ def auth_check(request):
         'authority' : True 
     }
     return JsonResponse(response)
-    #time = datetime.now()
-    #user = user_token.objects.filter(authID_object = user_id).first()
     
     #暫時先註記，目前訪客id給-1，所以會找不到對應的資料，後續再修正
     #token_in_db = user.token
@@ -736,61 +725,6 @@ def member_reset_password(request):
     return JsonResponse(response)
 
 #########以下是舊的views先貼過來以免 server跑不起來
-
-def signup(request):
-    title = '會員註冊'
-   
-    if request.method == 'POST':
-        username = request.POST['username'].strip()
-        password = request.POST.get('password', False)
-        password_hash = make_password(password)
-        name = request.POST['name'].strip()
-        nickname = request.POST['nickname'].strip()
-        birth_date = request.POST.get('birth_date', False)
-        if birth_date != False and is_num(birth_date):
-            if len(str(birth_date)) == 8:
-                birth_date = date_function(
-                    int(str(birth_date)[:4]),
-                    int(str(birth_date)[4:6]),
-                    int(str(birth_date)[-2:])
-                    )
-            else:
-               birth_date = None
-        else:
-            birth_date = None 
-        # birth_date = '1990-12-25' # request.POST['birth_date']
-        is_male = request.POST['is_male']
-        role = request.POST['role']
-        mobile = request.POST['mobile'].strip()
-        user_folder = 'to_be_deleted'
-        update_someone_by_email = request.POST['update_someone_by_email'].strip()
-
-        db_manager = user_db_manager()        
-        is_successful = \
-            db_manager.create_user(
-                user_type = 'user',
-                username = username,
-                password_hash = password_hash,
-                name = name,
-                nickname = nickname,
-                birth_date = birth_date,
-                is_male = is_male,
-                role = request.POST['role'],
-                mobile = request.POST['mobile'],
-                user_folder = 'to_be_deleted',
-                update_someone_by_email = request.POST['update_someone_by_email'],
-            )
-        if is_successful:
-            user = auth.authenticate(username=username, password=password)
-            auth.login(request, user)
-        else:
-            username_taken = True
-        return render(request, 'account/signup.html', locals())
-    else:
-        return render(request, 'account/signup.html', locals())
-
-
-
 def dev_forgot_password_1_check_username(request):
     # fotgot password step 1
     title = '忘記密碼'
