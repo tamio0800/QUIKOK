@@ -76,7 +76,6 @@ def get_lesson_cards_for_common_users(request):
     keywords = request.POST.get('keywords', False)
     ordered_by = request.POST.get('ordered_by', False)
     user_auth_id = request.POST.get('userID', False)
-    keywords = request.POST.get('keywords', False)
     only_show_ones_favorites = request.POST.get('only_show_ones_favorites', False)
     only_show_lessons_by_this_teacher_s_auth_id = \
         request.POST.get('only_show_lessons_by_this_teacher_s_auth_id', False)
@@ -856,30 +855,9 @@ def lesson_manage(request):
 
 @require_http_methods(['POST'])
 def before_signing_up_create_or_edit_a_lesson(request):
+    #dummy_user_id = request.POST.get(['dummy_user_id'], False)
     response = dict()
-    action = request.POST.get('action', False)
-    teacher_auth_id = request.POST.get('userID', False)
-    lesson_id = request.POST.get('lessonID', False) # 新增沒有,修改才有
-    # print(request.POST.get('background_picture_path', False))
-    the_leeson_manager = lesson_manager()
-    if not check_if_all_variables_are_true(action, teacher_auth_id):
-        # 萬一有變數沒有傳到後端來的話...
-        response['status'] = 'failed'
-        response['errCode'] = 0
-        response['errMsg'] = 'Received Arguments Failed.'
-        return JsonResponse(response)
-    if action == 'createLesson':
-        response['status'], response['errCode'], response['errMsg']= \
-            the_leeson_manager.setup_a_lesson(
-                teacher_auth_id, request, None, action)
-        return JsonResponse(response)
-    elif action == 'editLesson':
-        response['status'], response['errCode'], response['errMsg']= \
-            the_leeson_manager.setup_a_lesson(
-                teacher_auth_id, request, lesson_id, action)
-        return JsonResponse(response)
-    else:
-        response['status'] = 'failed'
-        response['errCode'] = 1
-        response['errMsg'] = 'Unknown Action.'
-        return JsonResponse(response)
+    response['status'] = 'success'
+    response['errCode'] = None
+    response['errMsg'] = None
+    return JsonResponse(response)
