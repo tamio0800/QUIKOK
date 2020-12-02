@@ -12,7 +12,16 @@ class Lesson_Related_Functions_Test(TestCase):
         self.client = Client()
         response = self.client.post(path='/api/lesson/beforeSigningUpCreateOrEditLesson/')
         self.assertEqual(response.status_code, 200)
+        
+
+    def test_before_signing_up_create_or_edit_a_lesson_received_argument(self):
+        # 測試這個函式能不能接受到自訂的「dummy_user_id」參數
+        self.client = Client()
+        response = self.client.post(
+            path='/api/lesson/beforeSigningUpCreateOrEditLesson/',
+            data={'dummy_user_id': 'tamio080011111'})
         print(str(response.content, encoding='utf8'))
+        
         self.assertJSONEqual(
             str(response.content, encoding='utf8'),
             {
@@ -22,26 +31,6 @@ class Lesson_Related_Functions_Test(TestCase):
             }
         )
 
-    '''def test_before_signing_up_create_or_edit_a_lesson_exist(self):
-        # 確認有找到這個views function
-        self.factory = RequestFactory()
-        request = self.factory.post('api/lesson/beforeSigningUpCreateOrEditLesson/')
-        print(str(request))
+    
 
-    def test_get_lesson_cards_for_common_users_exist(self):
-        # self.factory = RequestFactory()
-        data = {
-            'qty': 10,
-            'filtered_by': None,
-            'keywords': None,
-            'ordered_by': None,
-            'user_auth_id': 4,
-            'only_show_ones_favorites': False
-        }
-        response = self.client.post(
-            path='api/lesson/getLessonCardsForCommonUsers/',
-            data=data,
-            content_type='application/json',
-        )
-        print(str(response))'''
         

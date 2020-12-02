@@ -855,9 +855,16 @@ def lesson_manage(request):
 
 @require_http_methods(['POST'])
 def before_signing_up_create_or_edit_a_lesson(request):
-    #dummy_user_id = request.POST.get(['dummy_user_id'], False)
     response = dict()
-    response['status'] = 'success'
-    response['errCode'] = None
-    response['errMsg'] = None
+    dummy_user_id = request.POST.get('dummy_user_id', False)
+    
+    if dummy_user_id != False:
+        response['status'] = 'success'
+        response['errCode'] = None
+        response['errMsg'] = None
+    else:
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = 'Non dummy_user_id'
+    
     return JsonResponse(response)
