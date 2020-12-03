@@ -8,7 +8,7 @@ from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.core.files.storage import FileSystemStorage
 import pandas as pd
 from account.models import teacher_profile, favorite_lessons
-from lesson.models import lesson_info, lesson_reviews, lesson_card
+from lesson.models import lesson_info, lesson_reviews, lesson_card, lesson_info_for_users_not_signed_up
 from lesson.lesson_tools import *
 from django.contrib.auth.decorators import login_required
 from account.model_tools import *
@@ -853,15 +853,19 @@ def lesson_manage(request):
     print(response)
     return JsonResponse(response)    
 
+
 @require_http_methods(['POST'])
 def before_signing_up_create_or_edit_a_lesson(request):
     response = dict()
-    dummy_user_id = request.POST.get('dummy_user_id', False)
-    
-    if dummy_user_id != False:
+    dummy_teacher_id = request.POST.get('dummy_teacher_id', False)
+
+    if dummy_teacher_id != False:
+        # 成功接收到 dummy_teacher_id
+        
         response['status'] = 'success'
         response['errCode'] = None
         response['errMsg'] = None
+
     else:
         response['status'] = 'failed'
         response['errCode'] = '0'
