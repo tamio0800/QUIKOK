@@ -2,6 +2,7 @@ from django.contrib.auth.models import Permission, User, Group
 from account.models import student_profile, teacher_profile, user_token
 from chatroom.models import chatroom_info_Mr_Q2user
 import re
+from datetime import datetime, timedelta
 # 跟權限確認有關係的功能
 # 像一道道閘門一樣每個網頁去確認權限
 # 有過/沒過, 回傳 1,0, 並藉此控制回傳給前端的responce
@@ -33,14 +34,14 @@ class auth_check_manager:
             '註冊新老師' : ('/account/register/teacher.', 'public'),
             '註冊新學生' : ('^/account/register/student.', 'public'),
         }
-    # 一次一個url檢查權限
-    def find_which_page(self,url):
-        self.auth_bag = {}
+    # 確認前端這次傳來的url屬於哪個權限範圍(一次一個url檢查權限,bag裡只應該有一筆資料)
+    def find_auth_page(self,url):
+        self.auth_page = {}
         for key, value in self.url_category_rules.items():
             if len(re.findall(value[0], url)) > 0:
-                self.autj_bag[key] = value
-        print(self.auth_bag)
-        #if len(self.auth_bag) < 1:
+                self.auth_page[key] = value
+        print(self.auth_page)
+        #if len(self.auth_page) < 1:
 
     # 管理給前端的回應
     def response_to_frontend(self,num):
@@ -61,6 +62,12 @@ class auth_check_manager:
             response['errCode'] = '1'
             response['errMsg'] = 'Query Data Failed.'
             response['data'] = None
+        elif num == 3:
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = 'Please login.'
+            response['data'] = {'authority' : False }
+
         return(response)
     def check_user_type(self, userID):
 
@@ -70,42 +77,45 @@ class auth_check_manager:
             return('student')
         else:
             pass
+    # gate.1 url種類如果是public一律有權限
+    def check_url_is_public(self):
+        for info_key,auth_info in self.auth_page.items():
+            for info in auth_info:
+                if info == 'public': # public頁面,一律有權限
+                    return(1)
+                else:
+                    return(0)
+    # gate.2 時效與token檢查, 非public頁面最優先檢查
     def check_user_token(self, userID, token):
-        user_token = user_token.objects.filter(authID_object=userID)
-        #token_in_db = user.token
-        #logout_date = user.logout_time
-        #logout_only_date = logout_date.split(' ')[0] # 0是日期, 1是小時
-        #logout_datetime_type = datetime.strptime(logout_only_date,"%Y-%m-%d")
-        #time_has_passed = logout_datetime_type - time 
-    def get_user_group_and_permisstion_group(self,userID):
-        a_user = User.objects.get(userID)
-        
+        token_obj = user_token.objects.filter(authID_object=userID).first()
+        time = datetime.now()
+        logout_date = token_obj.logout_time
+        logout_datetime_type = datetime.strptime(logout_date.split('.')[0],"%Y-%m-%d %H:%M:%S")
+        time_result = logout_datetime_type - time
+        # 登出時間-現在時間<0 則超過時效
+        if time_result.days < 0:
+            return(0)
+        else:
+            if token == token_obj.token:
+                return(1)
+            else:
+                return(0)
+    # gate.3 依權限分類劃分
+    #使用者的權限分類
+    def get_user_group_and_permission_group(self,userID):
+        a_user = User.objects.filter(userID).first()
         for group_num in a_user.groups.all():
-            self.user_auth_group.append(group_num.id) # 該使用者的auth_group
-        
-    def create_url_rules(self):
-        # 目前有的各個網站的結構以及權限分類
-        pass
-    #def check_url_belong_to_which_category(self, url):
-    #    for url_category_name, url_pattern_and_auth_type in self.url_category_rules.items()
-    #    pass
-    #def write_into_db(self):
-        #from .models import auth_check
-        #for url_category_name, url_pattern_and_auth_type in self.url_category_rules.items():
-            #auth_check.objects.update_or_create(
-                #category_name = url_category_name, 
-                #defaults = {'url_pattern' : url_pattern_and_auth_type[0],
-                #            'url_auth_type' : url_pattern_and_auth_type[1]
-                #                            },)
-
-        #for category in self.url_category_rules.keys():
-            
-#re.findall('^/account/info/teacherS+','/account/info/teacherS+')
-    # 先拿 url 找 url的type
-       # 用正則來處理前端給的url
-       # 處理出來只有前面沒有後面
-       # 再用處理出來的 url去db找 type
-    # 如果 url_type == public:
-        #直接 success有權限
-    # else
-    #   用 auth_id來看他有沒有資格看
+            self.user_auth_group.append(group_num.id) # 該使用者的auth_groupID
+    # 比對授權號碼    
+    def check_auth_page_and_permission(self):
+        for info_key,auth_info in self.auth_page.items():
+            for info in auth_info:
+                if info in self.user_auth_group:
+                    return(1)
+                else:
+                    return(0)
+           
+    def check_all_gate_and_responce(self,**kwargs):
+        userID = kwargs['userID']
+        url = kwargs['url']
+        token = kwargs['token']
