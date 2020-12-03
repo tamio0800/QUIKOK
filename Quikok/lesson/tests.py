@@ -3,7 +3,9 @@ from django.test import Client
 import pandas as pd
 import os
 from lesson import lesson_tools
+from lesson.models import lesson_info_for_users_not_signed_up
 
+# python manage.py test lesson/ --settings=Quikok.settings_for_test
 class Lesson_Related_Functions_Test(TestCase):
 
     def test_before_signing_up_create_or_edit_a_lesson_exist(self):
@@ -15,11 +17,11 @@ class Lesson_Related_Functions_Test(TestCase):
         
 
     def test_before_signing_up_create_or_edit_a_lesson_received_argument(self):
-        # 測試這個函式能不能接受到自訂的「dummy_user_id」參數
+        # 測試這個函式能不能接受到自訂的「dummy_teacher_id」參數
         self.client = Client()
         response = self.client.post(
             path='/api/lesson/beforeSigningUpCreateOrEditLesson/',
-            data={'dummy_user_id': 'tamio080011111'})
+            data={'dummy_teacher_id': 'tamio080011111'})
         print(str(response.content, encoding='utf8'))
         
         self.assertJSONEqual(
@@ -30,6 +32,41 @@ class Lesson_Related_Functions_Test(TestCase):
                 'errMsg': None,
             }
         )
+
+    def test_saving_and_retreiving_data_from_db(self):
+        # 測試這個函式能不能接受到自訂的「dummy_teacher_id」參數
+        new_added_lesson = \
+            lesson_info_for_users_not_signed_up.objects.create(
+                big_title='test',
+                little_title='test',
+                title_color='#fffffff',
+                background_picture_code=3,
+                background_picture_path='',
+                lesson_title='test',
+                price_per_hour=300,
+                lesson_has_one_hour_package=True,
+                trial_class_price=100,
+                highlight_1='test',
+                highlight_2='test',
+                highlight_3='test',
+                lesson_intro='test',
+                how_does_lesson_go='test',
+                target_students='test',
+                lesson_remarks='test',
+                syllabus='test',
+                lesson_attributes='test',
+                dummy_teacher_id='tamio0800111111'
+            )
+        print(new_added_lesson.id)
+        new_added_lesson.save()
+
+        self.assertEqual(
+            lesson_info_for_users_not_signed_up.objects.all().count(),
+            1,
+            lesson_info_for_users_not_signed_up.objects.values()
+        )
+    
+        
 
     
 
