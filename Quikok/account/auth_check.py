@@ -1,6 +1,5 @@
 from django.contrib.auth.models import Permission, User, Group
 from account.models import student_profile, teacher_profile, user_token
-from chatroom.models import chatroom_info_Mr_Q2user
 import re
 from datetime import datetime, timedelta
 # 跟權限確認有關係的功能
@@ -16,24 +15,24 @@ class auth_check_manager:
         self.auth_page = {}
         # value = (前端給的url格式, 有權限的 auth_group_id)
         self.url_category_rules = {
-            '老師會員中心': ('^/account/info/teacher.', 1,3,5),
-            '課程管理' : ('^/account/lesson.', 1,3,5),
-            '課程上架': ('^/lesson/ready/add.', 1,3,5), 
+            '老師會員中心': ('^/account/info/teacher', 1,3,5),
+            '課程管理' : ('^/account/lesson', 1,3,5),
+            '課程上架': ('^/lesson/ready/add', 1,3,5), 
             '課程編輯': ('^/lesson/ready/edit/.', 1,3,5),
             '課程預覽' : ('^/lesson/main/preview/.', 1,3,5),
             #'上課live_house' : ('', 'member_only'), # 還沒做到
             #'聊天室主頁' : ('', 'member_only'), # 還沒做到
-            '學生會員中心' : ('^/account/info/student.', 3,4,5),
+            '學生會員中心' : ('^/account/info/student', 3,4,5),
             #'學生帳務中心' : ('', 4),
             #'學習歷程': ('', 4),
             #'方案購買': ('', 4),
             #'課程預約': ('', 4),
             # 以下為公開頁面
             '首頁' : ('/home', 'public'),
-            '課程搜尋頁' : ('^/lesson/search[?]q=.', 'public'),
-            '課程資訊頁' : ('^/lesson/main/view/.', 'public'),
-            '註冊新老師' : ('/account/register/teacher.', 'public'),
-            '註冊新學生' : ('^/account/register/student.', 3,4,5),
+            '課程搜尋頁' : ('^/lesson/search[?]q=.*', 'public'),
+            '課程資訊頁' : ('^/lesson/main/view/.*', 'public'),
+            '註冊新老師' : ('/account/register/teacher.*', 'public'),
+            '註冊新學生' : ('^/account/register/student.*', 3,4,5),
         }
     # 確認前端這次傳來的url屬於哪個權限範圍(一次一個url檢查權限,bag裡只應該有一筆資料)
     def find_auth_page(self,url):
@@ -127,6 +126,7 @@ class auth_check_manager:
         userID = kwargs['userID']
         url = kwargs['url']
         token = kwargs['token']
+        print(userID)
         self.get_user_group_and_permission_group(userID)
         # superuser:edony 擁有所有權限
         if 5 in self.user_auth_group:
