@@ -1,18 +1,17 @@
+from django.test import RequestFactory, TestCase
+from django.test import Client
 from django.contrib.auth.models import Permission, User, Group
 from account.models import student_profile, teacher_profile, user_token
-from chatroom.models import chatroom_info_Mr_Q2user
+from account.auth_check import auth_check_manager
 import re
 from datetime import datetime, timedelta
-from .views import auth_check
 
-class test_auth_check:
-    def check_user_token(self, userID, token):
-        token_obj = user_token.objects.filter(authID_object=userID).first()
-        #token_in_db = token_obj.token
-        time = datetime.now()
-        logout_date = token_obj.logout_time
-        logout_datetime_type = datetime.strptime(logout_date.split('.')[0],"%Y-%m-%d %H:%M:%S")
-        time_result = logout_datetime_type - time
-        # 登出實現-現在時間<0 則超過時效
-        if time_result.days < 0:
-            print(time_result)
+# python manage.py test lesson/ --settings=Quikok.settings_for_test
+class Auth_Related_Functions_Test(TestCase):
+
+    def test_auth_check(self):
+        # 測試這個函式是否存在，並且應該回傳status='success', errCode=None, errMsg=None
+        # self.factory = RequestFactory()
+        self.client = Client()
+        response = self.client.get(path='authCheck/')
+        self.assertEqual(response.status_code, 200)

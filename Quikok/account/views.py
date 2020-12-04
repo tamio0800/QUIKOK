@@ -12,6 +12,7 @@ import pandas as pd
 from chatroom.models import chatroom_info_Mr_Q2user
 from chatroom.chat_tools import chat_room_manager
 import os
+from .auth_check import auth_check_manager
 # FOR API
 from django.views.decorators.http import require_http_methods
 from django.core import serializers
@@ -611,80 +612,39 @@ def signin(request):
 # 頁面權限檢查 目前身分有:老師/學生/訪客/會員(老師+學生)
 #@require_http_methods(['POST'])
 def auth_check(request):
-    response = {}
-    user_id = request.POST.get('userId', False)
-    print('auth_check 檢查id:'+ str(user_id))
-    url = request.POST.get('url', False)
-    print('檢查網址'+ str(url))
+    
     try:
-        #token_from_user3 = request.META['QUERY_STRING']
+        user_id = request.POST.get('userId', False)
+        print('auth_check 檢查id:'+ str(user_id))
+        url = request.POST.get('url', False)
+        print('檢查網址'+ str(url))#token_from_user3 = request.META['QUERY_STRING']
         token_from_user_raw = request.headers.get('Authorization', False)
         print(token_from_user_raw) 
         token_from_user = token_from_user_raw.split(' ')[1]  
         # 從前端拿來的token格式: "bearer token", 為了只拿"token"因此用split切開拿後面
         print('token is :'+ str(token_from_user))
+        pass_to_auth_check = {
+            'userID' : user_id, 'url' : url, 'token': token
+        }
+        print('開始檢查權限~')
+        auth_manage = auth_check_manager()
+        response = auth_manage.check_all_gate_and_responce(pass_to_auth_check)
+        print('檢查完畢')
+        print(response)
     except:
-        print('沒有收到token')
+        auth_manage = auth_check_manager()
+        response = auth_manage.response_to_frontend(0)
 
-    response['status'] = 'success'
-    response['errCode'] = None
-    response['errMsg'] = None
-    response['data'] = {
-        'authority' : True 
-    }
+    #response['status'] = 'success'
+    #response['errCode'] = None
+    #response['errMsg'] = None
+    #response['data'] = {
+    #    'authority' : True 
+    #}
     return JsonResponse(response)
     
-    #暫時先註記，目前訪客id給-1，所以會找不到對應的資料，後續再修正
-    #token_in_db = user.token
-    #logout_date = user.logout_time
-    #logout_only_date = logout_date.split(' ')[0] # 0是日期, 1是小時
-    #logout_datetime_type = datetime.strptime(logout_only_date,"%Y-%m-%d")
-    #time_has_passed = logout_datetime_type - time 
-    
-    # if url是需要權限的才需要登入
-    '''if user_id is not False: 
-        # 超過十四天未登入,直接沒有權限、需再登入
-        if time_has_passed.days > 13:
-            response['status'] = 'success'
-            response['errCode'] = '0'
-            response['errMsg'] = 'more than 14 days'
-            response['data'] = {'authority': False}
+   
 
-        else:
-            if token_from_user == token_in_db:
-                # 進入檢查該網頁權限程序
-                response['status'] = 'success'
-                response['errCode'] = None
-                response['errMsg'] = None
-                response['data'] = {
-                'authority' : True 
-                }
-                print('成功登入', response) 
-            else:
-                response['status'] = 'success'
-                response['errCode'] = None
-                response['errMsg'] = 'token error'
-                response['data'] = {
-                'authority' : True 
-                }
-                print('請重新登入', response)
-    
-    else: # 可能是訪客或是沒收到資訊
-        if url and token_from_user:
-            # 進檢查程序
-            response['status'] = 'success'
-            response['errCode'] = None
-            response['errMsg'] = None
-            response['data'] = {
-            'authority' : True 
-            }
-        else:
-            response['status'] = 'failed'
-            response['errCode'] = None
-            response['errMsg'] = 'not received data'
-            response['data'] = None
-            print('失敗', response)
-    return JsonResponse(response)'''
 
         
 @require_http_methods(['POST'])
