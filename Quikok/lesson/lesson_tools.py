@@ -13,7 +13,7 @@ def clean_files(folder_path, key_words):
     for each_file in os.listdir(folder_path):
         if key_words in each_file:
             os.unlink(os.path.join(folder_path, each_file))
-            
+
 def get_lesson_s_best_sale(lesson_id):
     lesson_object = lesson_info.objects.filter(id=lesson_id).first()
     trial_class_price = lesson_object.trial_class_price
@@ -33,19 +33,23 @@ def get_lesson_s_best_sale(lesson_id):
             return str(100 - best_discount) + '% off'
             # 反之則回傳  xx% off
 class sea_man:
+
     def __init__(self):
         self.delimiters = r' |,'   # 目前只有「空格」跟「,」
+
     def get_key_words(self, key_words):
         if type(key_words) is str:
             # split後轉成elements in a list
             key_words = re.split(self.delimiters, key_words)
         return key_words
+
     def a_is_in_b(self, key_words, target_texts):
         key_words = self.get_key_words(key_words)
         for each_key_word in key_words:
             if each_key_word in target_texts:
                 return True
         return False
+
     def get_model_key_value_where_a_is_in_its_specific_columns(self, key_words, column_names_as_list, returned_key, the_model_objects):
         matched_key_value_in_model = list()
         model_object_values_as_dicts_in_list = the_model_objects.values()
@@ -120,6 +124,7 @@ class lesson_manager:
             3: '5-10年',
             4: '10年以上',
         }
+
     def parse_filtered_conditions(self, filtered_by_in_string):
         # API: filtered_by >>  
         #   filtered_subjects:0,2,3;filtered_target_students:0,1,2;filtered_tutoring_experience:0,2;'filtered_price_per_hour:200,400 
@@ -166,6 +171,7 @@ class lesson_manager:
                     self.current_filtered_price_per_hour = \
                         (min_func(keys_in_list[0]), max_func(keys_in_list[1]))
             return True         
+
     def return_lesson_details(self, lesson_id, user_auth_id, for_whom='common_users'):
         # for_whom接收的參數有兩個，'common_users' 以及 'teacher_who_created_it'
         if for_whom == 'common_users':
@@ -214,9 +220,11 @@ class lesson_manager:
             # 是要給老師看的，另外加上for老師的資訊    
             self.data['best_sale'] = get_lesson_s_best_sale(lesson_id=lesson_id)  
         return (self.status, self.errCode, self.errMsg, self.data)
+
     def fetch_lesson_details(self, lesson_id):
         lesson_object = lesson_info.objects.filter(id = lesson_id)
         return lesson_object.values()[0]
+
     def setup_a_lesson(self, teacher_auth_id, a_request_object, lesson_id, action):
         # 全新的課程建立
         _temp_lesson_info = dict()
@@ -235,7 +243,7 @@ class lesson_manager:
             else:
                 _temp_lesson_info[each_column_to_be_read] = _arg
         _temp_lesson_info['lesson_has_one_hour_package'] = \
-            _temp_lesson_info['lesson_has_one_hour_package'] == 'true'
+            _temp_lesson_info['lesson_has_one_hour_package'] in ['true', True]
         # 轉成boolean
         # if a_request_object.POST.get('unitClassPrice', False):
             # 代表其非為空值，且非為None
