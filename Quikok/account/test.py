@@ -13,5 +13,5 @@ class Auth_Related_Functions_Test(TestCase):
         # 測試這個函式是否存在，並且應該回傳status='success', errCode=None, errMsg=None
         # self.factory = RequestFactory()
         self.client = Client()
-        response = self.client.get(path='authCheck/')
+        response = self.client.get(path='/authCheck/')
         self.assertEqual(response.status_code, 200)
