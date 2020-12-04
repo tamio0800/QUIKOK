@@ -162,6 +162,14 @@ class Lesson_Related_Functions_Test(TestCase):
             os.listdir(f'user_upload/temp/before_signed_up/{dummy_teacher_id}')
         )  # 確認該資料夾裡面有背景照片
         
+        print(lesson_info_for_users_not_signed_up.objects.values())
+        
+        self.assertEqual(
+            lesson_info_for_users_not_signed_up.objects.filter().first().dummy_teacher_id,
+            dummy_teacher_id,
+            lesson_info_for_users_not_signed_up.objects.values()
+        )
+
         self.assertJSONEqual(
             str(response.content, encoding='utf8'),
             {
@@ -170,5 +178,6 @@ class Lesson_Related_Functions_Test(TestCase):
                 'errMsg': None,
             }
         )
+
         
         

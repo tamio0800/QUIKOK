@@ -884,7 +884,7 @@ def before_signing_up_create_or_edit_a_lesson(request):
             fs = FileSystemStorage(location=temp_folder)
             file_extension = uploaded_background_picture.name.split('.')[-1]
             fs.save('customized_lesson_background'+'.'+ file_extension , uploaded_background_picture)
-            background_picture_path = '/' + temp_folder + '/' + 'customized_lesson_background' + file_extension
+            background_picture_path = '/' + temp_folder + '/' + 'customized_lesson_background.' + file_extension
 
         arguments_dict = {
             'dummy_teacher_id': dummy_teacher_id,
@@ -907,9 +907,19 @@ def before_signing_up_create_or_edit_a_lesson(request):
             'syllabus': request.POST.get('syllabus', False),
             'lesson_attributes': request.POST.get('lesson_attributes', False)        
             }
-        
-        response['status'] = 'success'
-        response['errCode'] = None
-        response['errMsg'] = None
+
+        try:
+            temp_lesson_info = lesson_info_for_users_not_signed_up.objects.create(
+                **arguments_dict
+            )
+            temp_lesson_info.save()
+
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+        except:
+            response['status'] = 'failed'
+            response['errCode'] = '1'
+            response['errMsg'] = 'Error: Written In Database'
     
     return JsonResponse(response)
