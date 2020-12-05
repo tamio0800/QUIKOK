@@ -25,11 +25,25 @@ class Auth_Related_Functions_Test(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-    def test_create_a_teacher_after_setting_up_a_class_receive_dummy_teacher_id_variable(self):
+    def test_create_a_teacher_after_setting_up_a_class_required_dummy_teacher_id_variable(self):
         # 測試 sign_up_after_setup_a_clcreate_a_teacher_after_setting_up_a_classass 這個函式存在
         client = Client()
 
-        dummy_teacher_id = ''
-        response = client.post(path='/api/account/create_a_teacher_after_setting_up_a_class/')
-        self.assertEqual(response.status_code, 200)
+        post_data = {
+            'dummy_teacher_id': 'tamio080011111'
+        }
+        response = client.post(
+            path='/api/account/create_a_teacher_after_setting_up_a_class/',
+            data=post_data)
+        print(str(response.content, encoding='utf8'))
+        
+        self.assertJSONEqual(
+            str(response.content, encoding='utf8'),
+            {
+                'status': 'success',
+                'errCode': None,
+                'errMsg': None,
+                'data': None
+            }
+        )
 

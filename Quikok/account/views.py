@@ -274,7 +274,24 @@ def edit_teacher_profile(request):
 
 @require_http_methods(['POST'])
 def create_a_teacher_after_setting_up_a_class(request):
-    return HttpResponse("YA")
+    # 在用戶上架課程後，再開始註冊，跟正式註冊有兩點不同：
+    #   1. 會多收到一個 dummy_teacher_id 的變數，用來分辨是誰上架了蝦米；
+    #   2. 註冊完成後，需要幫老師把剛剛上架的課程ETL到正式的上架table中，並且跟小卡整合在一起。
+    response = {}
+    dummy_teacher_id = request.POST.get('dummy_teacher_id', False)
+    
+    if dummy_teacher_id == False:
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = 'No Dummy_Teacher_ID'
+        response['data'] = None
+    else:
+        response['status'] = 'success'
+        response['errCode'] = None
+        response['errMsg'] = None
+        response['data'] = None
+
+    return JsonResponse(response)
 
 
 @require_http_methods(['POST'])
