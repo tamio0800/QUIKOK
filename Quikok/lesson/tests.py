@@ -8,7 +8,7 @@ from lesson.models import lesson_info_for_users_not_signed_up
 # python manage.py test lesson/ --settings=Quikok.settings_for_test
 class Lesson_Related_Functions_Test(TestCase):
 
-
+ 
     def test_before_signing_up_create_or_edit_a_lesson_exist(self):
         # 測試這個函式是否存在，並且應該回傳status='success', errCode=None, errMsg=None
         # self.factory = RequestFactory()

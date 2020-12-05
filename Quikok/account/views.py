@@ -271,6 +271,12 @@ def edit_teacher_profile(request):
  
     return JsonResponse(response)
 
+
+@require_http_methods(['POST'])
+def create_a_teacher_after_setting_up_a_class(request):
+    return HttpResponse("YA")
+
+
 @require_http_methods(['POST'])
 def create_a_teacher_user(request):    
     response = {}
