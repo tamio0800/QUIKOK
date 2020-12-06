@@ -272,7 +272,22 @@ def edit_teacher_profile(request):
     return JsonResponse(response)
 
 
-# def check_if_has_dummy_teacher_id_variable(create_a_teacher_view_func):
+def check_if_has_dummy_teacher_id_variable(create_a_teacher_view_func):
+    def wrapper(request, *args, **kwargs):
+        if request.POST.get('dummy_teacher_id', False) != False:
+            # 代表有找到 dummy_teacher_id 這個變數，所以我們要幫這名老師註冊完後進行上架
+            # 因為要上架課程，所以我們必須知道他的auth_id，不能直接return函式的運算結果
+            response = create_a_teacher_view_func(request, *args, **kwargs)
+            this_teacher_user_auth_id = json.loads(str(response.content, 'utf8'))['data']
+            # 先取得剛註冊好的老師的auth_id，以備上架使用
+            # print('this_teacher_user_auth_id', this_teacher_user_auth_id, type(this_teacher_user_auth_id))
+
+            return response
+        else:
+            # 代表沒找到 dummy_teacher_id 這個變數，直接執行創立老師用戶即可。
+            return create_a_teacher_view_func(request, *args, **kwargs)
+        
+    return wrapper
 
 
 
@@ -298,7 +313,9 @@ def create_a_teacher_after_setting_up_a_class(request):
     return JsonResponse(response)
 
 
+
 @require_http_methods(['POST'])
+@check_if_has_dummy_teacher_id_variable
 def create_a_teacher_user(request):    
     response = {}
     username = request.POST.get('regEmail', False) # 當前端值有錯誤傳 null 就會是false 
@@ -483,7 +500,8 @@ def create_a_teacher_user(request):
             response['status'] = 'success'
             response['errCode'] = None
             response['errMsg'] = None
-            response['data'] = None
+            response['data'] = user_created_object.id
+            # 回傳auth_id作為data的變數
         else:
             print('此帳號已註冊過!')
             response['status'] = 'failed'

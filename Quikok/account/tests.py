@@ -47,11 +47,12 @@ class Auth_Related_Functions_Test(TestCase):
             }
         )
 
+
     def test_create_a_teacher_user_function_works_properly(self):
         client = Client()
         post_data = {
             # 這邊創立要建立老師的註冊資料
-            'dummy_teacher_id': 'tamio080011111',
+            #'dummy_teacher_id': 'tamio080011111',
             'regEmail': 'test_teacher_user@test.com',
             'regPwd': '00000000',
             'regName': 'test_name',
@@ -83,6 +84,6 @@ class Auth_Related_Functions_Test(TestCase):
                 'status': 'success',
                 'errCode': None,
                 'errMsg': None,
-                'data': None
+                'data': 1
             }
         )
