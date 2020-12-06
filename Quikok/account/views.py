@@ -612,7 +612,6 @@ def signin(request):
 # 頁面權限檢查 目前身分有:老師/學生/訪客/會員(老師+學生)
 #@require_http_methods(['POST'])
 def auth_check(request):
-    
     try:
         user_id = request.POST.get('userId', False)
         print('auth_check 檢查id:'+ str(user_id))
@@ -624,14 +623,15 @@ def auth_check(request):
         # 從前端拿來的token格式: "bearer token", 為了只拿"token"因此用split切開拿後面
         print('token is :'+ str(token_from_user))
         pass_to_auth_check = {
-            'userID' : user_id, 'url' : url, 'token': token
+            'userID' : user_id, 'url' : url, 'token': token_from_user
         }
         print('開始檢查權限~')
         auth_manage = auth_check_manager()
         response = auth_manage.check_all_gate_and_responce(pass_to_auth_check)
         print('檢查完畢')
         print(response)
-    except:
+    except Exception as e:
+        print(e)
         auth_manage = auth_check_manager()
         response = auth_manage.response_to_frontend(0)
 
