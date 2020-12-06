@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
-import os
+import os, shutil
 from django.contrib.auth.models import User
 from account.models import student_profile, teacher_profile, specific_available_time, general_available_time
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
@@ -857,18 +857,69 @@ def lesson_manage(request):
 @require_http_methods(['POST'])
 def before_signing_up_create_or_edit_a_lesson(request):
     response = dict()
+
     dummy_teacher_id = request.POST.get('dummy_teacher_id', False)
 
-    if dummy_teacher_id != False:
-        # 成功接收到 dummy_teacher_id
-        
-        response['status'] = 'success'
-        response['errCode'] = None
-        response['errMsg'] = None
-
-    else:
+    if dummy_teacher_id == False:
         response['status'] = 'failed'
         response['errCode'] = '0'
         response['errMsg'] = 'Non dummy_user_id'
+    
+    else:
+        background_picture_code = int(request.POST.get('background_picture_code', False))
+        
+        if background_picture_code != 99:
+            # 用戶使用預設的背景圖
+            background_picture_path = ''
+        else:
+            temp_folder = f'user_upload/temp/before_signed_up/{dummy_teacher_id}'
+            uploaded_background_picture = request.FILES['background_picture_path']
+            # 用戶自己上傳了背景圖
+            if not os.path.isdir(temp_folder):
+                os.mkdir(temp_folder)
+            else:
+                shutil.rmtree(temp_folder)
+                os.mkdir(temp_folder)
+
+            fs = FileSystemStorage(location=temp_folder)
+            file_extension = uploaded_background_picture.name.split('.')[-1]
+            fs.save('customized_lesson_background'+'.'+ file_extension , uploaded_background_picture)
+            background_picture_path = '/' + temp_folder + '/' + 'customized_lesson_background.' + file_extension
+
+        arguments_dict = {
+            'dummy_teacher_id': dummy_teacher_id,
+            'big_title': request.POST.get('big_title', False),
+            'little_title': request.POST.get('little_title', False),
+            'title_color': request.POST.get('title_color', False),
+            'background_picture_code': background_picture_code,
+            'background_picture_path': background_picture_path,
+            'lesson_title': request.POST.get('lesson_title', False),
+            'price_per_hour': request.POST.get('price_per_hour', False),
+            'lesson_has_one_hour_package': request.POST.get('lesson_has_one_hour_package', False) == 'true',
+            'trial_class_price': request.POST.get('trial_class_price', False),
+            'highlight_1': request.POST.get('highlight_1', False),
+            'highlight_2': request.POST.get('highlight_2', False),
+            'highlight_3': request.POST.get('highlight_3', False),
+            'lesson_intro': request.POST.get('lesson_intro', False),
+            'how_does_lesson_go': request.POST.get('how_does_lesson_go', False),
+            'target_students': request.POST.get('target_students', False),
+            'lesson_remarks': request.POST.get('lesson_remarks', False),
+            'syllabus': request.POST.get('syllabus', False),
+            'lesson_attributes': request.POST.get('lesson_attributes', False)        
+            }
+
+        try:
+            temp_lesson_info = lesson_info_for_users_not_signed_up.objects.create(
+                **arguments_dict
+            )
+            temp_lesson_info.save()
+
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+        except:
+            response['status'] = 'failed'
+            response['errCode'] = '1'
+            response['errMsg'] = 'Error: Written In Database'
     
     return JsonResponse(response)

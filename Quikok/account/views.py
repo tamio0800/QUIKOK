@@ -271,6 +271,33 @@ def edit_teacher_profile(request):
  
     return JsonResponse(response)
 
+
+# def check_if_has_dummy_teacher_id_variable(create_a_teacher_view_func):
+
+
+
+@require_http_methods(['POST'])
+def create_a_teacher_after_setting_up_a_class(request):
+    # 在用戶上架課程後，再開始註冊，跟正式註冊有兩點不同：
+    #   1. 會多收到一個 dummy_teacher_id 的變數，用來分辨是誰上架了蝦米；
+    #   2. 註冊完成後，需要幫老師把剛剛上架的課程ETL到正式的上架table中，並且跟小卡整合在一起。
+    response = {}
+    dummy_teacher_id = request.POST.get('dummy_teacher_id', False)
+    
+    if dummy_teacher_id == False:
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = 'No Dummy_Teacher_ID'
+        response['data'] = None
+    else:
+        response['status'] = 'success'
+        response['errCode'] = None
+        response['errMsg'] = None
+        response['data'] = None
+
+    return JsonResponse(response)
+
+
 @require_http_methods(['POST'])
 def create_a_teacher_user(request):    
     response = {}
@@ -341,7 +368,6 @@ def create_a_teacher_user(request):
         obj = teacher_profile.objects.filter(username=username).first()
         auth_obj = User.objects.filter(username=username).first() 
 
-        
         # 下面這個條件式>> 皆非(a為空 或是 b為空) >> a跟b都不能為空>> annie0918:應該是兩個都要空才對
         if obj is None and auth_obj is None :
             print('還沒註冊過,建立 teacher_profile')
@@ -371,8 +397,6 @@ def create_a_teacher_user(request):
                     file_exten = each_file.name.split('.')[-1]
                     fs.save('thumbnail'+'.'+ file_exten , each_file) # 檔名統一改成thumbnail開頭
                     thumbnail_dir = '/user_upload/teachers/' + user_folder + '/' + 'thumbnail'+'.'+ file_exten 
-
-    
             else:
                 print('沒收到老師大頭照')
                 # 可能依照性別使用預設的圖片
@@ -432,7 +456,6 @@ def create_a_teacher_user(request):
                     special_exp = special_exp
             ).save()
             print('成功建立 teacher_profile')
-            
             ## 寫入一般時間table
             # 因為models設定general_available_time與 teacher_profile 
             # 的teacher_name有foreignkey的關係
