@@ -126,36 +126,40 @@ class auth_check_manager:
         userID = kwargs['userID']
         url = kwargs['url']
         token = kwargs['token']
-        print(userID)
-        self.get_user_group_and_permission_group(userID)
-        # superuser:edony 擁有所有權限
-        if 5 in self.user_auth_group:
-            response = self.response_to_frontend(0)
-            print('pass auth check')
-        # 確認網址屬性
-        self.find_auth_page(url)
-        if len(self.auth_page)<0:
-            response = self.response_to_frontend(2)
-        else: #gate1
-            is_public = self.check_url_is_public()
-            if is_public == 1:
+        print('check_all_gate...')
+        print(kwargs['userID'],kwargs['url'],kwargs['token'])
+        try:
+            self.get_user_group_and_permission_group(userID)
+            # superuser:edony 擁有所有權限
+            if 5 in self.user_auth_group:
                 response = self.response_to_frontend(0)
                 print('pass auth check')
-            elif is_public == 0:
-                # gate2
-                is_token_match = self.check_user_token(userID,token)
-                if is_token_match ==0:
-                    response = self.response_to_frontend(3)
-                elif is_token_match ==1:
-                    # gate3
-                    self.get_user_group_and_permission_group(userID)
-                    is_perm_match = self.check_auth_page_and_permission()
-                    if is_perm_match == 0:
-                        response = self.response_to_frontend(5)
-                    elif is_perm_match == 1:
-                        response = self.response_to_frontend(0)
-                        print('pass auth check')
-        print(response)
-        return(response)
+            # 確認網址屬性
+            self.find_auth_page(url)
+            if len(self.auth_page)<0:
+                response = self.response_to_frontend(2)
+            else: #gate1
+                is_public = self.check_url_is_public()
+                if is_public == 1:
+                    response = self.response_to_frontend(0)
+                    print('pass auth check')
+                elif is_public == 0:
+                    # gate2
+                    is_token_match = self.check_user_token(userID,token)
+                    if is_token_match ==0:
+                        response = self.response_to_frontend(3)
+                    elif is_token_match ==1:
+                        # gate3
+                        self.get_user_group_and_permission_group(userID)
+                        is_perm_match = self.check_auth_page_and_permission()
+                        if is_perm_match == 0:
+                            response = self.response_to_frontend(5)
+                        elif is_perm_match == 1:
+                            response = self.response_to_frontend(0)
+                            print('pass auth check')
+            print(response)
+            return(response)
+        except Exception as e:
+            print(e)
 
 
