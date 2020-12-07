@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import auth
 from django.contrib.auth.hashers import make_password, check_password  # 這一行用來加密密碼的
-from .model_tools import user_db_manager, teacher_manager, student_manager, auth_manager
+from .model_tools import user_db_manager, teacher_manager, student_manager, auth_manager_for_password
 from django.contrib.auth.models import User
 from account.models import user_token, student_profile, teacher_profile, specific_available_time, general_available_time
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
@@ -14,7 +14,7 @@ from chatroom.models import chatroom_info_Mr_Q2user
 from chatroom.chat_tools import chat_room_manager
 from lesson.lesson_tools import *
 import os
-from .auth_check import auth_check_manager
+from .auth_tools import auth_check_manager
 # FOR API
 from django.views.decorators.http import require_http_methods
 from django.core import serializers
@@ -718,18 +718,18 @@ def auth_check(request):
         token_from_user = token_from_user_raw.split(' ')[1]  
         # 從前端拿來的token格式: "bearer token", 為了只拿"token"因此用split切開拿後面
         print('token is :'+ str(token_from_user))
-        pass_to_auth_check = {
+        check_data = {
             'userID' : user_id, 'url' : url, 'token': token_from_user
         }
         print('開始檢查權限~')
-        auth_manage = auth_check_manager()
-        response = auth_manage.check_all_gate_and_responce(pass_to_auth_check)
+        page_auth = auth_check_manager()
+        response = page_auth.check_all_gate_and_responce(**check_data)
         print('檢查完畢')
         print(response)
     except Exception as e:
         print(e)
-        auth_manage = auth_check_manager()
-        response = auth_manage.response_to_frontend(0)
+        page_auth = auth_check_manager()
+        response = page_auth.response_to_frontend(0)
 
     #response['status'] = 'success'
     #response['errCode'] = None
@@ -751,7 +751,7 @@ def member_forgot_password(request):
     for data_type in user_data_type_frontend: 
         pass_data_to_model_tools[data_type] = request.POST.get(data_type,False)
     
-    the_auth_manager = auth_manager()
+    the_auth_manager = auth_manager_for_password()
     
     response['status'], response['errCode'], response['errMsg'], response['data'] = \
     the_auth_manager.member_forgot_password(**pass_data_to_model_tools)
@@ -774,7 +774,7 @@ def member_reset_password(request):
     for data_type in user_data_type_frontend: 
         pass_data_to_model_tools[data_type] = request.POST.get(data_type,False)
     print(pass_data_to_model_tools)
-    the_auth_manager = auth_manager()
+    the_auth_manager = auth_manager_for_password()
     
     response['status'], response['errCode'], response['errMsg'], response['data'] = \
     the_auth_manager.member_reset_password(**pass_data_to_model_tools)
