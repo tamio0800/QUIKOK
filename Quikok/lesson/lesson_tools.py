@@ -221,9 +221,11 @@ class lesson_manager:
             self.data['best_sale'] = get_lesson_s_best_sale(lesson_id=lesson_id)  
         return (self.status, self.errCode, self.errMsg, self.data)
 
+
     def fetch_lesson_details(self, lesson_id):
         lesson_object = lesson_info.objects.filter(id = lesson_id)
         return lesson_object.values()[0]
+
 
     def setup_a_lesson(self, teacher_auth_id, a_request_object, lesson_id, action):
         # 全新的課程建立
