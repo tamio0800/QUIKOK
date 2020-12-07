@@ -352,7 +352,7 @@ class teacher_manager:
                 return (self.status, self.errCode, self.errMsg, self.data)
 
 
-class auth_manager:
+class auth_manager_for_password:
     def __init__(self):
         self.status = None
         self.errCode = None

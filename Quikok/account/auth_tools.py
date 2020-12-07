@@ -2,6 +2,12 @@ from django.contrib.auth.models import Permission, User, Group
 from account.models import student_profile, teacher_profile, user_token
 import re
 from datetime import datetime, timedelta
+
+#測試用
+# from account.auth_check import auth_check_manager
+# a = auth_check_manager()
+#a.check_all_gate_and_responce(userID = 9, url = '/account/info/teacher', token ='pbkdf2_sha256$216000$yMyEFKhgkT7L$hoiStkV4HVl4iXZbwg7OKzBZJ7n+82KXWGWPE3WvKb8=')
+
 # 跟權限確認有關係的功能
 # 像一道道閘門一樣每個網頁去確認權限
 # 有過/沒過, 回傳 1,0, 並藉此控制回傳給前端的responce
@@ -29,7 +35,7 @@ class auth_check_manager:
             #'課程預約': ('', 4),
             # 以下為公開頁面
             '首頁' : ('/home', 'public'),
-            '課程搜尋頁' : ('^/lesson/search[?]q=.*', 'public'),
+            '課程搜尋頁' : ('^/lesson/search|/lesson/search[?]q=.*', 'public'),
             '課程資訊頁' : ('^/lesson/main/view/.*', 'public'),
             '註冊新老師' : ('/account/register/teacher.*', 'public'),
             '註冊新學生' : ('^/account/register/student.*', 3,4,5),
@@ -60,7 +66,7 @@ class auth_check_manager:
             response['errCode'] = '1'
             response['errMsg'] = 'Page is not exist.'
             response['data'] = None
-        elif num == 3:
+        elif num == 3: # token unmatch
             response['status'] = 'success'
             response['errCode'] = None
             response['errMsg'] = 'Please login.'
@@ -87,11 +93,13 @@ class auth_check_manager:
     # gate.1 url種類如果是public一律有權限
     def check_url_is_public(self):
         for info_key,auth_info in self.auth_page.items():
-            for info in auth_info:
-                if info == 'public': # public頁面,一律有權限
-                    return(1)
-                else:
-                    return(0)
+            # if any(_ == 'public' for _ in auth_info)
+            if 'public' in auth_info:
+#            for info in auth_info:
+#                if info == 'public': # public頁面,一律有權限
+                return(1)
+            else:
+                return(0)
     # gate.2 時效與token檢查
     def check_user_token(self, userID, token):
         token_obj = user_token.objects.filter(authID_object=userID).first()
@@ -110,15 +118,21 @@ class auth_check_manager:
     # gate.3 依權限分類劃分
     #使用者的權限分類
     def get_user_group_and_permission_group(self,userID):
-        a_user = User.objects.filter(userID).first()
+        a_user = User.objects.filter(id = userID).first()
         for group_num in a_user.groups.all():
             self.user_auth_group.append(group_num.id) # 該使用者的auth_groupID
+            print('self.user_auth_group_1')
+            print(self.user_auth_group)
     # 比對授權號碼    
     def check_auth_page_and_permission(self):
-        for info_key,auth_info in self.auth_page.items():
-            for info in auth_info:
-                if info in self.user_auth_group:
-                    return(1)
+        #print('self.auth_page')
+        print('self.user_auth_group_2')
+        print(self.user_auth_group)
+
+        for info_key,info_value in self.auth_page.items():
+            #for info in auth_info:
+                if any(auth_num in self.user_auth_group for auth_num in info_value):
+                    return(1) # 網頁授權的group有在user的group中
                 else:
                     return(0)
            
@@ -134,29 +148,29 @@ class auth_check_manager:
             if 5 in self.user_auth_group:
                 response = self.response_to_frontend(0)
                 print('pass auth check')
-            # 確認網址屬性
-            self.find_auth_page(url)
-            if len(self.auth_page)<0:
-                response = self.response_to_frontend(2)
-            else: #gate1
-                is_public = self.check_url_is_public()
-                if is_public == 1:
-                    response = self.response_to_frontend(0)
-                    print('pass auth check')
-                elif is_public == 0:
-                    # gate2
-                    is_token_match = self.check_user_token(userID,token)
-                    if is_token_match ==0:
-                        response = self.response_to_frontend(3)
-                    elif is_token_match ==1:
-                        # gate3
-                        self.get_user_group_and_permission_group(userID)
-                        is_perm_match = self.check_auth_page_and_permission()
-                        if is_perm_match == 0:
-                            response = self.response_to_frontend(5)
-                        elif is_perm_match == 1:
-                            response = self.response_to_frontend(0)
-                            print('pass auth check')
+            else:    # 確認網址屬性
+                self.find_auth_page(url)
+                if len(self.auth_page)<0:
+                    response = self.response_to_frontend(2)
+                else: #gate1
+                    is_public = self.check_url_is_public()
+                    if is_public == 1:
+                        response = self.response_to_frontend(0)
+                        print('pass auth check')
+                    elif is_public == 0:
+                        # gate2
+                        is_token_match = self.check_user_token(userID,token)
+                        if is_token_match ==0:
+                            response = self.response_to_frontend(3)
+                        elif is_token_match ==1:
+                            # gate3
+                            self.get_user_group_and_permission_group(userID)
+                            is_perm_match = self.check_auth_page_and_permission()
+                            if is_perm_match == 0:
+                                response = self.response_to_frontend(5)
+                            elif is_perm_match == 1:
+                                response = self.response_to_frontend(0)
+                                print('pass auth check')
             print(response)
             return(response)
         except Exception as e:
