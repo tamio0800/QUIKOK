@@ -864,7 +864,7 @@ def before_signing_up_create_or_edit_a_lesson(request):
         response['status'] = 'failed'
         response['errCode'] = '0'
         response['errMsg'] = 'Non dummy_user_id'
-    
+        response['data'] = None
     else:
         background_picture_code = int(request.POST.get('background_picture_code', False))
         
@@ -917,9 +917,11 @@ def before_signing_up_create_or_edit_a_lesson(request):
             response['status'] = 'success'
             response['errCode'] = None
             response['errMsg'] = None
+            response['data'] = temp_lesson_info.id
         except:
             response['status'] = 'failed'
             response['errCode'] = '1'
             response['errMsg'] = 'Error: Written In Database'
+            response['data'] = None
     
     return JsonResponse(response)

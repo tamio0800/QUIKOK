@@ -19,40 +19,45 @@ class Auth_Related_Functions_Test(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-    def test_create_a_teacher_after_setting_up_a_class_exist(self):
-        # 測試 sign_up_after_setup_a_clcreate_a_teacher_after_setting_up_a_classass 這個函式存在
-        client = Client()
-        response = client.post(path='/api/account/create_a_teacher_after_setting_up_a_class/')
-        self.assertEqual(response.status_code, 200)
-
-
-    def test_create_a_teacher_after_setting_up_a_class_required_dummy_teacher_id_variable(self):
-        # 測試 sign_up_after_setup_a_clcreate_a_teacher_after_setting_up_a_classass 這個函式存在
-        client = Client()
-        post_data = {
-            'dummy_teacher_id': 'tamio080011111'
-        }
-        response = client.post(
-            path='/api/account/create_a_teacher_after_setting_up_a_class/',
-            data=post_data)
-        print(str(response.content, encoding='utf8'))
-        
-        self.assertJSONEqual(
-            str(response.content, encoding='utf8'),
-            {
-                'status': 'success',
-                'errCode': None,
-                'errMsg': None,
-                'data': None
-            }
-        )
-
-
     def test_create_a_teacher_user_function_works_properly(self):
+
         client = Client()
+        # 先創立一門假的暫存課程
+        dummy_teacher_id = 'tamio080011111'
+        background_picture = open('/Users/tamiotsiu/Desktop/cuddle.png', 'rb')
+        arguments_dict = {
+            'dummy_teacher_id': dummy_teacher_id,
+            'big_title': 'big_title',
+            'little_title': 'test',
+            'title_color': '#000000',
+            'background_picture_code': 99,
+            # 使用自訂的背景圖，code為99
+            'background_picture_path': background_picture,
+            # 使用自訂的背景圖，所以要給一個圖片路徑
+            'lesson_title': 'test',
+            'price_per_hour': 100,
+            'lesson_has_one_hour_package': True,
+            'trial_class_price': 99,
+            'highlight_1': 'test',
+            'highlight_2': 'test',
+            'highlight_3': 'test',
+            'lesson_intro': 'test',
+            'how_does_lesson_go': 'test',
+            'target_students': 'test',
+            'lesson_remarks': 'test',
+            'syllabus': 'test',
+            'lesson_attributes': 'test'      
+            }
+        response = \
+            self.client.post(
+                path='/api/lesson/beforeSigningUpCreateOrEditLesson/',
+                data=arguments_dict)
+        
+        print(str(response.content, 'utf8'))
+
         post_data = {
             # 這邊創立要建立老師的註冊資料
-            #'dummy_teacher_id': 'tamio080011111',
+            'dummy_teacher_id': 'tamio080011111',
             'regEmail': 'test_teacher_user@test.com',
             'regPwd': '00000000',
             'regName': 'test_name',
@@ -75,6 +80,7 @@ class Auth_Related_Functions_Test(TestCase):
             path='/api/account/signupTeacher/',
             data=post_data
         )
+
         print(str(response.content, encoding='utf8'))
         print(teacher_profile.objects.values()
         )
