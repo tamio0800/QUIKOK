@@ -12,6 +12,7 @@ from datetime import date as date_function
 import pandas as pd
 from chatroom.models import chatroom_info_Mr_Q2user
 from chatroom.chat_tools import chat_room_manager
+from lesson.lesson_tools import *
 import os
 from .auth_check import auth_check_manager
 # FOR API
@@ -284,6 +285,7 @@ def check_if_has_dummy_teacher_id_variable(create_a_teacher_view_func):
         def query_temp_lesson_info_from_db(self, dummy_teacher_id, teacher_auth_id):
             # 根據給定的 dummy_teacher_id 查值, 並存在 self.arguments_dict 中
             self.dummy_teacher_id = dummy_teacher_id
+            self.teacher_auth_id = teacher_auth_id
             temp_lesson_info_values = \
                 lesson_info_for_users_not_signed_up.objects.filter(dummy_teacher_id=dummy_teacher_id).values().first()
 
@@ -298,18 +300,21 @@ def check_if_has_dummy_teacher_id_variable(create_a_teacher_view_func):
             self.arguments_dict['selling_status'] = 'selling'
 
         def ETL_to_lesson_info(self):
+            
+            # ================創建正式課程================
             new_added_lesson_info = \
                 lesson_info.objects.create(
                     **self.arguments_dict
                 )
-            new_added_lesson_info.save()
-
+            # 這裏還不能儲存，原因是需要等到課程建立後我們才能用課程的id 賦名予課程資訊的folder
+            #new_added_lesson_info.save()   
+            # ================創建正式課程================
+          
+            # ================處理用戶自訂的上傳圖片================
             lessons_folder_path = \
                     'user_upload/teachers/' + self.arguments_dict['teacher'].username + '/lessons/' + str(new_added_lesson_info.id)
-            
             if not os.path.isdir(lessons_folder_path):
                 os.mkdir(lessons_folder_path)
-
             if self.arguments_dict['background_picture_path'] != '':
                 # 代表user有傳入自定義的背景圖片，我們要幫他移動過去到正確的地方
                 os.rename(
@@ -319,7 +324,22 @@ def check_if_has_dummy_teacher_id_variable(create_a_teacher_view_func):
                 # 接著將參數改正
                 self.arguments_dict['background_picture_path'] = \
                     '/' + lessons_folder_path + '/' + self.arguments_dict['background_picture_path'].split('/')[-1]
-            
+            # ================處理用戶自訂的上傳圖片================
+
+            # ================更改課程資訊的背景圖片位置並儲存================
+            new_added_lesson_info.background_picture_path = \
+                self.arguments_dict['background_picture_path']
+            new_added_lesson_info.save()
+            # ================更改課程資訊的背景圖片位置並儲存================
+
+            # ================創建課程小卡================
+            the_lesson_card_manager = lesson_card_manager()
+            the_lesson_card_manager.setup_a_lesson_card(
+                corresponding_lesson_id = new_added_lesson_info.id,
+                teacher_auth_id = self.teacher_auth_id
+                )
+            # ================創建課程小卡================
+
             lesson_info_for_users_not_signed_up.objects.filter(dummy_teacher_id=self.dummy_teacher_id).delete()
             # 刪除暫存區的資料
             return new_added_lesson_info.id
