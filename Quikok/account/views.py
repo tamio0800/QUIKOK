@@ -167,16 +167,19 @@ def create_a_student_user(request):
                 update_someone_by_email = update_someone_by_email
             )
             print('student_profile建立')
-            # 回前端
+            
             # 建立學生與system的聊天室
             chat_tool = chat_room_manager()
             chat_tool.create_system2user_chatroom(userID=new_student.auth_id, user_type = 'student')
             print('建立學生與Mr.Q 聊天室')
-  
+            # 建立group, 現在學生都是測試:4
+            user_created_object.groups.add(4)
+            # 回前端
             response['status'] = 'success'
             response['errCode'] = None
             response['errMsg'] = None
             #response['data'] = None
+
         else:
             if obj is not None:
                 print('此帳號已註冊過學生類別!')
@@ -548,6 +551,8 @@ def create_a_teacher_user(request):
             chat_tool = chat_room_manager()
             chat_tool.create_system2user_chatroom(userID=teacher_object.auth_id, user_type = 'teacher')
             print('建立老師與Mr.Q 聊天室')
+            # 建立group, 現在老師都是測試:3
+            user_created_object.groups.add(3)
 
             response['status'] = 'success'
             response['errCode'] = None

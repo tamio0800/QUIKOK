@@ -103,7 +103,8 @@ class student_manager:
                 self.errCode = '2'
                 self.errMsg = 'Querying Data Failed.'
                 return (self.status, self.errCode, self.errMsg, self.data)
-
+    def create_student_group(self, **kwargs):
+        pass
 class teacher_manager:
     def __init__(self):
         self.status = None
