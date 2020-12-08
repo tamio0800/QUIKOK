@@ -372,7 +372,7 @@ class lesson_manager:
         from account.models import teacher_profile
         import numpy as np
         txt = '與三部曲不同，《銀河修理員》說的不再是小情小愛，而是像銀河寬闊的愛。在亂世中的香港，聽起來有點隱隱作痛。「平安」二字，過去這 11 個月對過多少人講？面對千瘡百孔的生活，我們想身邊所愛安好，「平安」變成了最好的祈願。香港人由烽烽火火到疫症蔓延，微小的願望看似脆弱怯懦，但道出了我們對現實的無力。\
-    即使歌詞裏也描述到「誰能望穿我這種堅壯非堅壯」，死頂而已。偏偏這種死頂就是最捨身的愛。而我最喜歡的是最後一段：\
+    即使歌詞裏也描述到「誰能望穿我這種堅壯非堅壯」，死頂而已。偏偏這種死頂就是最捨身的愛。而我最喜歡的是最後一段：臣亮言：先帝創業未半，而中道崩殂。今天下三分，益州疲弊，此誠危急存亡之秋也。然侍衛之臣，不懈於內；忠志之士，忘身於外者，蓋追先帝之殊遇，欲報之於陛下也。誠宜開張聖聽，以光先帝遺德，恢弘志士之氣；不宜妄自菲薄，引喻失義，以塞忠諫之路也。宮中府中，俱為一體，陟罰臧否，不宜異同。若有作姦犯科，及為忠善者，宜付有司，論其刑賞，以昭陛下平明之治，不宜篇私，使內外異法也。\
     第一次合作，黃偉文為 Dear Jane 帶來了《銀河修理員》，在這個壞透的世界，它正來得合時。本以為是一首溝女小情歌（當然看著 MV 男主角都有被迷倒一下，哈哈），但聽了幾次後有種被療癒的力量。無論經歷任何風霜，都總會一起逆風對抗。「跨宇宙又橫越洪荒」的守護，震撼之餘又帶浪漫。我們每個人都期待生命中，面對生活裡的煩惱，世界的不公，出現一位屬於自己的銀河修理員。祝你在亂流下平安。'
         txt = [_ for _ in txt]
         def get_text(txt_list, num=150):
@@ -454,7 +454,7 @@ class lesson_manager:
                     **_temp_lesson_info
                 )  # 建立課程檔案
                 if _temp_lesson_info['background_picture_code'] == 99:
-                    pic_path = '/mnt/c/Users/User/Desktop/background'
+                    pic_path = 'account/batched_creating/lesson_background'
                     pic_name, pic_ext = np.random.choice(os.listdir(pic_path)).split('.')
                     _temp_lesson_info['background_picture_code'] = \
                         '/' + lessons_folder_path + '/customized_lesson_background'+'.'+ pic_ext
