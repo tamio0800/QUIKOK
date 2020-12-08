@@ -294,6 +294,7 @@ def check_if_has_dummy_teacher_id_variable(create_a_teacher_view_func):
                     self.arguments_dict[each_key] = each_value
             
             self.arguments_dict['teacher'] = teacher_profile.objects.filter(auth_id=teacher_auth_id).first()
+            # self.arguments_dict['teacher_id'] = self.arguments_dict['teacher'].id
             self.arguments_dict['discount_price'] = ''
             self.arguments_dict['lesson_avg_score'] = 0.0
             self.arguments_dict['lesson_reviewed_times'] = 0
@@ -353,7 +354,7 @@ def check_if_has_dummy_teacher_id_variable(create_a_teacher_view_func):
             response = create_a_teacher_view_func(request, *args, **kwargs)
             this_teacher_user_auth_id = json.loads(str(response.content, 'utf8'))['data']
             # 先取得剛註冊好的老師的auth_id，以備上架使用
-            # print('this_teacher_user_auth_id', this_teacher_user_auth_id, type(this_teacher_user_auth_id))
+            print('this_teacher_user_auth_id', this_teacher_user_auth_id, type(this_teacher_user_auth_id))
             # 接著把上架寫在這裡吧
             the_lesson_ETL_manager = lesson_ETL_manager()
             the_lesson_ETL_manager.query_temp_lesson_info_from_db(
