@@ -19,16 +19,16 @@ class auth_check_manager:
     def __init__(self):
         self.user_auth_group = list()
         self.auth_page = {}
-        # value = (前端給的url格式, 有權限的 auth_group_id)
+        # value = (前端給的url格式, 有權限的 auth_group的id)  auth_group為table名稱
         self.url_category_rules = {
-            '老師會員中心': ('^/account/info/teacher', 1,3,5),
-            '課程管理' : ('^/account/lesson', 1,3,5),
-            '課程上架': ('^/lesson/ready/add', 1,3,5), 
-            '課程編輯': ('^/lesson/ready/edit/.', 1,3,5),
-            '課程預覽' : ('^/lesson/main/preview/.', 1,3,5),
+            '老師會員中心': ('^/account/info/teacher', 2,3,5),
+            '課程管理' : ('^/account/lesson', 2,3,5),
+            '課程上架': ('^/lesson/ready/add', 2,3,5), 
+            '課程編輯': ('^/lesson/ready/edit/.', 2,3,5),
+            '課程預覽' : ('^/lesson/main/preview/.', 2,3,5),
             #'上課live_house' : ('', 'member_only'), # 還沒做到
             #'聊天室主頁' : ('', 'member_only'), # 還沒做到
-            '學生會員中心' : ('^/account/info/student', 3,4,5),
+            '學生會員中心' : ('^/account/info/student', 1,4,5),
             #'學生帳務中心' : ('', 4),
             #'學習歷程': ('', 4),
             #'方案購買': ('', 4),
@@ -38,7 +38,7 @@ class auth_check_manager:
             '課程搜尋頁' : ('^/lesson/search|/lesson/search[?]q=.*', 'public'),
             '課程資訊頁' : ('^/lesson/main/view/.*', 'public'),
             '註冊新老師' : ('/account/register/teacher.*', 'public'),
-            '註冊新學生' : ('^/account/register/student.*', 3,4,5),
+            '註冊新學生' : ('^/account/register/student.*', 'public'),
         }
     # 確認前端這次傳來的url屬於哪個權限範圍(一次一個url檢查權限,bag裡只應該有一筆資料)
     def find_auth_page(self,url):

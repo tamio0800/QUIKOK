@@ -1,7 +1,6 @@
 from django.contrib.auth.models import User
 from django.contrib.auth.models import Group
 from account.models import student_profile, teacher_profile
-from chatroom.models import chatroom_info_Mr_Q2user
 from django.contrib.auth.models import Permission, User
 # 這個檔案是由於起初建立的第一批假user沒有建立group,
 # 使用這邊的代碼利用shell將他們加上group
@@ -10,6 +9,11 @@ from django.contrib.auth.models import Permission, User
 # 把某個會員加進user_groups的方式
 for a in User.objects.all():
     a.groups.add(id =1)
+
+for i in range(51,52):
+    user = User.objects.get(id = i)
+    print(user)
+    user.groups.add(2)
 
 # 取得a屬於那些user_groups的方式
 a = User.objects.get(id=1)

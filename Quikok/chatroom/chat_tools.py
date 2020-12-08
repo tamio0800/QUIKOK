@@ -6,6 +6,7 @@ from account.models import student_profile, teacher_profile
 from datetime import datetime
 from .system_2user_layer import layer_info_maneger
 
+
 class system_msg_producer:
     # 傳訊息代碼進來, 回應相對的資訊
     def wellcome_msg(self):

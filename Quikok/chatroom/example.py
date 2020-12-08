@@ -1,3 +1,11 @@
+from django.contrib.auth.models import User
+from chatroom.models import *
+
+# 與mr.q建立聊天室的程式碼
+for i in range(51,74):
+    user=User.objects.get(id = i)
+    chatroom_info_Mr_Q2user.objects.create(user_auth_id= user.id,user_type= 'teacher',system_user_auth_id=50,chatroom_type='system2teacher')
+
 # 這邊放的是 views.py 裡面 def chatroom_content(request):
 # 關於後端回傳聊天室歷史訊息給前端格式的範例
 
