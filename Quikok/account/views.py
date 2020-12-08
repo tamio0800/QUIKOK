@@ -170,7 +170,7 @@ def create_a_student_user(request):
             # 回前端
             # 建立學生與system的聊天室
             chat_tool = chat_room_manager()
-            chat_tool.create_system2user_chatroom(userID=new_student.id, user_type = 'student')
+            chat_tool.create_system2user_chatroom(userID=new_student.auth_id, user_type = 'student')
             print('建立學生與Mr.Q 聊天室')
   
             response['status'] = 'success'
@@ -546,7 +546,7 @@ def create_a_teacher_user(request):
 
             # 建立老師與system的聊天室
             chat_tool = chat_room_manager()
-            chat_tool.create_system2user_chatroom(userID=teacher_object.id, user_type = 'teacher')
+            chat_tool.create_system2user_chatroom(userID=teacher_object.auth_id, user_type = 'teacher')
             print('建立老師與Mr.Q 聊天室')
 
             response['status'] = 'success'

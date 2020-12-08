@@ -75,6 +75,7 @@ class chat_room_manager:
         new_chatroom = chatroom_info_Mr_Q2user.objects.create(user_auth_id=user_authID,
                 user_type = user_type, system_user_auth_id = systemID,
                 chatroom_type = chatroom_type)
+        new_chatroom.save()        
         print('建立系統聊天室')
 
     def check_and_create_chat_room(self,**kwargs):
