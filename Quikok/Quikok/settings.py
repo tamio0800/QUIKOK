@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'lesson', # 課程商品頁
     'django_api', # 用來放api們
     'blog',  # quikok的文章專區
+    'tinymce',
 ]
 
 MIDDLEWARE = [
