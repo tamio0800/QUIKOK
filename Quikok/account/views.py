@@ -122,7 +122,6 @@ def create_a_student_user(request):
             print('學生個人資料夾建立')
            
             # 如果沒東西 會是空的  user_upload 看前端取甚麼名字 
-
             each_file = request.FILES.get("upload_snapshot")
             if each_file :
                 print('收到學生大頭照: ', each_file.name)
@@ -174,8 +173,6 @@ def create_a_student_user(request):
             chat_tool.create_system2user_chatroom(userID=new_student.id, user_type = 'student')
             print('建立學生與Mr.Q 聊天室')
   
-
-
             response['status'] = 'success'
             response['errCode'] = None
             response['errMsg'] = None

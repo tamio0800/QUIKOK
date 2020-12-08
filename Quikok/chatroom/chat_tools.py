@@ -65,12 +65,18 @@ class chat_room_manager:
     # user註冊時call來建立聊天室
         user_authID = kwargs['userID']
         user_type = kwargs['user_type']
-        systemID = 404 # 404 暫定為系統專用auth_id
-        chatroom_type = 'system2users'
+        systemID = 50 # 50 暫定為系統專用auth_id
+        if user_type == 'student':
+            chatroom_type = 'system2student'
+        elif user_type == 'teacher':
+            chatroom_type = 'system2teacher'
+        else:
+            pass
         new_chatroom = chatroom_info_Mr_Q2user.objects.create(user_auth_id=user_authID,
                 user_type = user_type, system_user_auth_id = systemID,
                 chatroom_type = chatroom_type)
-                
+        print('建立系統聊天室')
+
     def check_and_create_chat_room(self,**kwargs):
         student_authID = kwargs['userID']
         teacher_authID = kwargs['chatUserID']
