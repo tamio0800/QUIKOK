@@ -20,8 +20,6 @@ class article_info(models.Model):
         return str(self.title)
 
 
-    
-
 class author_profile(models.Model):
     # 記錄作者資訊的內容
     auth_user_id = models.IntegerField(blank=True, null=True)  # 對應的auth_user_id, 可能為None值
@@ -30,7 +28,7 @@ class author_profile(models.Model):
     intro = models.TextField()
     thumbnail = models.ImageField(
             default='user_upload/authors/default_thumbnail.png',
-            upload_to='user_upload/authors/%Y/%m/%d/'),  # 作者的大頭貼(一開始沒有沒關係)
+            upload_to='user_upload/authors/%Y/%m/%d/')  # 作者的大頭貼(一開始沒有沒關係)
     hashtag = models.TextField()  # 作者本身的hashtag
     created_time = models.DateTimeField(auto_now=True)
     last_edited_time = models.DateTimeField(auto_now_add=True)

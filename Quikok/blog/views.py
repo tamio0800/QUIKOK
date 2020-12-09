@@ -2,7 +2,7 @@ from django.shortcuts import render, HttpResponse, redirect
 from django.template import Template, Context
 from django.contrib.auth.models import User
 from account.models import student_profile, teacher_profile
-from .models import article_info,author_profile
+from .models import article_info ,author_profile
 from datetime import datetime
 
 # Create your views here.
@@ -48,10 +48,10 @@ def aritcle_content(request, article_id):
         # 萬一找不到該文章的id，直接回到blog首頁。
         return redirect('main_blog')
     # print(the_article.author_id)
-    # author_nickname = teacher_profile.objects.filter(auth_id=50).first().nickname
     author_object = author_profile.objects.filter(id=the_article.author_id).first()
     author_nickname = author_object.name
     author_intro = author_object.intro
+    author_thumbnail = author_object.thumbnail
     article_title = the_article.title
     article_date = str(the_article.last_edited_time).split()[0].replace('-', '.')
     article_main_picture = the_article.main_picture
@@ -66,6 +66,7 @@ def aritcle_content(request, article_id):
             'article_main_picture': article_main_picture,
             'article_author' : author_nickname,
             'article_title' : article_title,
+            'author_thumbnail': author_thumbnail,
             'article_content' : article_content,
             'article_category' : article_category,
             'article_hashtag' : article_hashtag,
