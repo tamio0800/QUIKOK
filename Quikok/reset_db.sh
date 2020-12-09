@@ -5,3 +5,5 @@ find account/migrations/* | grep -v __init__.py | xargs rm -rf
 find account_finance/migrations/* | grep -v __init__.py | xargs rm -rf
 find chatroom/migrations/* | grep -v __init__.py | xargs rm -rf
 find lesson/migrations/* | grep -v __init__.py | xargs rm -rf
+find blog/migrations/* | grep -v __init__.py | xargs rm -rf
+
