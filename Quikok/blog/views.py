@@ -13,7 +13,7 @@ def main_blog(request):
     article_title = the_article.title
     article_date = str(the_article.last_edited_time).split()[0].replace('-', '.')
     article_main_picture = the_article.main_picture
-    article_content = the_article.content
+    article_snippet = the_article.snippet
     article_category = the_article.category
     return render(
         request,
@@ -23,7 +23,7 @@ def main_blog(request):
             'article_main_picture': article_main_picture,
             'article_author' : author_nickname,
             'article_title' : article_title,
-            'article_content' : article_content,
+            'article_snippet' : article_snippet,
             'article_category' : article_category,
         })
 

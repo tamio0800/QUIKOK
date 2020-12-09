@@ -1,6 +1,6 @@
 from django.db import models
 from tinymce.models import HTMLField
-import os
+import os, re
 
 # Create your models here.
 class article_info(models.Model):
@@ -16,8 +16,17 @@ class article_info(models.Model):
     hashtag = models.TextField()
     created_time = models.DateTimeField(auto_now=True)
     last_edited_time = models.DateTimeField(auto_now_add=True)
+    
     def __str__(self):
         return str(self.title)
+
+    def snippet(self):
+        only_readable_words = re.sub(r'<.*?>', '', self.content)
+        if len(only_readable_words) > 50:
+            return self.content[:50] + '...'
+        else:
+            return self.content
+
 
 
 class author_profile(models.Model):

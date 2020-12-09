@@ -39,7 +39,7 @@
                         </div>
                         <span class="category">{{article_category}}</span>
                         <p class="card-title"> {{ article_title }} </p>
-                        <p class="card-text">{{ article_content }}</p>
+                        {{ article_snippet | safe }}
                         <button>More</button>
                     </div>
                 </div>
