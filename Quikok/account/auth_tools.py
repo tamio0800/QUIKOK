@@ -39,6 +39,8 @@ class auth_check_manager:
             '課程資訊頁' : ('^/lesson/main/view/.*', 'public'),
             '註冊新老師' : ('/account/register/teacher.*', 'public'),
             '註冊新學生' : ('^/account/register/student.*', 'public'),
+            '部落格首頁':('^/blog/main', 'public'),
+            '部落格文章內頁':('^/blog/post/.*', 'public'),
         }
     # 確認前端這次傳來的url屬於哪個權限範圍(一次一個url檢查權限,bag裡只應該有一筆資料)
     def find_auth_page(self,url):
