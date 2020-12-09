@@ -19,7 +19,7 @@ def hello_blog(request):
         })
 
 
-def second_blog(request, article_id):
+def second_blog(request):
     return render(
         request,
         'blog/articles.html',
