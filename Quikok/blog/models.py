@@ -20,7 +20,7 @@ class author_profile(models.Model):
     name = models.CharField(max_length=100)  # 筆名、真名、或暱稱都可以
     hightlight = models.CharField(max_length=20)  # 簡短的一行介紹
     intro = models.TextField()
-    thumbnail_path = models.TextField()  # 作者的大頭貼路徑(一開始沒有沒關係)
+    thumbnail_path = models.TextField(blank=True, null=True)  # 作者的大頭貼路徑(一開始沒有沒關係)
     hashtag = models.TextField()  # 作者本身的hashtag
     created_time = models.DateTimeField(auto_now=True)
     last_edited_time = models.DateTimeField(auto_now_add=True)
