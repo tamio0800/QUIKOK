@@ -6,7 +6,6 @@ from .models import article_info,author_profile
 # Create your views here.
 def hello_blog(request):
     #return HttpResponse('hello blog')
-
     return render(
         request,
         'blog/articles_list.html',
@@ -50,3 +49,10 @@ def aritcle_content(request, article_id):
             'article_hashtag' : '新鮮人職場必備',
             'article_author_introduction' : '台灣韓國情報站創辦人，先後任職美國國會山莊遊說團體、無國界記者組織，現為獨立記者、公共外交說客。'
         })
+
+def article_editor(request):
+    # 這個函式用來回傳blog中文章的編輯器
+    if request.method == 'POST':
+        print(request.POST.get('textarea', False))
+
+    return render(request, 'blog/article_editor.html')

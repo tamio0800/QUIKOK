@@ -1,11 +1,12 @@
 from django.db import models
+from tinymce.models import HTMLField
 
 # Create your models here.
 class article_info(models.Model):
     # 紀錄文章(部落格)的內容
     author_id = models.IntegerField()
     title = models.CharField(max_length=100)
-    content = models.TextField()
+    content = HTMLField()
     category = models.CharField(max_length=100)  # 文章的分類
     hashtag = models.TextField()
     created_time = models.DateTimeField(auto_now=True)
