@@ -1,4 +1,4 @@
-from django.shortcuts import render, HttpResponse
+from django.shortcuts import render, HttpResponse, redirect
 from django.template import Template, Context
 from django.contrib.auth.models import User
 from account.models import student_profile, teacher_profile
@@ -41,11 +41,16 @@ def main_blog(request):
 
 def aritcle_content(request, article_id):
     the_article = article_info.objects.filter(id = article_id).first()
-    print(the_article.author_id)
-    author_nickname = teacher_profile.objects.filter(auth_id=50).first().nickname
-    author_intro = author_profile.objects.filter(id=1).first().intro
+    if the_article is None:
+        # 萬一找不到該文章的id，直接回到blog首頁。
+        return redirect('main_blog')
+    # print(the_article.author_id)
+    # author_nickname = teacher_profile.objects.filter(auth_id=50).first().nickname
+    author_object = author_profile.objects.filter(id=the_article.author_id).first()
+    author_nickname = author_object.name
+    author_intro = author_object.intro
     article_title = the_article.title
-    article_time = the_article.last_edited_time
+    article_time = str(the_article.last_edited_time)
     article_content = the_article.content
     article_category = the_article.category
     article_hashtag = the_article.hashtag
