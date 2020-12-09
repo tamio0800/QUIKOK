@@ -50,7 +50,7 @@ def aritcle_content(request, article_id):
     author_nickname = author_object.name
     author_intro = author_object.intro
     article_title = the_article.title
-    article_time = str(the_article.last_edited_time)
+    article_time = str(the_article.last_edited_time).split()[0].replace('-', '.')
     article_content = the_article.content
     article_category = the_article.category
     article_hashtag = the_article.hashtag
