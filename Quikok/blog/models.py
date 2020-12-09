@@ -1,10 +1,15 @@
 from django.db import models
 from tinymce.models import HTMLField
+import os
 
 # Create your models here.
 class article_info(models.Model):
     # 紀錄文章(部落格)的內容
     author_id = models.IntegerField()
+    main_picture = \
+        models.ImageField(
+            default='user_upload/articles/default_main_picture.png',
+            upload_to='user_upload/articles/%Y/%m/%d/')
     title = models.CharField(max_length=100)
     content = HTMLField()
     category = models.CharField(max_length=100)  # 文章的分類
@@ -13,6 +18,9 @@ class article_info(models.Model):
     last_edited_time = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return str(self.title)
+
+
+    
 
 class author_profile(models.Model):
     # 記錄作者資訊的內容
