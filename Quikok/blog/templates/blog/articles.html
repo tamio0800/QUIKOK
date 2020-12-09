@@ -23,12 +23,12 @@
 
     <div class="main container">
         <div class="pic">
-            <img src="http://lorempixel.com/1920/800/food" alt="...">
+            <img src=" {{ article_main_picture.url }} " alt="...">
         </div>
         <div class="row">
             <div class="article col-md-10">
                 <div class="timename">
-                    <span class="time"> {{article_time}} </span>
+                    <span class="time"> {{article_date}} </span>
                     <span class="name">{{article_author}}</span>
                 </div>
                 <h1 class="title">{{article_title}}</h1>

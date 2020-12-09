@@ -8,16 +8,19 @@ from datetime import datetime
 # Create your views here.
 def main_blog(request):
     the_article = article_info.objects.filter(id=1).first()
-    author_nickname = teacher_profile.objects.filter(auth_id=50).first().nickname
+    author_object = author_profile.objects.filter(id=the_article.author_id).first()
+    author_nickname = author_object.name
     article_title = the_article.title
-    article_time = the_article.last_edited_time
+    article_date = str(the_article.last_edited_time).split()[0].replace('-', '.')
+    article_main_picture = the_article.main_picture
     article_content = the_article.content
     article_category = the_article.category
     return render(
         request,
         'blog/articles_list.html',
         {
-            'article_time' : article_time,
+            'article_date' : article_date,
+            'article_main_picture': article_main_picture,
             'article_author' : author_nickname,
             'article_title' : article_title,
             'article_content' : article_content,
@@ -50,7 +53,8 @@ def aritcle_content(request, article_id):
     author_nickname = author_object.name
     author_intro = author_object.intro
     article_title = the_article.title
-    article_time = str(the_article.last_edited_time).split()[0].replace('-', '.')
+    article_date = str(the_article.last_edited_time).split()[0].replace('-', '.')
+    article_main_picture = the_article.main_picture
     article_content = the_article.content
     article_category = the_article.category
     article_hashtag = the_article.hashtag
@@ -58,7 +62,8 @@ def aritcle_content(request, article_id):
         request,
         'blog/articles.html',
         {
-            'article_time' : article_time,
+            'article_date' : article_date,
+            'article_main_picture': article_main_picture,
             'article_author' : author_nickname,
             'article_title' : article_title,
             'article_content' : article_content,
