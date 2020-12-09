@@ -3,8 +3,8 @@ from .import views
 from django.urls import path
 
 urlpatterns = [
-    path('hello_blog/', views.hello_blog, name='hello_blog'),
-    path('second_blog/', views.second_blog, name='second_blog'),
+    path('main_blog/', views.main_blog, name='main_blog'),
+    #path('second_blog/', views.second_blog, name='second_blog'),
     path('blog_article=<article_id>/', views.aritcle_content),
     path('editor/', views.article_editor, name='article_editor')
 ]
