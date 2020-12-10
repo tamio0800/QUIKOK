@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,300italic,400italic" rel="stylesheet"
         type="text/css">
     <link rel="icon" href="/static/favicon.png">
-    <title>Quikok Blog</title>
+    <title>文章專區</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
         integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
@@ -28,22 +28,28 @@
 
 
         <!--以下是每一個文章介紹的小blog-->
-        {% for each_aticle in articles_in_list %}
+        {% for each_article in articles_in_list %}
         <div class="row">
             <div class="big-card col-md-10">
                 <div class="row">
                     <div class="col-md-4">
-                        <img src="{{ each_aticle.main_picture.url }}" class="card-img" style="width: 300px; height: 200;">
+                        <a href="{% url 'aritcle_content' article_id=each_article.id %}">
+                            <img src="{{ each_article.main_picture.url }}" class="card-img" style="width: 300px; height: 200;">
+                        </a>
                     </div>
                     <div class="textcard col-md-8">
                         <div class="timename" style="line-height: 1.5">
-                            <span class="time">{{ each_aticle.date }}</span>
-                            <span class="name">{{ each_aticle.author.name }}</span>
+                            <span class="time">{{ each_article.date }}</span>
+                            <span class="name">{{ each_article.author.name }}</span>
                         </div>
-                        <span class="category">{{ each_aticle.category }}</span>
-                        <p class="card-title"> {{ each_aticle.title }} </p>
-                        {{ each_aticle.snippet }}
-                        <button>More</button>
+                        <span class="category">{{ each_article.category }}</span>
+                            <p class="card-title"> {{ each_article.title }} </p>
+                            {{ each_article.snippet }}
+                        <a href="{% url 'aritcle_content' article_id=each_article.id %}">
+                            <button>
+                                More
+                            </button>
+                        </a>
                     </div>
                 </div>
             </div>
