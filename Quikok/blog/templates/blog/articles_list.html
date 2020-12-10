@@ -22,23 +22,25 @@
 <body>
 
     <div class="main container">
+        <!--以下為上方Banner圖片-->
         <div class="pic">
             <img src="http://lorempixel.com/1920/800/food" alt="...">
         </div>
+        <!--以上為上方Banner圖片-->
 
 
         <!--以下是每一個文章介紹的小blog-->
-        {% for each_article in articles_in_list %}
         <div class="row">
             <div class="big-card col-md-10">
-                <div class="row">
+            {% for each_article in articles_in_list %}
+                <div class="row" style="margin: 10px -17px">
                     <div class="col-md-4">
                         <a href="{% url 'aritcle_content' article_id=each_article.id %}">
                             <img src="{{ each_article.main_picture.url }}" class="card-img" style="width: 300px; height: 200;">
                         </a>
                     </div>
                     <div class="textcard col-md-8">
-                        <div class="timename" style="line-height: 1.5">
+                        <div class="timename">
                             <span class="time">{{ each_article.date }}</span>
                             <span class="name">{{ each_article.author.name }}</span>
                         </div>
@@ -52,12 +54,12 @@
                         </a>
                     </div>
                 </div>
+            {% endfor %}
             </div>
-        </div>
-        {% endfor %}
-        <!--以上是每一個文章介紹的小blog-->
+            <!--以上是每一個文章介紹的小blog-->
 
 
+            <!--以下是右側文章清單-->
             <div class="article-list col-md-2">
                 <div class="article-title">
                     <h4>文章分類</h4>
@@ -78,9 +80,9 @@
                             {% endfor %}
                         </ul>
                     </div>
-                {% endfor %}
-                
             </div>
+            {% endfor %}
+            <!--以上是右側文章清單-->
         </div>
     </div>
 
