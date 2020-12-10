@@ -718,11 +718,16 @@ def auth_check(request):
         print('檢查網址'+ str(url))#token_from_user3 = request.META['QUERY_STRING']
         token_from_user_raw = request.headers.get('Authorization', False)
         print(token_from_user_raw) 
-        token_from_user = token_from_user_raw.split(' ')[1]  
-        # 從前端拿來的token格式: "bearer token", 為了只拿"token"因此用split切開拿後面
+        # 當前端傳來空白token時(例如訪客), bearer後面會是空白的,這邊寫死來判斷
+        if len(token_from_user_raw) > len('bearer '):
+            # 從前端拿來的token格式: "bearer token", 為了只拿"token"因此用split切開拿後面
+            token_from_user = token_from_user_raw.split(' ')[1]  
+        else:
+            token_from_user = ''
+        
         print('token is :'+ str(token_from_user))
         page_auth = auth_check_manager()
-        if user_id and  url and token_from_user is not Flase:
+        if user_id and  url and token_from_user is not False:
             check_data = {
                 'userID' : user_id, 'url' : url, 'token': token_from_user
             }

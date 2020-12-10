@@ -41,6 +41,8 @@ class auth_check_manager:
             '註冊新學生' : ('^/account/register/student.*', 'public'),
             '部落格首頁':('^/blog/main', 'public'),
             '部落格文章內頁':('^/blog/post/.*', 'public'),
+            '訪客上架':('^/lesson/guestready', 'public'),
+            '入口頁':('^/landing', 'public'),
         }
     # 確認前端這次傳來的url屬於哪個權限範圍(一次一個url檢查權限,bag裡只應該有一筆資料)
     def find_auth_page(self,url):
@@ -90,6 +92,7 @@ class auth_check_manager:
   
 
         return(response)
+    # 這是個很常用到的功能, 但權限檢查用不到
     def check_user_type(self, userID):
         if len(teacher_profile.objects.filter(auth_id=userID))> 0:
             return('teacher')
@@ -148,12 +151,17 @@ class auth_check_manager:
         print('check_all_gate...')
         print(kwargs['userID'],kwargs['url'],kwargs['token'])
         try:
-            self.get_user_group_and_permission_group(userID)
-            # superuser:edony 擁有所有權限
+            if int(userID) >0: # -1目前是訪客
+                self.get_user_group_and_permission_group(userID)
+            else:
+                self.user_auth_group = list() # 訪客權限的代號
+
+            # 5是superuser:edony 擁有所有權限
             if 5 in self.user_auth_group:
                 response = self.response_to_frontend(0)
                 print('pass auth check')
             else:    # 確認網址屬性
+                print('url屬於哪一類')
                 self.find_auth_page(url)
                 if len(self.auth_page)<0:
                     response = self.response_to_frontend(2)
