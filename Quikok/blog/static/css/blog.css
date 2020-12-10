@@ -180,7 +180,7 @@ div.textcard {
 }
 
 div.textcard span {
-	font-size: 14px;
+	font-size: 16px;
 }
 
 span.category{
@@ -190,6 +190,17 @@ span.category{
     font-weight: 530;
     line-height: 20px;
     padding: 1px;
+}
+
+p.content{
+	font-size: 18px !important;
+    margin: 3px auto;
+}
+
+div.timename{
+	line-height: 1.5;
+    letter-spacing: 1px;
+    margin-bottom: 1px;
 }
 
 p.card-title {
