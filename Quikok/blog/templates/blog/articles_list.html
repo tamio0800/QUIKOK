@@ -16,7 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx"
         crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="/static/css/blog.css">
+    <link rel="stylesheet" href="/static/CSS/blog.css">
 </head>
 
 <body>
@@ -25,15 +25,15 @@
         <div class="pic">
             <img src="http://lorempixel.com/1920/800/food" alt="...">
         </div>
-        <div class="row">
 
-            <!--以下是每一個文章介紹的小blog-->
-            {% for each_aticle in articles_in_list %}
+
+        <!--以下是每一個文章介紹的小blog-->
+        {% for each_aticle in articles_in_list %}
+        <div class="row">
             <div class="big-card col-md-10">
                 <div class="row">
                     <div class="col-md-4">
-                        <img src="{{ each_aticle.main_picture.url }}" class="card-img"
-                            style="width: 300px; height: 200;">
+                        <img src="{{ each_aticle.main_picture.url }}" class="card-img" style="width: 300px; height: 200;">
                     </div>
                     <div class="textcard col-md-8">
                         <div class="timename" style="line-height: 1.5">
@@ -47,12 +47,14 @@
                     </div>
                 </div>
             </div>
-            {% endfor %}
-            <!--以上是每一個文章介紹的小blog-->
+        </div>
+        {% endfor %}
+        <!--以上是每一個文章介紹的小blog-->
+
 
             <div class="article-list col-md-2">
                 <div class="article-title">
-                    <h1>文章分類</h1>
+                    <h4>文章分類</h4>
                 </div>
                 <button class="collapse-btn" type="button" data-toggle="collapse" data-target="#menu01"
                     aria-expanded="false" aria-controls="menu01" style="display: block;">
@@ -88,4 +90,5 @@
 
 </body>
 
+>>>>>>> 7602008e082b3919155815b83d0a6d9f70f876f0
 </html>
