@@ -73,7 +73,7 @@ class auth_check_manager:
             response['errCode'] = '1'
             response['errMsg'] =  'Page is not exist.'
             response['data'] = {'authority' : False }
-        elif num == 3: # token unmatch
+        elif num == 3: # token unmatch, 超過時效或沒登入的訪客進入該頁
             response['status'] = 'failed'
             response['errCode'] = None
             response['errMsg'] = 'Please login.'
@@ -110,19 +110,22 @@ class auth_check_manager:
                 return(0)
     # gate.2 時效與token檢查
     def check_user_token(self, userID, token):
-        token_obj = user_token.objects.filter(authID_object=userID).first()
-        time = datetime.now()
-        logout_date = token_obj.logout_time
-        logout_datetime_type = datetime.strptime(logout_date.split('.')[0],"%Y-%m-%d %H:%M:%S")
-        time_result = logout_datetime_type - time
-        # 登出時間-現在時間<0 則超過時效
-        if time_result.days < 0:
+        if int(userID) >0:
+            token_obj = user_token.objects.filter(authID_object=userID).first()
+            time = datetime.now()
+            logout_date = token_obj.logout_time
+            logout_datetime_type = datetime.strptime(logout_date.split('.')[0],"%Y-%m-%d %H:%M:%S")
+            time_result = logout_datetime_type - time
+            # 登出時間-現在時間<0 則超過時效
+            if time_result.days < 0:
+                return(0)
+            else: # 登入時間內,token unmatch也是沒有權限
+                if token == token_obj.token:
+                    return(1)
+                else: # token unmatch
+                    return(2)
+        else:
             return(0)
-        else: # 登入時間內,token unmatch也是沒有權限
-            if token == token_obj.token:
-                return(1)
-            else: # token unmatch
-                return(2)
     # gate.3 依權限分類劃分
     #使用者的權限分類
     def get_user_group_and_permission_group(self,userID):
@@ -173,7 +176,7 @@ class auth_check_manager:
                     elif is_public == 0:
                         # gate2
                         is_token_match = self.check_user_token(userID,token)
-                        if is_token_match == 0: # 超過時效
+                        if is_token_match == 0: # 超過時效或沒登入的訪客進入該頁
                             response = self.response_to_frontend(3)
                         elif is_token_match == 2: #token不合. no permission
                             response = self.response_to_frontend(5)    
