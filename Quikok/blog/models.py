@@ -20,12 +20,15 @@ class article_info(models.Model):
     def __str__(self):
         return str(self.title)
 
+    def content_without_html_tags(self):
+        return re.sub(r'<.*?>', '', self.content)
+
     def snippet(self):
-        only_readable_words = re.sub(r'<.*?>', '', self.content)
-        if len(only_readable_words) > 50:
-            return self.content[:50] + '...'
+        only_readable_words = self.content_without_html_tags()
+        if len(only_readable_words) > 30:
+            return only_readable_words[:30] + '...'
         else:
-            return self.content
+            return only_readable_words
 
 
 

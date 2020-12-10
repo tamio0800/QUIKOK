@@ -7,27 +7,40 @@ from datetime import datetime
 
 # Create your views here.
 def main_blog(request):
-    the_article = article_info.objects.filter(id=1).first()
-    author_object = author_profile.objects.filter(id=the_article.author_id).first()
-    author_nickname = author_object.name
-    article_title = the_article.title
-    article_date = str(the_article.last_edited_time).split()[0].replace('-', '.')
-    article_main_picture = the_article.main_picture
-    article_snippet = the_article.snippet
-    article_category = the_article.category
+    the_articles = article_info.objects.all()
+
+    articles_in_list = list()
+    
+    # 將文章應該有的資訊再度整合成一個物件（字典形式）
+    for each_article_object in the_articles:
+        articles = dict()
+        correspondent_author_object = \
+            author_profile.objects.filter(id=each_article_object.author_id).first()
+        articles['date'] = str(each_article_object.created_time).split()[0].replace('-', '.')
+        articles['category'] = each_article_object.category
+        articles['hashtag'] = each_article_object.hashtag
+        articles['main_picture'] = each_article_object.main_picture
+        articles['author'] = correspondent_author_object
+        articles['title'] = each_article_object.title
+        articles['snippet'] = each_article_object.snippet
+        print(f'articles[\'snippet\']:  {each_article_object.snippet}')
+        articles_in_list.append(articles)
+
     return render(
         request,
         'blog/articles_list.html',
         {
-            'article_date' : article_date,
-            'article_main_picture': article_main_picture,
-            'article_author' : author_nickname,
-            'article_title' : article_title,
-            'article_snippet' : article_snippet,
-            'article_category' : article_category,
+            'articles_in_list': articles_in_list
         })
 
-
+'''
+'article_date' : article_date,
+'article_main_picture': article_main_picture,
+'article_author' : author_nickname,
+'article_title' : article_title,
+'article_snippet' : article_snippet,
+'article_category' : article_category,
+'''
 #def second_blog(request):
 #    return render(
 #        request,
