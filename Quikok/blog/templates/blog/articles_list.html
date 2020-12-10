@@ -29,12 +29,11 @@
 
         <!--以下是每一個文章介紹的小blog-->
         <div class="row">
-        {% for each_aticle in articles_in_list %}
             <div class="big-card col-md-10">
+            {% for each_aticle in articles_in_list %}
                 <div class="row">
                     <div class="col-md-4">
-                        <img src="{{ each_aticle.main_picture.url }}" class="card-img"
-                            style="width: 300px; height: 200;">
+                        <img src="{{ each_aticle.main_picture.url }}" class="card-img" style="width: 300px; height: 200;">
                     </div>
                     <div class="textcard col-md-8">
                         <div class="timename" style="line-height: 1.5">
@@ -47,9 +46,10 @@
                         <button>More</button>
                     </div>
                 </div>
-            </div>
             {% endfor %}
-            <!--以上是每一個文章介紹的小blog-->
+            </div>
+        
+        <!--以上是每一個文章介紹的小blog-->
 
 
             <div class="article-list col-md-2">
@@ -86,7 +86,7 @@
                 </div>
             </div>
         </div>
-    </div>    
+    </div>
 
 </body>
 
