@@ -52,27 +52,31 @@ class auth_check_manager:
     # 管理給前端的回應
     def response_to_frontend(self,num):
         response = dict()
+        # 有權限
         if num == 0:
             response['status'] = 'success'
             response['errCode'] = None
             response['errMsg'] = None
             response['data'] = {'authority' : True }
-            
+        # 沒有收到資料    
         elif num == 1:
             response['status'] = 'failed'
             response['errCode'] = '0'
-            response['errMsg'] = 'Received Arguments Failed.'
+            response['errMsg'] = 'not received data'
             response['data'] = None
+        # 萬一有頁面不存在..前端會統一導向首頁,正常情況不會走到這步
+        # 是正則表達無法判斷是哪一頁的時候防掛掉用的
         elif num == 2:
             response['status'] = 'failed'
             response['errCode'] = '1'
-            response['errMsg'] = 'Page is not exist.'
-            response['data'] = None
+            response['errMsg'] =  'Page is not exist.'
+            response['data'] = {'authority' : False }
         elif num == 3: # token unmatch
-            response['status'] = 'success'
+            response['status'] = 'failed'
             response['errCode'] = None
             response['errMsg'] = 'Please login.'
             response['data'] = {'authority' : False }
+        # 暫時未使用...都用num==0回傳
         elif num == 4:
             response['status'] = 'failed'
             response['errCode'] = '1'
@@ -83,6 +87,7 @@ class auth_check_manager:
             response['errCode'] = None
             response['errMsg'] = 'Permission denied.'
             response['data'] = {'authority' : False }
+  
 
         return(response)
     def check_user_type(self, userID):
@@ -97,8 +102,6 @@ class auth_check_manager:
         for info_key,auth_info in self.auth_page.items():
             # if any(_ == 'public' for _ in auth_info)
             if 'public' in auth_info:
-#            for info in auth_info:
-#                if info == 'public': # public頁面,一律有權限
                 return(1)
             else:
                 return(0)
@@ -112,11 +115,11 @@ class auth_check_manager:
         # 登出時間-現在時間<0 則超過時效
         if time_result.days < 0:
             return(0)
-        else:
+        else: # 登入時間內,token unmatch也是沒有權限
             if token == token_obj.token:
                 return(1)
-            else:
-                return(0)
+            else: # token unmatch
+                return(2)
     # gate.3 依權限分類劃分
     #使用者的權限分類
     def get_user_group_and_permission_group(self,userID):
@@ -162,9 +165,11 @@ class auth_check_manager:
                     elif is_public == 0:
                         # gate2
                         is_token_match = self.check_user_token(userID,token)
-                        if is_token_match ==0:
+                        if is_token_match == 0: # 超過時效
                             response = self.response_to_frontend(3)
-                        elif is_token_match ==1:
+                        elif is_token_match == 2: #token不合. no permission
+                            response = self.response_to_frontend(5)    
+                        elif is_token_match == 1:
                             # gate3
                             self.get_user_group_and_permission_group(userID)
                             is_perm_match = self.check_auth_page_and_permission()

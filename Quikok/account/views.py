@@ -721,31 +721,23 @@ def auth_check(request):
         token_from_user = token_from_user_raw.split(' ')[1]  
         # 從前端拿來的token格式: "bearer token", 為了只拿"token"因此用split切開拿後面
         print('token is :'+ str(token_from_user))
-        check_data = {
-            'userID' : user_id, 'url' : url, 'token': token_from_user
-        }
-        print('開始檢查權限~')
         page_auth = auth_check_manager()
-        response = page_auth.check_all_gate_and_responce(**check_data)
-        print('檢查完畢')
-        print(response)
+        if user_id and  url and token_from_user is not Flase:
+            check_data = {
+                'userID' : user_id, 'url' : url, 'token': token_from_user
+            }
+            print('開始檢查權限~')
+            response = page_auth.check_all_gate_and_responce(**check_data)
+            print(response)
+        else:
+            response = page_auth.response_to_frontend(1)
+
     except Exception as e:
         print(e)
-        page_auth = auth_check_manager()
-        response = page_auth.response_to_frontend(0)
+        response = page_auth.response_to_frontend(1)
 
-    #response['status'] = 'success'
-    #response['errCode'] = None
-    #response['errMsg'] = None
-    #response['data'] = {
-    #    'authority' : True 
-    #}
     return JsonResponse(response)
-    
-   
-
-
-        
+            
 @require_http_methods(['POST'])
 def member_forgot_password(request):
     user_data_type_frontend = ['userName', 'userBirth', 'userMobile']
