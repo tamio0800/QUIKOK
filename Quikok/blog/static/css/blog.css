@@ -143,7 +143,7 @@ after {
 
 img {
 	max-width: 100%;
-	height: 0 auto;
+	height: auto;
 }
 
 /*CSS Reset*/
@@ -166,6 +166,13 @@ img {
     align-items: flex-end;
 }
 
+a.titlea{
+	color: #000;
+	display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
 div.pic img {
 	background-position: center center;
 	background-size: cover;
@@ -182,6 +189,7 @@ div.big-card {
 
 div.big-card img {
 	margin-top: 6px;
+	width: 100% !important;
 
 }
 
@@ -357,10 +365,10 @@ div.author-text p {
 
 
 @media (min-width: 1200px) constructed stylesheet .container,
-.container-lg,
-.container-md,
-.container-sm,
-.container-xl {
+	.container-lg,
+	.container-md,
+	.container-sm,
+	.container-xl {
 	max-width: 1140px;
 }
 
