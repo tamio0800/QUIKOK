@@ -32,12 +32,13 @@
         <!--以下是每一個文章介紹的小blog-->
         <div class="row">
             <div class="big-card col-md-10">
-            {% for each_article in articles_in_list %}
+                {% for each_article in articles_in_list %}
                 <div class="row" style="margin: 10px -17px">
                     <div class="col-md-4">
                         <!--<a href="{% url 'aritcle_content' article_id=each_article.id %}">-->
                         <a href="/blog/post/{{ each_article.id }}/">
-                            <img src="{{ each_article.main_picture.url }}" class="card-img" style="width: 300px; height: 200;">
+                            <img src="{{ each_article.main_picture.url }}" class="card-img"
+                                style="width: 300px; height: 200;">
                         </a>
                     </div>
                     <div class="textcard col-md-8">
@@ -46,8 +47,8 @@
                             <span class="name">{{ each_article.author.name }}</span>
                         </div>
                         <span class="category">{{ each_article.category }}</span>
-                            <p class="card-title"> {{ each_article.title }} </p>
-                            <p class="content">{{ each_article.snippet }}</p>
+                        <p class="card-title"> {{ each_article.title }} </p>
+                        <p class="content">{{ each_article.snippet }}</p>
                         <a href="/blog/post/{{ each_article.id }}/">
                             <button>
                                 More
@@ -55,7 +56,7 @@
                         </a>
                     </div>
                 </div>
-            {% endfor %}
+                {% endfor %}
             </div>
             <!--以上是每一個文章介紹的小blog-->
 
@@ -66,27 +67,28 @@
                     <h4>文章分類</h4>
                 </div>
                 {% for each_unique_category in all_unique_categories %}
+                <div class="article_group">
                     <button class="collapse-btn" type="button" data-toggle="collapse" data-target="#menu01"
                         aria-expanded="false" aria-controls="menu01" style="display: block;">
                         {{ each_unique_category }}
                     </button>
-                    <div class="article-name collapse" id="menu01">
-                        <ul>
-                            {% for each_article in articles_in_list %}
-                                {% if each_article.category == each_unique_category %}
-                                    <li>
-                                        <a href="/blog/post/{{ each_article.id }}/">{{ each_article.title }}</a>
-                                    </li>
-                                {% endif %}
-                            {% endfor %}
-                        </ul>
-                    </div>
+                    <ul>
+                        {% for each_article in articles_in_list %}
+                        {% if each_article.category == each_unique_category %}
+                        <li>
+                            <a href="/blog/post/{{ each_article.id }}/">{{ each_article.title }}</a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
                 {% endfor %}
             </div>
-            
+
             <!--以上是右側文章清單-->
         </div>
     </div>
 
 </body>
+
 </html>
