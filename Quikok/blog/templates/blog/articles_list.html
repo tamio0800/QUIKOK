@@ -47,7 +47,9 @@
                             <span class="name">{{ each_article.author.name }}</span>
                         </div>
                         <span class="category">{{ each_article.category }}</span>
-                        <p class="card-title"> {{ each_article.title }} </p>
+                        <a class="titlea" href="/blog/post/{{ each_article.id }}/">
+                            <p class="card-title"> {{ each_article.title }} </p>
+                        </a>
                         <p class="content">{{ each_article.snippet }}</p>
                         <a href="/blog/post/{{ each_article.id }}/">
                             <button>
