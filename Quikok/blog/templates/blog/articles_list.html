@@ -16,7 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx"
         crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="/static/CSS/blog.css">
+    <link rel="stylesheet" href="/static/css/blog.css">
 </head>
 
 <body>
@@ -46,7 +46,7 @@
                         </div>
                         <span class="category">{{ each_article.category }}</span>
                             <p class="card-title"> {{ each_article.title }} </p>
-                            {{ each_article.snippet }}
+                            <p class="content">{{ each_article.snippet }}</p>
                         <a href="{% url 'aritcle_content' article_id=each_article.id %}">
                             <button>
                                 More
