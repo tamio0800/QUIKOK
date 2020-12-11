@@ -262,10 +262,25 @@ div.article-name {
 	font-size: 16px;
 }
 
-div.article-name li {
-	margin: 8px 6px;
+div.article_group:hover button{
+	font-size: 20px;
+}
+
+div.article_group ul{
+	display: none;
+}
+
+div.article_group:hover ul{
+	display: block;
+}
+
+div.article_group li {
+	position: relative;
+	margin: 9px 10px;
 	font-size: 16px;
 }
+
+
 
 /*main02*/
 div.article {
