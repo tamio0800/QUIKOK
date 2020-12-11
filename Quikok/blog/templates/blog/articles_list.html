@@ -35,7 +35,8 @@
             {% for each_article in articles_in_list %}
                 <div class="row" style="margin: 10px -17px">
                     <div class="col-md-4">
-                        <a href="{% url 'aritcle_content' article_id=each_article.id %}">
+                        <!--<a href="{% url 'aritcle_content' article_id=each_article.id %}">-->
+                        <a href="/blog/post/{{ each_article.id }}/">
                             <img src="{{ each_article.main_picture.url }}" class="card-img" style="width: 300px; height: 200;">
                         </a>
                     </div>
@@ -47,7 +48,7 @@
                         <span class="category">{{ each_article.category }}</span>
                             <p class="card-title"> {{ each_article.title }} </p>
                             <p class="content">{{ each_article.snippet }}</p>
-                        <a href="{% url 'aritcle_content' article_id=each_article.id %}">
+                        <a href="/blog/post/{{ each_article.id }}/">
                             <button>
                                 More
                             </button>
@@ -74,7 +75,7 @@
                             {% for each_article in articles_in_list %}
                                 {% if each_article.category == each_unique_category %}
                                     <li>
-                                        <a href="{% url 'aritcle_content' article_id=each_article.id %}">{{ each_article.title }}</a>
+                                        <a href="/blog/post/{{ each_article.id }}/">{{ each_article.title }}</a>
                                     </li>
                                 {% endif %}
                             {% endfor %}
