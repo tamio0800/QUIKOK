@@ -36,7 +36,7 @@
                 <div class="row" style="margin: 10px -17px">
                     <div class="col-md-4">
                         <!--<a href="{% url 'aritcle_content' article_id=each_article.id %}">-->
-                        <a href="/blog/post/{{ each_article.id }}/">
+                        <a href="/blog/post/{{ each_article.id }}">
                             <img src="{{ each_article.main_picture.url }}" class="card-img"
                                 style="width: 300px; height: 200;">
                         </a>
@@ -47,17 +47,18 @@
                             <span class="name">{{ each_article.author.name }}</span>
                         </div>
                         <span class="category">{{ each_article.category }}</span>
-                        <a class="titlea" href="/blog/post/{{ each_article.id }}/">
+                        <a class="titlea" href="/blog/post/{{ each_article.id }}">
                             <p class="card-title"> {{ each_article.title }} </p>
                         </a>
                         <p class="content">{{ each_article.snippet }}</p>
-                        <a href="/blog/post/{{ each_article.id }}/">
+                        <a href="/blog/post/{{ each_article.id }}">
                             <button>
                                 More
                             </button>
                         </a>
                     </div>
                 </div>
+                <hr>
                 {% endfor %}
             </div>
             <!--以上是每一個文章介紹的小blog-->
