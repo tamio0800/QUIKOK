@@ -88,9 +88,11 @@ video {
 	padding: 0;
 	border: 0;
 	font-size: 100%;
-	font: inherit;
+	/* font: inherit; */
 	vertical-align: baseline;
 }
+
+
 
 /* HTML5 display-role reset for older browsers */
 article,
@@ -111,10 +113,15 @@ body {
 	line-height: 1;
 }
 
-ol,
-ul {
+div.article-list ol,
+div.article-list ul {
 	list-style: none;
 	line-height: 1.5;
+}
+
+div.article ol, 
+div.article ul{
+	padding-left: 24px;
 }
 
 blockquote,
@@ -213,6 +220,7 @@ span.category {
 p.content {
 	font-size: 18px !important;
 	margin: 3px auto;
+	text-align: justify;
 }
 
 div.timename {
@@ -275,11 +283,13 @@ div.article_group:hover button{
 }
 
 div.article_group ul{
-	display: none;
+    max-height: 0px;
+	overflow: hidden;
+	transition: 2s;
 }
 
 div.article_group:hover ul{
-	display: block;
+	max-height: 500px;
 }
 
 div.article_group li {
