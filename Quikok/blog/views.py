@@ -4,19 +4,24 @@ from django.contrib.auth.models import User
 from account.models import student_profile, teacher_profile
 from .models import article_info ,author_profile
 from datetime import datetime
+import re
 
 # Create your views here.
 def main_blog(request):
     the_articles = article_info.objects.all()
 
     articles_in_list = list()
+    all_unique_categories = list(the_articles.values_list('category', flat=True).distinct())
     
+    all_unique_categories = [each_category for each_category in all_unique_categories]
+
     # 將文章應該有的資訊再度整合成一個物件（字典形式）
     for each_article_object in the_articles:
         articles = dict()
         correspondent_author_object = \
             author_profile.objects.filter(id=each_article_object.author_id).first()
         articles['date'] = str(each_article_object.created_time).split()[0].replace('-', '.')
+        articles['id'] = each_article_object.id
         articles['category'] = each_article_object.category
         articles['hashtag'] = each_article_object.hashtag
         articles['main_picture'] = each_article_object.main_picture
@@ -30,7 +35,8 @@ def main_blog(request):
         request,
         'blog/articles_list.html',
         {
-            'articles_in_list': articles_in_list
+            'articles_in_list': articles_in_list,
+            'all_unique_categories': all_unique_categories
         })
 
 '''
@@ -56,11 +62,12 @@ def main_blog(request):
 #        })
 
 def aritcle_content(request, article_id):
+    
     the_article = article_info.objects.filter(id = article_id).first()
     if the_article is None:
         # 萬一找不到該文章的id，直接回到blog首頁。
         return redirect('main_blog')
-    # print(the_article.author_id)
+    
     author_object = author_profile.objects.filter(id=the_article.author_id).first()
     author_nickname = author_object.name
     author_intro = author_object.intro
@@ -70,7 +77,13 @@ def aritcle_content(request, article_id):
     article_main_picture = the_article.main_picture
     article_content = the_article.content
     article_category = the_article.category
-    article_hashtag = the_article.hashtag
+    article_hashtags = [_ for _ in re.sub(r'[,#;]', ' ', the_article.hashtag).split() if len(_) > 0]
+
+    the_articles = article_info.objects.all()
+    all_unique_categories = list(the_articles.values_list('category', flat=True).distinct())
+    all_unique_categories = [each_category for each_category in all_unique_categories]
+    
+
     return render(
         request,
         'blog/articles.html',
@@ -82,8 +95,11 @@ def aritcle_content(request, article_id):
             'author_thumbnail': author_thumbnail,
             'article_content' : article_content,
             'article_category' : article_category,
-            'article_hashtag' : article_hashtag,
+            'article_hashtags' : article_hashtags,
             'article_author_introduction' : author_intro,
+
+            'all_unique_categories': all_unique_categories,
+            'the_articles': the_articles,
         })
 
 def article_editor(request):

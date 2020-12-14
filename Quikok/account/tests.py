@@ -3,14 +3,13 @@ from django.test import RequestFactory, TestCase
 from django.test import Client
 from django.contrib.auth.models import Permission, User, Group
 from account.models import student_profile, teacher_profile, user_token
-from account.auth_check import auth_check_manager
+from account.auth_tools import auth_check_manager
 from datetime import datetime, timedelta
-from account.models import teacher_profile
+from account.models import teacher_profile, feedback
 from lesson.models import lesson_card
 
 # python manage.py test lesson/ --settings=Quikok.settings_for_test
 class Auth_Related_Functions_Test(TestCase):
-
 
     def test_auth_check_exist(self):
         # 測試這個函式是否存在，並且應該回傳status='success', errCode=None, errMsg=None
@@ -20,7 +19,7 @@ class Auth_Related_Functions_Test(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-    def test_create_a_teacher_user_function_works_properly(self):
+    '''def test_create_a_teacher_user_function_works_properly(self):
 
         client = Client()
         # 先創立一門假的暫存課程
@@ -162,6 +161,69 @@ class Auth_Related_Functions_Test(TestCase):
         self.assertEqual(
             lesson_card.objects.all().first().lesson_title,
             'test'
+        )'''
+
+
+class Feedback_Test(TestCase):
+    
+    def test_feedback_exist(self):
+        # 測試這個函式是否存在
+        self.client = Client()
+        response = self.client.post(path='/api/account/feedback/')
+        self.assertEqual(response.status_code, 200)
+
+
+    def test_feedback_received_data_from_frontend(self):
+        # 測試傳送「問題反應」的資訊給後端，後端是否有收到
+        self.client = Client()
+
+        who_are_you = 'test_user'
+        contact = 'test_user@test.com'
+        problem = 'here is a test problem to test if views function could received.'
+        on_which_page = '/test/url/'
+        is_signed_in = True
+        post_data = {
+            'who_are_you': who_are_you,
+            'contact': contact,
+            'problem': problem,
+            'on_which_page': on_which_page,
+            'is_signed_in': is_signed_in
+        }
+        response = self.client.post(path='/api/account/feedback/', data=post_data)
+
+        self.assertJSONEqual(
+            str(response.content, encoding='utf8'),
+            {
+                'status': 'success',
+                'errCode': None,
+                'errMsg': None,
+                'data': '謝謝您告訴我們這件事，我們會火速處理、並協助您解決這個問題，請再留意您的Email或手機唷。'
+            }
         )
 
+
+    def test_feedback_written_data_into_DB(self):
+        # 測試傳送「問題反應」的資訊給後端，後端是否有收到
+        self.client = Client()
+        who_are_you = 'test_user'
+        contact = 'test_user@test.com'
+        problem = 'here is a test problem to test if views function could received.'
+        on_which_page = '/test/url/'
+        is_signed_in = True
+        post_data = {
+            'who_are_you': who_are_you,
+            'contact': contact,
+            'problem': problem,
+            'on_which_page': on_which_page,
+            'is_signed_in': is_signed_in
+        }
+        self.client.post(path='/api/account/feedback/', data=post_data)
+        self.assertEqual(feedback.objects.all().count(), 1, feedback.objects.values())
+        self.assertEqual(feedback.objects.first().who_are_you, who_are_you)
+        self.assertEqual(feedback.objects.first().contact, contact)
+        self.assertEqual(feedback.objects.first().problem, problem)
+        self.assertEqual(feedback.objects.first().on_which_page, on_which_page)
+        self.assertEqual(feedback.objects.first().is_signed_in, is_signed_in)
+
+    
 

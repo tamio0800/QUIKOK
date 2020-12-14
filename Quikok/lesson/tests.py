@@ -31,6 +31,7 @@ class Lesson_Related_Functions_Test(TestCase):
                 'status': 'success',
                 'errCode': None,
                 'errMsg': None,
+                'data': 1
             }
         )
 
@@ -107,6 +108,7 @@ class Lesson_Related_Functions_Test(TestCase):
                 'status': 'success',
                 'errCode': None,
                 'errMsg': None,
+                'data': 1
             }
         )
 
@@ -176,6 +178,7 @@ class Lesson_Related_Functions_Test(TestCase):
                 'status': 'success',
                 'errCode': None,
                 'errMsg': None,
+                'data': 1
             }
         )
 

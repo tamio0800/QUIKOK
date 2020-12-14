@@ -29,4 +29,5 @@ path('editStudentProfile/', views.edit_student_profile),
 path('editTeacherProfile/', views.edit_teacher_profile),
 path('memberForgotPassword/', views.member_forgot_password),
 path('memberResetPassword/', views.member_reset_password),
+path('feedback/', views.feedback_view_function),
 ]

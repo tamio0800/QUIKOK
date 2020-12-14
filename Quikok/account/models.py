@@ -160,3 +160,24 @@ class favorite_teachers(models.Model):
     teacher_auth_id = models.IntegerField()
     def __str__(self):
         return str(self.follower_auth_id)
+
+
+class feedback(models.Model):
+    # 用來儲存user的問題反應
+    who_are_you = models.CharField(max_length=40)
+    contact = models.CharField(max_length=150)
+    problem = models.TextField()
+    on_which_page = models.TextField()
+    is_signed_in = models.BooleanField()
+    # user 回報問題時是否有登入
+    is_replied = models.BooleanField(default=False)
+    # 回覆了沒
+    is_resolved = models.BooleanField(default=False)
+    # 解決了沒
+    created_time = models.DateTimeField(auto_now=True)
+    last_edited_time = models.DateTimeField(auto_now_add=True)
+    # 可以用來衡量問題回覆、解決的時間長度
+    def __str__(self):
+        return str(self.id)
+
+    

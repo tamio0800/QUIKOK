@@ -88,9 +88,11 @@ video {
 	padding: 0;
 	border: 0;
 	font-size: 100%;
-	font: inherit;
+	/* font: inherit; */
 	vertical-align: baseline;
 }
+
+
 
 /* HTML5 display-role reset for older browsers */
 article,
@@ -111,10 +113,15 @@ body {
 	line-height: 1;
 }
 
-ol,
-ul {
+div.article-list ol,
+div.article-list ul {
 	list-style: none;
-    line-height: 1.5;
+	line-height: 1.5;
+}
+
+div.article ol, 
+div.article ul{
+	padding-left: 24px;
 }
 
 blockquote,
@@ -135,14 +142,17 @@ table {
 	border-spacing: 0;
 }
 
-*,*:before,after{
+*,
+*:before,
+after {
 	box-sizing: border-box;
 }
 
-img{
+img {
 	max-width: 100%;
-	height: 0 auto;
+	height: auto;
 }
+
 /*CSS Reset*/
 
 .application-wrap {
@@ -156,12 +166,26 @@ img{
 	position: relative;
 }
 
-div.pic img{
+.textcard a {
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+a.titlea{
+	color: #000;
+	display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+div.pic img {
 	background-position: center center;
-    background-size: cover;
-    max-height: 500px;
-    display: block;
-    margin: 0 auto;
+	background-size: cover;
+	max-height: 500px;
+	display: block;
+	margin: 0 auto;
 }
 
 div.big-card {
@@ -172,7 +196,8 @@ div.big-card {
 
 div.big-card img {
 	margin-top: 6px;
-	
+	width: 100% !important;
+
 }
 
 div.textcard {
@@ -180,44 +205,55 @@ div.textcard {
 }
 
 div.textcard span {
-	font-size: 38px;
+	font-size: 16px;
 }
 
-span.category{
-    letter-spacing: 1px;
-    background-color: #989898;
-    color: #fff;
-    font-weight: 530;
-    line-height: 20px;
-    padding: 1px;
+span.category {
+	letter-spacing: 1px;
+	background-color: #989898;
+	color: #fff;
+	font-weight: 530;
+	line-height: 20px;
+	padding: 1px;
+}
+
+p.content {
+	font-size: 18px !important;
+	margin: 3px auto;
+	text-align: justify;
+}
+
+div.timename {
+	line-height: 1.5;
+	letter-spacing: 1px;
+	margin-bottom: 1px;
 }
 
 p.card-title {
 	font-size: 28px !important;
-    margin: 1px 0;
+	margin: 1px 0;
 	font-weight: 700 !important;
 	padding: 3px 0;
 	line-height: 1.3 !important;
 }
 
+
 p.card-text {
 	font-size: 18px;
-    line-height: 28px;
-    letter-spacing: 0.5px;
-    padding: 2px 0;
-    font-weight: 100;
-    height: 60px;
-    overflow: hidden;
+	line-height: 28px;
+	letter-spacing: 0.5px;
+	padding: 2px 0;
+	font-weight: 100;
+	height: 60px;
+	overflow: hidden;
 }
 
 div.big-card button {
 	border: none;
 	background-color: #2AC5FF;
-	border-radius: 20px;
+	border-radius: 15px;
 	color: white;
-	padding: 8px;
-	margin: 6px 0;
-	float: right;
+	padding: 6px;
 }
 
 div.article-title {
@@ -242,10 +278,27 @@ div.article-name {
 	font-size: 16px;
 }
 
-div.article-name li {
-	margin: 8px 6px;
-    font-size: 16px;
+div.article_group:hover button{
+	font-size: 20px;
 }
+
+div.article_group ul{
+    max-height: 0px;
+	overflow: hidden;
+	transition: 2s;
+}
+
+div.article_group:hover ul{
+	max-height: 500px;
+}
+
+div.article_group li {
+	position: relative;
+	margin: 9px 10px;
+	font-size: 16px;
+}
+
+
 
 /*main02*/
 div.article {
@@ -273,29 +326,30 @@ div.article span {
 	margin: 10px 0;
 }
 
-div.hastage {
+div.hashtag {
 	margin: 20px 0;
 }
 
-div.hastage span {
+div.hashtag span {
 	font-size: 15px;
 	padding: 10px;
 	background-color: #29642A;
 	color: white;
-	border-radius: 15px;
+	border-radius: 10px;
 	margin-right: 10px;
-	letter-spacing: 2px;
+	letter-spacing: 2.5px;
+    font-weight: 700 !important;
 }
 
 div.author {
 	margin: 30px 0;
 }
 
-div.author >p{
+div.author>p {
 	border-bottom-color: #E2DFDF;
 	border-bottom-style: solid;
 	border-width: 1.5px;
-	font-size: 20px;
+	font-size: 20px !important;
 	margin: 10px;
 	box-shadow: 0px;
 	padding: 5px 0;
@@ -312,10 +366,11 @@ div.author img {
 	background-color #000;
 }
 
-div.author-information p{
+div.author-text p {
 	margin-left: 10px;
-	font-size: 16px;
-	line-height: 25px;
+	font-size: 16px !important;
+	line-height: 25px !important;
+
 }
 
 
