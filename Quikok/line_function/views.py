@@ -15,28 +15,33 @@ from linebot.exceptions import InvalidSignatureError, LineBotApiError
 from linebot.models import MessageEvent, TextSendMessage, TextMessage, FollowEvent
 
 
-line_bot_api = LineBotApi('KrLaJm+6juX+LOjbIdZPhVmANzc1gaBT7LAQERHLUygzV1Wrj8nWwKX7U7vf+9ACiT+oai2fwps5oiVv4DzZj8HMHnRtpaL+9AKfbvhzd8TzC2RY+iv0b3d5LXZZe//4m5ccb6mGKyJoNRbvQMRqbwdB04t89/1O/w1cDnyilFU=')
-handler = WebhookHandler('ee6b6c9d1c72714d0b86dd5fcd34bce5')
+line_bot_api = LineBotApi('12Mo2EzQJYqUhhL1feBf0KKzzTrnoDJe0iBU5JzdTHQabuMEiOtJY27TaZHOff36Hw0TGGjvQt1PQQDHQ1GoED1k3zhy5oGc0ZLmhoBDHNvbLmMKhuB2czzzdvA9y//MxJbyiaPo5THU8wt1fzoMjQdB04t89/1O/w1cDnyilFU=')
+handler = WebhookHandler('c51ff7c4fe9be02993a68aab624111a2')
 
 
 #設定
 @csrf_exempt
 def callback(request):
-
+    #test =request.Post.getlist()
     if request.method == 'POST':
         signature = request.META['HTTP_X_LINE_SIGNATURE']
+        print(signature)
         body = request.body.decode()
-
-        try:
-            handler.handle(body, signature)
-        except InvalidSignatureError as e:
-            print(e)
+        print(body)
+        try: # 目前這個寫法若user傳圖片會報錯
+            handler.handle(body, signature)  # 傳入的事件
+        except InvalidSignatureError:
             return HttpResponseForbidden()
-        except LineBotApiError as e:
-            print(e)
+        except LineBotApiError:
             return HttpResponseBadRequest()
-
-        return HttpResponse("OK")
+ 
+#        for event in events:
+#            if isinstance(event, MessageEvent):  # 如果有訊息事件
+#                line_bot_api.reply_message(  # 回復傳入的訊息文字
+#                    event.reply_token,
+#                    TextSendMessage(text=event.message.text)
+#                )
+        return HttpResponse()
     else:
         return HttpResponseBadRequest()
 
@@ -48,12 +53,12 @@ def message_text(event):
     print("user_id =", user_id)
 
     try:
-        if account.objects.filter(verify = event.message.text).exists():
-            account.objects.filter(verify = event.message.text).update(userid=event.source.user_id)
+        #if account.objects.filter(verify = event.message.text).exists():
+        #    account.objects.filter(verify = event.message.text).update(userid=event.source.user_id)
             #username=account.objects.filter(verify = event.message.text)
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text='success\nhello '))
-        else :
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text='驗證碼過期'))
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text='success\nhello '))
+        #else :
+        #    line_bot_api.reply_message(event.reply_token, TextSendMessage(text='驗證碼過期'))
 
     except LineBotApiError as e:
         print(e.status_code)

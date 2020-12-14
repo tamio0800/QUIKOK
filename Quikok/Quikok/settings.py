@@ -36,7 +36,8 @@ INSTALLED_APPS = [
     'lesson', # 課程商品頁
     'django_api', # 用來放api們
     'blog',  # quikok的文章專區,
-    'tinymce'
+    'tinymce',
+    'line_function'
 ]
 
 MIDDLEWARE = [
@@ -161,3 +162,4 @@ STATICFILES_DIRS = [
 # 存放使用者上傳的大頭照
 MEDIA_URL = '/user_upload/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'user_upload')  
+
