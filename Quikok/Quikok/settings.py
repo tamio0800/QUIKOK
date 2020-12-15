@@ -1,7 +1,4 @@
-
 import os
-is_test_mode = os.getenv('is_test', default='0')
-# '0' means not, '1' means yes!
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -36,7 +33,8 @@ INSTALLED_APPS = [
     'lesson', # 課程商品頁
     'django_api', # 用來放api們
     'blog',  # quikok的文章專區,
-    'tinymce'
+    'tinymce',
+    'line_function'
 ]
 
 MIDDLEWARE = [
@@ -78,26 +76,19 @@ WSGI_APPLICATION = 'Quikok.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-if is_test_mode == '1':
-    DATABASES = {
+
+DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',  
-        'NAME': os.path.join(BASE_DIR, 'db_for_test.sqlite3'),
+        'ENGINE': 'django.db.backends.mysql',  
+        # 'ENGINE': 'django.db.backends.sqlite3',  
+        # 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': 'quikok_db',  # 資料庫/schema的名稱
+        'USER': 'root',
+        'PASSWORD': '@Annie0800_GaryWx2003_tamiotsiu+#YT#',
+        'HOST': '61.222.157.152',
+        'PORT': '3306',
     }
 }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',  
-            # 'ENGINE': 'django.db.backends.sqlite3',  
-            # 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-            'NAME': 'quikok_db',  # 資料庫/schema的名稱
-            'USER': 'root',
-            'PASSWORD': '@Annie0800_GaryWx2003_tamiotsiu+#YT#',
-            'HOST': '61.222.157.152',
-            'PORT': '3306',
-        }
-    }
 
 # channel settings
 ASGI_APPLICATION = "Quikok.routing.application"
@@ -161,3 +152,4 @@ STATICFILES_DIRS = [
 # 存放使用者上傳的大頭照
 MEDIA_URL = '/user_upload/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'user_upload')  
+

@@ -3,7 +3,7 @@ from django.contrib import auth
 from django.contrib.auth.hashers import make_password, check_password  # 這一行用來加密密碼的
 from .model_tools import user_db_manager, teacher_manager, student_manager, auth_manager_for_password
 from django.contrib.auth.models import User
-from account.models import user_token, student_profile, teacher_profile, specific_available_time, general_available_time
+from account.models import user_token, student_profile, teacher_profile, specific_available_time, general_available_time, feedback
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.core.files.storage import FileSystemStorage
 from account.models import dev_db
@@ -1241,3 +1241,39 @@ def test_connect_time(request):
     s_time = time()
     _ = teacher_profile.objects.all().count()
     return HttpResponse(str(time() - s_time) + ' seconds,   for' + str(_) + ' teachers.')
+
+
+@require_http_methods(['POST'])
+def feedback_view_function(request):
+    response = dict()
+
+    who_are_you = request.POST.get('who_are_you', False)
+    contact = request.POST.get('contact', False)
+    problem = request.POST.get('problem', False)
+    on_which_page = request.POST.get('on_which_page', False)
+    is_signed_in = request.POST.get('is_signed_in', False) in ['true', True, 'True']
+
+    if False not in (who_are_you, contact, problem, on_which_page):
+        # 檢查一下傳輸有沒有問題
+
+        # 將客戶反應的資料存進DB
+        feedback_record = feedback.objects.create(
+            who_are_you=who_are_you,
+            contact=contact,
+            problem=problem,
+            on_which_page=on_which_page,
+            is_signed_in=is_signed_in
+        )
+        feedback_record.save()
+        response['status'] = 'success'
+        response['errCode'] = None
+        response['errMsg'] = None
+        response['data'] = '謝謝您告訴我們這件事，我們會火速處理、並協助您解決這個問題，請再留意您的Email或手機唷。'
+    else:
+        # 傳輸有問題
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = 'Error: Received None.'
+        response['data'] = None
+
+    return JsonResponse(response)

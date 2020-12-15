@@ -88,9 +88,11 @@ video {
 	padding: 0;
 	border: 0;
 	font-size: 100%;
-	font: inherit;
+	/* font: inherit; */
 	vertical-align: baseline;
 }
+
+
 
 /* HTML5 display-role reset for older browsers */
 article,
@@ -111,10 +113,15 @@ body {
 	line-height: 1;
 }
 
-ol,
-ul {
+div.article-list ol,
+div.article-list ul {
 	list-style: none;
 	line-height: 1.5;
+}
+
+div.article ol, 
+div.article ul{
+	padding-left: 24px;
 }
 
 blockquote,
@@ -143,7 +150,7 @@ after {
 
 img {
 	max-width: 100%;
-	height: 0 auto;
+	height: auto;
 }
 
 /*CSS Reset*/
@@ -159,11 +166,18 @@ img {
 	position: relative;
 }
 
-.application a {
+.textcard a {
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
+}
+
+a.titlea{
+	color: #000;
+	display: flex;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
 div.pic img {
@@ -182,6 +196,7 @@ div.big-card {
 
 div.big-card img {
 	margin-top: 6px;
+	width: 100% !important;
 
 }
 
@@ -205,6 +220,7 @@ span.category {
 p.content {
 	font-size: 18px !important;
 	margin: 3px auto;
+	text-align: justify;
 }
 
 div.timename {
@@ -262,10 +278,27 @@ div.article-name {
 	font-size: 16px;
 }
 
-div.article-name li {
-	margin: 8px 6px;
+div.article_group:hover button{
+	font-size: 20px;
+}
+
+div.article_group ul{
+    max-height: 0px;
+	overflow: hidden;
+	transition: 2s;
+}
+
+div.article_group:hover ul{
+	max-height: 500px;
+}
+
+div.article_group li {
+	position: relative;
+	margin: 9px 10px;
 	font-size: 16px;
 }
+
+
 
 /*main02*/
 div.article {
@@ -293,18 +326,19 @@ div.article span {
 	margin: 10px 0;
 }
 
-div.hastage {
+div.hashtag {
 	margin: 20px 0;
 }
 
-div.hastage span {
+div.hashtag span {
 	font-size: 15px;
 	padding: 10px;
 	background-color: #29642A;
 	color: white;
-	border-radius: 15px;
+	border-radius: 10px;
 	margin-right: 10px;
-	letter-spacing: 2px;
+	letter-spacing: 2.5px;
+    font-weight: 700 !important;
 }
 
 div.author {
@@ -315,7 +349,7 @@ div.author>p {
 	border-bottom-color: #E2DFDF;
 	border-bottom-style: solid;
 	border-width: 1.5px;
-	font-size: 20px;
+	font-size: 20px !important;
 	margin: 10px;
 	box-shadow: 0px;
 	padding: 5px 0;
@@ -332,18 +366,19 @@ div.author img {
 	background-color #000;
 }
 
-div.author-information p {
+div.author-text p {
 	margin-left: 10px;
-	font-size: 16px;
-	line-height: 25px;
+	font-size: 16px !important;
+	line-height: 25px !important;
+
 }
 
 
 @media (min-width: 1200px) constructed stylesheet .container,
-.container-lg,
-.container-md,
-.container-sm,
-.container-xl {
+	.container-lg,
+	.container-md,
+	.container-sm,
+	.container-xl {
 	max-width: 1140px;
 }
 
