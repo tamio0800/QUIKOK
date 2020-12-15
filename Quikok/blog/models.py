@@ -54,8 +54,8 @@ class article_info(models.Model):
     author_id = models.IntegerField()
     main_picture = \
         models.ImageField(
-            default='user_upload/articles/default_main_picture.png',
-            upload_to='user_upload/articles/%Y/%m/%d/')
+            default='articles/default_main_picture.png',
+            upload_to='articles/%Y/%m/%d/')
     title = models.CharField(max_length=100)
     content = HTMLField()
     category = models.CharField(max_length=100)  # 文章的分類
@@ -78,8 +78,8 @@ class author_profile(models.Model):
     hightlight = models.CharField(max_length=20)  # 簡短的一行介紹
     intro = models.TextField()
     thumbnail = models.ImageField(
-            default='user_upload/authors/default_thumbnail.png',
-            upload_to='user_upload/authors/%Y/%m/%d/')  # 作者的大頭貼(一開始沒有沒關係)
+            default='authors/default_thumbnail.png',
+            upload_to='authors/%Y/%m/%d/')  # 作者的大頭貼(一開始沒有沒關係)
     hashtag = models.TextField()  # 作者本身的hashtag
     created_time = models.DateTimeField(auto_now=True)
     last_edited_time = models.DateTimeField(auto_now_add=True)
