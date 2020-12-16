@@ -345,9 +345,8 @@ def check_if_has_dummy_teacher_id_variable(create_a_teacher_view_func):
             # 刪除暫存區的資料
             return new_added_lesson_info.id
 
-
     def wrapper(request, *args, **kwargs):
-        if request.POST.get('dummy_teacher_id', False) != False:
+        if request.POST.get('dummy_teacher_id', False) not in [False, '', 'False']:
             # 代表有找到 dummy_teacher_id 這個變數，所以我們要幫這名老師註冊完後進行上架
             # 因為要上架課程，所以我們必須知道他的auth_id，不能直接return函式的運算結果
             dummy_teacher_id = request.POST.get('dummy_teacher_id', False)
@@ -367,6 +366,7 @@ def check_if_has_dummy_teacher_id_variable(create_a_teacher_view_func):
         else:
             # 代表沒找到 dummy_teacher_id 這個變數，直接執行創立老師用戶即可。
             return create_a_teacher_view_func(request, *args, **kwargs)
+    
     return wrapper
 
 
@@ -781,7 +781,7 @@ def member_reset_password(request):
     return JsonResponse(response)
 
 #########以下是舊的views先貼過來以免 server跑不起來
-def dev_forgot_password_1_check_username(request):
+'''def dev_forgot_password_1_check_username(request):
     # fotgot password step 1
     title = '忘記密碼'
     if request.method == 'POST':
@@ -895,14 +895,14 @@ def admin_import_user(request):
         db_manager.admin_create_chatrooms()
         return render(request, 'account/import_users.html', locals())
     else:
-        return render(request, 'account/import_users.html', locals())
+        return render(request, 'account/import_users.html', locals())'''
             
 
 def logout(request):
     auth.logout(request)
     return HttpResponseRedirect('/homepage/')
 
-def for_test(request):
+'''def for_test(request):
     title = '測試-會員登入'
     print('BEFORE')
     print(request.user.id)
@@ -950,7 +950,7 @@ def teacher_info_show(request):
 
 def datepicker(request):
     print('request:',request)
-    return render (request, 'account/datepicker.html' )
+    return render (request, 'account/datepicker.html' )'''
 
 
 def get_time(request):
@@ -1023,7 +1023,7 @@ def change_general_time(request):
 
 
 
-def create_batch_student_users():
+'''def create_batch_student_users():
     response = {}
     print('StARt')
     for i in range(0, 200):
@@ -1240,7 +1240,7 @@ def test_connect_time(request):
     from time import time
     s_time = time()
     _ = teacher_profile.objects.all().count()
-    return HttpResponse(str(time() - s_time) + ' seconds,   for' + str(_) + ' teachers.')
+    return HttpResponse(str(time() - s_time) + ' seconds,   for' + str(_) + ' teachers.')'''
 
 
 @require_http_methods(['POST'])
