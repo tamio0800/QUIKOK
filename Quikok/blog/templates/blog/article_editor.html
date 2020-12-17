@@ -12,7 +12,12 @@
     <script>
         tinymce.init({
           selector: '#textarea',
-          plugins : "advlist autolink link image lists charmap print preview"
+          language: "zh_TW",
+          plugins : "advlist autolink link image lists charmap print preview",
+          toolbar: 'codesample | bold italic sizeselect fontselect fontsizeselect | hr alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | insertfile undo redo | forecolor backcolor emoticons | code',
+          fontsize_formats: "8pt 10pt 12pt 14pt 17pt 18pt 24pt 36pt 48pt 60pt",
+          content_style: "body {font-size: 17pt;}",
+          font_formats: "Microsoft JhengHei=Microsoft JhengHei; Andale Mono=andale mono,times; Arial=arial,helvetica,sans-serif; Arial Black=arial black,avant garde; Book Antiqua=book antiqua,palatino; Comic Sans MS=comic sans ms,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Helvetica=helvetica; Impact=impact,chicago; Symbol=symbol; Tahoma=tahoma,arial,helvetica,sans-serif; Terminal=terminal,monaco; Times New Roman=times new roman,times; Trebuchet MS=trebuchet ms,geneva; Verdana=verdana,geneva; Webdings=webdings; Wingdings=wingdings,zapf dingbats",
         });
     </script>
 
@@ -40,12 +45,31 @@
             </div>
         </div>
 
-        <div class="btn_block row offset-1 mt-4 mb-3">
-            <div class="col">
-                <button type="submit" class="btn btn-primary">發佈文章</button> &nbsp;&nbsp;&nbsp;&nbsp;
-                <button type="button" class="btn btn-info">預覽文章</button>
+        <div class="row offset-1 mb-3 mt-4">
+            <div class="a-block col-md-1 mr-3">
+                <h6>Author ID</h6>
+                <input class="form-control" type="text" name="author_id" id="author_id" placeholder="">
+            </div>
+
+            <div class="a-block col-md-3 mr-3">
+                <h6>Category</h6>
+                <input class="form-control" type="text" name="category" id="category" placeholder="">
+            </div>
+
+            <div class="a-block col-md-5">
+                <h6>Hashtag</h6>
+                <input class="form-control" type="text" name="hashtag" id="hashtag" placeholder="">
             </div>
         </div>
+        
+
+        <div class="row offset-1 mb-5 mt-4">
+      
+            <div class="btn_block col-5 mt-2">
+                    <button type="submit" class="btn btn-primary" style="height: 55px;">將文章存入資料庫</button> &nbsp;&nbsp;&nbsp;&nbsp;
+            </div>
+        </div>
+        
     </form>
 
     <!-- Optional JavaScript -->

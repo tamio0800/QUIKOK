@@ -55,7 +55,7 @@ class teacher_profile(models.Model):
     nickname = models.CharField(max_length = 40)
     birth_date = models.DateField(null=True)
     is_male = models.BooleanField()
-    intro = models.CharField(max_length = 150)  # 簡短介紹，不要超過150個字元長
+    intro = models.TextField()  # 自我介紹
     mobile = models.CharField(max_length = 12)
     thumbnail_dir = models.TextField(blank=True) # 老師頭像完整路徑 thumbnail_dir
     user_folder = models.TextField(blank=True)  # 該user最外層的資料夾路徑
@@ -66,8 +66,8 @@ class teacher_profile(models.Model):
     education_1 = models.CharField(max_length = 60, blank=True)
     education_2 = models.CharField(max_length = 60, blank=True)
     education_3 = models.CharField(max_length = 60, blank=True)
-    cert_unapproved = models.CharField(max_length = 60) # 尚未審核通過的各類型證書/證明檔案指向資料夾位置
-    cert_approved = models.CharField(max_length = 60) # 已審核通過的各類型證書/證明檔案指向資料夾位置
+    cert_unapproved = models.TextField() # 尚未審核通過的各類型證書/證明檔案指向資料夾位置
+    cert_approved = models.TextField() # 已審核通過的各類型證書/證明檔案指向資料夾位置
     # 四大類別的認證預設 false, 未認證
     id_approved = models.BooleanField(default = False)  #身分類別的認證勳章 實名認證
     education_approved = models.BooleanField(default = False)  #學歷類別的認證勳章 全部的學歷都有認證才通過
@@ -77,7 +77,7 @@ class teacher_profile(models.Model):
     company = models.CharField(max_length = 100, blank=True) # 公司與職位 原本分兩個但設計時做在一起了所以只留這個
     is_approved = models.BooleanField(default = False)  # 要讓陳先生看過/審核過
     date_join = models.DateTimeField(auto_now_add = True)
-    special_exp = models.CharField(max_length = 300, blank=True)# 其他經歷或特殊專長
+    special_exp = models.TextField()  # 其他經歷或特殊專長
     all_lesson_score_mean = models.FloatField(default=0.0)  # 全部課程分數平均
     total_number_of_remark = models.IntegerField(default=0) # 評分筆數
     def __str__(self):

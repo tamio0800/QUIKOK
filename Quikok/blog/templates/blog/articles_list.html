@@ -79,7 +79,7 @@
                         {% for each_article in articles_in_list %}
                         {% if each_article.category == each_unique_category %}
                         <li>
-                            <a href="/blog/post/{{ each_article.id }}/">{{ each_article.title }}</a>
+                            <a href="/blog/post/{{ each_article.id }}">{{ each_article.title }}</a>
                         </li>
                         {% endif %}
                         {% endfor %}
