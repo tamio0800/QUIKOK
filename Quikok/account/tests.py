@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from account.models import teacher_profile, feedback
 from lesson.models import lesson_card
 
-# python manage.py test lesson/ --settings=Quikok.settings_for_test
+#python manage.py test account/ --settings=Quikok.settings_for_test
 class Auth_Related_Functions_Test(TestCase):
 
     def test_auth_check_exist(self):
