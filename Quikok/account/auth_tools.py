@@ -43,7 +43,7 @@ class auth_check_manager:
             '部落格文章內頁':('^/blog/post/.*', 'public'),
             '訪客上架':('^/lesson/guestready', 'public'),
             '入口頁':('^/landing', 'public'),
-            '老師/學生資訊業(公開)':('^/account/profile/\d*', 'public'),
+            '老師/學生資訊頁(公開)':('^/account/profile/\d*', 'public'),
             
         }
     # 確認前端這次傳來的url屬於哪個權限範圍(一次一個url檢查權限,bag裡只應該有一筆資料)

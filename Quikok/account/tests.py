@@ -18,7 +18,10 @@ class Auth_Related_Functions_Test(TestCase):
         response = self.client.get(path='/authCheck/')
         self.assertEqual(response.status_code, 200)
 
-
+    def test_create_teacher(self):
+        self.client = Client()
+        response = self.client.post(path='/api/account/signupTeacher/')
+        self.assertEqual(response.status_code, 200)
     '''def test_create_a_teacher_user_function_works_properly(self):
 
         client = Client()
