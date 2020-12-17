@@ -94,5 +94,5 @@ class uploaded_pictures(models.Model):
     description = models.CharField(max_length=40)
     created_time = models.DateTimeField(auto_now=True)
     def __str__(self):
-        return str(self.name)
-
+        return str(self.description)
+# quikok_db_development   做為部落格的首頁主圖使用

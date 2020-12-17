@@ -2,7 +2,7 @@ from django.shortcuts import render, HttpResponse, redirect
 from django.template import Template, Context
 from django.contrib.auth.models import User
 from account.models import student_profile, teacher_profile
-from .models import article_info ,author_profile
+from blog.models import article_info ,author_profile, uploaded_pictures
 from datetime import datetime
 import re
 
@@ -12,32 +12,39 @@ def main_blog(request):
 
     articles_in_list = list()
     all_unique_categories = list(the_articles.values_list('category', flat=True).distinct())
-    
     all_unique_categories = [each_category for each_category in all_unique_categories]
-
+    the_one_big_picture = uploaded_pictures.objects.filter(id=1).first().picture
+    print(the_articles)
+    print(all_unique_categories)
+    print(the_one_big_picture)
     # 將文章應該有的資訊再度整合成一個物件（字典形式）
-    for each_article_object in the_articles:
-        articles = dict()
-        correspondent_author_object = \
-            author_profile.objects.filter(id=each_article_object.author_id).first()
-        articles['date'] = str(each_article_object.created_time).split()[0].replace('-', '.')
-        articles['id'] = each_article_object.id
-        articles['category'] = each_article_object.category
-        articles['hashtag'] = each_article_object.hashtag
-        articles['main_picture'] = each_article_object.main_picture
-        articles['author'] = correspondent_author_object
-        articles['title'] = each_article_object.title
-        articles['snippet'] = each_article_object.snippet
-        print(f'articles[\'snippet\']:  {each_article_object.snippet}')
-        articles_in_list.append(articles)
+    if len(the_articles) > 0:
+        for each_article_object in the_articles:
+            articles = dict()
+            correspondent_author_object = \
+                author_profile.objects.filter(id=each_article_object.author_id).first()
+            articles['date'] = str(each_article_object.created_time).split()[0].replace('-', '.')
+            articles['id'] = each_article_object.id
+            articles['category'] = each_article_object.category
+            articles['hashtag'] = each_article_object.hashtag
+            articles['main_picture'] = each_article_object.main_picture
+            articles['author'] = correspondent_author_object
+            articles['title'] = each_article_object.title
+            articles['snippet'] = each_article_object.snippet
+            print(f'articles[\'snippet\']:  {each_article_object.snippet}')
+            articles_in_list.append(articles)
 
-    return render(
-        request,
-        'blog/articles_list.html',
-        {
-            'articles_in_list': articles_in_list,
-            'all_unique_categories': all_unique_categories
-        })
+        return render(
+            request,
+            'blog/articles_list.html',
+            {
+                'articles_in_list': articles_in_list,
+                'all_unique_categories': all_unique_categories,
+                'the_one_big_picture': the_one_big_picture
+            })
+
+    return render(request, 'blog/articles_list.html',)
+    
 
 '''
 'article_date' : article_date,
