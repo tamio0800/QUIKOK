@@ -61,6 +61,7 @@ def main_blog(request):
 #            'article_author_introduction' : '台灣韓國情報站創辦人，先後任職美國國會山莊遊說團體、無國界記者組織，現為獨立記者、公共外交說客。'
 #        })
 
+
 def aritcle_content(request, article_id):
     
     the_article = article_info.objects.filter(id = article_id).first()
@@ -105,6 +106,30 @@ def aritcle_content(request, article_id):
 def article_editor(request):
     # 這個函式用來回傳blog中文章的編輯器
     if request.method == 'POST':
-        print(request.POST.get('textarea', False))
-
+        title = request.POST.get('title', False)
+        textarea = request.POST.get('textarea', False)
+        author_id = request.POST.get('author_id', False)
+        category = request.POST.get('category', False)
+        hashtag = request.POST.get('hashtag', False)
+        if False not in [title, textarea, category, author_id, hashtag]:
+            
+            new_article = article_info.objects.create(
+                author_id = author_id,
+                title = title,
+                content = textarea,
+                category = category,
+                hashtag = hashtag)
+            new_article.save()
+            
+            return HttpResponse('已經成功匯入資料庫')
+        else:
+            return render(request, 'blog/article_editor.html', 
+            {
+              'title': title,
+              'textarea': textarea,
+              'author_id': author_id,
+              'category': category,
+              'hashtag': hashtag
+            })
+        
     return render(request, 'blog/article_editor.html')
