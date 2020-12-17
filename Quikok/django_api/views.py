@@ -5,7 +5,7 @@ from django.http import JsonResponse
 import json, os
 from django.middleware.csrf import get_token
 
-from account.models import dev_db, student_profile, teacher_profile
+from account.models import student_profile, teacher_profile
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password, check_password  # 這一行用來加密密碼的
 

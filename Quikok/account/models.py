@@ -91,16 +91,6 @@ class connects(models.Model):
     def __str__(self):
         return self.username
 
-class dev_db(models.Model):
-    username = models.CharField(max_length = 120)
-    password = models.CharField(max_length = 100)
-    name = models.CharField(max_length = 40)
-    birth_date = models.DateField()
-    is_male = models.BooleanField()
-    date_join = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.username
 
 # from account.models import general_available_time as g
 class general_available_time(models.Model):

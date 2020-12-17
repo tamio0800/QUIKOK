@@ -6,7 +6,6 @@ from django.contrib.auth.models import User
 from account.models import user_token, student_profile, teacher_profile, specific_available_time, general_available_time, feedback
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.core.files.storage import FileSystemStorage
-from account.models import dev_db
 from lesson.models import lesson_info_for_users_not_signed_up, lesson_info
 from datetime import date as date_function
 import pandas as pd
