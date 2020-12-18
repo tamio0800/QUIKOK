@@ -7,6 +7,7 @@ from account.auth_tools import auth_check_manager
 from datetime import datetime, timedelta
 from account.models import teacher_profile, feedback
 from lesson.models import lesson_card
+import os, shutil
 
 #python manage.py test account/ --settings=Quikok.settings_for_test
 class Auth_Related_Functions_Test(TestCase):
@@ -18,10 +19,52 @@ class Auth_Related_Functions_Test(TestCase):
         response = self.client.get(path='/authCheck/')
         self.assertEqual(response.status_code, 200)
 
-    def test_create_teacher(self):
+    def test_create_teacher_receive_can_mkdir(self):
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
         self.client = Client()
-        response = self.client.post(path='/api/account/signupTeacher/')
-        self.assertEqual(response.status_code, 200)
+        test_username = 'test201218_teacher_user@test.com'
+        try:
+            shutil.rmtree('user_upload/teachers/' + test_username)
+        except:
+            pass
+        self.assertEqual(
+            os.path.isdir('user_upload/teachers/' + test_username),
+            False
+        )
+        data = {
+            'regEmail': test_username,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345-678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5'
+        }
+        self.client.post(path='/api/account/signupTeacher/', data=data)
+        self.assertEqual(
+            os.path.isdir('user_upload/teachers/' + test_username),
+            True
+        )
+
+
+
     '''def test_create_a_teacher_user_function_works_properly(self):
 
         client = Client()
@@ -228,5 +271,15 @@ class Feedback_Test(TestCase):
         self.assertEqual(feedback.objects.first().on_which_page, on_which_page)
         self.assertEqual(feedback.objects.first().is_signed_in, is_signed_in)
 
-    
+
+class EMAIL_SENDING_TEST(TestCase):
+
+    def test_email_could_send(self):
+        self.client = Client()
+        response = self.client.get('/api/account/send_email/')
+        self.assertIn('Success', str(response.content, 'utf8'),
+        str(response.content, 'utf8'))
+
+
+
 

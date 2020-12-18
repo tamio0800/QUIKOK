@@ -119,7 +119,7 @@ class Lesson_Related_Functions_Test(TestCase):
         arguments_dict = dict()
 
         dummy_teacher_id = 'tamio0800111111'
-        background_picture = open('/Users/tamiotsiu/Desktop/cuddle.png', 'rb')
+        background_picture = open('user_upload/temp/before_signed_up/tamio0800111111/customized_lesson_background.png', 'rb')
         arguments_dict = {
             'dummy_teacher_id': dummy_teacher_id,
             'big_title': 'big_title',
