@@ -7,7 +7,7 @@ from account.auth_tools import auth_check_manager
 from datetime import datetime, timedelta
 from account.models import teacher_profile, feedback
 from lesson.models import lesson_card
-import os
+import os, shutil
 
 #python manage.py test account/ --settings=Quikok.settings_for_test
 class Auth_Related_Functions_Test(TestCase):
@@ -31,7 +31,10 @@ class Auth_Related_Functions_Test(TestCase):
         )
         self.client = Client()
         test_username = 'test201218_teacher_user@test.com'
-        print(Group.objects.values())
+        try:
+            shutil.rmtree('user_upload/teachers/' + test_username)
+        except:
+            pass
         self.assertEqual(
             os.path.isdir('user_upload/teachers/' + test_username),
             False
@@ -268,5 +271,15 @@ class Feedback_Test(TestCase):
         self.assertEqual(feedback.objects.first().on_which_page, on_which_page)
         self.assertEqual(feedback.objects.first().is_signed_in, is_signed_in)
 
-    
+
+class EMAIL_SENDING_TEST(TestCase):
+
+    def test_email_could_send(self):
+        self.client = Client()
+        response = self.client.get('/api/account/send_email/')
+        self.assertIn('Success', str(response.content, 'utf8'),
+        str(response.content, 'utf8'))
+
+
+
 
