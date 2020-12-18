@@ -1,7 +1,7 @@
 from django.db import models
 from account.models import teacher_profile, student_profile
 
-class test_class(models.Model):
+'''class test_class(models.Model):
     title = models.CharField(max_length=20)
     score = models.IntegerField()
     def __str__(self):
@@ -11,7 +11,7 @@ class test_class2(models.Model):
     title = models.CharField(max_length=20)
     class1 = models.ForeignKey(test_class, on_delete=models.CASCADE) 
     def __str__(self):
-        return str(self.id)
+        return str(self.id)'''
 
 class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的東西填入
     # 每堂課程會有自己的unique id，我們用這個來辨識、串連課程 09/25 討論後認為先用內建的id就好

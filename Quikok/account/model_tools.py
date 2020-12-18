@@ -1,4 +1,4 @@
-from account.models import dev_db, student_profile, teacher_profile, general_available_time, user_token
+from account.models import student_profile, teacher_profile, general_available_time, user_token
 from chatroom.models import chat_room
 from django.contrib.auth.models import User
 from itertools import product as pdt

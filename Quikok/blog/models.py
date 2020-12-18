@@ -86,3 +86,13 @@ class author_profile(models.Model):
     def __str__(self):
         return str(self.name)
 
+
+class uploaded_pictures(models.Model):
+    # 這是用來存放圖片檔用的, 因為寫blog常常會需要插入圖片
+    picture = \
+        models.ImageField(upload_to='articles/%Y/%m/%d/')
+    description = models.CharField(max_length=40)
+    created_time = models.DateTimeField(auto_now=True)
+    def __str__(self):
+        return str(self.description)
+# quikok_db_development   做為部落格的首頁主圖使用
