@@ -4,7 +4,10 @@ from django.template.loader import render_to_string
 
 class email_manager:
 
-    def send_email(self):
+    def send_email(self, **kwargs):
+        subject = kwargs['subject']
+        body = kwargs['body']
+        to_whom = kwargs['to_whom']
         email = EmailMessage(
             subject = '測試信',  # 電子郵件標題
             body = '測試看看能不能真的發出去的內容',
