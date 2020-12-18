@@ -85,7 +85,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',  
         # 'ENGINE': 'django.db.backends.sqlite3',  
         # 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-        'NAME': 'quikok_db_development',  # 資料庫/schema的名稱
+        'NAME': 'quikok_db',  # 資料庫/schema的名稱
         'USER': 'root',
         'PASSWORD': '@Annie0800_GaryWx2003_tamiotsiu+#YT#',
         'HOST': '61.222.157.152',
