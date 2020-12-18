@@ -8,6 +8,7 @@ from django.conf import settings
 from django.views.generic import TemplateView  # 新增的
 
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('django_api.urls')),
@@ -27,3 +28,4 @@ urlpatterns = [
 
 urlpatterns += staticfiles_urlpatterns()
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
