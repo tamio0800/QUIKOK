@@ -65,7 +65,7 @@ class chat_room_manager:
     # user註冊時call來建立聊天室
         user_authID = kwargs['userID']
         user_type = kwargs['user_type']
-        systemID = 50 # 50 暫定為系統專用auth_id
+        systemID = 1 # 1 暫定為系統專用auth_id
         if user_type == 'student':
             chatroom_type = 'system2student'
         elif user_type == 'teacher':
