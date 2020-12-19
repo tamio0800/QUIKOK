@@ -146,7 +146,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, '/static/'),
+    os.path.join(BASE_DIR, 'static_files'),
     os.path.join(BASE_DIR, "frontend/dist"),
     os.path.join(BASE_DIR, 'user_upload')]
 
@@ -155,10 +155,6 @@ STATICFILES_DIRS = [
  #     os.path.join(BASE_DIR, "frontend/dist"),  
  #     之後會在static/下建立對應的frontend/dist
 # ]
-
-
-#MEDIA_URL = '/temp_files/'  Tamio原本的設定
-#MEDIA_ROOT = os.path.join(BASE_DIR, 'temp_files')  # 增加這行做為上傳資料時的暫存位置
 
 # 存放使用者上傳的大頭照
 MEDIA_URL = '/user_upload/'
