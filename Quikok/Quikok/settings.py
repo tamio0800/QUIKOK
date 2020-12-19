@@ -145,11 +145,16 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 # 不加這一行會出現奇怪的錯誤，無法進行python manage.py collectstatic
 
 STATIC_URL = '/static/'
-# STATICFILES_DIRS = (os.path.join(BASE_DIR, 'assets'),)
-# Add for vuejs
 STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, '/static/'),
     os.path.join(BASE_DIR, "frontend/dist"),
-]
+    os.path.join(BASE_DIR, 'user_upload')]
+
+# Add for vuejs
+# STATICFILES_DIRS = [
+ #     os.path.join(BASE_DIR, "frontend/dist"),  
+ #     之後會在static/下建立對應的frontend/dist
+# ]
 
 
 #MEDIA_URL = '/temp_files/'  Tamio原本的設定

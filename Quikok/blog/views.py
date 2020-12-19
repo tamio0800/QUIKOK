@@ -13,10 +13,10 @@ def main_blog(request):
     articles_in_list = list()
     all_unique_categories = list(the_articles.values_list('category', flat=True).distinct())
     all_unique_categories = [each_category for each_category in all_unique_categories]
-    the_one_big_picture = uploaded_pictures.objects.filter(id=1).first().picture
-    print(the_articles)
-    print(all_unique_categories)
-    print(the_one_big_picture)
+    the_one_big_picture = uploaded_pictures.objects.filter(id=1).first()
+    #print(the_articles)
+    #print(all_unique_categories)
+    #print(the_one_big_picture)
     # 將文章應該有的資訊再度整合成一個物件（字典形式）
     if len(the_articles) > 0:
         for each_article_object in the_articles:
