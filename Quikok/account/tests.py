@@ -2,14 +2,16 @@
 from django.test import RequestFactory, TestCase
 from django.test import Client
 from django.contrib.auth.models import Permission, User, Group
-from account.models import student_profile, teacher_profile, user_token
+from account.models import student_profile, teacher_profile, user_token, feedback
 from account.auth_tools import auth_check_manager
 from datetime import datetime, timedelta
-from account.models import teacher_profile, feedback
 from lesson.models import lesson_card
 import os, shutil
 
 #python manage.py test account/ --settings=Quikok.settings_for_test
+
+
+
 class Auth_Related_Functions_Test(TestCase):
 
     def test_auth_check_exist(self):
@@ -64,8 +66,8 @@ class Auth_Related_Functions_Test(TestCase):
         )
 
 
-
-    '''def test_create_a_teacher_user_function_works_properly(self):
+    @skip
+    def test_create_a_teacher_user_function_works_properly(self):
 
         client = Client()
         # 先創立一門假的暫存課程
@@ -140,6 +142,7 @@ class Auth_Related_Functions_Test(TestCase):
             }
         )
 
+    @skip
     def test_lesson_card_is_created_after_teacher_signed_up_with_dummy_teacher_id(self):
         client = Client()
         # 先創立一門假的暫存課程
@@ -207,7 +210,7 @@ class Auth_Related_Functions_Test(TestCase):
         self.assertEqual(
             lesson_card.objects.all().first().lesson_title,
             'test'
-        )'''
+        )
 
 
 class Feedback_Test(TestCase):

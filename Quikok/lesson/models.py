@@ -161,7 +161,7 @@ class lesson_booking_info(models.Model):
     last_changed_by = models.CharField(max_length = 20)  # teacher or student or parent
     booking_set = models.IntegerField()
     # 預約使用的是該課程的哪一個方案（ID），這個之後會另外建立一個「每個課程的方案table」來做串連。
-    remaining_minutes = models.TimeField()
+    remaining_minutes = models.IntegerField()
     booking_date_and_time = models.CharField(max_length=400)  
     # Example: 2020821:1,2,3,4;20200822:3,4,5,6 之類的
     booking_status = models.CharField(max_length = 20)  # to_be_confirmed or confirmed or canceled
@@ -169,8 +169,6 @@ class lesson_booking_info(models.Model):
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
         return str(self.id)
-
-
 class lesson_sales_sets(models.Model):
     '''
     課程的方案table，這個只能一直往下疊加狀態，
@@ -196,8 +194,6 @@ class lesson_sales_sets(models.Model):
     last_sold_time = models.DateTimeField(auto_now=True)
     def __str__(self):
         return str(self.id)
-
-
 
 class lesson_info_for_users_not_signed_up(models.Model): 
     # 因為有一個先期導入版本，我們利用一個暫存的lesson_info先存放這些資訊，
@@ -237,3 +233,25 @@ class lesson_info_for_users_not_signed_up(models.Model):
     def __str__(self):
         return str(self.id)
         # 理論上一個老師在這張table只會有一個row的資料，所以這樣寫比較好看
+
+# 上課與完課紀錄
+class lesson_history(models.Model):
+    lesson_booking_info_id = models.IntegerField()  # 所對應的課程id
+    real_teaching_time = models.IntegerField()
+    # 實際開課時間
+    real_start_time = models.DateTimeField(auto_now_add=True)
+    # 實際下課時間
+    real_end_time = models.DateTimeField(auto_now_add=True)
+    # 實際上課時數, 1分鐘為單位, 10分鐘一跳
+    check_time = models.IntegerField()
+    # 實際應付老師金額
+    real_teaching_fee = models.IntegerField()
+    # # Example: 2020821:1,2,3,4;20200822:3,4,5,6 之類的
+    teaching_status = models.CharField(max_length = 20)  
+    # 還沒上課 unprocess, 已完課 over or canceled
+    is_student_confirm = models.BooleanField(default=0)
+    # default=0,當老師送出向學生確認後改為1, 萬一需要協調時數用
+    created_time = models.DateTimeField(auto_now_add=True)
+    last_changed_time = models.DateTimeField(auto_now=True)
+    def __str__(self):
+        return str(self.id)
