@@ -13,7 +13,7 @@ def main_blog(request):
     articles_in_list = list()
     all_unique_categories = list(the_articles.values_list('category', flat=True).distinct())
     all_unique_categories = [each_category for each_category in all_unique_categories]
-    the_one_big_picture = uploaded_pictures.objects.filter(id=1).first()
+    the_one_big_picture = uploaded_pictures.objects.filter(id=2).first()
     #print(the_articles)
     #print(all_unique_categories)
     #print(the_one_big_picture)

@@ -11,7 +11,7 @@ APPEND_SLASH = False
 SECRET_KEY = 'dhu80odw8@*7*o*oxznv+bkjsho1y@6#+6sodf*##d-cg9$o&r'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
