@@ -48,12 +48,39 @@ class blog_articles_editor_test(TestCase):
             'category': 'category_test',
             'hashtag': 'hashtag_test'
         }
-        response = self.client.post('/articles/editor/', data=data)
+        self.client.post('/articles/editor/', data=data)
         
         self.assertEqual(
             article_info.objects.all().count(),
             1
         )
-
         
         print(article_info.objects.values())
+
+
+    def test_get_all_categories_for_blog_works_fine(self):
+        # 測試這個函式是否可以如預期回傳排除某些類別的所有類別
+        from .views import _get_all_categories_for_blog
+        all_categories = list(article_info.objects.values_list('category', flat=True).distinct())
+        self.assertGreater(len(all_categories) > len(all_categories) - 1)
+        # 測試至少大於零種類別
+        if len(all_categories) == 1:
+            self.assertNotIn(
+                all_categories[0],
+                _get_all_categories_for_blog(excluded=[all_categories[0],]),
+                all_categories
+                )
+        else:
+            self.assertNotIn(
+                all_categories[0],
+                _get_all_categories_for_blog(excluded=[all_categories[0],]),
+                all_categories
+                )
+            self.assertNotIn(
+                all_categories[1],
+                _get_all_categories_for_blog(excluded=[all_categories[0], all_categories[1]]),
+                all_categories
+                )
+
+
+

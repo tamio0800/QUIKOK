@@ -15,7 +15,7 @@ class student_purchase_record(models.Model):
     lesson_name = models.CharField(max_length = 30)
     lesson_set_id = models.IntegerField()
     price = models.IntegerField()
-    bank_account_code = models.IntegerField() # 用戶繳費帳號後5碼,對帳用
+    part_of_bank_account_code = models.CharField(max_length=30, default='') # 用戶繳費帳號後5碼,對帳用
     payment_status = models.CharField(max_length = 30, default = 'unpaid')
     # paid, unpaid, cancel.....
     update_time = models.DateTimeField(auto_now_add=True)
@@ -32,8 +32,8 @@ class student_refund(models.Model):
     refund_status = models.CharField(max_length = 30, default = 'unpaid')
     # already_paid, unpaid, cancel.....
     update_time = models.DateTimeField(auto_now_add=True)
-    bank_account_code = models.CharField(max_length = 30)
-    bank_code = models.CharField(max_length = 5)
+    bank_account_code = models.CharField(max_length=30, default='')
+    bank_code = models.CharField(max_length=5, default='')
     def __str__(self):
         return str(self.id)
 
@@ -44,10 +44,10 @@ class teacher_refund(models.Model):
     txn_fee = models.IntegerField(default=0) # 手續費
     refund_amount = models.IntegerField() # 匯款多少錢,正常情況下是全額
     created_time = models.DateTimeField(auto_now_add=True)
-    refund_status = models.CharField(max_length = 30, default = 'unpaid')
+    refund_status = models.CharField(max_length=30, default='unpaid')
     # paid, unpaid, cancel.....
     update_time = models.DateTimeField(auto_now_add=True)
-    bank_account_code = models.CharField(max_length = 30)
-    bank_code = models.CharField(max_length = 5)
+    bank_account_code = models.CharField(max_length=30, default='')
+    bank_code = models.CharField(max_length=5, default='')
     def __str__(self):
         return str(self.id)

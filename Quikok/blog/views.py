@@ -6,6 +6,10 @@ from blog.models import article_info ,author_profile, uploaded_pictures
 from datetime import datetime
 import re
 
+def _get_all_categories_for_blog():
+    excluded_ones = ['Mail',]
+    all_unique_categories = list(article_info.objects.values_list('category', flat=True).distinct())
+
 # Create your views here.
 def main_blog(request):
     the_articles = article_info.objects.all()
@@ -91,7 +95,6 @@ def aritcle_content(request, article_id):
     all_unique_categories = list(the_articles.values_list('category', flat=True).distinct())
     all_unique_categories = [each_category for each_category in all_unique_categories]
     
-
     return render(
         request,
         'blog/articles.html',
