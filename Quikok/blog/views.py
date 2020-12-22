@@ -7,20 +7,21 @@ from datetime import datetime
 import re
 
 def _get_all_categories_for_blog(excluded=['Mail',]):
-    all_unique_categories = list(article_info.objects.values_list('category', flat=True).distinct())
+    '''
+    用以回傳除了某些特定類別以外的，資料庫中的文章的所有類別。
+    '''
+    all_unique_categories = \
+        list(article_info.objects.values_list('category', flat=True).distinct())
     return [_ for _ in all_unique_categories if _ not in excluded]
 
 # Create your views here.
 def main_blog(request):
-    the_articles = article_info.objects.all()
-
+    
+    all_unique_categories = _get_all_categories_for_blog()
+    the_articles = article_info.objects.filter(category__in=all_unique_categories)
     articles_in_list = list()
-    all_unique_categories = list(the_articles.values_list('category', flat=True).distinct())
-    all_unique_categories = [each_category for each_category in all_unique_categories]
     the_one_big_picture = uploaded_pictures.objects.filter(id=2).first()
-    #print(the_articles)
-    #print(all_unique_categories)
-    #print(the_one_big_picture)
+
     # 將文章應該有的資訊再度整合成一個物件（字典形式）
     if len(the_articles) > 0:
         for each_article_object in the_articles:
@@ -50,29 +51,6 @@ def main_blog(request):
     return render(request, 'blog/articles_list.html',)
     
 
-'''
-'article_date' : article_date,
-'article_main_picture': article_main_picture,
-'article_author' : author_nickname,
-'article_title' : article_title,
-'article_snippet' : article_snippet,
-'article_category' : article_category,
-'''
-#def second_blog(request):
-#    return render(
-#        request,
-#        'blog/articles.html',
-#        {
-#            'article_time' : '2011.11.11',
-#            'article_author' : 'Tam',
-#            'article_title' : '英國文化大臣稱劇集《王冠》應標明情節虛構',
-#            'article_content' : '因為劇中對一些王室事件，尤其是對威爾士親王夫婦婚姻破裂的刻畫，由英國演員奧利維婭曼扮演女王的《王冠》第四季招致了一些批評',
-#            'article_category' : '教育現場',
-#            'article_hashtag' : '新鮮人職場必備',
-#            'article_author_introduction' : '台灣韓國情報站創辦人，先後任職美國國會山莊遊說團體、無國界記者組織，現為獨立記者、公共外交說客。'
-#        })
-
-
 def aritcle_content(request, article_id):
     
     the_article = article_info.objects.filter(id = article_id).first()
@@ -92,8 +70,7 @@ def aritcle_content(request, article_id):
     article_hashtags = [_ for _ in re.sub(r'[,#;]', ' ', the_article.hashtag).split() if len(_) > 0]
 
     the_articles = article_info.objects.all()
-    all_unique_categories = list(the_articles.values_list('category', flat=True).distinct())
-    all_unique_categories = [each_category for each_category in all_unique_categories]
+    all_unique_categories = _get_all_categories_for_blog()
     
     return render(
         request,
@@ -112,6 +89,7 @@ def aritcle_content(request, article_id):
             'all_unique_categories': all_unique_categories,
             'the_articles': the_articles,
         })
+
 
 def article_editor(request):
     # 這個函式用來回傳blog中文章的編輯器
