@@ -6,9 +6,9 @@ from blog.models import article_info ,author_profile, uploaded_pictures
 from datetime import datetime
 import re
 
-def _get_all_categories_for_blog():
-    excluded_ones = ['Mail',]
+def _get_all_categories_for_blog(excluded=['Mail',]):
     all_unique_categories = list(article_info.objects.values_list('category', flat=True).distinct())
+    return [_ for _ in all_unique_categories if _ not in excluded]
 
 # Create your views here.
 def main_blog(request):
