@@ -83,9 +83,15 @@ WSGI_APPLICATION = 'Quikok.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',  
-        # 'ENGINE': 'django.db.backends.sqlite3',  
-        # 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         'NAME': 'quikok_db',  # 資料庫/schema的名稱_development
+        'USER': 'root',
+        'PASSWORD': '@Annie0800_GaryWx2003_tamiotsiu+#YT#',
+        'HOST': '61.222.157.152',
+        'PORT': '3306',
+    },
+    'production': {
+        'ENGINE': 'django.db.backends.mysql',  
+        'NAME': 'quikok_db_production', 
         'USER': 'root',
         'PASSWORD': '@Annie0800_GaryWx2003_tamiotsiu+#YT#',
         'HOST': '61.222.157.152',
