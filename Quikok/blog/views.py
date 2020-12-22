@@ -43,14 +43,14 @@ def main_blog(request):
 
         return render(
             request,
-            'blog/articles_list.html',
+            'blog/main_blog.html',
             {
                 'articles_in_list': articles_in_list,
                 'all_unique_categories': all_unique_categories,
-                'the_one_big_picture': the_one_big_picture
+                'the_one_big_picture': the_one_big_picture,
             })
 
-    return render(request, 'blog/articles_list.html',)
+    return render(request, 'blog/main_blog.html', {'the_one_big_picture': the_one_big_picture})
     
 
 def aritcle_content(request, article_id):
@@ -76,7 +76,7 @@ def aritcle_content(request, article_id):
     
     return render(
         request,
-        'blog/articles.html',
+        'blog/aritcle_content.html',
         {
             'article_date' : article_date,
             'article_main_picture': article_main_picture,
