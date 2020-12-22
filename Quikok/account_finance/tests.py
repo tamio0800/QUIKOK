@@ -5,7 +5,9 @@ from django.test import Client
 class test_finance_functions(TestCase):
     def test_storege_order(self):
         self.client = Client()
+        # 測試前端傳來三種不同情況的方案時,是否能順利寫入
         lesson_set = ['trail','no_discount','30:70']
+
         for selected_set in lesson_set:
             data = {'userID':1,
             'teacher_id':2,
