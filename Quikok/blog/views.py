@@ -20,7 +20,9 @@ def main_blog(request):
     all_unique_categories = _get_all_categories_for_blog()
     the_articles = article_info.objects.filter(category__in=all_unique_categories)
     articles_in_list = list()
-    the_one_big_picture = uploaded_pictures.objects.filter(id=2).first()
+    the_one_big_picture = uploaded_pictures.objects.filter(id=1).first()
+    print(the_one_big_picture)
+    print(str(the_one_big_picture.picture.url))
 
     # 將文章應該有的資訊再度整合成一個物件（字典形式）
     if len(the_articles) > 0:

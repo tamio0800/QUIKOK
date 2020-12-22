@@ -89,6 +89,7 @@ DATABASES = {
         'HOST': '61.222.157.152',
         'PORT': '3306',
     },
+    # python manage.py migrate --database=production
     'production': {
         'ENGINE': 'django.db.backends.mysql',  
         'NAME': 'quikok_db_production', 
@@ -98,6 +99,14 @@ DATABASES = {
         'PORT': '3306',
     }
 }
+'''
+將schema從A倒到B的方法:
+    mysqldump  (--no-data) -u user -p database >database-schema.sql
+    
+    use schema2;
+    source database-schema.sql;
+'''
+
 
 # channel settings
 ASGI_APPLICATION = "Quikok.routing.application"
