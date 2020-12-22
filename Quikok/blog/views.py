@@ -50,7 +50,10 @@ def main_blog(request):
                 'the_one_big_picture': the_one_big_picture
             })
 
-    return render(request, 'blog/articles_list.html',)
+    return render(request, 'blog/articles_list.html',
+            {
+                'the_one_big_picture': the_one_big_picture
+            })
     
 
 def aritcle_content(request, article_id):
