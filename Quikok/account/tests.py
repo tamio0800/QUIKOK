@@ -9,9 +9,6 @@ from lesson.models import lesson_card
 import os, shutil
 
 #python manage.py test account/ --settings=Quikok.settings_for_test
-
-
-
 class Auth_Related_Functions_Test(TestCase):
 
     def test_auth_check_exist(self):
