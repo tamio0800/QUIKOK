@@ -213,7 +213,7 @@ class lesson_manager:
                 this_user_favorite_lessons_s_ids = this_user_favorite_lessons_object.values_list('lesson_id', flat=True)
                 self.data['is_this_my_favorite_lesson'] = \
                     lesson_id in this_user_favorite_lessons_s_ids
-                print(self.data)
+                #print(self.data)
             self.data['teacher_auth_id'] = \
                 teacher_profile.objects.filter(id=lesson_object.teacher_id).first().auth_id
         else:
@@ -281,7 +281,7 @@ class lesson_manager:
                 if has_teacher_uploaded_lesson_background_picture:
                     # 有上傳圖片
                     uploaded_background_picture = a_request_object.FILES["background_picture_path"]
-                    print('received bg pic: ', uploaded_background_picture.name)
+                    #print('received bg pic: ', uploaded_background_picture.name)
                     fs = FileSystemStorage(location=lessons_folder_path)
                     file_extension = uploaded_background_picture.name.split('.')[-1]
                     fs.save('customized_lesson_background'+'.'+ file_extension , uploaded_background_picture) # 檔名統一改成thumbnail開頭
@@ -342,12 +342,12 @@ class lesson_manager:
                 if has_teacher_uploaded_lesson_background_picture:
                     # 有上傳圖片
                     uploaded_background_picture = a_request_object.FILES["background_picture_path"]
-                    print('received bg pic: ', uploaded_background_picture.name)
+                    #print('received bg pic: ', uploaded_background_picture.name)
                     fs = FileSystemStorage(location=lessons_folder_path)
                     file_extension = uploaded_background_picture.name.split('.')[-1]
                     clean_files(lessons_folder_path, 'customized_lesson_background')  # 先清理過舊的背景圖片
                     fs.save('customized_lesson_background'+'.'+ file_extension , uploaded_background_picture) # 檔名統一改成thumbnail開頭
-                    print('/' + lessons_folder_path + '/customized_lesson_background'+'.'+ file_extension)
+                    #print('/' + lessons_folder_path + '/customized_lesson_background'+'.'+ file_extension)
                     _temp_lesson_info['background_picture_path'] = \
                         '/' + lessons_folder_path + '/customized_lesson_background'+'.'+ file_extension
                 for key, item in _temp_lesson_info.items():
@@ -385,7 +385,7 @@ class lesson_manager:
             class_nums = np.random.randint(1, 6)
             for each_class in range(class_nums):
                 _temp_lesson_info['teacher'] = teacher_profile.objects.filter(auth_id = each_teacher_auth_id).first()
-                print(_temp_lesson_info['teacher'].username, 'is building a class', each_class, 'for', class_nums)
+                #print(_temp_lesson_info['teacher'].username, 'is building a class', each_class, 'for', class_nums)
                 _temp_lesson_info['lesson_avg_score'] = 0
                 _temp_lesson_info['lesson_reviewed_times'] = 0
                 _temp_lesson_info['big_title'] = get_text(txt, np.random.randint(0, 11))
@@ -477,7 +477,7 @@ class lesson_card_manager:
         self.lesson_card_info = dict()
     def setup_a_lesson_card(self, **kwargs):
         # 當課程建立或是修改時，同步編修課程小卡資料
-        print("Activate setup_a_lesson_card!!!!")
+        #print("Activate setup_a_lesson_card!!!!")
         from account.models import teacher_profile
         from lesson.models import lesson_info, lesson_reviews, lesson_card
         try:
