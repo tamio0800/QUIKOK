@@ -17,7 +17,6 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     # 每堂課程會有自己的unique id，我們用這個來辨識、串連課程 09/25 討論後認為先用內建的id就好
     # lesson_id = models.CharField(max_length = 40) 
     teacher = models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='teacher_of_the_lesson')
-    # teacher  =  models.CharField(max_length = 150) # = username
     big_title = models.CharField(max_length = 10)  # 背景圖片的大標題
     little_title = models.CharField(max_length = 10)  # 背景圖片的小標題
     title_color = models.CharField(max_length = 7) # 標題顏色 以色碼存入，  >> #\d{6}
@@ -69,7 +68,7 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     # 販售狀態 >>
     #   草稿: draft, 上架: selling, 沒上架: notSelling, 刪除: donotShow
     def __str__(self):
-        return str(self.id)
+        return self.lesson_title
 
 
 class lesson_card(models.Model):
@@ -101,7 +100,7 @@ class lesson_card(models.Model):
     lesson_reviewed_times = models.IntegerField(default = 0) # 這個是課程被評分過幾次的統計
   
     def __str__(self):
-        return str(self.corresponding_lesson_id)
+        return self.lesson_title
 
 
 
@@ -231,7 +230,7 @@ class lesson_info_for_users_not_signed_up(models.Model):
     # 這個是放課程的標籤，一開始先人工(老師)給，之後再交給機器學習模型來判斷
     created_time = models.DateTimeField(auto_now_add=True)
     def __str__(self):
-        return str(self.id)
+        return self.lesson_title
         # 理論上一個老師在這張table只會有一個row的資料，所以這樣寫比較好看
 
 # 上課與完課紀錄
