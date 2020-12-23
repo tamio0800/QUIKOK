@@ -2,3 +2,5 @@
 migrations/
 quikok_env/
 vscode/settings.json
+user_upload/
+static/

@@ -2,16 +2,14 @@
 from django.test import RequestFactory, TestCase
 from django.test import Client
 from django.contrib.auth.models import Permission, User, Group
-from account.models import student_profile, teacher_profile, user_token, feedback
+from account.models import student_profile, teacher_profile, user_token, feedback, general_available_time
 from account.auth_tools import auth_check_manager
 from datetime import datetime, timedelta
 from lesson.models import lesson_card
 import os, shutil
+from unittest import skip
 
 #python manage.py test account/ --settings=Quikok.settings_for_test
-
-
-
 class Auth_Related_Functions_Test(TestCase):
 
     def test_auth_check_exist(self):
@@ -20,6 +18,8 @@ class Auth_Related_Functions_Test(TestCase):
         self.client = Client()
         response = self.client.get(path='/authCheck/')
         self.assertEqual(response.status_code, 200)
+
+class Teacher_Test(TestCase):
 
     def test_create_teacher_receive_can_mkdir(self):
         Group.objects.bulk_create(
@@ -49,7 +49,7 @@ class Auth_Related_Functions_Test(TestCase):
             'regBirth': '2000-01-01',
             'regGender': '0',
             'intro': 'test_intro',
-            'regMobile': '0912-345-678',
+            'regMobile': '0912-345678',
             'tutor_experience': '一年以下',
             'subject_type': 'test_subject',
             'education_1': 'education_1_test',
@@ -57,13 +57,87 @@ class Auth_Related_Functions_Test(TestCase):
             'education_3': 'education_3_test',
             'company': 'test_company',
             'special_exp': 'test_special_exp',
-            'teacher_general_availabale_time': '0:1,2,3,4,5'
+            'teacher_general_availabale_time': '0:1,2,3,4,5;'
         }
         self.client.post(path='/api/account/signupTeacher/', data=data)
         self.assertEqual(
             os.path.isdir('user_upload/teachers/' + test_username),
             True
         )
+        try:
+            shutil.rmtree(f'user_upload/teachers/{test_username}')
+        except Exception as e:
+            print(f'Error:  {e}')
+
+    
+    def test_get_teacher_available_time(self):
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+        client = Client()
+        test_username = 'test_teacher_user@test.com'
+        teacher_available_time = '0:1,2,3,4,5;1:11,13,15,17,19,21,22,25,33;4:1,9,27,28,41;'
+        try:
+            shutil.rmtree('user_upload/teachers/' + test_username)
+        except:
+            pass
+        self.assertEqual(
+            os.path.isdir('user_upload/teachers/' + test_username),
+            False
+        )
+        data = {
+            'regEmail': test_username,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': teacher_available_time
+        }
+        response = client.post(path='/api/account/signupTeacher/', data=data)
+        try:
+            shutil.rmtree(f'user_upload/teachers/{test_username}')
+        except Exception as e:
+            print(f'Error:  {e}')
+       
+        the_general_available_time = general_available_time.objects.filter(teacher_model_id=1)
+
+        self.assertEqual(
+            the_general_available_time.filter(week=0).first().time,
+            '1,2,3,4,5'
+        )
+        self.assertEqual(
+            the_general_available_time.filter(week=1).first().time,
+            '11,13,15,17,19,21,22,25,33'
+        )
+        self.assertEqual(
+            the_general_available_time.filter(week=4).first().time,
+            '1,9,27,28,41'
+        )
+
+    #def test_get_teacher_available_time(self):
+    #    self.test_get_teacher_available_time()
+    #    client = Client()
+    #    teacher_auth_id = 1
+    #    response = client.post(path='api/account/getTeacherAvailableTime/', teacher_auth_id)
+    #    # 理論上要回傳
+
+
 
 
     @skip

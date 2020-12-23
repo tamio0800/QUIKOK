@@ -1,5 +1,4 @@
-
-from Quikok.chatroom.models import Messages, chat_room
+from chatroom.models import Messages, chat_room
 from django.contrib.auth.models import User
 # Create your tests here.
 

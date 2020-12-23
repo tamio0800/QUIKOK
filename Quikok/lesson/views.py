@@ -259,7 +259,7 @@ def get_lesson_cards_for_common_users(request):
             for each_dict in _data:
                 if each_dict['lessonID'] not in matched_lesson_ids:
                     _data.remove(each_dict)
-            print(len(_data))
+            #print(len(_data))
         if len(ordered_by) > 0:
             the_lesson_card_manager = lesson_card_manager()
             sorted_lesson_ids = the_lesson_card_manager.sort_lessons_id_by(
@@ -451,9 +451,9 @@ def return_lesson_details_for_teacher_who_created_it(request):
     teacher_auth_id = request.GET.get('userID', False)
     lesson_id = request.GET.get('lessonID', False)
     the_lesson_manager = lesson_manager()
-    print('action', action)
-    print('teacher_auth_id', teacher_auth_id)
-    print('lesson_id', lesson_id)
+    #print('action', action)
+    #print('teacher_auth_id', teacher_auth_id)
+    #print('lesson_id', lesson_id)
 
     if action != 'editLesson':
         response['status'] = 'failed'
@@ -555,7 +555,7 @@ def set_lesson_s_status(request):
     action = request.POST.get('selling_status', False)
     teacher_auth_id = request.POST.get('userID', False)
     lesson_id = request.POST.get('lessonID', False) 
-    print(action, teacher_auth_id, lesson_id)
+    #print(action, teacher_auth_id, lesson_id)
 
     if not check_if_all_variables_are_true(action, teacher_auth_id, lesson_id):
         response['status'] = 'failed'
@@ -674,7 +674,7 @@ def lesson_manage(request):
                     'errMsg': None,
                     'data' :data
                     }
-                    print(response)
+                    #print(response)
                 else:
                     response['status'] = 'failed'
                     response['errCode'] = '1'
@@ -817,7 +817,7 @@ def lesson_manage(request):
                 # 儲存這個課的userupload_pic 自定義背景
                 background = request.FILES.get("tUploadBackPic", False)
                 if background is not False:
-                    print('課程自訂背景圖: ', background.name)
+                    #print('課程自訂背景圖: ', background.name)
                     file_exten = background.name.split('.')[-1]
                     # 完整檔名
                     back_pic_full_name = 'lesson_'+ lesson_id +'_upload_back_pic'+'.'+ file_exten
@@ -850,7 +850,7 @@ def lesson_manage(request):
             response['status'] = 'failed'
             response['errCode'] = '2'
             response['errMsg'] = 'what is action?'
-    print(response)
+    #print(response)
     return JsonResponse(response)    
 
 

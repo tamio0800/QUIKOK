@@ -17,9 +17,9 @@ urlpatterns = [
     path('api/account/', include('account.urls')),
     path('api/lesson/', include('lesson.urls')),
     path('articles/', include('blog.urls')),
-    path('homepage/', views.homepage, name='home'),
-    path('base_layout/', views.base_layout),
-    path('test/', views.test_page),
+    #path('homepage/', views.homepage, name='home'),
+    #path('base_layout/', views.base_layout),
+    #path('test/', views.test_page),
     path('api/getBannerBar/', views.get_banner_bar),
     path('edony_linebot/', include('line_function.urls')),
     re_path(r'^(?!.*?user_upload|.*?website_assets|.*?@\S+[.]com).*', TemplateView.as_view(template_name="index.html")),  # 新增的

@@ -31,4 +31,5 @@ urlpatterns = [
     path('memberResetPassword/', views.member_reset_password),
     path('feedback/', views.feedback_view_function),
     path('send_email/', views.send_email),
+    #path('getTeacherAvailableTime/', views.get_teacher_available_time),
 ]

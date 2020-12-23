@@ -2,6 +2,7 @@ from django.test import RequestFactory, TestCase
 from django.test import Client
 import pandas as pd
 import os
+import shutil
 from lesson import lesson_tools
 from lesson.models import lesson_info_for_users_not_signed_up
 
@@ -163,6 +164,12 @@ class Lesson_Related_Functions_Test(TestCase):
             True,
             os.listdir(f'user_upload/temp/before_signed_up/{dummy_teacher_id}')
         )  # 確認該資料夾裡面有背景照片
+
+        # 清理產出的測試檔案
+        try:
+            shutil.rmtree(f'user_upload/temp/before_signed_up/{dummy_teacher_id}')
+        except Exception as e:
+            print(f'Something went wrong:  {e}')
         
         print(lesson_info_for_users_not_signed_up.objects.values())
         
@@ -181,6 +188,50 @@ class Lesson_Related_Functions_Test(TestCase):
                 'data': 1
             }
         )
+
+
+    def test_lesson_card_syncronized_after_creating_a_lesson(self):
+        '''
+        測試創建課程後，課程小卡也會同步出現正確的資料
+        '''
+        self.client = Client()
+        arguments_dict = dict()
+
+        arguments_dict = {
+            'big_title': 'big_title',
+            'little_title': 'test',
+            'title_color': '#000000',
+            'background_picture_code': 1,
+            'background_picture_path': '',
+            'lesson_title': 'test',
+            'price_per_hour': 800,
+            'lesson_has_one_hour_package': True,
+            'trial_class_price': 69,
+            'highlight_1': 'test',
+            'highlight_2': 'test',
+            'highlight_3': 'test',
+            'lesson_intro': 'test',
+            'how_does_lesson_go': 'test',
+            'target_students': 'test',
+            'lesson_remarks': 'test',
+            'syllabus': 'test',
+            'lesson_attributes': 'test'      
+            }
+        response = \
+            self.client.post(
+                path='/api/lesson/createOrEditLesson/',
+                data=arguments_dict)
+        
+        self.assertJSONEqual(
+            str(response.content, encoding='utf8'),
+            {
+                'status': 'success',
+                'errCode': None,
+                'errMsg': None,
+                'data': 1
+            }
+        )
+
 
         
         

@@ -213,7 +213,7 @@ class lesson_manager:
                 this_user_favorite_lessons_s_ids = this_user_favorite_lessons_object.values_list('lesson_id', flat=True)
                 self.data['is_this_my_favorite_lesson'] = \
                     lesson_id in this_user_favorite_lessons_s_ids
-                print(self.data)
+                #print(self.data)
             self.data['teacher_auth_id'] = \
                 teacher_profile.objects.filter(id=lesson_object.teacher_id).first().auth_id
         else:
@@ -281,7 +281,7 @@ class lesson_manager:
                 if has_teacher_uploaded_lesson_background_picture:
                     # 有上傳圖片
                     uploaded_background_picture = a_request_object.FILES["background_picture_path"]
-                    print('received bg pic: ', uploaded_background_picture.name)
+                    #print('received bg pic: ', uploaded_background_picture.name)
                     fs = FileSystemStorage(location=lessons_folder_path)
                     file_extension = uploaded_background_picture.name.split('.')[-1]
                     fs.save('customized_lesson_background'+'.'+ file_extension , uploaded_background_picture) # 檔名統一改成thumbnail開頭
@@ -342,12 +342,12 @@ class lesson_manager:
                 if has_teacher_uploaded_lesson_background_picture:
                     # 有上傳圖片
                     uploaded_background_picture = a_request_object.FILES["background_picture_path"]
-                    print('received bg pic: ', uploaded_background_picture.name)
+                    #print('received bg pic: ', uploaded_background_picture.name)
                     fs = FileSystemStorage(location=lessons_folder_path)
                     file_extension = uploaded_background_picture.name.split('.')[-1]
                     clean_files(lessons_folder_path, 'customized_lesson_background')  # 先清理過舊的背景圖片
                     fs.save('customized_lesson_background'+'.'+ file_extension , uploaded_background_picture) # 檔名統一改成thumbnail開頭
-                    print('/' + lessons_folder_path + '/customized_lesson_background'+'.'+ file_extension)
+                    #print('/' + lessons_folder_path + '/customized_lesson_background'+'.'+ file_extension)
                     _temp_lesson_info['background_picture_path'] = \
                         '/' + lessons_folder_path + '/customized_lesson_background'+'.'+ file_extension
                 for key, item in _temp_lesson_info.items():
@@ -368,6 +368,8 @@ class lesson_manager:
                 self.errCode = '3'
                 self.errMsg = 'Error While Writting In Database.'
                 return (self.status, self.errCode, self.errMsg)
+    
+    
     def setup_batch_lessons(self, teacher_auth_ids, nums_of_lesson):
         from account.models import teacher_profile
         import numpy as np
@@ -383,7 +385,7 @@ class lesson_manager:
             class_nums = np.random.randint(1, 6)
             for each_class in range(class_nums):
                 _temp_lesson_info['teacher'] = teacher_profile.objects.filter(auth_id = each_teacher_auth_id).first()
-                print(_temp_lesson_info['teacher'].username, 'is building a class', each_class, 'for', class_nums)
+                #print(_temp_lesson_info['teacher'].username, 'is building a class', each_class, 'for', class_nums)
                 _temp_lesson_info['lesson_avg_score'] = 0
                 _temp_lesson_info['lesson_reviewed_times'] = 0
                 _temp_lesson_info['big_title'] = get_text(txt, np.random.randint(0, 11))
@@ -469,12 +471,13 @@ class lesson_manager:
                     corresponding_lesson_id = created_lesson.id,
                     teacher_auth_id = each_teacher_auth_id
                 )  # 建立課程小卡資訊
+                
 class lesson_card_manager: 
     def __init__(self):
         self.lesson_card_info = dict()
     def setup_a_lesson_card(self, **kwargs):
         # 當課程建立或是修改時，同步編修課程小卡資料
-        print("Activate setup_a_lesson_card!!!!")
+        #print("Activate setup_a_lesson_card!!!!")
         from account.models import teacher_profile
         from lesson.models import lesson_info, lesson_reviews, lesson_card
         try:
@@ -501,8 +504,7 @@ class lesson_card_manager:
             self.lesson_card_info['is_this_teacher_male'] =  teacher_object.is_male
             self.lesson_card_info['education'] =  teacher_object.education_1
             self.lesson_card_info['education_is_approved'] =  teacher_object.education_approved
-            self.lesson_card_info['working_experience'] =  teacher_object.company
-            self.lesson_card_info['working_experience_is_approved'] =  teacher_object.work_approved
+            
             if len(review_objects) == 0:
                 # 這是一個新上架的課程或是沒有人給予過評論
                 self.lesson_card_info['lesson_reviewed_times'] = 0
@@ -510,6 +512,23 @@ class lesson_card_manager:
             else:
                 self.lesson_card_info['lesson_reviewed_times'] = len(review_objects)
                 self.lesson_card_info['lesson_avg_score'] = review_objects.aggregate(_avg = Avg('score_given'))['_avg']
+            
+            self.lesson_card_info['working_experience'] =  teacher_object.company
+            self.lesson_card_info['working_experience_is_approved'] =  teacher_object.work_approved
+            
+            # 呈現學歷與經歷，若經歷為空則第二個呈現次要學歷，若亦為空則呈現 其他經歷或特殊專長
+            if teacher_object.company != '':
+                self.lesson_card_info['working_experience'] =  teacher_object.company
+                self.lesson_card_info['working_experience_is_approved'] =  teacher_object.work_approved
+            elif teacher_object.education_2 != '':
+                self.lesson_card_info['working_experience'] =  teacher_object.education_2
+                self.lesson_card_info['working_experience_is_approved'] =  self.lesson_card_info['education_is_approved']
+            elif teacher_object.special_exp != '':
+                self.lesson_card_info['working_experience'] =  teacher_object.special_exp
+                self.lesson_card_info['working_experience_is_approved'] =  teacher_object.other_approved
+
+
+            
             # 先確認這個課程小卡是否存在，不存在的話建立，存在的話修改
             lesson_card_object = lesson_card.objects.filter(corresponding_lesson_id=self.lesson_card_info['corresponding_lesson_id']).first()
             if lesson_card_object is None:
