@@ -26,17 +26,17 @@ class student_profile(models.Model):
     withholding_balance = models.IntegerField(default=0)  # 這個是帳戶預扣額度
     name = models.CharField(max_length = 40)
     nickname = models.CharField(max_length = 40)
-    birth_date = models.DateField(null=True)
+    birth_date = models.DateField(blank=True, null=True)
     is_male = models.BooleanField()
-    intro = models.CharField(default='', max_length = 300, blank=True)  
+    intro = models.TextField(default='', max_length = 300, blank=True, null=True)  
     # 自我介紹，不要超過300個字元長，比老師長的緣故是比起老師，學生更需要詳細介紹自己的學習背景
     role = models.CharField(max_length = 40)
     mobile = models.CharField(max_length = 12)
     # picture_folder = models.ImageField(default = 'snapshop_default.png', blank =True)
-    user_folder = models.TextField(blank=True) #該user最外層的資料夾路徑  從 picture_folder 改名,與老師的命名統一
-    info_folder = models.TextField(blank=True)  # 資料夾路徑，存放個人檔案（暫不使用）
-    thumbnail_dir = models.TextField(blank=True)
-    update_someone_by_email = models.CharField(max_length = 405, blank=True)
+    user_folder = models.TextField(blank=True, null=True) #該user最外層的資料夾路徑  從 picture_folder 改名,與老師的命名統一
+    info_folder = models.TextField(blank=True, null=True)  # 資料夾路徑，存放個人檔案（暫不使用）
+    thumbnail_dir = models.TextField(blank=True, null=True)
+    update_someone_by_email = models.CharField(max_length = 405, blank=True, null=True)
     date_join = models.DateTimeField(auto_now_add=True)
     # 為了使回傳platform名稱而不是object
     def __str__(self):
@@ -57,27 +57,27 @@ class teacher_profile(models.Model):
     is_male = models.BooleanField()
     intro = models.TextField()  # 自我介紹
     mobile = models.CharField(max_length = 12)
-    thumbnail_dir = models.TextField(blank=True) # 老師頭像完整路徑 thumbnail_dir
-    user_folder = models.TextField(blank=True)  # 該user最外層的資料夾路徑
-    info_folder = models.TextField(blank=True)  # 資料夾路徑，存放個人檔案目前暫沒使用
+    thumbnail_dir = models.TextField(blank=True, null=True) # 老師頭像完整路徑 thumbnail_dir
+    user_folder = models.TextField(blank=True, null=True)  # 該user最外層的資料夾路徑
+    info_folder = models.TextField(blank=True, null=True)  # 資料夾路徑，存放個人檔案目前暫沒使用
     tutor_experience = models.CharField(max_length = 12)  # 改成下拉式選單 五種分類
-    subject_type = models.TextField(blank=True) # 科目名稱也可包含教課對象
+    subject_type = models.TextField(blank=True, null=True) # 科目名稱也可包含教課對象
     # id_cert = models.CharField(max_length = 150) 整合進下方的cert..裡面
-    education_1 = models.CharField(max_length = 60, blank=True)
-    education_2 = models.CharField(max_length = 60, blank=True)
-    education_3 = models.CharField(max_length = 60, blank=True)
-    cert_unapproved = models.TextField() # 尚未審核通過的各類型證書/證明檔案指向資料夾位置
-    cert_approved = models.TextField() # 已審核通過的各類型證書/證明檔案指向資料夾位置
+    education_1 = models.CharField(max_length = 60)
+    education_2 = models.CharField(max_length = 60, blank=True, null=True)
+    education_3 = models.CharField(max_length = 60, blank=True, null=True)
+    cert_unapproved = models.TextField(blank=True, null=True) # 尚未審核通過的各類型證書/證明檔案指向資料夾位置
+    cert_approved = models.TextField(blank=True, null=True) # 已審核通過的各類型證書/證明檔案指向資料夾位置
     # 四大類別的認證預設 false, 未認證
     id_approved = models.BooleanField(default = False)  #身分類別的認證勳章 實名認證
     education_approved = models.BooleanField(default = False)  #學歷類別的認證勳章 全部的學歷都有認證才通過
     work_approved = models.BooleanField(default = False)  #工作經歷類別的認證勳章:ex 某個厲害的公司,專案經驗
     other_approved = models.BooleanField(default = False)  #其他類別的認證勳章: ex:金色多益、奧林匹亞數學冠軍
     #occupation = models.CharField(max_length = 60, blank=True)
-    company = models.CharField(max_length = 100, blank=True) # 公司與職位 原本分兩個但設計時做在一起了所以只留這個
+    company = models.CharField(max_length = 100, blank=True, null=True) # 公司與職位 原本分兩個但設計時做在一起了所以只留這個
     is_approved = models.BooleanField(default = False)  # 要讓陳先生看過/審核過
     date_join = models.DateTimeField(auto_now_add = True)
-    special_exp = models.TextField()  # 其他經歷或特殊專長
+    special_exp = models.TextField(blank=True, null=True)  # 其他經歷或特殊專長
     all_lesson_score_mean = models.FloatField(default=0.0)  # 全部課程分數平均
     total_number_of_remark = models.IntegerField(default=0) # 評分筆數
     def __str__(self):
