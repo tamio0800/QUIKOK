@@ -18,24 +18,29 @@ def storage_order(request):
         if False not in [student_authID, teacher_authID,\
                         lesson_id, lesson_set, price]:
             if len(teacher_queryset) and len(lesson_queryset) > 0:
-                set_obj = lesson_sales_sets.objects.filter(Q(lesson_id=lesson_id)&Q(sales_set=lesson_set))
+                set_queryset = lesson_sales_sets.objects.filter(Q(lesson_id=lesson_id)&Q(sales_set=lesson_set))
+                if len(set_queryset)>0:
+                    set_obj = set_queryset.first()
+                    teacher_obj = teacher_queryset.first()
+                    lesson_obj = lesson_queryset.first()
+                    new_record = student_purchase_record.objects.create(
+                        student_auth_id= student_authID,
+                        teacher_auth_id= teacher_authID,
+                        teacher_nickname= teacher_obj.nickname,
+                        lesson_id = lesson_id,
+                        lesson_name = lesson_obj.lesson_title,
+                        lesson_set_id = set_obj.id)
+                    new_record.save()
 
-                teacher_obj = teacher_queryset.first()
-                lesson_obj = lesson_queryset.first()
-                new_record = student_purchase_record.objects.create(
-                    student_auth_id= student_authID,
-                    teacher_auth_id= teacher_authID,
-                    teacher_nickname= teacher_obj.nickname,
-                    lesson_id = lesson_id,
-                    lesson_name = lesson_obj.lesson_title,
-                    lesson_set_id = '')
-                new_record.save()
-
-
-                response = {'status':'success',
-                'errCode': None,
-                'errMsg': None,
-                'data': None}
+                    response = {'status':'success',
+                    'errCode': None,
+                    'errMsg': None,
+                    'data': None}
+                else:
+                    response = {'status':'failed',
+                    'errCode': 1,
+                    'errMsg': '系統找不到該門課程方案，請稍後再試，如狀況持續可連絡客服',
+                    'data': None}
             else:
                 response = {'status':'failed',
                 'errCode': 1,
