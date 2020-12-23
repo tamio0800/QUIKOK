@@ -368,6 +368,8 @@ class lesson_manager:
                 self.errCode = '3'
                 self.errMsg = 'Error While Writting In Database.'
                 return (self.status, self.errCode, self.errMsg)
+    
+    
     def setup_batch_lessons(self, teacher_auth_ids, nums_of_lesson):
         from account.models import teacher_profile
         import numpy as np
@@ -501,8 +503,7 @@ class lesson_card_manager:
             self.lesson_card_info['is_this_teacher_male'] =  teacher_object.is_male
             self.lesson_card_info['education'] =  teacher_object.education_1
             self.lesson_card_info['education_is_approved'] =  teacher_object.education_approved
-            self.lesson_card_info['working_experience'] =  teacher_object.company
-            self.lesson_card_info['working_experience_is_approved'] =  teacher_object.work_approved
+            
             if len(review_objects) == 0:
                 # 這是一個新上架的課程或是沒有人給予過評論
                 self.lesson_card_info['lesson_reviewed_times'] = 0
@@ -510,6 +511,25 @@ class lesson_card_manager:
             else:
                 self.lesson_card_info['lesson_reviewed_times'] = len(review_objects)
                 self.lesson_card_info['lesson_avg_score'] = review_objects.aggregate(_avg = Avg('score_given'))['_avg']
+            
+            self.lesson_card_info['working_experience'] =  teacher_object.company
+            self.lesson_card_info['working_experience_is_approved'] =  teacher_object.work_approved
+            
+            # 呈現學歷與經歷，若經歷為空則第二個呈現次要學歷，若亦為空則呈現 其他經歷或特殊專長
+            if teacher_object.company != '':
+                self.lesson_card_info['working_experience'] =  teacher_object.company
+                self.lesson_card_info['working_experience_is_approved'] =  teacher_object.work_approved
+            elif teacher_object.education_2 != '':
+                self.lesson_card_info['working_experience'] =  teacher_object.education_2
+                self.lesson_card_info['working_experience_is_approved'] =  self.lesson_card_info['education_is_approved']
+            elif teacher_object.special_exp != '':
+                self.lesson_card_info['working_experience'] =  teacher_object.special_exp
+                self.lesson_card_info['working_experience_is_approved'] =  teacher_object.other_approved
+
+
+                
+            
+            
             # 先確認這個課程小卡是否存在，不存在的話建立，存在的話修改
             lesson_card_object = lesson_card.objects.filter(corresponding_lesson_id=self.lesson_card_info['corresponding_lesson_id']).first()
             if lesson_card_object is None:
