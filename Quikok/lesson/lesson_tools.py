@@ -471,6 +471,7 @@ class lesson_manager:
                     corresponding_lesson_id = created_lesson.id,
                     teacher_auth_id = each_teacher_auth_id
                 )  # 建立課程小卡資訊
+                
 class lesson_card_manager: 
     def __init__(self):
         self.lesson_card_info = dict()
@@ -527,8 +528,6 @@ class lesson_card_manager:
                 self.lesson_card_info['working_experience_is_approved'] =  teacher_object.other_approved
 
 
-                
-            
             
             # 先確認這個課程小卡是否存在，不存在的話建立，存在的話修改
             lesson_card_object = lesson_card.objects.filter(corresponding_lesson_id=self.lesson_card_info['corresponding_lesson_id']).first()
