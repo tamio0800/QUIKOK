@@ -22,6 +22,7 @@ urlpatterns = [
     #path('test/', views.test_page),
     path('api/getBannerBar/', views.get_banner_bar),
     path('edony_linebot/', include('line_function.urls')),
+    path('api/account_finance/', include('account_finance.urls')),
     re_path(r'^(?!.*?user_upload|.*?website_assets|.*?@\S+[.]com).*', TemplateView.as_view(template_name="index.html")),  # 新增的
 ]
 
