@@ -7,7 +7,7 @@ from account.models import student_profile, teacher_profile
 class chat_room(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE,related_name='student_set')
     teacher = models.ForeignKey(User, on_delete=models.CASCADE,related_name='teacher_set')
-    date= models.DateTimeField(auto_now_add=True)
+    created_time= models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return 'member:{},{}'.format(self.student,self.teacher)
 
@@ -19,7 +19,7 @@ class Messages(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sender')
     group = models.ForeignKey(chat_room, on_delete=models.CASCADE)
     message = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
+    created_time = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         """
