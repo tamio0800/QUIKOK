@@ -234,8 +234,11 @@ class lesson_info_for_users_not_signed_up(models.Model):
         # 理論上一個老師在這張table只會有一個row的資料，所以這樣寫比較好看
 
 # 上課與完課紀錄
-class lesson_history(models.Model):
+class lesson_complete_recorf(models.Model):
     lesson_booking_info_id = models.IntegerField()  # 所對應的課程id
+    teacher_auth_id = models.IntegerField()
+    student_auth_id = models.IntegerField()
+    parent_auth_id = models.IntegerField()
     real_teaching_time = models.IntegerField()
     # 實際開課時間
     real_start_time = models.DateTimeField(auto_now_add=True)
