@@ -208,6 +208,9 @@ class chat_room_manager:
 
 
 class websocket_manager:
+    def __init__(self):
+        # 系統的authID
+        self.system_authID =1 
     def check_authID_type(self, authID):
         # 判斷某個ID的身分
         _find_teacher = teacher_profile.objects.filter(auth_id=authID)
@@ -218,9 +221,11 @@ class websocket_manager:
         elif len(_find_student)>0 :
             self.user_type = 'student'
         else: # 等到預約寫了這邊還會再加上預約(system)
+            # 1224由於當初架構只分老師和學生,目前系統身分是'老師'...
             self.user_type = 'unknown'
     
     # 儲存聊天訊息到 db
+    # user_2_user
     def chat_storge(self, **kwargs):
         self.chatroom_id = kwargs['chatroomID']
         self.sender = kwargs['senderID'] # 發訊息者
@@ -230,6 +235,7 @@ class websocket_manager:
 
         try:
             chatroom_info = chatroom_info_user2user.objects.filter(id = self.chatroom_id).first()
+            print(chatroom_info)
             print(chatroom_info.id)
             if self.user_type == 'student':
                 # 發送者是學生
@@ -264,6 +270,7 @@ class websocket_manager:
         except Exception as e:
             print(e)
     
+    # 特殊情況1
     # 找尋user和user是不是第一次聊天(目前只有學生對老師需做此特殊處理)
     # 如果是, 查詢他找的新老師與系統的聊天室id資訊並回傳
     def query_chat_history(self, senderID):
@@ -289,7 +296,7 @@ class websocket_manager:
         send_to_ws = {
             'type' : "chat.message",
             'chatroomID':self.system_chatroomID, # 老師與系統聊天室
-            'senderID': 404, # 系統的auth_id
+            'senderID': self.system_authID, # 系統的auth_id
             'messageText':'',
             'messageType': 2, # 系統方塊
             'systemCode':1, # 建立聊天室
