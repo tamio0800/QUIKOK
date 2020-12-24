@@ -5,6 +5,7 @@ import os
 import shutil
 from lesson import lesson_tools
 from lesson.models import lesson_info_for_users_not_signed_up
+from django.contrib.auth.models import Permission, User, Group
 
 # python manage.py test lesson/ --settings=Quikok.settings_for_test
 class Lesson_Related_Functions_Test(TestCase):
@@ -120,7 +121,7 @@ class Lesson_Related_Functions_Test(TestCase):
         arguments_dict = dict()
 
         dummy_teacher_id = 'tamio0800111111'
-        background_picture = open('user_upload/temp/before_signed_up/tamio0800111111/customized_lesson_background.png', 'rb')
+        background_picture = open('user_upload/temp/before_signed_up/tamio0800111111/customized_lesson_background.jpg', 'rb')
         arguments_dict = {
             'dummy_teacher_id': dummy_teacher_id,
             'big_title': 'big_title',
@@ -166,10 +167,10 @@ class Lesson_Related_Functions_Test(TestCase):
         )  # 確認該資料夾裡面有背景照片
 
         # 清理產出的測試檔案
-        try:
-            shutil.rmtree(f'user_upload/temp/before_signed_up/{dummy_teacher_id}')
-        except Exception as e:
-            print(f'Something went wrong:  {e}')
+        #try:
+        #    shutil.rmtree(f'user_upload/temp/before_signed_up/{dummy_teacher_id}')
+        #except Exception as e:
+        #    print(f'Something went wrong:  {e}')
         
         print(lesson_info_for_users_not_signed_up.objects.values())
         
@@ -197,7 +198,54 @@ class Lesson_Related_Functions_Test(TestCase):
         self.client = Client()
         arguments_dict = dict()
 
+        # 要先建立老師才能做測試
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+
+        test_username = 'test201218_teacher_user@test.com'
+        try:
+            shutil.rmtree('user_upload/teachers/' + test_username)
+        except:
+            pass
+        self.assertEqual(
+            os.path.isdir('user_upload/teachers/' + test_username),
+            False
+        )
+        data = {
+            'regEmail': test_username,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;'
+        }
+        self.client.post(path='/api/account/signupTeacher/', data=data)
+        self.assertEqual(
+            os.path.isdir('user_upload/teachers/' + test_username),
+            True
+        )
+        # 應該已經建立完成了
+
         arguments_dict = {
+            'userID': 1,   # 這是老師的auth_id
+            'action': 'createLesson',
             'big_title': 'big_title',
             'little_title': 'test',
             'title_color': '#000000',
@@ -205,6 +253,8 @@ class Lesson_Related_Functions_Test(TestCase):
             'background_picture_path': '',
             'lesson_title': 'test',
             'price_per_hour': 800,
+            'discount_price': '10:90;20:80;30:75;',
+            'selling_status': 'selling',
             'lesson_has_one_hour_package': True,
             'trial_class_price': 69,
             'highlight_1': 'test',
@@ -221,6 +271,10 @@ class Lesson_Related_Functions_Test(TestCase):
             self.client.post(
                 path='/api/lesson/createOrEditLesson/',
                 data=arguments_dict)
+        try:
+            shutil.rmtree(f'user_upload/teachers/{test_username}')
+        except Exception as e:
+            print(f'Error:  {e}')
         
         self.assertJSONEqual(
             str(response.content, encoding='utf8'),
@@ -228,9 +282,11 @@ class Lesson_Related_Functions_Test(TestCase):
                 'status': 'success',
                 'errCode': None,
                 'errMsg': None,
-                'data': 1
+                #'data': 1
             }
         )
+
+        
 
 
         
