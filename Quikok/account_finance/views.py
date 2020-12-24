@@ -3,6 +3,7 @@ from account_finance.models import student_purchase_record
 from account.models import teacher_profile
 from lesson.models import lesson_info, lesson_sales_sets, lesson_booking_info
 from django.http import JsonResponse
+from chatroom.consumers import ChatConsumer
 
 def storage_order(request):
     response = dict()
@@ -31,7 +32,9 @@ def storage_order(request):
                         lesson_name = lesson_obj.lesson_title,
                         lesson_set_id = set_obj.id)
                     new_record.save()
-
+                    # chatroom傳送通知
+            
+                    # email傳送通知
                     response = {'status':'success',
                     'errCode': None,
                     'errMsg': None,

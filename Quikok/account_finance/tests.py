@@ -24,7 +24,7 @@ class test_finance_functions(TestCase):
             print(response)
             self.assertEqual(response.status_code, 200)
         # 目前都會回傳沒有老師,因為給test.py用的批次建立老師跟課程假資料還沒寫
-        
+        # 所以就先不測試回傳有沒有success
         #self.assertJSONEqual(
         #    str(response.content, encoding='utf8'),
         #    {
