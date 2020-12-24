@@ -530,7 +530,7 @@ def create_or_edit_a_lesson(request):
         # 萬一有變數沒有傳到後端來的話...
         response['status'] = 'failed'
         response['errCode'] = 0
-        response['errMsg'] = 'Received Arguments Failed.'
+        response['errMsg'] = '不好意思系統好像出了一點問題，請您稍後再試或告訴我們這個問題> <'
         return JsonResponse(response)
     if action == 'createLesson':
         response['status'], response['errCode'], response['errMsg']= \

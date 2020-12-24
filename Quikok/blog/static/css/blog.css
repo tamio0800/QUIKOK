@@ -214,7 +214,7 @@ span.category {
 	color: #fff;
 	font-weight: 530;
 	line-height: 20px;
-	padding: 1px;
+	padding: 5px;
 }
 
 p.content {
@@ -338,7 +338,8 @@ div.hashtag span {
 	border-radius: 10px;
 	margin-right: 10px;
 	letter-spacing: 2.5px;
-    font-weight: 700 !important;
+	font-weight: 700 !important;
+	display: inline-block;
 }
 
 div.author {
