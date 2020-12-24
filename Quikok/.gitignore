@@ -3,8 +3,8 @@
 /quikok_env/
 /vscode/settings.json
 /static/
-/user_upload/teachers/
-/user_upload/students/
+/user_upload/teachers/*
+/user_upload/students/*
 !/user_upload/teachers/quikok.taiwan@quikok.com/
 !/user_upload/teachers/quikok.system1@quikok.com/
 !/user_upload/teachers/quikok.system2@quikok.com/
