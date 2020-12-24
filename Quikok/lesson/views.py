@@ -13,26 +13,8 @@ from lesson.lesson_tools import *
 from django.contrib.auth.decorators import login_required
 from account.model_tools import *
 from django.db.models import Q
-
-def check_if_all_variables_are_true(*args):
-    print(args)
-    for each_arg in args:
-        if each_arg == False:
-            return False
-    return True
-
-def sort_dictionaries_in_a_list_by_specific_key(specific_key, followed_by_values_in_list, the_list):
-    _new_mapping_dict = dict()
-    for each_dict in the_list:
-        _new_mapping_dict[
-            each_dict[specific_key]
-        ] = each_dict
-    _data = list()
-    for each_value in followed_by_values_in_list:
-        _data.append(_new_mapping_dict[each_value])
-    return _data
-    
-
+from handy_functions import check_if_all_variables_are_true
+from handy_functions import sort_dictionaries_in_a_list_by_specific_key
 
 
 @login_required
@@ -530,7 +512,7 @@ def create_or_edit_a_lesson(request):
         # 萬一有變數沒有傳到後端來的話...
         response['status'] = 'failed'
         response['errCode'] = 0
-        response['errMsg'] = '不好意思系統好像出了一點問題，請您稍後再試或告訴我們這個問題> <'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
         return JsonResponse(response)
     if action == 'createLesson':
         response['status'], response['errCode'], response['errMsg']= \

@@ -358,5 +358,94 @@ class EMAIL_SENDING_TEST(TestCase):
         str(response.content, 'utf8'))
 
 
+class PROFILE_EDITTING_TEST(TestCase):
 
+    def test_edit_teacher_profile_works_properly(self):
+        client = Client()
+        # 要先建立老師才能做測試
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+
+        test_username = 'test201224_teacher_user@test.com'
+        try:
+            shutil.rmtree('user_upload/teachers/' + test_username)
+        except:
+            pass
+        self.assertEqual(
+            os.path.isdir('user_upload/teachers/' + test_username),
+            False
+        )
+
+        teacher_post_data = {
+            'regEmail': test_username,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;'
+        }
+        response = client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        # 先註冊老師
+        self.assertJSONEqual(
+            str(response.content, encoding='utf8'),
+            {
+                'status': 'success',
+                'errCode': None,
+                'errMsg': None,
+                'data': 1
+            }
+        )
+        self.assertEqual(
+            teacher_profile.objects.filter(auth_id=1).first().auth_id,
+            1
+        )
+
+        teacher_post_data['userID'] = 1
+        teacher_post_data['nickname'] = '新的暱稱'
+        teacher_post_data['intro'] = '新的自我介紹歐耶'
+        teacher_post_data['mobile'] = '0911-222345'
+        teacher_post_data['upload_snapshot'] = open('/Users/tamiotsiu/Desktop/cuddle.png', 'rb')
+        
+
+        response = client.post(path='/api/account/editTeacherProfile/', data=teacher_post_data)
+        
+        self.assertJSONEqual(
+            str(response.content, encoding='utf8'),
+            {
+                'status': 'success',
+                'errCode': None,
+                'errMsg': None,
+            }
+        )
+        
+
+        '''self.assertEqual(
+            (
+                teacher_profile.objects.filter(username=test_username).first().nickname,
+                teacher_profile.objects.filter(username=test_username).first().intro,
+                teacher_profile.objects.filter(username=test_username).first().mobile,
+            ),
+            (
+                teacher_post_data['regNickname'],
+                teacher_post_data['intro'],
+                teacher_post_data['regMobile'],
+            )
+        )'''
 

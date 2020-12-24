@@ -25,26 +25,11 @@ import shutil
 from django.core.mail import EmailMessage
 from django.conf import settings
 from django.template.loader import render_to_string
-
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
-
-
-def is_num(target):
-    try:
-        int(target)
-        if int(target) == float(target):
-            return True
-        else:
-            return False
-    except:
-        return False
-
-def clean_files(folder_path, key_words):
-    for each_file in os.listdir(folder_path):
-        if key_words in each_file:
-            os.unlink(os.path.join(folder_path, each_file))
-
+from handy_functions import check_if_all_variables_are_true
+from handy_functions import is_num
+from handy_functions import clean_files
 
 
 def date_string_2_dateformat(target_string):
@@ -251,29 +236,38 @@ def edit_student_profile(request):
 # 老師編輯個人資料
 @require_http_methods(['POST'])
 def edit_teacher_profile(request):
-    response = dict()
-    pass_data_to_model_tools = dict()
-    for key, value in request.POST.items():
-        pass_data_to_model_tools[key] = request.POST.get(key,False)
-        print('this is a pair of key, value:' + key + value)
-    the_teacher_manager = teacher_manager()
-    print(pass_data_to_model_tools)
-    # 上傳檔案的種類:大頭照、證書
-    userupload_file_kind = ["upload_snapshot", "upload_cer"]
-    #each_file = request.FILES.get("upload_snapshot")
-    #    if each_file :
-    for each_kind_of_upload_file in userupload_file_kind:
-        file_list = request.FILES.getlist(each_kind_of_upload_file)
-        if len(file_list) > 0 :
-            pass_data_to_model_tools[each_kind_of_upload_file] = request.FILES.getlist(each_kind_of_upload_file)
-            #print(each_kind_of_upload_file+'傳東西')
-        else:
-            pass_data_to_model_tools[each_kind_of_upload_file] = False
-            #print(each_kind_of_upload_file + '沒東西')
 
-    response['status'], response['errCode'], response['errMsg'], response['data'] =\
-    the_teacher_manager.edit_teacher_profile_tool(**pass_data_to_model_tools)
- 
+    response = dict()
+    
+    auth_id = request.POST.get('userID', False)
+    nickname = request.POST.get('nickname', False)
+    intro = request.POST.get('intro', False)
+    mobile = request.POST.get('mobile', False)
+    tutor_experience = request.POST.get('tutor_experience', False)
+    subject_type = request.POST.get('subject_type', False)
+    education_1 = request.POST.get('education_1', False)
+    education_2 = request.POST.get('education_2', False)
+    education_3 = request.POST.get('education_3', False)
+    company = request.POST.get('company', False)
+    special_exp = request.POST.get('special_exp', False)
+    teacher_general_availabale_time = request.POST.get('teacher_general_availabale_time', False)
+
+    # 確認有收到這些資料
+    if not check_if_all_variables_are_true(
+        auth_id, nickname, intro, mobile, tutor_experience, subject_type,
+        education_1, education_2, education_3, company, special_exp, 
+        teacher_general_availabale_time):
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+    
+    user_thumbnail = request.FILES['upload_snapshot']
+    user_certifications = request.FILES.getlist('upload_cer')
+
+    response['status'] = 'success'
+    response['errCode'] = None
+    response['errMsg'] = None
+
     return JsonResponse(response)
 
 

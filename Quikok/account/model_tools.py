@@ -217,6 +217,7 @@ class teacher_manager:
             self.errMsg = 'Querying Data Failed.'
             return (self.status, self.errCode, self.errMsg, self.data)
     #老師個人資訊公開頁
+    
     def return_teacher_profile_for_public_viewing(self, teacher_auth_id):
         teacher_profile_object = teacher_profile.objects.filter(auth_id=teacher_auth_id)
         if teacher_profile_object.first() is None:
@@ -349,7 +350,7 @@ class teacher_manager:
                 print(e)
                 self.status = 'failed'
                 self.errCode = '2'
-                self.errMsg = 'Querying Data Failed.'
+                self.errMsg = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
                 return (self.status, self.errCode, self.errMsg, self.data)
 
 
