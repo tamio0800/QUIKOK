@@ -473,13 +473,16 @@ class lesson_manager:
                 )  # 建立課程小卡資訊
                 
 class lesson_card_manager: 
+    
     def __init__(self):
         self.lesson_card_info = dict()
+    
     def setup_a_lesson_card(self, **kwargs):
         # 當課程建立或是修改時，同步編修課程小卡資料
         #print("Activate setup_a_lesson_card!!!!")
         from account.models import teacher_profile
         from lesson.models import lesson_info, lesson_reviews, lesson_card
+        
         try:
             teacher_object = teacher_profile.objects.filter(auth_id = kwargs['teacher_auth_id']).first()
             lesson_object = lesson_info.objects.filter(id = kwargs['corresponding_lesson_id']).first()
@@ -527,8 +530,6 @@ class lesson_card_manager:
                 self.lesson_card_info['working_experience'] =  teacher_object.special_exp
                 self.lesson_card_info['working_experience_is_approved'] =  teacher_object.other_approved
 
-
-            
             # 先確認這個課程小卡是否存在，不存在的話建立，存在的話修改
             lesson_card_object = lesson_card.objects.filter(corresponding_lesson_id=self.lesson_card_info['corresponding_lesson_id']).first()
             if lesson_card_object is None:

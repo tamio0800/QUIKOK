@@ -482,10 +482,11 @@ class PROFILE_EDITTING_TEST(TestCase):
             {os.path.getsize(teacher_profile.objects.filter(username=test_username).first().thumbnail_dir[1:])}'
             )
 
-
         try:
             shutil.rmtree(f'user_upload/teachers/{test_username}')
         except Exception as e:
             print(f'Error:  {e}')
+
+        # 接下來測試看看課程小卡有沒有連動更改
         
 

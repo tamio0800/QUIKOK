@@ -575,6 +575,12 @@ class Lesson_Related_Functions_Test(TestCase):
         )  # 建立新課程成功
 
         self.assertEqual(
+            lesson_card.objects.count(),
+            1,
+            lesson_card.objects.values()
+          )  # 課程小卡成功連動建立
+
+        self.assertEqual(
             (
                 lesson_info.objects.filter(id=1).first().big_title,
                 lesson_info.objects.filter(id=1).first().little_title,
@@ -594,14 +600,18 @@ class Lesson_Related_Functions_Test(TestCase):
         接下來要修改剛剛建立的老師資訊，看看課程小卡有沒有被同步。
         '''
 
+        teacher_post_data['userID'] = 1
         teacher_post_data['nickname'] = '新的暱稱啦'
         teacher_post_data['education_1'] = '新的教育程度'
         teacher_post_data['company'] = '新的工作經驗'
+        teacher_post_data['intro'] = '新的自我介紹歐耶'
+        teacher_post_data['mobile'] = '0911-222345'
+        teacher_post_data['teacher_general_availabale_time'] = '0:1,2,3,4,5;5:6,7,8,9,10;3:10,11,12;'
 
         # 將老師的修改資料傳到對應的api
         response = \
             self.client.post(
-                path='/api/account/edit_teacher_profile/',
+                path='/api/account/editTeacherProfile/',
                 data=teacher_post_data)  # 老師修改個人資料
 
         print(f'str(response.content, encoding=utf8)  {str(response.content, encoding="utf8")}')
@@ -611,7 +621,6 @@ class Lesson_Related_Functions_Test(TestCase):
                 'status': 'success',
                 'errCode': None,
                 'errMsg': None,
-                'data': None,
             },
             str(response.content, encoding='utf8')
         )  # 老師修改個人資料成功
@@ -619,9 +628,9 @@ class Lesson_Related_Functions_Test(TestCase):
         # 測試課程小卡有寫入
         self.assertEqual(
             (
-                lesson_card.objects.filter(id=1).first().teacher_nickname,
-                lesson_card.objects.filter(id=1).first().education,
-                lesson_card.objects.filter(id=1).first().working_experience,
+                lesson_card.objects.filter(teacher_auth_id=1).first().teacher_nickname,
+                lesson_card.objects.filter(teacher_auth_id=1).first().education,
+                lesson_card.objects.filter(teacher_auth_id=1).first().working_experience,
             ),
             (
                 teacher_post_data['nickname'],
@@ -635,10 +644,6 @@ class Lesson_Related_Functions_Test(TestCase):
             shutil.rmtree(f'user_upload/teachers/{test_username}')
         except Exception as e:
             print(f'Error:  {e}')
-
-        print(f'teacher_profile.objects.values()  {teacher_profile.objects.values()}')
-        print(f'lesson_info.objects.values()  {lesson_info.objects.values()}')
-        print(f'lesson_card.objects.values()  {lesson_card.objects.values()}')
 
 
         
