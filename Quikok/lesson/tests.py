@@ -4,7 +4,10 @@ import pandas as pd
 import os
 import shutil
 from lesson import lesson_tools
-from lesson.models import lesson_info_for_users_not_signed_up, lesson_info, lesson_card
+from lesson.models import lesson_info_for_users_not_signed_up 
+from lesson.models import lesson_info
+from lesson.models import lesson_card
+from lesson.models import lesson_sales_sets
 from account.models import teacher_profile
 from django.contrib.auth.models import Permission, User, Group
 from unittest import skip
@@ -12,7 +15,6 @@ from unittest import skip
 
 # python manage.py test lesson/ --settings=Quikok.settings_for_test
 class Lesson_Related_Functions_Test(TestCase):
-
  
     def test_before_signing_up_create_or_edit_a_lesson_exist(self):
         # 測試這個函式是否存在，並且應該回傳status='success', errCode=None, errMsg=None
@@ -285,7 +287,7 @@ class Lesson_Related_Functions_Test(TestCase):
                 'status': 'success',
                 'errCode': None,
                 'errMsg': None,
-                #'data': 1
+                'data': 1
             }
         )
 
@@ -415,7 +417,7 @@ class Lesson_Related_Functions_Test(TestCase):
                 'status': 'success',
                 'errCode': None,
                 'errMsg': None,
-                #'data': 1
+                'data': 1
             }
         )
 
@@ -456,7 +458,7 @@ class Lesson_Related_Functions_Test(TestCase):
                 'status': 'success',
                 'errCode': None,
                 'errMsg': None,
-                #'data': 1
+                'data': 1
             }
         )
 
@@ -570,7 +572,7 @@ class Lesson_Related_Functions_Test(TestCase):
                 'status': 'success',
                 'errCode': None,
                 'errMsg': None,
-                #'data': 1
+                'data': 1
             }
         )  # 建立新課程成功
 
@@ -646,5 +648,98 @@ class Lesson_Related_Functions_Test(TestCase):
             print(f'Error:  {e}')
 
 
+    @skip
+    def test_sales_set_update_after_creating_a_lesson(self):
         
+        self.client = Client()
+
+        # 要先建立老師才能做測試
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+
+        test_username = 'test201218_teacher_user@test.com'
+        try:
+            shutil.rmtree('user_upload/teachers/' + test_username)
+        except:
+            pass
+        self.assertEqual(
+            os.path.isdir('user_upload/teachers/' + test_username),
+            False
+        )
+        teacher_post_data = {
+            'regEmail': test_username,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;'
+        }
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        self.assertEqual(
+            os.path.isdir('user_upload/teachers/' + test_username),
+            True
+        )
+        # 應該已經建立完成了
+
+        lesson_post_data = {
+            'userID': 1,   # 這是老師的auth_id
+            'action': 'createLesson',
+            'big_title': 'big_title',
+            'little_title': 'test',
+            'title_color': '#000000',
+            'background_picture_code': 1,
+            'background_picture_path': '',
+            'lesson_title': 'test',
+            'price_per_hour': 800,
+            'discount_price': '10:90;20:80;30:75;',
+            'selling_status': 'selling',
+            'lesson_has_one_hour_package': True,
+            'trial_class_price': 69,
+            'highlight_1': 'test',
+            'highlight_2': 'test',
+            'highlight_3': 'test',
+            'lesson_intro': 'test',
+            'how_does_lesson_go': 'test',
+            'target_students': 'test',
+            'lesson_remarks': 'test',
+            'syllabus': 'test',
+            'lesson_attributes': 'test'      
+            }
+        response = \
+            self.client.post(
+                path='/api/lesson/createOrEditLesson/',
+                data=lesson_post_data)
+        # 建立完課程了
+
+        # 接下來測試看看課程小卡有沒有連動更改
+        all_lesson_1_sales_sets = \
+            list(lesson_sales_sets.objects.filter(lesson_id=1).values_list('sales_set', flat=True))
+        
+        # 因為上方有 "試課優惠"，且也有 "單堂方案"，故應該有:
+        #   trial、no_discount、10:90、20:80、30:75  這五種 sales_sets
+        self.assertListEqual(
+            ['trial', 'no_discount', '10:90', '20:80', '30:75'],
+            all_lesson_1_sales_sets,
+            lesson_sales_sets.objects.values()
+        )
+        
+
+
         

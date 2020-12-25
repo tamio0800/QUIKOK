@@ -9,6 +9,7 @@ from django.core.files.storage import FileSystemStorage
 import pandas as pd
 from account.models import teacher_profile, favorite_lessons
 from lesson.models import lesson_info, lesson_reviews, lesson_card, lesson_info_for_users_not_signed_up
+from lesson.models import lesson_sales_sets
 from lesson.lesson_tools import *
 from django.contrib.auth.decorators import login_required
 from account.model_tools import *
@@ -502,32 +503,47 @@ def return_lesson_details_for_browsing(request):
 
 @require_http_methods(['POST'])
 def create_or_edit_a_lesson(request):
+
     response = dict()
+
     action = request.POST.get('action', False)
     teacher_auth_id = request.POST.get('userID', False)
-    lesson_id = request.POST.get('lessonID', False) # 新增沒有,修改才有
-    # print(request.POST.get('background_picture_path', False))
+    lesson_id = request.POST.get('lessonID', False)  # 新增沒有, 修改才有
     the_leeson_manager = lesson_manager()
+
     if not check_if_all_variables_are_true(action, teacher_auth_id):
         # 萬一有變數沒有傳到後端來的話...
         response['status'] = 'failed'
         response['errCode'] = 0
         response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
         return JsonResponse(response)
+
     if action == 'createLesson':
-        response['status'], response['errCode'], response['errMsg']= \
+        # 課程新增
+        response['status'], response['errCode'], response['errMsg'], response['data']= \
             the_leeson_manager.setup_a_lesson(
                 teacher_auth_id, request, None, action)
+
+        if response['status'] == 'success':
+            # 確定成功再來更新 sales_sets
+            lesson_sales_sets
+
+
+        
         return JsonResponse(response)
     elif action == 'editLesson':
-        response['status'], response['errCode'], response['errMsg']= \
+        response['status'], response['errCode'], response['errMsg'], response['data']= \
             the_leeson_manager.setup_a_lesson(
                 teacher_auth_id, request, lesson_id, action)
+
+        
         return JsonResponse(response)
+
     else:
         response['status'] = 'failed'
         response['errCode'] = 1
-        response['errMsg'] = 'Unknown Action.'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
         return JsonResponse(response)
 
 

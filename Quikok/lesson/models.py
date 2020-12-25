@@ -13,6 +13,7 @@ class test_class2(models.Model):
     def __str__(self):
         return str(self.id)'''
 
+
 class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的東西填入
     # 每堂課程會有自己的unique id，我們用這個來辨識、串連課程 09/25 討論後認為先用內建的id就好
     # lesson_id = models.CharField(max_length = 40) 
@@ -103,7 +104,6 @@ class lesson_card(models.Model):
         return self.lesson_title
 
 
-
 '''class lesson_info_snapshot(models.Model): 
     # 加上課程更改的snapshot，其中價格的變更一定要留存
     # 主要為了證明對方真的有更改過那個價格，而且也為了之後資料分析怎麼樣的設計有助於吸引顧客。
@@ -168,6 +168,8 @@ class lesson_booking_info(models.Model):
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
         return str(self.id)
+
+
 class lesson_sales_sets(models.Model):
     '''
     課程的方案table，這個只能一直往下疊加狀態，
@@ -175,6 +177,8 @@ class lesson_sales_sets(models.Model):
         1. 學生s購買了老師t的「30小時：優惠7折方案」 
         2. 老師t將「30小時：優惠7折方案」改成 >> 「30小時：優惠9折方案」 
         3. 但因為學生s之前已經付款成功了，這時候不應該改變他已購買方案的狀態。
+
+    >> 應該要在課程建立、編輯時同步寫入。
     '''
     lesson_id = models.IntegerField()
     teacher_auth_id = models.IntegerField()
