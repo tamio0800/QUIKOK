@@ -109,7 +109,7 @@ class Teacher_Test(TestCase):
             'special_exp': 'test_special_exp',
             'teacher_general_availabale_time': teacher_available_time
         }
-        response = client.post(path='/api/account/signupTeacher/', data=data)
+        client.post(path='/api/account/signupTeacher/', data=data)
         try:
             shutil.rmtree(f'user_upload/teachers/{test_username}')
         except Exception as e:
@@ -399,7 +399,7 @@ class PROFILE_EDITTING_TEST(TestCase):
             'education_3': 'education_3_test',
             'company': 'test_company',
             'special_exp': 'test_special_exp',
-            'teacher_general_availabale_time': '0:1,2,3,4,5;'
+            'teacher_general_availabale_time': '0:1,2,3,4,5;5:6,7,8,9,10;'
         }
         response = client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
         # 先註冊老師
@@ -421,10 +421,17 @@ class PROFILE_EDITTING_TEST(TestCase):
         teacher_post_data['nickname'] = '新的暱稱'
         teacher_post_data['intro'] = '新的自我介紹歐耶'
         teacher_post_data['mobile'] = '0911-222345'
-        teacher_post_data['upload_snapshot'] = open('/Users/tamiotsiu/Desktop/cuddle.png', 'rb')
+        teacher_post_data['teacher_general_availabale_time'] = '0:1,2,3,4,5;5:6,7,8,9,10;3:10,11,12;'
+        teacher_post_data['upload_snapshot'] = \
+            open('user_upload/temp/before_signed_up/tamio0800111111/customized_lesson_background.jpg', 'rb')
         
+        print(f'before general_available_time:  \
+            {general_available_time.objects.values().filter(teacher_model__auth_id=teacher_post_data["userID"])}')
 
         response = client.post(path='/api/account/editTeacherProfile/', data=teacher_post_data)
+
+        print(f'after general_available_time:  \
+            {general_available_time.objects.values().filter(teacher_model__auth_id=teacher_post_data["userID"])}')
         
         self.assertJSONEqual(
             str(response.content, encoding='utf8'),
@@ -433,19 +440,30 @@ class PROFILE_EDITTING_TEST(TestCase):
                 'errCode': None,
                 'errMsg': None,
             }
-        )
-        
+        )  # views function有成功拿到資料
 
-        '''self.assertEqual(
+
+        # 測試有沒有照實寫入
+        self.assertEqual(
             (
                 teacher_profile.objects.filter(username=test_username).first().nickname,
                 teacher_profile.objects.filter(username=test_username).first().intro,
                 teacher_profile.objects.filter(username=test_username).first().mobile,
+                general_available_time.objects.filter(
+                    teacher_model__auth_id=teacher_post_data['userID']).filter(week=3).first().time
             ),
             (
-                teacher_post_data['regNickname'],
+                teacher_post_data['nickname'],
                 teacher_post_data['intro'],
-                teacher_post_data['regMobile'],
-            )
-        )'''
+                teacher_post_data['mobile'],
+                '10,11,12'
+            ),
+            teacher_profile.objects.values()
+        )
+
+        try:
+            shutil.rmtree(f'user_upload/teachers/{test_username}')
+        except Exception as e:
+            print(f'Error:  {e}')
+        
 

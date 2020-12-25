@@ -5,6 +5,7 @@ import os
 import shutil
 from lesson import lesson_tools
 from lesson.models import lesson_info_for_users_not_signed_up, lesson_info, lesson_card
+from account.models import teacher_profile
 from django.contrib.auth.models import Permission, User, Group
 from unittest import skip
 
@@ -561,6 +562,7 @@ class Lesson_Related_Functions_Test(TestCase):
             self.client.post(
                 path='/api/lesson/createOrEditLesson/',
                 data=lesson_post_data)
+        # 建立新課程
         
         self.assertJSONEqual(
             str(response.content, encoding='utf8'),
@@ -570,7 +572,7 @@ class Lesson_Related_Functions_Test(TestCase):
                 'errMsg': None,
                 #'data': 1
             }
-        )
+        )  # 建立新課程成功
 
         self.assertEqual(
             (
@@ -585,7 +587,7 @@ class Lesson_Related_Functions_Test(TestCase):
                 lesson_post_data['lesson_title'],
                 lesson_post_data['price_per_hour']
             )
-        )
+        ) 
 
         '''
         截止以上為止，都是舊的測試，代表課程可以順利建立，且同步到課程小卡，
@@ -600,8 +602,9 @@ class Lesson_Related_Functions_Test(TestCase):
         response = \
             self.client.post(
                 path='/api/account/edit_teacher_profile/',
-                data=teacher_post_data)
+                data=teacher_post_data)  # 老師修改個人資料
 
+        print(f'str(response.content, encoding=utf8)  {str(response.content, encoding="utf8")}')
         self.assertJSONEqual(
             str(response.content, encoding='utf8'),
             {
@@ -611,7 +614,7 @@ class Lesson_Related_Functions_Test(TestCase):
                 'data': None,
             },
             str(response.content, encoding='utf8')
-        )
+        )  # 老師修改個人資料成功
 
         # 測試課程小卡有寫入
         self.assertEqual(
@@ -626,12 +629,16 @@ class Lesson_Related_Functions_Test(TestCase):
                 teacher_post_data['company'],
             ),
             lesson_card.objects.values()
-        )
+        )  # 測試課程小卡有寫入
 
         try:
             shutil.rmtree(f'user_upload/teachers/{test_username}')
         except Exception as e:
             print(f'Error:  {e}')
+
+        print(f'teacher_profile.objects.values()  {teacher_profile.objects.values()}')
+        print(f'lesson_info.objects.values()  {lesson_info.objects.values()}')
+        print(f'lesson_card.objects.values()  {lesson_card.objects.values()}')
 
 
         

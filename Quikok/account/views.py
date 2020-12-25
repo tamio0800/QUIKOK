@@ -264,6 +264,49 @@ def edit_teacher_profile(request):
     user_thumbnail = request.FILES['upload_snapshot']
     user_certifications = request.FILES.getlist('upload_cer')
 
+    # 接著來更新資料庫吧
+    the_teacher_info_object = \
+        teacher_profile.objects.filter(auth_id=auth_id).first()
+    
+    if the_teacher_info_object is None:
+        response['status'] = 'failed'
+        response['errCode'] = '1'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        # 找不到該用戶
+    else:
+        the_teacher_general_availabale_time = \
+            general_available_time.objects.filter(teacher_model__auth_id=auth_id)
+        
+        for each_weekday_times_set in  [_ for _ in teacher_general_availabale_time.split(';') if len(_)]:
+            week, time = each_weekday_times_set.split(':')
+            the_week_object = the_teacher_general_availabale_time.filter(week=week).first()
+            
+            if the_week_object is None:
+                # 新建的row
+                general_available_time.objects.create(
+                    teacher_model=the_teacher_info_object,
+                    week=week,
+                    time=time
+                ).save()
+            else:
+                the_week_object.time = time
+                the_week_object.save()
+
+
+        the_teacher_info_object.nickname = nickname
+        the_teacher_info_object.intro = intro
+        the_teacher_info_object.mobile = mobile
+        the_teacher_info_object.tutor_experience = tutor_experience
+        the_teacher_info_object.subject_type = subject_type
+        the_teacher_info_object.education_1 = education_1
+        the_teacher_info_object.education_2 = education_2
+        the_teacher_info_object.education_3 = education_3
+        the_teacher_info_object.company = company
+        the_teacher_info_object.special_exp = special_exp
+        the_teacher_info_object.save()
+
+    
+
     response['status'] = 'success'
     response['errCode'] = None
     response['errMsg'] = None
