@@ -260,8 +260,8 @@ def edit_teacher_profile(request):
         response['status'] = 'failed'
         response['errCode'] = '0'
         response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
-    
-    user_thumbnail = request.FILES['upload_snapshot']
+
+    user_thumbnail = request.FILES.get("upload_snapshot")
     user_certifications = request.FILES.getlist('upload_cer')
 
     # 接著來更新資料庫吧
@@ -292,7 +292,6 @@ def edit_teacher_profile(request):
                 the_week_object.time = time
                 the_week_object.save()
 
-
         the_teacher_info_object.nickname = nickname
         the_teacher_info_object.intro = intro
         the_teacher_info_object.mobile = mobile
@@ -303,9 +302,27 @@ def edit_teacher_profile(request):
         the_teacher_info_object.education_3 = education_3
         the_teacher_info_object.company = company
         the_teacher_info_object.special_exp = special_exp
-        the_teacher_info_object.save()
 
-    
+        if user_thumbnail:
+            # 老師有傳新大頭照
+            folder_where_are_uploaded_files_be ='user_upload/teachers/' + the_teacher_info_object.username
+            fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
+            file_exten = user_thumbnail.name.split('.')[-1]
+            fs.save('thumbnail.' + file_exten, user_thumbnail) # 檔名統一改成thumbnail開頭
+            the_teacher_info_object.thumbnail_dir = '/' + folder_where_are_uploaded_files_be + '/thumbnail.' + file_exten
+
+        is_new_certification_uploaded = False
+        for each_file in user_certifications:
+            # 老師有傳新認證資料
+            folder_where_are_uploaded_files_be ='user_upload/teachers/' + the_teacher_info_object.username + '/unaproved_cer'
+            fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
+            fs.save(each_file.name, each_file)
+            is_new_certification_uploaded = True
+        
+        if is_new_certification_uploaded:
+            the_teacher_info_object.is_approved = False
+
+        the_teacher_info_object.save()  # 儲存資料
 
     response['status'] = 'success'
     response['errCode'] = None

@@ -422,8 +422,7 @@ class PROFILE_EDITTING_TEST(TestCase):
         teacher_post_data['intro'] = '新的自我介紹歐耶'
         teacher_post_data['mobile'] = '0911-222345'
         teacher_post_data['teacher_general_availabale_time'] = '0:1,2,3,4,5;5:6,7,8,9,10;3:10,11,12;'
-        teacher_post_data['upload_snapshot'] = \
-            open('user_upload/temp/before_signed_up/tamio0800111111/customized_lesson_background.jpg', 'rb')
+        teacher_post_data['upload_snapshot'] = ''
         
         print(f'before general_available_time:  \
             {general_available_time.objects.values().filter(teacher_model__auth_id=teacher_post_data["userID"])}')
@@ -442,7 +441,6 @@ class PROFILE_EDITTING_TEST(TestCase):
             }
         )  # views function有成功拿到資料
 
-
         # 測試有沒有照實寫入
         self.assertEqual(
             (
@@ -460,6 +458,30 @@ class PROFILE_EDITTING_TEST(TestCase):
             ),
             teacher_profile.objects.values()
         )
+
+        # 測試圖片也可以編輯
+        row_thumbnail_pic_path = 'user_upload/temp/before_signed_up/tamio0800111111/customized_lesson_background.jpg'
+        picture_in_binary = open(row_thumbnail_pic_path, 'rb')
+        teacher_post_data['upload_snapshot'] = picture_in_binary
+
+        self.assertNotIn(
+            'thumbnail',
+            teacher_profile.objects.filter(username=test_username).first().thumbnail_dir,
+        )  # 在還沒有更新前，應該沒有大頭貼
+
+        response = client.post(path='/api/account/editTeacherProfile/', data=teacher_post_data)
+
+        self.assertEqual(
+            os.path.getsize(row_thumbnail_pic_path),
+            os.path.getsize(teacher_profile.objects.filter(username=test_username).first().thumbnail_dir[1:]),
+            teacher_profile.objects.filter(username=test_username).first().thumbnail_dir[1:]
+        )  # 更新後，兩個大頭貼應該一樣了
+        
+        print(
+            f'os.path.getsize(teacher_profile.objects.filter(username=test_username).first().thumbnail_dir[1:]): \
+            {os.path.getsize(teacher_profile.objects.filter(username=test_username).first().thumbnail_dir[1:])}'
+            )
+
 
         try:
             shutil.rmtree(f'user_upload/teachers/{test_username}')
