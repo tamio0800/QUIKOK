@@ -188,11 +188,12 @@ class lesson_sales_sets(models.Model):
     #  單堂原價：'no_discount'
     #  30小時7折優惠：'30:70'
     total_hours_of_the_sales_set = models.IntegerField()  # 該方案的總時數(小時)
+    # 如果是試教的話，先給值0
     total_amount_of_the_sales_set = models.IntegerField()  # 該方案的總價
     price_per_hour_after_discount = models.IntegerField()  # 折扣後，該方案的鐘點費
-    selling_volume = models.IntegerField()  # 銷售的總量
-    taking_lesson_volume = models.IntegerField()  # 上課中的總量(曾預約成功過)
-    fulfilled_volume = models.IntegerField()  # 已完成課程的總量
+    selling_volume = models.IntegerField(default=0)  # 銷售的總量
+    taking_lesson_volume = models.IntegerField(default=0)  # 上課中的總量(曾預約成功過)
+    fulfilled_volume = models.IntegerField(default=0)  # 已完成課程的總量
     created_time = models.DateTimeField(auto_now_add=True)
     last_sold_time = models.DateTimeField(auto_now=True)
     def __str__(self):

@@ -648,7 +648,6 @@ class Lesson_Related_Functions_Test(TestCase):
             print(f'Error:  {e}')
 
 
-    @skip
     def test_sales_set_update_after_creating_a_lesson(self):
         
         self.client = Client()

@@ -526,7 +526,8 @@ def create_or_edit_a_lesson(request):
 
         if response['status'] == 'success':
             # 確定成功再來更新 sales_sets
-            lesson_sales_sets
+            # 要先確定 1.是否有試課  2.是否有單堂  3.其他方案(\d*:\d*的格式)
+            the_lesson_info_object = lesson_info.objects.filter()
 
 
         

@@ -487,6 +487,4 @@ class PROFILE_EDITTING_TEST(TestCase):
         except Exception as e:
             print(f'Error:  {e}')
 
-        # 接下來測試看看課程小卡有沒有連動更改
         
-
