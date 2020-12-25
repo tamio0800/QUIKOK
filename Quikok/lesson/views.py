@@ -526,8 +526,55 @@ def create_or_edit_a_lesson(request):
 
         if response['status'] == 'success':
             # 確定成功再來更新 sales_sets
-            # 要先確定 1.是否有試課  2.是否有單堂  3.其他方案(\d*:\d*的格式)
-            the_lesson_info_object = lesson_info.objects.filter()
+            # 先把一些共同的欄位合併在一個list內
+            the_lesson_info_object = lesson_info.objects.filter(id=response['data']).first()
+            shared_columns = {
+                'lesson_id': response['data'],
+                'teacher_auth_id': the_lesson_info_object.teacher.auth_id,
+                'price_per_hour': the_lesson_info_object.price_per_hour 
+            }
+            
+            # 要先確定 1.是否有試課方案  2.是否有單堂方案  3.其他方案(\d*:\d*的格式)
+            
+            if the_lesson_info_object.trial_class_price != -999:
+                # 有試課方案
+                shared_columns['sales_set'] = 'trial'
+                shared_columns['total_hours_of_the_sales_set'] = 1
+                shared_columns['price_per_hour_after_discount'] = the_lesson_info_object.trial_class_price
+                shared_columns['total_amount_of_the_sales_set'] = the_lesson_info_object.trial_class_price
+                
+                lesson_sales_sets.objects.create(
+                    **shared_columns
+                ).save()
+            
+            if the_lesson_info_object.lesson_has_one_hour_package == True:
+                # 有單堂方案
+                shared_columns['sales_set'] = 'no_discount'
+                shared_columns['total_hours_of_the_sales_set'] = 1
+                shared_columns['price_per_hour_after_discount'] = the_lesson_info_object.price_per_hour
+                shared_columns['total_amount_of_the_sales_set'] = the_lesson_info_object.price_per_hour
+
+                lesson_sales_sets.objects.create(
+                    **shared_columns
+                ).save()
+
+            if len(the_lesson_info_object.discount_price) > 2:
+                # 有其他方案
+                for each_hours_discount_set in [_ for _ in the_lesson_info_object.discount_price.split(';') if len(_) > 0]:
+                    
+                    hours, discount_price = each_hours_discount_set.split(':')
+                    shared_columns['sales_set'] = each_hours_discount_set
+                    shared_columns['total_hours_of_the_sales_set'] = int(hours)
+                    shared_columns['price_per_hour_after_discount'] = round(the_lesson_info_object.price_per_hour * int(discount_price) / 100)
+                    shared_columns['total_amount_of_the_sales_set'] = round(the_lesson_info_object.price_per_hour * int(hours) * int(discount_price) / 100)
+
+                    lesson_sales_sets.objects.create(
+                        **shared_columns
+                    ).save()
+
+            
+
+
 
 
         

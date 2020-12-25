@@ -29,7 +29,7 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     price_per_hour = models.IntegerField()  # 該門課程的鐘點費
     lesson_has_one_hour_package = models.BooleanField()  # 該門課程是否可以單堂出售
     # unit_class_price = models.IntegerField() # 單堂課程的鐘點費
-    trial_class_price = models.IntegerField()  # 該門課程的試上鐘點費
+    trial_class_price = models.IntegerField()  # 該門課程的試上鐘點費, 若無試教則為 -999
     discount_price = models.CharField(max_length = 30) # 優惠折數
     # discount_price說明
     # 假設老師勾選了方案一 & 方案二 & 方案三，內容各自為：
@@ -188,7 +188,7 @@ class lesson_sales_sets(models.Model):
     #  單堂原價：'no_discount'
     #  30小時7折優惠：'30:70'
     total_hours_of_the_sales_set = models.IntegerField()  # 該方案的總時數(小時)
-    # 如果是試教的話，先給值0
+    # 如果是試教的話，先給值1
     total_amount_of_the_sales_set = models.IntegerField()  # 該方案的總價
     price_per_hour_after_discount = models.IntegerField()  # 折扣後，該方案的鐘點費
     selling_volume = models.IntegerField(default=0)  # 銷售的總量

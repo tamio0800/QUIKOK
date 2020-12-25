@@ -250,7 +250,7 @@ class lesson_manager:
                 _temp_lesson_info[each_column_to_be_read] = _arg
 
         _temp_lesson_info['lesson_has_one_hour_package'] = \
-            _temp_lesson_info['lesson_has_one_hour_package'] in ['true', True]
+            _temp_lesson_info['lesson_has_one_hour_package'] in ['true', True, 'True']
 
         # 轉成boolean
         # if a_request_object.POST.get('unitClassPrice', False):
