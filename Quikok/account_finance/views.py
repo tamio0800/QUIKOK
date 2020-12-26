@@ -33,7 +33,8 @@ def storage_order(request):
                         lesson_set_id = set_obj.id)
                     new_record.save()
                     # chatroom傳送通知
-            
+                    chatroom_func = ChatConsumer()
+                    chatroom_func.system_msg_new_order_payment_remind()
                     # email傳送通知
                     response = {'status':'success',
                     'errCode': None,

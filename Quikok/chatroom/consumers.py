@@ -110,11 +110,12 @@ class ChatConsumer(WebsocketConsumer):
         'senderID' : text_data_json['senderID'],
         'chatroomID' : text_data_json['chatroomID'],
         'messageType' : text_data_json['messageType'],
-        'messageText' : text_data_json['messageText']}
+        'messageText' : text_data_json['messageText'],
+        'chatroom_type': self.chatroom_type}
         #now_time = datetime.datetime.now().strftime('%H:%M')
         # 儲存對話紀錄到db
         ws_manager = websocket_manager()
-        msgID, time, is_first_msg = ws_manager.chat_storge(**pass_to_chat_tools)
+        msgID, time = ws_manager.chat_storge(**pass_to_chat_tools)
         now_time = str(time)
         # systemCode 暫時沒有作用,統一給0
         if text_data_json['messageType'] == 1:
@@ -143,7 +144,9 @@ class ChatConsumer(WebsocketConsumer):
                 'messageCreateTime': now_time
             },)
         print('send no.1 msg')
-        # 若符合才會>1並在學生傳msg給老師時同步發到系統聊天室
+        # 若符合才會>1, 不符合會=0
+        # 符合會在學生傳msg給老師時同步發到系統聊天室
+        # system_chatroomID 格式: system_1
         if len(system_chatroomID) > 1:
             # 傳給ws的內容
             content = ws_manager.msg_maker1_system_2teacher(pass_to_chat_tools['chatroomID'])
@@ -161,18 +164,19 @@ class ChatConsumer(WebsocketConsumer):
         print('send to WebSocket')
     
     # 測試是否可以直接發到特定聊天室
-    # 推測這方式沒寫儲存msg應該可收到,但重開就會沒東西
-    #def system_msg_new_order_payment_remind(self):
-    #    self.send(text_data=json.dumps(
-    #        {   'type' : "chat.message", # channel要求必填,不填channel會收不到
-    #            'chatroomID':2,
-    #            'senderID': 1,
-    #            'messageText': 'test',
-    #            'messageType': 3,
-    #            'systemCode':0,
-     #           'messageCreateTime': now_time
-     #       }))
-     #   print('system send to WebSocket')
+    # 推測這方式沒寫儲存msg應該可收到
+    def system_msg_new_order_payment_remind(self):
+        # 這邊先固定寫死傳看看是否成功
+        self.send(text_data=json.dumps(
+            {   'type' : "chat.message", # channel要求必填,不填channel會收不到
+                'chatroomID':2,
+                'senderID': 1,
+                'messageText': 'test',
+                'messageType': 3,
+                'systemCode':0,
+                'messageCreateTime': now_time
+            }))
+        print('system send to WebSocket')
 
 
 #class ChatSystem(ChatConsumer):

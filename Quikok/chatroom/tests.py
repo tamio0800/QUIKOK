@@ -19,6 +19,7 @@ class test_consumer(TestCase):
             chatroom_type='teacher2student',
             created_time= datetime.datetime.now()
         ).save()
+        
         print('建立user2user 聊天室')
     @pytest.mark.asyncio
     async def test_my_consumer(self):
