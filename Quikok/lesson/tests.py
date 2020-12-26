@@ -735,7 +735,30 @@ class Lesson_Related_Functions_Test(TestCase):
             all_lesson_1_sales_sets,
             lesson_sales_sets.objects.values()
         )
-        
+
+        # 接下來測試價格計算對不對
+        self.assertEqual(
+            (
+                lesson_post_data['price_per_hour'],
+                round(lesson_post_data['price_per_hour'] * 0.9),
+                round(lesson_post_data['price_per_hour'] * 0.8),
+                round(lesson_post_data['price_per_hour'] * 0.75),
+                round(lesson_post_data['price_per_hour'] * 0.75 * 30),
+                lesson_post_data['trial_class_price'],
+                10,
+                0
+            ),
+            (
+                lesson_sales_sets.objects.filter(sales_set='no_discount').first().price_per_hour_after_discount,
+                lesson_sales_sets.objects.filter(sales_set='10:90').first().price_per_hour_after_discount,
+                lesson_sales_sets.objects.filter(sales_set='20:80').first().price_per_hour_after_discount,
+                lesson_sales_sets.objects.filter(sales_set='30:75').first().price_per_hour_after_discount,
+                lesson_sales_sets.objects.filter(sales_set='30:75').first().total_amount_of_the_sales_set,
+                lesson_sales_sets.objects.filter(sales_set='trial').first().price_per_hour_after_discount,
+                lesson_sales_sets.objects.filter(sales_set='10:90').first().total_hours_of_the_sales_set,
+                lesson_sales_sets.objects.filter(sales_set='10:90').first().taking_lesson_volume
+            )
+        )
 
 
         
