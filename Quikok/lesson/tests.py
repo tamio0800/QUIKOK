@@ -647,7 +647,6 @@ class Lesson_Related_Functions_Test(TestCase):
     def test_sales_set_update_after_creating_a_lesson(self):
         
         self.client = Client()
-
         # 要先建立老師才能做測試
         Group.objects.bulk_create(
             [
@@ -746,7 +745,9 @@ class Lesson_Related_Functions_Test(TestCase):
                 round(lesson_post_data['price_per_hour'] * 0.75 * 30),
                 lesson_post_data['trial_class_price'],
                 10,
-                0
+                0,
+                True,
+                True
             ),
             (
                 lesson_sales_sets.objects.filter(sales_set='no_discount').first().price_per_hour_after_discount,
@@ -756,9 +757,173 @@ class Lesson_Related_Functions_Test(TestCase):
                 lesson_sales_sets.objects.filter(sales_set='30:75').first().total_amount_of_the_sales_set,
                 lesson_sales_sets.objects.filter(sales_set='trial').first().price_per_hour_after_discount,
                 lesson_sales_sets.objects.filter(sales_set='10:90').first().total_hours_of_the_sales_set,
-                lesson_sales_sets.objects.filter(sales_set='10:90').first().taking_lesson_volume
+                lesson_sales_sets.objects.filter(sales_set='10:90').first().taking_lesson_volume,
+                lesson_sales_sets.objects.filter(sales_set='no_discount').first().is_open,
+                lesson_sales_sets.objects.filter(sales_set='30:75').first().is_open,
+            )
+        )
+        
+        try:
+            shutil.rmtree(f'user_upload/teachers/{test_username}')
+        except Exception as e:
+            print(f'Error:  {e}')
+
+
+    def test_sales_set_update_after_editting_a_lesson(self):
+        
+        client = Client()
+        # 要先建立老師才能做測試
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+        test_username = 'test_teacher_user@test.com'
+        try:
+            shutil.rmtree('user_upload/teachers/' + test_username)
+        except:
+            pass
+        teacher_post_data = {
+            'regEmail': test_username,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;'
+        }
+        response = client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        self.assertIn(
+            'success',
+            str(response.content, 'utf8'),
+        )
+
+        # 應該已經建立完成了
+        lesson_post_data = {
+            'userID': 1,   # 這是老師的auth_id
+            'action': 'createLesson',
+            'big_title': 'big_title',
+            'little_title': 'test',
+            'title_color': '#000000',
+            'background_picture_code': 1,
+            'background_picture_path': '',
+            'lesson_title': 'test',
+            'price_per_hour': 800,
+            'discount_price': '10:90;20:80;30:75;',
+            'selling_status': 'selling',
+            'lesson_has_one_hour_package': True,
+            'trial_class_price': 69,
+            'highlight_1': 'test',
+            'highlight_2': 'test',
+            'highlight_3': 'test',
+            'lesson_intro': 'test_lesson_intro',
+            'how_does_lesson_go': 'test',
+            'target_students': 'test',
+            'lesson_remarks': 'test',
+            'syllabus': 'test',
+            'lesson_attributes': 'test'      
+            }
+        response = \
+            client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+        # 建立完課程了
+
+        # 接下來要修改課程
+        lesson_post_data['action'] = 'editLesson'
+        lesson_post_data['lessonID'] = 1  # 因為是課程編輯，所以需要給課程的id
+        lesson_post_data['little_title'] = '新的圖片小標題'
+        lesson_post_data['lesson_title'] = '新的課程標題'
+        lesson_post_data['price_per_hour'] = 1230
+        lesson_post_data['trial_class_price'] = -999  # 不試教了
+        lesson_post_data['discount_price'] = '5:95;10:90;50:70;'
+        lesson_post_data['lesson_has_one_hour_package'] = False  # 也沒有單堂販賣了
+        lesson_post_data['lesson_intro'] = 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Repudiandae, saepe itaque iste explicabo voluptas consectetur aliquam reiciendis magni expedita blanditiis minus temporibus facilis quod, dolorem, eligendi soluta! Ea, voluptate hic?'
+
+        response = \
+            client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+        
+        self.assertIn(
+            'success',
+            str(response.content, 'utf8'),
+            (
+                teacher_profile.objects.values(),
+                lesson_info.objects.values()
+            )
+        )
+        '''
+        理論上這時該課程的 sales_sets 會存有 8 個 rows：
+            non-active的:
+                1. trial
+                2. no_discount
+                3. 10:90
+                4. 20:80
+                5. 30:75
+            active的:
+                1. 5:95
+                2. 10:90
+                3. 50:70
+        '''
+        self.assertEqual(
+            (
+                lesson_post_data['price_per_hour'],
+                lesson_post_data['little_title'],
+                lesson_post_data['trial_class_price'],
+                lesson_post_data['discount_price'],
+                lesson_post_data['lesson_intro']
+            ),
+            (
+                lesson_info.objects.filter(id=1).first().price_per_hour,
+                lesson_info.objects.filter(id=1).first().little_title,
+                lesson_info.objects.filter(id=1).first().trial_class_price,
+                lesson_info.objects.filter(id=1).first().discount_price,
+                lesson_info.objects.filter(id=1).first().lesson_intro,
+            ),
+            lesson_info.objects.values()
+        )
+
+        self.assertEqual(
+            8, lesson_sales_sets.objects.count(),
+            (
+                lesson_sales_sets.objects.values_list('sales_set', flat=True),
+                lesson_sales_sets.objects.values_list('is_open', flat=True)
             )
         )
 
+        self.assertEqual(
+            5, lesson_sales_sets.objects.filter(is_open=False).count(),
+        )
+        self.assertEqual(
+            3, lesson_sales_sets.objects.filter(is_open=True).count(),
+        )
+        self.assertListEqual(
+            ['5:95', '10:90', '50:70'],
+            list(lesson_sales_sets.objects.values_list('sales_set', flat=True).filter(is_open=True))
+        )
 
-        
+        self.assertEqual(
+            (
+                round(lesson_post_data['price_per_hour'] * 0.7),
+                round(lesson_post_data['price_per_hour'] * 50 * 0.7),
+            ),
+            (
+                lesson_sales_sets.objects.filter(is_open=True).filter(sales_set='50:70').first().price_per_hour_after_discount,
+                lesson_sales_sets.objects.filter(is_open=True).filter(sales_set='50:70').first().total_amount_of_the_sales_set,
+            )
+        )
+
+        try:
+            shutil.rmtree(f'user_upload/teachers/{test_username}')
+        except Exception as e:
+            print(f'Error:  {e}')

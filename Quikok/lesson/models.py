@@ -1,19 +1,6 @@
 from django.db import models
 from account.models import teacher_profile, student_profile
 
-'''class test_class(models.Model):
-    title = models.CharField(max_length=20)
-    score = models.IntegerField()
-    def __str__(self):
-        return str(self.id)
-
-class test_class2(models.Model):
-    title = models.CharField(max_length=20)
-    class1 = models.ForeignKey(test_class, on_delete=models.CASCADE) 
-    def __str__(self):
-        return str(self.id)'''
-
-
 class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的東西填入
     # 每堂課程會有自己的unique id，我們用這個來辨識、串連課程 09/25 討論後認為先用內建的id就好
     # lesson_id = models.CharField(max_length = 40) 
@@ -28,7 +15,6 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     lesson_title = models.CharField(max_length = 14) # 課程的名稱
     price_per_hour = models.IntegerField()  # 該門課程的鐘點費
     lesson_has_one_hour_package = models.BooleanField()  # 該門課程是否可以單堂出售
-    # unit_class_price = models.IntegerField() # 單堂課程的鐘點費
     trial_class_price = models.IntegerField()  # 該門課程的試上鐘點費, 若無試教則為 -999
     discount_price = models.CharField(max_length = 30) # 優惠折數
     # discount_price說明
@@ -77,7 +63,6 @@ class lesson_card(models.Model):
     # 要即時組合老師、課程、評價資訊會需要大量的運算，不如多建立一個table，
     # 之後直接query就好。
     corresponding_lesson_id = models.IntegerField()  # 所對應的課程id
-
     teacher_thumbnail_path = models.TextField(blank=True)  # 老師的大頭照路徑
     teacher_nickname = models.CharField(max_length = 40)
     teacher_auth_id = models.IntegerField()
@@ -196,6 +181,7 @@ class lesson_sales_sets(models.Model):
     fulfilled_volume = models.IntegerField(default=0)  # 已完成課程的總量
     created_time = models.DateTimeField(auto_now_add=True)
     last_sold_time = models.DateTimeField(auto_now=True)
+    is_open = models.BooleanField(default=True)  #是否為老師該課程目前使用中的方案
     def __str__(self):
         return str(self.id)
 
