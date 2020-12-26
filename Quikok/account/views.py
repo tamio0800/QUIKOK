@@ -25,26 +25,11 @@ import shutil
 from django.core.mail import EmailMessage
 from django.conf import settings
 from django.template.loader import render_to_string
-
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
-
-
-def is_num(target):
-    try:
-        int(target)
-        if int(target) == float(target):
-            return True
-        else:
-            return False
-    except:
-        return False
-
-def clean_files(folder_path, key_words):
-    for each_file in os.listdir(folder_path):
-        if key_words in each_file:
-            os.unlink(os.path.join(folder_path, each_file))
-
+from handy_functions import check_if_all_variables_are_true
+from handy_functions import is_num
+from handy_functions import clean_files
 
 
 def date_string_2_dateformat(target_string):
@@ -251,29 +236,109 @@ def edit_student_profile(request):
 # 老師編輯個人資料
 @require_http_methods(['POST'])
 def edit_teacher_profile(request):
-    response = dict()
-    pass_data_to_model_tools = dict()
-    for key, value in request.POST.items():
-        pass_data_to_model_tools[key] = request.POST.get(key,False)
-        print('this is a pair of key, value:' + key + value)
-    the_teacher_manager = teacher_manager()
-    print(pass_data_to_model_tools)
-    # 上傳檔案的種類:大頭照、證書
-    userupload_file_kind = ["upload_snapshot", "upload_cer"]
-    #each_file = request.FILES.get("upload_snapshot")
-    #    if each_file :
-    for each_kind_of_upload_file in userupload_file_kind:
-        file_list = request.FILES.getlist(each_kind_of_upload_file)
-        if len(file_list) > 0 :
-            pass_data_to_model_tools[each_kind_of_upload_file] = request.FILES.getlist(each_kind_of_upload_file)
-            #print(each_kind_of_upload_file+'傳東西')
-        else:
-            pass_data_to_model_tools[each_kind_of_upload_file] = False
-            #print(each_kind_of_upload_file + '沒東西')
 
-    response['status'], response['errCode'], response['errMsg'], response['data'] =\
-    the_teacher_manager.edit_teacher_profile_tool(**pass_data_to_model_tools)
- 
+    response = dict()
+    
+    auth_id = request.POST.get('userID', False)
+    nickname = request.POST.get('nickname', False)
+    intro = request.POST.get('intro', False)
+    mobile = request.POST.get('mobile', False)
+    tutor_experience = request.POST.get('tutor_experience', False)
+    subject_type = request.POST.get('subject_type', False)
+    education_1 = request.POST.get('education_1', False)
+    education_2 = request.POST.get('education_2', False)
+    education_3 = request.POST.get('education_3', False)
+    company = request.POST.get('company', False)
+    special_exp = request.POST.get('special_exp', False)
+    teacher_general_availabale_time = request.POST.get('teacher_general_availabale_time', False)
+
+    # 確認有收到這些資料
+    if not check_if_all_variables_are_true(
+        auth_id, nickname, intro, mobile, tutor_experience, subject_type,
+        education_1, education_2, education_3, company, special_exp, 
+        teacher_general_availabale_time):
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+
+    user_thumbnail = request.FILES.get("upload_snapshot")
+    user_certifications = request.FILES.getlist('upload_cer')
+
+    # 接著來更新資料庫吧
+    the_teacher_info_object = \
+        teacher_profile.objects.filter(auth_id=auth_id).first()
+    
+    if the_teacher_info_object is None:
+        response['status'] = 'failed'
+        response['errCode'] = '1'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        # 找不到該用戶
+    else:
+        the_teacher_general_availabale_time = \
+            general_available_time.objects.filter(teacher_model__auth_id=auth_id)
+        
+        for each_weekday_times_set in  [_ for _ in teacher_general_availabale_time.split(';') if len(_)]:
+            week, time = each_weekday_times_set.split(':')
+            the_week_object = the_teacher_general_availabale_time.filter(week=week).first()
+            
+            if the_week_object is None:
+                # 新建的row
+                general_available_time.objects.create(
+                    teacher_model=the_teacher_info_object,
+                    week=week,
+                    time=time
+                ).save()
+            else:
+                the_week_object.time = time
+                the_week_object.save()
+
+        the_teacher_info_object.nickname = nickname
+        the_teacher_info_object.intro = intro
+        the_teacher_info_object.mobile = mobile
+        the_teacher_info_object.tutor_experience = tutor_experience
+        the_teacher_info_object.subject_type = subject_type
+        the_teacher_info_object.education_1 = education_1
+        the_teacher_info_object.education_2 = education_2
+        the_teacher_info_object.education_3 = education_3
+        the_teacher_info_object.company = company
+        the_teacher_info_object.special_exp = special_exp
+
+        if user_thumbnail:
+            # 老師有傳新大頭照
+            folder_where_are_uploaded_files_be ='user_upload/teachers/' + the_teacher_info_object.username
+            fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
+            file_exten = user_thumbnail.name.split('.')[-1]
+            fs.save('thumbnail.' + file_exten, user_thumbnail) # 檔名統一改成thumbnail開頭
+            the_teacher_info_object.thumbnail_dir = '/' + folder_where_are_uploaded_files_be + '/thumbnail.' + file_exten
+
+        is_new_certification_uploaded = False
+        for each_file in user_certifications:
+            # 老師有傳新認證資料
+            folder_where_are_uploaded_files_be ='user_upload/teachers/' + the_teacher_info_object.username + '/unaproved_cer'
+            fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
+            fs.save(each_file.name, each_file)
+            is_new_certification_uploaded = True
+        
+        if is_new_certification_uploaded:
+            the_teacher_info_object.is_approved = False
+
+        the_teacher_info_object.save()  # 儲存資料
+
+        # ================更新課程小卡================
+        the_lesson_card_manager = lesson_card_manager()
+        
+        all_lesson_ids_of_the_teacher = list(lesson_info.objects.filter(teacher__auth_id=auth_id).values_list('id', flat=True))
+        for each_lesson_id in all_lesson_ids_of_the_teacher:
+            the_lesson_card_manager.setup_a_lesson_card(
+                teacher_auth_id=auth_id,
+                corresponding_lesson_id=each_lesson_id
+            )
+        # ================更新課程小卡================
+
+    response['status'] = 'success'
+    response['errCode'] = None
+    response['errMsg'] = None
+
     return JsonResponse(response)
 
 
