@@ -923,6 +923,30 @@ class Lesson_Related_Functions_Test(TestCase):
             )
         )
 
+        lesson_post_data['selling_status'] = 'draft'
+        response = \
+            client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+        # 將課程改為暫存測試
+        self.assertIn(
+            'success',
+            str(response.content, 'utf8'),
+            (
+                teacher_profile.objects.values(),
+                lesson_info.objects.values()
+            )
+        )
+        self.assertEqual(
+            8, lesson_sales_sets.objects.count(),
+            (
+                lesson_sales_sets.objects.values_list('sales_set', flat=True),
+                lesson_sales_sets.objects.values_list('is_open', flat=True)
+            )
+        )
+        self.assertEqual(
+            8, lesson_sales_sets.objects.filter(is_open=False).count(),
+        )
+
+
         try:
             shutil.rmtree(f'user_upload/teachers/{test_username}')
         except Exception as e:
