@@ -210,19 +210,23 @@ class chat_room_manager:
 class websocket_manager:
     def __init__(self):
         # 系統的authID
-        self.system_authID =1 
+        self.system_authID = 1 
     def check_authID_type(self, authID):
         # 判斷某個ID的身分
-        _find_teacher = teacher_profile.objects.filter(auth_id=authID)
-        _find_student = student_profile.objects.filter(auth_id=authID)
+        if authID == self.system_authID: # 目前1是system的auth_id
+            self.user_type = 'system'
+        else:
+            _find_teacher = teacher_profile.objects.filter(auth_id=authID).count()
+            _find_student = student_profile.objects.filter(auth_id=authID).count()
 
-        if len(_find_teacher)>0:
-            self.user_type = 'teacher'
-        elif len(_find_student)>0 :
-            self.user_type = 'student'
-        else: # 等到預約寫了這邊還會再加上預約(system)
-            # 1224由於當初架構只分老師和學生,目前系統身分是'老師'...
-            self.user_type = 'unknown'
+            if _find_teacher > 0:
+                self.user_type = 'teacher'
+            elif _find_student > 0 :
+                self.user_type = 'student'
+            else: # 等到預約寫了這邊還會再加上預約(system)
+                # 1224由於當初架構只分老師和學生,目前系統身分是'老師',
+                # 所以系統的身分先給老師, unknown先保留做為沒資料時避免程式壞掉用
+                self.user_type = 'unknown'
     
     # 儲存聊天訊息到 db
     # user_2_user
@@ -231,41 +235,59 @@ class websocket_manager:
         self.sender = kwargs['senderID'] # 發訊息者
         message = kwargs['messageText']
         messageType = kwargs['messageType']
-        self.check_authID_type(self.sender)
-
+        chatroom_type = kwargs['chatroom_type']
+        self.check_authID_type(self.sender) # 發訊息者的身分
+        
         try:
-            chatroom_info = chatroom_info_user2user.objects.filter(id = self.chatroom_id).first()
-            print(chatroom_info)
-            print(chatroom_info.id)
-            if self.user_type == 'student':
-                # 發送者是學生
-                self.teacher_id = chatroom_info.teacher_auth_id
-                self.student_id = self.sender
-            elif self.user_type == 'teacher':
-                self.teacher_id = self.sender
-                self.student_id= chatroom_info.student_auth_id
-            else:
-                pass
-            parent_auth_id = -1 # 目前先給-1
-            is_first_msg = str(1)
-            new_msg = chat_history_user2user.objects.create(
-                    chatroom_info_user2user_id= self.chatroom_id,
-                    teacher_auth_id =self.teacher_id,
-                    student_auth_id= self.student_id,
-                    parent_auth_id =parent_auth_id,
-                    message = message,
-                    message_type= messageType,
-                    who_is_sender= self.user_type,
-                    sender_auth_id = self.sender,
-                    is_read= 0,
-                    )
-            new_msg.save()
+            if chatroom_type == 'user2user':
+                chatroom_info = chatroom_info_user2user.objects.filter(id = self.chatroom_id).first()
+                print(chatroom_info)
+                print(chatroom_info.id)
+                if self.user_type == 'student':
+                    # 發送者是學生
+                    self.teacher_id = chatroom_info.teacher_auth_id
+                    self.student_id = self.sender
+                elif self.user_type == 'teacher':
+                    self.teacher_id = self.sender
+                    self.student_id= chatroom_info.student_auth_id
+                else:
+                    pass
+                parent_auth_id = -1 # 目前先給-1
+                
+                new_msg = chat_history_user2user.objects.create(
+                        chatroom_info_user2user_id= self.chatroom_id,
+                        teacher_auth_id =self.teacher_id,
+                        student_auth_id= self.student_id,
+                        parent_auth_id =parent_auth_id,
+                        message = message,
+                        message_type= messageType,
+                        who_is_sender= self.user_type,
+                        sender_auth_id = self.sender,
+                        is_read= 0,
+                        )
+                new_msg.save()
 
-            return(new_msg.id, new_msg.created_time, is_first_msg)
+                return(new_msg.id, new_msg.created_time)
             
-            #else:
-            #    print('Found no chatroom_info_user2user id == ', self.chatroom_id)
-            #    return(None, None)
+            else: # chatroom_type == 'system2user'
+                chatroom_info = chatroom_info_mr_q2user.objects.filter(id = self.chatroom_id).first()
+                print(chatroom_info)
+                print(chatroom_info.id)
+                
+                new_msg = chat_history_mr_q2user.objects.create(
+                        chatroom_info_system2user_id= self.chatroom_id,
+                        user_auth_id = chatroom_info.user_auth_id,
+                        system_user_auth_id = chatroom_info.system_user_auth_id,
+                        message = message,
+                        message_type= messageType,
+                        who_is_sender= self.user_type,
+                        sender_auth_id = self.sender,
+                        is_read= 0,
+                        )
+                new_msg.save()
+
+                return(new_msg.id, new_msg.created_time)
+
 
         except Exception as e:
             print(e)
@@ -276,9 +298,11 @@ class websocket_manager:
     def query_chat_history(self, senderID):
         if self.user_type == 'student':
             total = chat_history_user2user.objects.filter(Q(student_auth_id=self.student_id)&Q(teacher_auth_id=self.teacher_id))
+            if len(total) <2 : # 當user跟系統聊天的時候才會發生<2,因為system_authID不會在user2user出現
+                return('0')
             # 第一筆是系統在聊天室建立時自動發送的訊息
-            # 第二筆是學生剛發送的訊息, 所以小於3筆的話表示是新老師
-            if len(total)<3:
+            # 第二筆是學生剛發送的訊息, 所以=2 筆的話表示是新老師
+            if len(total)==2:
                 print('self.teacher_id:')
                 print(self.teacher_id)
                 #find_layer = layer_info_maneger.show_channel_layer_info(self.teacher_id)
@@ -315,7 +339,15 @@ class websocket_manager:
 
         return(send_to_ws)
 
-        
+    def msg_system_student_payment_remind(self, chatroomID): 
+        # 購買課程的小提醒
+        order_teacher = ''
+        order_lesson = ''
+        order_price = ''
+        meg_text = '哈囉！感謝你購買了'+ order_teacher + '老師的' + 'order_lesson'+\
+            '，總金額為'+ order_price + '。請於5日內匯款並於「我的存摺頁」填寫匯款帳號'
+
+        return(send_to_ws)  
 
     
 
