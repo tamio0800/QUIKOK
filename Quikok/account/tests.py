@@ -72,7 +72,8 @@ class Teacher_Test(TestCase):
             print(f'Error:  {e}')
 
     
-    def test_get_teacher_available_and_specific_time(self):
+    def test_teacher_available_and_specific_time_created_after_signing_up(self):
+        
         Group.objects.bulk_create(
             [
                 Group(name='test_student'),
@@ -172,58 +173,31 @@ class Teacher_Test(TestCase):
                     list(specific_available_time.objects.all())[15].date.weekday()).first().time,
             ]
         )
-        print(specific_available_time.objects.values())
+        # print(specific_available_time.objects.values())
 
 
-
-    @skip
-    def test_create_a_teacher_user_function_works_properly(self):
-
+    def test_teacher_available_and_specific_time_synchronized_after_editting_profile(self):
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
         client = Client()
-        # 先創立一門假的暫存課程
-        dummy_teacher_id = 'tamio080011111'
-        background_picture = open('/Users/tamiotsiu/Desktop/cuddle.png', 'rb')
-        arguments_dict = {
-            'dummy_teacher_id': dummy_teacher_id,
-            'big_title': 'big_title',
-            'little_title': 'test',
-            'title_color': '#000000',
-            'background_picture_code': 99,
-            # 使用自訂的背景圖，code為99
-            'background_picture_path': background_picture,
-            # 使用自訂的背景圖，所以要給一個圖片路徑
-            'lesson_title': 'test',
-            'price_per_hour': 100,
-            'lesson_has_one_hour_package': True,
-            'trial_class_price': 99,
-            'highlight_1': 'test',
-            'highlight_2': 'test',
-            'highlight_3': 'test',
-            'lesson_intro': 'test',
-            'how_does_lesson_go': 'test',
-            'target_students': 'test',
-            'lesson_remarks': 'test',
-            'syllabus': 'test',
-            'lesson_attributes': 'test'      
-            }
-        response = \
-            self.client.post(
-                path='/api/lesson/beforeSigningUpCreateOrEditLesson/',
-                data=arguments_dict)
+        test_username = 'test_teacher_user@test.com'
         
-        print(str(response.content, 'utf8'))
-
-        post_data = {
-            # 這邊創立要建立老師的註冊資料
-            'dummy_teacher_id': 'tamio080011111',
-            'regEmail': 'test_teacher_user@test.com',
+        teacher_post_data = {
+            'regEmail': test_username,
             'regPwd': '00000000',
             'regName': 'test_name',
             'regNickname': 'test_nickname',
             'regBirth': '2000-01-01',
             'regGender': '0',
             'intro': 'test_intro',
-            'regMobile': '0912-345-678',
+            'regMobile': '0912-345678',
             'tutor_experience': '一年以下',
             'subject_type': 'test_subject',
             'education_1': 'education_1_test',
@@ -231,95 +205,105 @@ class Teacher_Test(TestCase):
             'education_3': 'education_3_test',
             'company': 'test_company',
             'special_exp': 'test_special_exp',
-            'teacher_general_availabale_time': '0:1,2,3,4,5'
+            'teacher_general_availabale_time': '0:1,2,3,4,5;1:11,13,15,17,19,21,22,25,33;4:1,9,27,28,41;'
         }
+        '''
+        禮拜一: 時段 1, 2, 3, 4, 5;
+        禮拜二: 時段 11, 13, 15, 17, 19, 21, 22, 25, 33;
+        禮拜五: 時段 1, 9, 27, 28, 41;
+        '''
+        client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        
+        teacher_post_data['intro'] = '因為最近事情比較多，暫時沒有可以預約的時間唷~~'
+        teacher_post_data['userID'] = 1
+        teacher_post_data['nickname'] = '一個新的測試暱稱'
+        teacher_post_data['teacher_general_availabale_time'] = ''
 
-        response = client.post(
-            path='/api/account/signupTeacher/',
-            data=post_data
+        # 更新老師的資料
+        response = client.post(path='/api/account/editTeacherProfile/', data=teacher_post_data)
+        self.assertIn(
+            'success',
+            str(response.content, 'utf8')
         )
 
-        print(str(response.content, encoding='utf8'))
-        print(teacher_profile.objects.values()
-        )
-        self.assertJSONEqual(
-            str(response.content, encoding='utf8'),
-            {
-                'status': 'success',
-                'errCode': None,
-                'errMsg': None,
-                'data': 1
-            }
-        )
-
-    @skip
-    def test_lesson_card_is_created_after_teacher_signed_up_with_dummy_teacher_id(self):
-        client = Client()
-        # 先創立一門假的暫存課程
-        dummy_teacher_id = 'tamio080011111'
-        background_picture = open('/Users/tamiotsiu/Desktop/cuddle.png', 'rb')
-        arguments_dict = {
-            'dummy_teacher_id': dummy_teacher_id,
-            'big_title': 'big_title',
-            'little_title': 'test',
-            'title_color': '#000000',
-            'background_picture_code': 99,
-            # 使用自訂的背景圖，code為99
-            'background_picture_path': background_picture,
-            # 使用自訂的背景圖，所以要給一個圖片路徑
-            'lesson_title': 'test',
-            'price_per_hour': 100,
-            'lesson_has_one_hour_package': True,
-            'trial_class_price': 99,
-            'highlight_1': 'test',
-            'highlight_2': 'test',
-            'highlight_3': 'test',
-            'lesson_intro': 'test',
-            'how_does_lesson_go': 'test',
-            'target_students': 'test',
-            'lesson_remarks': 'test',
-            'syllabus': 'test',
-            'lesson_attributes': 'test'      
-            }
-        response = \
-            self.client.post(
-                path='/api/lesson/beforeSigningUpCreateOrEditLesson/',
-                data=arguments_dict)
-
-        post_data = {
-            # 這邊創立要建立老師的註冊資料
-            'dummy_teacher_id': 'tamio080011111',
-            'regEmail': 'test_teacher_user@test.com',
-            'regPwd': '00000000',
-            'regName': 'test_name',
-            'regNickname': 'test_nickname',
-            'regBirth': '2000-01-01',
-            'regGender': '0',
-            'intro': 'test_intro',
-            'regMobile': '0912-345-678',
-            'tutor_experience': '一年以下',
-            'subject_type': 'test_subject',
-            'education_1': 'education_1_test',
-            'education_2': 'education_2_test',
-            'education_3': 'education_3_test',
-            'company': 'test_company',
-            'special_exp': 'test_special_exp',
-            'teacher_general_availabale_time': '0:1,2,3,4,5'
-        }
-        response = client.post(
-            path='/api/account/signupTeacher/',
-            data=post_data
+        # 確認資料真的更新了
+        self.assertEqual(
+            (
+                teacher_post_data['intro'],
+                teacher_post_data['nickname'],
+                0
+            ),
+            (
+                teacher_profile.objects.filter(auth_id=1).first().intro,
+                teacher_profile.objects.filter(auth_id=1).first().nickname,
+                general_available_time.objects.filter(teacher_model__auth_id=1).count()
+            ),
+            general_available_time.objects.filter(teacher_model__auth_id=1).values()
         )
         
-        print(lesson_card.objects.values().first())
+        # 此時應該什麼都沒有才對
         self.assertEqual(
-            lesson_card.objects.all().count(),
-            1
+            ( 
+                0,
+                0
+            ),
+            (
+                general_available_time.objects.filter(teacher_model__auth_id=1).count(),
+                specific_available_time.objects.filter(teacher_model__auth_id=1).count()
+            ),
+            (general_available_time.objects.values(), specific_available_time.objects.values())
+        )
+
+        teacher_post_data['teacher_general_availabale_time'] = \
+            '2:30,31,32,33,34,35;3:4,5,6,15;4:22,21,28,29;5:17,19,31,32,33;6:40,41,42,43;'
+        # 改為 禮拜二、三、四、五、六、日
+        response = client.post(path='/api/account/editTeacherProfile/', data=teacher_post_data)
+        # 刪除資料夾
+        try:
+            shutil.rmtree(f'user_upload/teachers/{test_username}')
+        except Exception as e:
+            print(f'Error:  {e}')
+
+        self.assertIn(
+            'success', str(response.content, 'utf8')
         )
 
         self.assertEqual(
-            lesson_card.objects.all().first().lesson_title,
-            'test'
+            5,
+            general_available_time.objects.filter(teacher_model__auth_id=1).count(),
+            general_available_time.objects.values()
+        )
+        # 因為最高只建立了未來183天的資料，所以不會大於 t + 183 天
+        self.assertGreater(
+            date_function.today() + timedelta(days=185),
+            specific_available_time.objects.latest('date').date,
+            specific_available_time.objects.values()
+        )
+        # 因為建立了未來183天的資料，所以不會小於 t + 150 天
+        self.assertLess(
+            date_function.today() + timedelta(days=150),
+            specific_available_time.objects.latest('date').date,
+            specific_available_time.objects.values()
+        )
+
+        self.assertListEqual(
+            list(set([_.weekday() for _ in specific_available_time.objects.values_list('date', flat=True)])),
+            [2, 3, 4, 5, 6],
+            list(set([_.weekday() for _ in specific_available_time.objects.values_list('date', flat=True)]))
+        )
+
+        # 選 倒數第7筆記錄 & 第15筆記錄 查驗 時段的正確性
+        self.assertListEqual(
+            [
+                list(specific_available_time.objects.all())[-7].time,
+                list(specific_available_time.objects.all())[15].time,
+            ],
+            [
+                general_available_time.objects.filter(week= \
+                    list(specific_available_time.objects.all())[-7].date.weekday()).first().time,
+                general_available_time.objects.filter(week= \
+                    list(specific_available_time.objects.all())[15].date.weekday()).first().time,
+            ]
         )
 
 
@@ -461,13 +445,13 @@ class PROFILE_EDITTING_TEST(TestCase):
         teacher_post_data['teacher_general_availabale_time'] = '0:1,2,3,4,5;5:6,7,8,9,10;3:10,11,12;'
         teacher_post_data['upload_snapshot'] = ''
         
-        print(f'before general_available_time:  \
-            {general_available_time.objects.values().filter(teacher_model__auth_id=teacher_post_data["userID"])}')
+        #print(f'before general_available_time:  \
+        #    {general_available_time.objects.values().filter(teacher_model__auth_id=teacher_post_data["userID"])}')
 
         response = client.post(path='/api/account/editTeacherProfile/', data=teacher_post_data)
 
-        print(f'after general_available_time:  \
-            {general_available_time.objects.values().filter(teacher_model__auth_id=teacher_post_data["userID"])}')
+        #print(f'after general_available_time:  \
+        #    {general_available_time.objects.values().filter(teacher_model__auth_id=teacher_post_data["userID"])}')
         
         self.assertJSONEqual(
             str(response.content, encoding='utf8'),
@@ -514,10 +498,10 @@ class PROFILE_EDITTING_TEST(TestCase):
             teacher_profile.objects.filter(username=test_username).first().thumbnail_dir[1:]
         )  # 更新後，兩個大頭貼應該一樣了
         
-        print(
-            f'os.path.getsize(teacher_profile.objects.filter(username=test_username).first().thumbnail_dir[1:]): \
-            {os.path.getsize(teacher_profile.objects.filter(username=test_username).first().thumbnail_dir[1:])}'
-            )
+        #print(
+        #    f'os.path.getsize(teacher_profile.objects.filter(username=test_username).first().thumbnail_dir[1:]): \
+        #    {os.path.getsize(teacher_profile.objects.filter(username=test_username).first().thumbnail_dir[1:])}'
+        #    )
 
         try:
             shutil.rmtree(f'user_upload/teachers/{test_username}')
