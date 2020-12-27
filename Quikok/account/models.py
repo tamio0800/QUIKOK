@@ -117,8 +117,9 @@ class general_available_time(models.Model):
 
 class specific_available_time(models.Model):
     teacher_model=models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='specific_time') 
-    date=models.DateField()        #Example:2020821
-    time=models.CharField(max_length=250)       #Example:1,2,3,4,5,4
+    date=models.DateField()    
+    time=models.CharField(max_length=250)  #Example:1,2,3,4,5,4
+    is_occupied=models.BooleanField(default=False)  # 該時段是否已經被預訂了  
     def __str__(self):
         return self.user.username
 

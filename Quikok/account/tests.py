@@ -1,4 +1,3 @@
-
 from django.test import RequestFactory, TestCase
 from django.test import Client
 from django.contrib.auth.models import Permission, User, Group
