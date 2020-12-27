@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from chatroom.consumers import ChatConsumer
 
 def storage_order(request):
+    # 訂單(方案)結帳
     response = dict()
     try:
         student_authID = request.POST.get('userID', False)

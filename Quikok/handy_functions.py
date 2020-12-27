@@ -41,3 +41,21 @@ def clean_files(folder_path, key_words):
     for each_file in os.listdir(folder_path):
         if key_words in each_file:
             os.unlink(os.path.join(folder_path, each_file))
+
+
+def date_string_2_dateformat(target_string):
+    from datetime import date as date_function
+    if not target_string == False:
+        try:
+            # 將前端的 2000-01-01格式改為20000101
+            nodash_str = target_string.replace('-','')
+            if len(nodash_str) == 8 :
+                _year, _month, _day = int(nodash_str[:4]), int(nodash_str[4:6]), int(nodash_str[-2:])
+                return date_function(_year, _month, _day)
+            else:
+                return False
+        except Exception as e:
+            print(e)
+            return False
+    else:
+        return False

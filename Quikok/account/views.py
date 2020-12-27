@@ -29,24 +29,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from handy_functions import check_if_all_variables_are_true
 from handy_functions import is_num
 from handy_functions import clean_files
-
-
-def date_string_2_dateformat(target_string):
-    if not target_string == False:
-        try:
-            # 將前端的 2000-01-01格式改為20000101
-            nodash_str = target_string.replace('-','')
-            if len(nodash_str) == 8 :
-                _year, _month, _day = int(nodash_str[:4]), int(nodash_str[4:6]), int(nodash_str[-2:])
-                return date_function(_year, _month, _day)
-            else:
-                return False
-        except Exception as e:
-            print(e)
-            return False
-    else:
-        return False
-
+from handy_functions import date_string_2_dateformat
 
 ## 0916改成api的版本,之前的另存成views_old, 之後依據該檔把已設計好的功能寫過來
 ##### 學生區 #####
@@ -62,7 +45,7 @@ def create_a_student_user(request):
     if not nickname:
         nickname = name
     birth_date = date_string_2_dateformat(request.POST.get('regBirth', False))
-    is_male = request.POST.get('regGender', None) # is_male boolean
+    is_male = request.POST.get('regGender', False) # is_male boolean
     # intro , 註冊時不需要填寫
     role = request.POST.get('regRole', False)
     #def request_get(something):
@@ -73,16 +56,18 @@ def create_a_student_user(request):
     mobile = request.POST.get('regMobile', False)
     update_someone_by_email = request.POST.get('regNotifiemail', False)
 
-    print('接收資料')
+    # print('接收資料')
     print('學生名稱:',username, password, name, '生日:',birth_date, '角色:',role,'手機:', mobile,':信箱', update_someone_by_email,is_male)
-    if False not in [username, password, name, birth_date, role, mobile, 
-    update_someone_by_email] and is_male is not None:
+    if check_if_all_variables_are_true(
+        username, password, name, birth_date, role, 
+        is_male, mobile, update_someone_by_email):
+
         print('接收資料內容正常')
         # 先檢查有沒有這個username存在，存在的話會return None給obj
         obj = student_profile.objects.filter(username=username).first()
         auth_obj = User.objects.filter(username=username).first()
         # 下面這個條件式>> 皆非(a為空 或是 b為空) >> a跟b都不能為空
-        if int(is_male) == 0:
+        if is_male in [0, '0', 'false', False, 'False']:
             is_male = False
         else:
             is_male = True
@@ -506,10 +491,10 @@ def create_a_teacher_user(request):
     # # http://127.0.0.1:8000/api/create_teacher/?username=testUser3&password=1111&name=tata3&birth_date=19901225&is_male=1
     user_folder = username #.replace('@', 'at')
     print('收到老師註冊資料')
-    if False not in [
+    if check_if_all_variables_are_true(
         username, password, name, intro, subject_type, mobile,
-        tutor_experience, subject_type
-    ] and is_male is not None:
+        tutor_experience, subject_type) and is_male is not None:
+    
         print('判斷收到老師資料是正常的')
         # 先檢查有沒有這個username存在，存在的話會return None給obj
         obj = teacher_profile.objects.filter(username=username).first()

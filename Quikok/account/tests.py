@@ -20,7 +20,7 @@ class Auth_Related_Functions_Test(TestCase):
         response = self.client.get(path='/authCheck/')
         self.assertEqual(response.status_code, 200)
 
-class Teacher_Test(TestCase):
+class Teacher_Profile_Test(TestCase):
 
     def test_create_teacher_receive_can_mkdir(self):
         Group.objects.bulk_create(
@@ -32,7 +32,7 @@ class Teacher_Test(TestCase):
                 Group(name='edony')
             ]
         )
-        self.client = Client()
+        client = Client()
         test_username = 'test201218_teacher_user@test.com'
         try:
             shutil.rmtree('user_upload/teachers/' + test_username)
@@ -60,7 +60,7 @@ class Teacher_Test(TestCase):
             'special_exp': 'test_special_exp',
             'teacher_general_availabale_time': '0:1,2,3,4,5;'
         }
-        self.client.post(path='/api/account/signupTeacher/', data=data)
+        client.post(path='/api/account/signupTeacher/', data=data)
         self.assertEqual(
             os.path.isdir('user_upload/teachers/' + test_username),
             True
@@ -211,6 +211,7 @@ class Teacher_Test(TestCase):
         禮拜二: 時段 11, 13, 15, 17, 19, 21, 22, 25, 33;
         禮拜五: 時段 1, 9, 27, 28, 41;
         '''
+        print(f'teacher_post_data:  {teacher_post_data}')
         client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
         
         teacher_post_data['intro'] = '因為最近事情比較多，暫時沒有可以預約的時間唷~~'
@@ -305,79 +306,6 @@ class Teacher_Test(TestCase):
             ]
         )
 
-
-class Feedback_Test(TestCase):
-    
-    def test_feedback_exist(self):
-        # 測試這個函式是否存在
-        self.client = Client()
-        response = self.client.post(path='/api/account/feedback/')
-        self.assertEqual(response.status_code, 200)
-
-
-    def test_feedback_received_data_from_frontend(self):
-        # 測試傳送「問題反應」的資訊給後端，後端是否有收到
-        self.client = Client()
-
-        who_are_you = 'test_user'
-        contact = 'test_user@test.com'
-        problem = 'here is a test problem to test if views function could received.'
-        on_which_page = '/test/url/'
-        is_signed_in = True
-        post_data = {
-            'who_are_you': who_are_you,
-            'contact': contact,
-            'problem': problem,
-            'on_which_page': on_which_page,
-            'is_signed_in': is_signed_in
-        }
-        response = self.client.post(path='/api/account/feedback/', data=post_data)
-
-        self.assertJSONEqual(
-            str(response.content, encoding='utf8'),
-            {
-                'status': 'success',
-                'errCode': None,
-                'errMsg': None,
-                'data': '謝謝您告訴我們這件事，我們會火速處理、並協助您解決這個問題，請再留意您的Email或手機唷。'
-            }
-        )
-
-
-    def test_feedback_written_data_into_DB(self):
-        # 測試傳送「問題反應」的資訊給後端，後端是否有收到
-        self.client = Client()
-        who_are_you = 'test_user'
-        contact = 'test_user@test.com'
-        problem = 'here is a test problem to test if views function could received.'
-        on_which_page = '/test/url/'
-        is_signed_in = True
-        post_data = {
-            'who_are_you': who_are_you,
-            'contact': contact,
-            'problem': problem,
-            'on_which_page': on_which_page,
-            'is_signed_in': is_signed_in
-        }
-        self.client.post(path='/api/account/feedback/', data=post_data)
-        self.assertEqual(feedback.objects.all().count(), 1, feedback.objects.values())
-        self.assertEqual(feedback.objects.first().who_are_you, who_are_you)
-        self.assertEqual(feedback.objects.first().contact, contact)
-        self.assertEqual(feedback.objects.first().problem, problem)
-        self.assertEqual(feedback.objects.first().on_which_page, on_which_page)
-        self.assertEqual(feedback.objects.first().is_signed_in, is_signed_in)
-
-
-class EMAIL_SENDING_TEST(TestCase):
-
-    def test_email_could_send(self):
-        self.client = Client()
-        response = self.client.get('/api/account/send_email/')
-        self.assertIn('Success', str(response.content, 'utf8'),
-        str(response.content, 'utf8'))
-
-
-class PROFILE_EDITTING_TEST(TestCase):
 
     def test_edit_teacher_profile_works_properly(self):
         client = Client()
@@ -507,4 +435,123 @@ class PROFILE_EDITTING_TEST(TestCase):
         except Exception as e:
             print(f'Error:  {e}')
 
+
+class Student_Test(TestCase):
+
+    def setUp(self):
+        self.test_username = 'test_student_username@test.com'
+        self.client = Client()
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+
+    def tearDown(self):
+        # 刪掉(如果有的話)產生的資料夾
+        try:
+            shutil.rmtree('user_upload/students/' + self.test_username)
+        except:
+            pass
+
+    def test_if_student_created_properly(self):
         
+        student_poat_data = {
+            'regEmail': self.test_username,
+            'regPwd': '00000000',
+            'regName': 'test_student_name',
+            'regBirth': '1990-12-25',
+            'regGender': 1,
+            'regRole': 'oneself',
+            'regMobile': '0900-111111',
+            'regNotifiemail': ''
+        }
+        resoponse = self.client.post(path='/api/account/signupStudent/', data=student_poat_data)
+        self.assertIn(
+            'success',
+            str(resoponse.content, 'utf8')
+        )
+        self.assertEqual(
+            student_poat_data['regName'],
+            student_profile.objects.filter(auth_id=1).first().nickname,
+            student_profile.objects.values()
+        )
+        self.assertTrue(
+            os.path.isdir(f'user_upload/students/{self.test_username}')
+        )
+
+class Feedback_Test(TestCase):
+    
+    def test_feedback_exist(self):
+        # 測試這個函式是否存在
+        self.client = Client()
+        response = self.client.post(path='/api/account/feedback/')
+        self.assertEqual(response.status_code, 200)
+
+
+    def test_feedback_received_data_from_frontend(self):
+        # 測試傳送「問題反應」的資訊給後端，後端是否有收到
+        self.client = Client()
+
+        who_are_you = 'test_user'
+        contact = 'test_user@test.com'
+        problem = 'here is a test problem to test if views function could received.'
+        on_which_page = '/test/url/'
+        is_signed_in = True
+        post_data = {
+            'who_are_you': who_are_you,
+            'contact': contact,
+            'problem': problem,
+            'on_which_page': on_which_page,
+            'is_signed_in': is_signed_in
+        }
+        response = self.client.post(path='/api/account/feedback/', data=post_data)
+
+        self.assertJSONEqual(
+            str(response.content, encoding='utf8'),
+            {
+                'status': 'success',
+                'errCode': None,
+                'errMsg': None,
+                'data': '謝謝您告訴我們這件事，我們會火速處理、並協助您解決這個問題，請再留意您的Email或手機唷。'
+            }
+        )
+
+
+    def test_feedback_written_data_into_DB(self):
+        # 測試傳送「問題反應」的資訊給後端，後端是否有收到
+        self.client = Client()
+        who_are_you = 'test_user'
+        contact = 'test_user@test.com'
+        problem = 'here is a test problem to test if views function could received.'
+        on_which_page = '/test/url/'
+        is_signed_in = True
+        post_data = {
+            'who_are_you': who_are_you,
+            'contact': contact,
+            'problem': problem,
+            'on_which_page': on_which_page,
+            'is_signed_in': is_signed_in
+        }
+        self.client.post(path='/api/account/feedback/', data=post_data)
+        self.assertEqual(feedback.objects.all().count(), 1, feedback.objects.values())
+        self.assertEqual(feedback.objects.first().who_are_you, who_are_you)
+        self.assertEqual(feedback.objects.first().contact, contact)
+        self.assertEqual(feedback.objects.first().problem, problem)
+        self.assertEqual(feedback.objects.first().on_which_page, on_which_page)
+        self.assertEqual(feedback.objects.first().is_signed_in, is_signed_in)
+
+
+class EMAIL_SENDING_TEST(TestCase):
+
+    def test_email_could_send(self):
+        self.client = Client()
+        response = self.client.get('/api/account/send_email/')
+        self.assertIn('Success', str(response.content, 'utf8'),
+        str(response.content, 'utf8'))
+
+
