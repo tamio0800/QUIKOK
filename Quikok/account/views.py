@@ -7,7 +7,6 @@ from account.models import user_token, student_profile, teacher_profile, specifi
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.core.files.storage import FileSystemStorage
 from lesson.models import lesson_info_for_users_not_signed_up, lesson_info
-from datetime import date as date_function
 import pandas as pd
 from chatroom.models import chatroom_info_Mr_Q2user
 from chatroom.chat_tools import chat_room_manager
@@ -20,7 +19,7 @@ from django.core import serializers
 from django.http import JsonResponse
 import json
 from django.middleware.csrf import get_token
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date as date_function
 import shutil
 from django.core.mail import EmailMessage
 from django.conf import settings
@@ -604,17 +603,33 @@ def create_a_teacher_user(request):
             # (否則無法建立)
             teacher_object = teacher_profile.objects.get(username=username)
             general_time = request.POST.get('teacher_general_availabale_time', False)
-            temp_general_time = general_time.split(';')
-            print(general_time)
-            for every_week in temp_general_time[0:-1]:
-                temp_every_week = every_week.split(':')
+            temp_general_time = [_ for _ in general_time.split(';') if len(_) > 0]
+            # print(general_time)
+            available_week_time_dictionary = dict()
+            # 建立一個dict以備晚點 specific time 可以直接call，不用再從 DB query
+            for every_week in temp_general_time:
+                week, time = every_week.split(':')
+                available_week_time_dictionary[int(week)] = time
 
                 general_available_time.objects.create(
                     teacher_model = teacher_object,
-                    week = temp_every_week[0],
-                    time = temp_every_week[1]
+                    week = week,
+                    time = time
                                 ).save()
-            print('老師成功建立 一般時間') 
+            print('老師成功建立 一般時間')
+
+            # 接下來來建立未來半年的 specific_time 吧
+            today_date = date_function.today()
+            for each_incremental_day in range(184):
+                that_date = today_date + timedelta(each_incremental_day)
+                if that_date.weekday() in available_week_time_dictionary.keys():
+                    # 有這天的空閒再處理就好
+                    specific_available_time.objects.create(
+                        teacher_model = teacher_object,
+                        date = that_date,
+                        time = available_week_time_dictionary[that_date.weekday()]
+                    ).save()
+            print('老師成功建立 特定時間')   # 是說這個要什麼時候更新啦QQ
 
             # 建立老師與system的聊天室
             chat_tool = chat_room_manager()

@@ -2,9 +2,11 @@
 from django.test import RequestFactory, TestCase
 from django.test import Client
 from django.contrib.auth.models import Permission, User, Group
-from account.models import student_profile, teacher_profile, user_token, feedback, general_available_time
+from account.models import student_profile, teacher_profile, user_token, feedback
+from account.models import general_available_time
+from account.models import specific_available_time
 from account.auth_tools import auth_check_manager
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date as date_function
 from lesson.models import lesson_card
 import os, shutil
 from unittest import skip
@@ -70,7 +72,7 @@ class Teacher_Test(TestCase):
             print(f'Error:  {e}')
 
     
-    def test_get_teacher_available_time(self):
+    def test_get_teacher_available_and_specific_time(self):
         Group.objects.bulk_create(
             [
                 Group(name='test_student'),
@@ -83,6 +85,12 @@ class Teacher_Test(TestCase):
         client = Client()
         test_username = 'test_teacher_user@test.com'
         teacher_available_time = '0:1,2,3,4,5;1:11,13,15,17,19,21,22,25,33;4:1,9,27,28,41;'
+        '''
+        禮拜一: 時段 1, 2, 3, 4, 5;
+        禮拜二: 時段 11, 13, 15, 17, 19, 21, 22, 25, 33;
+        禮拜五: 時段 1, 9, 27, 28, 41;
+        '''
+
         try:
             shutil.rmtree('user_upload/teachers/' + test_username)
         except:
@@ -130,13 +138,41 @@ class Teacher_Test(TestCase):
             '1,9,27,28,41'
         )
 
-    #def test_get_teacher_available_time(self):
-    #    self.test_get_teacher_available_time()
-    #    client = Client()
-    #    teacher_auth_id = 1
-    #    response = client.post(path='api/account/getTeacherAvailableTime/', teacher_auth_id)
-    #    # 理論上要回傳
+        # 先確定真的建立了大概半年左右的 specific_times
+        # 因為最高只建立了未來183天的資料，所以不會大於 t + 183 天
+        self.assertGreater(
+            date_function.today() + timedelta(days=185),
+            specific_available_time.objects.latest('date').date,
+            specific_available_time.objects.values()
+        )
+        # 因為建立了未來183天的資料，所以不會小於 t + 150 天
+        self.assertLess(
+            date_function.today() + timedelta(days=150),
+            specific_available_time.objects.latest('date').date,
+            specific_available_time.objects.values()
+        )
 
+        # 因為登錄了禮拜一、二、五的資料，應該要有這幾個紀錄，並且沒有其他weekdays的紀錄
+        self.assertListEqual(
+            list(set([_.weekday() for _ in specific_available_time.objects.values_list('date', flat=True)])),
+            [0, 1, 4],
+            list(set([_.weekday() for _ in specific_available_time.objects.values_list('date', flat=True)]))
+        )
+
+        # 選 倒數第7筆記錄 & 第15筆記錄 查驗 時段的正確性
+        self.assertListEqual(
+            [
+                list(specific_available_time.objects.all())[-7].time,
+                list(specific_available_time.objects.all())[15].time,
+            ],
+            [
+                general_available_time.objects.filter(week= \
+                    list(specific_available_time.objects.all())[-7].date.weekday()).first().time,
+                general_available_time.objects.filter(week= \
+                    list(specific_available_time.objects.all())[15].date.weekday()).first().time,
+            ]
+        )
+        print(specific_available_time.objects.values())
 
 
 
@@ -401,6 +437,7 @@ class PROFILE_EDITTING_TEST(TestCase):
             'special_exp': 'test_special_exp',
             'teacher_general_availabale_time': '0:1,2,3,4,5;5:6,7,8,9,10;'
         }
+
         response = client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
         # 先註冊老師
         self.assertJSONEqual(

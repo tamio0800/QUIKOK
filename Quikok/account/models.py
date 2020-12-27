@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+
 class user_token(models.Model):
     authID_object = models.ForeignKey(User, on_delete=models.CASCADE)
     token = models.CharField(max_length=128) # hash密碼
@@ -115,12 +116,11 @@ class general_available_time(models.Model):
 
 
 class specific_available_time(models.Model):
-    user=models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='specific_time') 
-    date=models.DateField(max_length=20)        #Example:2020821
+    teacher_model=models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='specific_time') 
+    date=models.DateField()        #Example:2020821
     time=models.CharField(max_length=250)       #Example:1,2,3,4,5,4
     def __str__(self):
         return self.user.username
-
 
 class student_studying_history(models.Model):
     # 這個是學生的學習歷程紀錄，先留著之後再完善
