@@ -1,3 +1,4 @@
+from unittest.case import skip
 from django.shortcuts import render, redirect
 from django.contrib import auth
 from django.contrib.auth.hashers import make_password, check_password  # 這一行用來加密密碼的
@@ -185,10 +186,19 @@ def return_student_profile_for_oneself_viewing(request):
             the_student_manager.return_student_profile_for_oneself_viewing(student_auth_id)
         return JsonResponse(response)
 
-
+@skip
 @require_http_methods(['POST'])
 def edit_student_profile(request):
     response = dict()
+
+    student_auth_id = request.POST.get('userID', False)
+    student_auth_id = request.POST.get('userID', False)
+    student_auth_id = request.POST.get('userID', False)
+    student_auth_id = request.POST.get('userID', False)
+    student_auth_id = request.POST.get('userID', False)
+    student_auth_id = request.POST.get('userID', False)
+
+
     pass_data_to_model_tools = dict()
 
     for key, value in request.POST.items():
@@ -211,7 +221,7 @@ def edit_student_profile(request):
     the_student_manager = student_manager()
 
     response['status'], response['errCode'], response['errMsg'], response['data'] =\
-    the_student_manager.update_student_profile(**pass_data_to_model_tools)
+        the_student_manager.update_student_profile(**pass_data_to_model_tools)
     print('passing data' + str(pass_data_to_model_tools))
     print(response)
     return JsonResponse(response)

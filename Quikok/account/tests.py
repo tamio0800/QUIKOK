@@ -1,3 +1,4 @@
+from django.http import response
 from django.test import RequestFactory, TestCase
 from django.test import Client
 from django.contrib.auth.models import Permission, User, Group
@@ -451,12 +452,14 @@ class Student_Test(TestCase):
             ]
         )
 
+
     def tearDown(self):
         # 刪掉(如果有的話)產生的資料夾
         try:
             shutil.rmtree('user_upload/students/' + self.test_username)
         except:
             pass
+
 
     def test_if_student_created_properly(self):
         
@@ -483,6 +486,60 @@ class Student_Test(TestCase):
         self.assertTrue(
             os.path.isdir(f'user_upload/students/{self.test_username}')
         )
+    
+
+    def test_if_student_editted_properly(self):
+
+        student_poat_data = {
+            'regEmail': self.test_username,
+            'regPwd': '00000000',
+            'regName': 'test_student_name',
+            'regBirth': '1990-12-25',
+            'regGender': 1,
+            'regRole': 'oneself',
+            'regMobile': '0900-111111',
+            'regNotifiemail': ''
+        }
+        self.client.post(path='/api/account/signupStudent/', data=student_poat_data)
+
+        student_poat_data['userID'] = 1
+        student_poat_data['mobile'] = '0911-234567'
+        student_poat_data['nickname'] = '新的學生測試暱稱'
+        student_poat_data['upload_snapshot'] = \
+            open('user_upload/temp/before_signed_up/tamio0800111111/customized_lesson_background.jpg', 'rb')
+        student_poat_data['update_someone_by_email'] = 'updated1@test.com;updated2@test.com;'
+
+        resoponse = self.client.post(path='/api/account/editStudentProfile/', data=student_poat_data)
+
+        self.assertIn(
+            'success',
+            str(response.content, 'utf8'),
+            response
+        )
+
+        self.assertEqual(
+            (
+                student_poat_data['mobile'],
+                student_poat_data['nickname'],
+                student_poat_data['update_someone_by_email'],
+                f'/user_upload/students/{self.test_username}/thumbnail.jpg'
+            ),
+            (
+                student_profile.objects.first().mobile,
+                student_profile.objects.first().nickname,
+                student_profile.objects.first().update_someone_by_email,
+                student_profile.objects.first().thumbnail_dir,
+            )
+        )
+
+        self.assertTrue(
+            os.path.isfile(student_profile.objects.first().thumbnail_dir[1:])
+        )
+
+
+
+
+
 
 class Feedback_Test(TestCase):
     
