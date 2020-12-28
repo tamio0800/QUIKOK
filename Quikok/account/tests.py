@@ -442,15 +442,13 @@ class Student_Test(TestCase):
     def setUp(self):
         self.test_username = 'test_student_username@test.com'
         self.client = Client()
-        Group.objects.bulk_create(
-            [
+        Group.objects.bulk_create([
                 Group(name='test_student'),
                 Group(name='test_teacher'),
                 Group(name='formal_teacher'),
                 Group(name='formal_student'),
                 Group(name='edony')
-            ]
-        )
+            ])
 
 
     def tearDown(self):

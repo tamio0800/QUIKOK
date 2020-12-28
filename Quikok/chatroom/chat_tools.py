@@ -339,14 +339,18 @@ class websocket_manager:
 
         return(send_to_ws)
 
-    def msg_system_student_payment_remind(self, chatroomID): 
+    def msg_system_student_payment_remind(self, **kwargs): 
         # 購買課程的小提醒
-        order_teacher = ''
-        order_lesson = ''
-        order_price = ''
-        meg_text = '哈囉！感謝你購買了'+ order_teacher + '老師的' + 'order_lesson'+\
-            '，總金額為'+ order_price + '。請於5日內匯款並於「我的存摺頁」填寫匯款帳號'
+        price = kwargs['price']
+        #測試用的user                
+        #student_authID = 1
+        student_authID = kwargs['studenID']
+        teacher_authID = kwargs['teacherID']
+        lesson_id = kwargs['lessonID']
+        lesson_set = kwargs['lesson_set']
 
+        msg_text = f'哈囉！感謝你購買了【{order_teacher}】老師的【{order_lesson}】\
+            ，總金額為【{price}】。請於5日內匯款並於「我的存摺頁」填寫匯款帳號'
         return(send_to_ws)  
 
     

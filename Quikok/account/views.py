@@ -186,7 +186,6 @@ def return_student_profile_for_oneself_viewing(request):
             the_student_manager.return_student_profile_for_oneself_viewing(student_auth_id)
         return JsonResponse(response)
 
-@skip
 @require_http_methods(['POST'])
 def edit_student_profile(request):
     response = dict()
