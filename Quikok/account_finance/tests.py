@@ -109,8 +109,6 @@ class test_finance_functions(TestCase):
         #        'data': None
         #    })
     def test_email_sending_new_order(self):
-        # 先建立學生才能測試
-
         data_test = {'studentID':2, 'teacherID':1,'lessonID':1,'lesson_set':'test' ,'price':100}
         e = email_manager()
         e.system_msg_new_order_payment_remind(**data_test)
