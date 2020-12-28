@@ -11,7 +11,7 @@ from lesson.models import lesson_card
 import os, shutil
 from unittest import skip
 
-#python manage.py test account/ --settings=Quikok.settings_for_test
+# python manage.py test account/ --settings=Quikok.settings_for_test
 class Auth_Related_Functions_Test(TestCase):
 
     def test_auth_check_exist(self):
@@ -463,7 +463,7 @@ class Student_Test(TestCase):
 
     def test_if_student_created_properly(self):
         
-        student_poat_data = {
+        student_post_data = {
             'regEmail': self.test_username,
             'regPwd': '00000000',
             'regName': 'test_student_name',
@@ -473,13 +473,13 @@ class Student_Test(TestCase):
             'regMobile': '0900-111111',
             'regNotifiemail': ''
         }
-        resoponse = self.client.post(path='/api/account/signupStudent/', data=student_poat_data)
+        resoponse = self.client.post(path='/api/account/signupStudent/', data=student_post_data)
         self.assertIn(
             'success',
             str(resoponse.content, 'utf8')
         )
         self.assertEqual(
-            student_poat_data['regName'],
+            student_post_data['regName'],
             student_profile.objects.filter(auth_id=1).first().nickname,
             student_profile.objects.values()
         )
@@ -490,7 +490,7 @@ class Student_Test(TestCase):
 
     def test_if_student_editted_properly(self):
 
-        student_poat_data = {
+        student_post_data = {
             'regEmail': self.test_username,
             'regPwd': '00000000',
             'regName': 'test_student_name',
@@ -500,16 +500,17 @@ class Student_Test(TestCase):
             'regMobile': '0900-111111',
             'regNotifiemail': ''
         }
-        self.client.post(path='/api/account/signupStudent/', data=student_poat_data)
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
 
-        student_poat_data['userID'] = 1
-        student_poat_data['mobile'] = '0911-234567'
-        student_poat_data['nickname'] = '新的學生測試暱稱'
-        student_poat_data['upload_snapshot'] = \
+        student_post_data['userID'] = 1
+        student_post_data['mobile'] = '0911-234567'
+        student_post_data['nickname'] = '新的學生測試暱稱'
+        student_post_data['intro'] = '新的學生測試自我介紹啦啦啦'
+        student_post_data['upload_snapshot'] = \
             open('user_upload/temp/before_signed_up/tamio0800111111/customized_lesson_background.jpg', 'rb')
-        student_poat_data['update_someone_by_email'] = 'updated1@test.com;updated2@test.com;'
+        student_post_data['update_someone_by_email'] = 'updated1@test.com;updated2@test.com;'
 
-        resoponse = self.client.post(path='/api/account/editStudentProfile/', data=student_poat_data)
+        response = self.client.post(path='/api/account/editStudentProfile/', data=student_post_data)
 
         self.assertIn(
             'success',
@@ -519,16 +520,18 @@ class Student_Test(TestCase):
 
         self.assertEqual(
             (
-                student_poat_data['mobile'],
-                student_poat_data['nickname'],
-                student_poat_data['update_someone_by_email'],
-                f'/user_upload/students/{self.test_username}/thumbnail.jpg'
+                student_post_data['mobile'],
+                student_post_data['nickname'],
+                student_post_data['update_someone_by_email'],
+                f'/user_upload/students/{self.test_username}/thumbnail.jpg',
+                student_post_data['intro']
             ),
             (
                 student_profile.objects.first().mobile,
                 student_profile.objects.first().nickname,
                 student_profile.objects.first().update_someone_by_email,
                 student_profile.objects.first().thumbnail_dir,
+                student_profile.objects.first().intro
             )
         )
 

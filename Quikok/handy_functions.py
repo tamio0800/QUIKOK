@@ -59,3 +59,12 @@ def date_string_2_dateformat(target_string):
             return False
     else:
         return False
+
+def clean_files(folder_path, key_words):
+    '''
+    自動搜尋folder_path所有的檔案，
+    並且刪除包含key_words關鍵字的檔案。
+    '''
+    for each_file in os.listdir(folder_path):
+        if key_words in each_file:
+            os.unlink(os.path.join(folder_path, each_file))

@@ -31,6 +31,7 @@ from handy_functions import check_if_all_variables_are_true
 from handy_functions import is_num
 from handy_functions import clean_files
 from handy_functions import date_string_2_dateformat
+from handy_functions import clean_files
 
 ## 0916改成api的版本,之前的另存成views_old, 之後依據該檔把已設計好的功能寫過來
 ##### 學生區 #####
@@ -186,44 +187,66 @@ def return_student_profile_for_oneself_viewing(request):
             the_student_manager.return_student_profile_for_oneself_viewing(student_auth_id)
         return JsonResponse(response)
 
-@skip
 @require_http_methods(['POST'])
 def edit_student_profile(request):
     response = dict()
 
     student_auth_id = request.POST.get('userID', False)
-    student_auth_id = request.POST.get('userID', False)
-    student_auth_id = request.POST.get('userID', False)
-    student_auth_id = request.POST.get('userID', False)
-    student_auth_id = request.POST.get('userID', False)
-    student_auth_id = request.POST.get('userID', False)
+    nickname = request.POST.get('nickname', False)
+    intro = request.POST.get('intro', False)
+    mobile = request.POST.get('mobile', False)
+    update_someone_by_email = request.POST.get('update_someone_by_email', False)
+    upload_snapshot = request.FILES.get('upload_snapshot', False)
 
-
-    pass_data_to_model_tools = dict()
-
-    for key, value in request.POST.items():
-        pass_data_to_model_tools[key] = request.POST.get(key,False)
-    # 要處理的資料
-    #recevived_data_name = ['token','userID','mobile','nickname','update_someone_by_email',
-    # 'intro']
-    # 上傳檔案的種類:大頭照
-    userupload_file_kind = ['upload_snapshot']
-    for each_kind_of_upload_file in userupload_file_kind:
-        file_list = request.FILES.getlist(each_kind_of_upload_file)
-        #print('上傳種類')
-        #print(file_list)
-        if len(file_list) > 0 :
-            pass_data_to_model_tools[each_kind_of_upload_file] = request.FILES.getlist(each_kind_of_upload_file)
-            #print(each_kind_of_upload_file+'傳東西')
+    if not check_if_all_variables_are_true(
+    student_auth_id, nickname, intro, mobile, update_someone_by_email):
+        # 系統傳輸錯誤
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+    else:
+        the_student_info_object = \
+            student_profile.objects.filter(auth_id=student_auth_id).first()
+        if the_student_info_object is None:
+            # 找不到這一個用戶  
+            response['status'] = 'failed'
+            response['errCode'] = '1'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['data'] = None
         else:
-            pass_data_to_model_tools[each_kind_of_upload_file] = False
-            #print(each_kind_of_upload_file + '沒東西')
-    the_student_manager = student_manager()
+            try:
+                if upload_snapshot != False:
+                    #  用戶有上傳大頭貼
+                    target_path = 'user_upload/students/' + the_student_info_object.username
+                    clean_files(target_path, 'thumbnail')
+                    #  清除原本的檔案
+                    fs = FileSystemStorage(location=target_path)
+                    file_extension = upload_snapshot.name.split('.')[-1]    
+                    fs.save('thumbnail' + '.' + file_extension , upload_snapshot) # 檔名統一改成thumbnail開頭
+                    the_student_info_object.thumbnail_dir = \
+                        f'/{target_path}/thumbnail.{file_extension}'
 
-    response['status'], response['errCode'], response['errMsg'], response['data'] =\
-        the_student_manager.update_student_profile(**pass_data_to_model_tools)
-    print('passing data' + str(pass_data_to_model_tools))
-    print(response)
+                the_student_info_object.nickname = nickname
+                the_student_info_object.intro = intro
+                the_student_info_object.mobile = mobile
+                the_student_info_object.update_someone_by_email = update_someone_by_email
+                the_student_info_object.save()
+
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = student_auth_id
+
+            except Exception as e:
+                print(f'Exception: {e}')
+                response['status'] = 'failed'
+                response['errCode'] = '2'
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                response['data'] = None
+    
+    #print(f'response:    {response}')
+    #print(student_auth_id, nickname, intro, mobile, update_someone_by_email)
     return JsonResponse(response)
 
 ##### 老師區 #####
