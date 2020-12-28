@@ -1,8 +1,8 @@
 from django.test import TestCase, Client, RequestFactory
 from .models import student_purchase_record
-from account.models import teacher_profile
+from account.models import student_profile, teacher_profile
 from lesson.models import lesson_info, lesson_sales_sets, lesson_booking_info
-from .email_sending import email_manager
+from account_finance.email_sending import email_manager
 from django.contrib.auth.models import Group
 import os, shutil
 #python manage.py test account_finance/ --settings=Quikok.settings_for_test
@@ -110,8 +110,46 @@ class test_finance_functions(TestCase):
         #    })
     def test_email_sending_new_order(self):
         data_test = {'studentID':2, 'teacherID':1,'lessonID':1,'lesson_set':'test' ,'price':100}
+
+        self.assertIsNotNone(student_profile.objects.filter(auth_id=data_test['studentID']).first())
+        self.assertIsNotNone(teacher_profile.objects.filter(auth_id=data_test['teacherID']).first())
+        self.assertIsNotNone(lesson_info.objects.filter(id=data_test['lessonID']).first())
+
         e = email_manager()
-        e.system_msg_new_order_payment_remind(**data_test)
+        ret = e.system_msg_new_order_payment_remind(**data_test)
+        self.assertTrue(ret)
+        # 確認程式有正確執行
+
+    def test_email_sendind_works_properly(self):
+        '''
+        詳見: https://docs.djangoproject.com/en/1.11/topics/testing/tools/#email-services
+        
+        If any of your Django views send email using Django’s email functionality, 
+            you probably don’t want to send email each time you run a test using that view. 
+        For this reason, Django’s test runner automatically redirects all Django-sent email to a dummy outbox. 
+        
+        This lets you test every aspect of sending email – 
+            from the number of messages sent to the contents of each message – 
+            without actually sending the messages.
+        '''
+
+        # 這裡有點照抄 send_mail 的意味
+        from django.core import mail
+        from django.conf import settings
+
+        test_subject = '測試信'
+        mail.send_mail(
+            subject = test_subject,  # 電子郵件標題
+            message = '測試看看能不能真的發出去的內容',
+            from_email = settings.EMAIL_HOST_USER,  # 寄件者
+            recipient_list = ['tamio.chou@gmail.com'],  # 收件者
+            fail_silently = False
+        )
+        print(f'mail.outbox: {mail.outbox}')
+        print(f'mail.outbox[0]: {mail.outbox[0]}, {mail.outbox[0].subject}')
+        self.assertEqual(len(mail.outbox), 1, mail.outbox)
+        self.assertEqual(mail.outbox[0].subject, test_subject)
+
 
     def tearDown(self):
         # 刪掉(如果有的話)產生的資料夾
@@ -120,3 +158,4 @@ class test_finance_functions(TestCase):
             shutil.rmtree('user_upload/teachers/' + self.test_username)
         except:
             pass
+
