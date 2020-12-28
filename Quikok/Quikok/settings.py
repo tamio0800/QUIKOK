@@ -105,6 +105,8 @@ DATABASES = {
     
     use schema2;
     source database-schema.sql;
+
+    mysqldump -u root -p quikok_db_production > quikok_db_production_20201225.sql
 '''
 
 

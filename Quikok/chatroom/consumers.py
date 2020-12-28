@@ -27,7 +27,6 @@ class ChatConsumer(WebsocketConsumer):
             for friend_room in chatroom_info_user2user.objects.filter(teacher_auth_id=userID):
                 async_to_sync(self.channel_layer.group_add)(friend_room.id, self.channel_name)
 
-        #self.room_group_name = self.scope["url_route"]["kwargs"]["room_url"].split('_')[2]
         # 接收格式 'kwargs': {'room_url': '204_chatroom_4_0'}
         if self.scope["url_route"]["kwargs"]["room_url"].split('_')[3] == '0':
             self.room_group_name = self.scope["url_route"]["kwargs"]["room_url"].split('_')[2]
@@ -51,8 +50,7 @@ class ChatConsumer(WebsocketConsumer):
         # 目前我不確定用for loop來做時,是否自是將各channel加入這個group
         async_to_sync(self.channel_layer.group_add)(
             self.room_group_name,
-            self.channel_name
-        )
+            self.channel_name)
         self.accept()
         # 如果是系統連線,此時要存到記憶體中
         print('websocket connect success')
@@ -89,6 +87,8 @@ class ChatConsumer(WebsocketConsumer):
         #    layer_maneger.add_layer_info(userID=self.userID, channel_layer= self.channel_layer)
 
         print('websocket connect success')
+    def get_channel_layer(self):
+        return(self.channel_name)
     def disconnect(self, close_code):
         # Leave room group
         async_to_sync(self.channel_layer.group_discard)(
@@ -101,9 +101,6 @@ class ChatConsumer(WebsocketConsumer):
 
     # Receive message from WebSocket
     def receive(self, text_data):
-        #response = dict()
-        #self.pass_to_chat_tools = dict()
-        
         text_data_json = json.loads(text_data)
         print('ws load jason收到的資料')
         print('\n\nreceive_data:\n'+str(text_data_json))
@@ -113,11 +110,12 @@ class ChatConsumer(WebsocketConsumer):
         'senderID' : text_data_json['senderID'],
         'chatroomID' : text_data_json['chatroomID'],
         'messageType' : text_data_json['messageType'],
-        'messageText' : text_data_json['messageText']}
+        'messageText' : text_data_json['messageText'],
+        'chatroom_type': self.chatroom_type}
         #now_time = datetime.datetime.now().strftime('%H:%M')
         # 儲存對話紀錄到db
         ws_manager = websocket_manager()
-        msgID, time, is_first_msg = ws_manager.chat_storge(**pass_to_chat_tools)
+        msgID, time = ws_manager.chat_storge(**pass_to_chat_tools)
         now_time = str(time)
         # systemCode 暫時沒有作用,統一給0
         if text_data_json['messageType'] == 1:
@@ -131,9 +129,8 @@ class ChatConsumer(WebsocketConsumer):
         system_chatroomID = ws_manager.query_chat_history(pass_to_chat_tools['senderID'])
         
         print('\n\nstorge message')
-        #user=User.objects.get(id=self.pass_data_to_chat_tools['userID'])
         # Send message to room group
-        # 會發到下面的chat_message (雖然不曉得怎麼發的)
+        # 會發到下面的def chat_message (雖然不曉得怎麼發的)
         print('this is self.channel_layer.group_send')
         print(self.channel_layer.group_send)
         async_to_sync(self.channel_layer.group_send)(
@@ -147,7 +144,9 @@ class ChatConsumer(WebsocketConsumer):
                 'messageCreateTime': now_time
             },)
         print('send no.1 msg')
-        # 若符合才會>1並在學生傳msg給老師時同步發到系統聊天室
+        # 若符合才會>1, 不符合會=0
+        # 符合會在學生傳msg給老師時同步發到系統聊天室
+        # system_chatroomID 格式: system_1
         if len(system_chatroomID) > 1:
             # 傳給ws的內容
             content = ws_manager.msg_maker1_system_2teacher(pass_to_chat_tools['chatroomID'])
@@ -157,8 +156,6 @@ class ChatConsumer(WebsocketConsumer):
         else:
             pass
 
-        
-
     # Receive message from room group
     # 收到的字典叫 "event",會回給前端
     def chat_message(self, event):
@@ -166,10 +163,20 @@ class ChatConsumer(WebsocketConsumer):
         self.send(text_data=json.dumps(event))
         print('send to WebSocket')
     
-    # 測試是否可以同時發兩個聊天室
-#    def chat_send_system_msg(self,event):
-#        self.send(text_data=json.dumps(event))
-#        print('system send to WebSocket')
+    # 測試是否可以直接發到特定聊天室
+    # 推測這方式沒寫儲存msg應該可收到
+    def system_msg_new_order_payment_remind(self):
+        # 這邊先固定寫死傳看看是否成功
+        self.send(text_data=json.dumps(
+            {   'type' : "chat.message", # channel要求必填,不填channel會收不到
+                'chatroomID':2,
+                'senderID': 1,
+                'messageText': 'test',
+                'messageType': 3,
+                'systemCode':0,
+                'messageCreateTime': now_time
+            }))
+        print('system send to WebSocket')
 
 
 #class ChatSystem(ChatConsumer):

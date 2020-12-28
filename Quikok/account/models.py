@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+
 class user_token(models.Model):
     authID_object = models.ForeignKey(User, on_delete=models.CASCADE)
     token = models.CharField(max_length=128) # hash密碼
@@ -100,6 +101,8 @@ class general_available_time(models.Model):
     # len(','.join([str(__ for _ in range(48)])) >> 133 
     def __str__(self):
         return self.teacher_model.username
+
+    
 # 就這個函式解釋一下怎麼與teacher_profile互相聯繫
 # 這個table insert values後，會有一欄 user_id，
 # 這個user_id就是該teacher在teacher_profile中的id；
@@ -113,12 +116,12 @@ class general_available_time(models.Model):
 
 
 class specific_available_time(models.Model):
-    user=models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='specific_time')        
-    date=models.DateField(max_length=20)        #Example:2020821
-    time=models.CharField(max_length=250)       #Example:1,2,3,4,5,4
+    teacher_model=models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='specific_time') 
+    date=models.DateField()    
+    time=models.CharField(max_length=250)  #Example:1,2,3,4,5,4
+    is_occupied=models.BooleanField(default=False)  # 該時段是否已經被預訂了  
     def __str__(self):
         return self.user.username
-
 
 class student_studying_history(models.Model):
     # 這個是學生的學習歷程紀錄，先留著之後再完善

@@ -1,3 +1,4 @@
+from unittest.case import skip
 from django.shortcuts import render, redirect
 from django.contrib import auth
 from django.contrib.auth.hashers import make_password, check_password  # 這一行用來加密密碼的
@@ -7,7 +8,6 @@ from account.models import user_token, student_profile, teacher_profile, specifi
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.core.files.storage import FileSystemStorage
 from lesson.models import lesson_info_for_users_not_signed_up, lesson_info
-from datetime import date as date_function
 import pandas as pd
 from chatroom.models import chatroom_info_Mr_Q2user
 from chatroom.chat_tools import chat_room_manager
@@ -20,49 +20,18 @@ from django.core import serializers
 from django.http import JsonResponse
 import json
 from django.middleware.csrf import get_token
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date as date_function
 import shutil
 from django.core.mail import EmailMessage
 from django.conf import settings
 from django.template.loader import render_to_string
-
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
-
-
-def is_num(target):
-    try:
-        int(target)
-        if int(target) == float(target):
-            return True
-        else:
-            return False
-    except:
-        return False
-
-def clean_files(folder_path, key_words):
-    for each_file in os.listdir(folder_path):
-        if key_words in each_file:
-            os.unlink(os.path.join(folder_path, each_file))
-
-
-
-def date_string_2_dateformat(target_string):
-    if not target_string == False:
-        try:
-            # 將前端的 2000-01-01格式改為20000101
-            nodash_str = target_string.replace('-','')
-            if len(nodash_str) == 8 :
-                _year, _month, _day = int(nodash_str[:4]), int(nodash_str[4:6]), int(nodash_str[-2:])
-                return date_function(_year, _month, _day)
-            else:
-                return False
-        except Exception as e:
-            print(e)
-            return False
-    else:
-        return False
-
+from handy_functions import check_if_all_variables_are_true
+from handy_functions import is_num
+from handy_functions import clean_files
+from handy_functions import date_string_2_dateformat
+from handy_functions import clean_files
 
 ## 0916改成api的版本,之前的另存成views_old, 之後依據該檔把已設計好的功能寫過來
 ##### 學生區 #####
@@ -78,7 +47,7 @@ def create_a_student_user(request):
     if not nickname:
         nickname = name
     birth_date = date_string_2_dateformat(request.POST.get('regBirth', False))
-    is_male = request.POST.get('regGender', None) # is_male boolean
+    is_male = request.POST.get('regGender', False) # is_male boolean
     # intro , 註冊時不需要填寫
     role = request.POST.get('regRole', False)
     #def request_get(something):
@@ -89,16 +58,18 @@ def create_a_student_user(request):
     mobile = request.POST.get('regMobile', False)
     update_someone_by_email = request.POST.get('regNotifiemail', False)
 
-    print('接收資料')
+    # print('接收資料')
     print('學生名稱:',username, password, name, '生日:',birth_date, '角色:',role,'手機:', mobile,':信箱', update_someone_by_email,is_male)
-    if False not in [username, password, name, birth_date, role, mobile, 
-    update_someone_by_email] and is_male is not None:
+    if check_if_all_variables_are_true(
+        username, password, name, birth_date, role, 
+        is_male, mobile, update_someone_by_email):
+
         print('接收資料內容正常')
         # 先檢查有沒有這個username存在，存在的話會return None給obj
         obj = student_profile.objects.filter(username=username).first()
         auth_obj = User.objects.filter(username=username).first()
         # 下面這個條件式>> 皆非(a為空 或是 b為空) >> a跟b都不能為空
-        if int(is_male) == 0:
+        if is_male in [0, '0', 'false', False, 'False']:
             is_male = False
         else:
             is_male = True
@@ -216,64 +187,182 @@ def return_student_profile_for_oneself_viewing(request):
             the_student_manager.return_student_profile_for_oneself_viewing(student_auth_id)
         return JsonResponse(response)
 
-
 @require_http_methods(['POST'])
 def edit_student_profile(request):
     response = dict()
-    pass_data_to_model_tools = dict()
 
-    for key, value in request.POST.items():
-        pass_data_to_model_tools[key] = request.POST.get(key,False)
-    # 要處理的資料
-    #recevived_data_name = ['token','userID','mobile','nickname','update_someone_by_email',
-    # 'intro']
-    # 上傳檔案的種類:大頭照
-    userupload_file_kind = ['upload_snapshot']
-    for each_kind_of_upload_file in userupload_file_kind:
-        file_list = request.FILES.getlist(each_kind_of_upload_file)
-        #print('上傳種類')
-        #print(file_list)
-        if len(file_list) > 0 :
-            pass_data_to_model_tools[each_kind_of_upload_file] = request.FILES.getlist(each_kind_of_upload_file)
-            #print(each_kind_of_upload_file+'傳東西')
+    student_auth_id = request.POST.get('userID', False)
+    nickname = request.POST.get('nickname', False)
+    intro = request.POST.get('intro', False)
+    mobile = request.POST.get('mobile', False)
+    update_someone_by_email = request.POST.get('update_someone_by_email', False)
+    upload_snapshot = request.FILES.get('upload_snapshot', False)
+
+    if not check_if_all_variables_are_true(
+    student_auth_id, nickname, intro, mobile, update_someone_by_email):
+        # 系統傳輸錯誤
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+    else:
+        the_student_info_object = \
+            student_profile.objects.filter(auth_id=student_auth_id).first()
+        if the_student_info_object is None:
+            # 找不到這一個用戶  
+            response['status'] = 'failed'
+            response['errCode'] = '1'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['data'] = None
         else:
-            pass_data_to_model_tools[each_kind_of_upload_file] = False
-            #print(each_kind_of_upload_file + '沒東西')
-    the_student_manager = student_manager()
+            try:
+                if upload_snapshot != False:
+                    #  用戶有上傳大頭貼
+                    target_path = 'user_upload/students/' + the_student_info_object.username
+                    clean_files(target_path, 'thumbnail')
+                    #  清除原本的檔案
+                    fs = FileSystemStorage(location=target_path)
+                    file_extension = upload_snapshot.name.split('.')[-1]    
+                    fs.save('thumbnail' + '.' + file_extension , upload_snapshot) # 檔名統一改成thumbnail開頭
+                    the_student_info_object.thumbnail_dir = \
+                        f'/{target_path}/thumbnail.{file_extension}'
 
-    response['status'], response['errCode'], response['errMsg'], response['data'] =\
-    the_student_manager.update_student_profile(**pass_data_to_model_tools)
-    print('passing data' + str(pass_data_to_model_tools))
-    print(response)
+                the_student_info_object.nickname = nickname
+                the_student_info_object.intro = intro
+                the_student_info_object.mobile = mobile
+                the_student_info_object.update_someone_by_email = update_someone_by_email
+                the_student_info_object.save()
+
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = student_auth_id
+
+            except Exception as e:
+                print(f'Exception: {e}')
+                response['status'] = 'failed'
+                response['errCode'] = '2'
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                response['data'] = None
+    
+    #print(f'response:    {response}')
+    #print(student_auth_id, nickname, intro, mobile, update_someone_by_email)
     return JsonResponse(response)
 
 ##### 老師區 #####
 # 老師編輯個人資料
 @require_http_methods(['POST'])
 def edit_teacher_profile(request):
-    response = dict()
-    pass_data_to_model_tools = dict()
-    for key, value in request.POST.items():
-        pass_data_to_model_tools[key] = request.POST.get(key,False)
-        print('this is a pair of key, value:' + key + value)
-    the_teacher_manager = teacher_manager()
-    print(pass_data_to_model_tools)
-    # 上傳檔案的種類:大頭照、證書
-    userupload_file_kind = ["upload_snapshot", "upload_cer"]
-    #each_file = request.FILES.get("upload_snapshot")
-    #    if each_file :
-    for each_kind_of_upload_file in userupload_file_kind:
-        file_list = request.FILES.getlist(each_kind_of_upload_file)
-        if len(file_list) > 0 :
-            pass_data_to_model_tools[each_kind_of_upload_file] = request.FILES.getlist(each_kind_of_upload_file)
-            #print(each_kind_of_upload_file+'傳東西')
-        else:
-            pass_data_to_model_tools[each_kind_of_upload_file] = False
-            #print(each_kind_of_upload_file + '沒東西')
 
-    response['status'], response['errCode'], response['errMsg'], response['data'] =\
-    the_teacher_manager.edit_teacher_profile_tool(**pass_data_to_model_tools)
- 
+    response = dict()
+    
+    auth_id = request.POST.get('userID', False)
+    nickname = request.POST.get('nickname', False)
+    intro = request.POST.get('intro', False)
+    mobile = request.POST.get('mobile', False)
+    tutor_experience = request.POST.get('tutor_experience', False)
+    subject_type = request.POST.get('subject_type', False)
+    education_1 = request.POST.get('education_1', False)
+    education_2 = request.POST.get('education_2', False)
+    education_3 = request.POST.get('education_3', False)
+    company = request.POST.get('company', False)
+    special_exp = request.POST.get('special_exp', False)
+    teacher_general_availabale_time = request.POST.get('teacher_general_availabale_time', False)
+
+    # 確認有收到這些資料
+    if not check_if_all_variables_are_true(
+        auth_id, nickname, intro, mobile, tutor_experience, subject_type,
+        education_1, education_2, education_3, company, special_exp, 
+        teacher_general_availabale_time):
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+
+    user_thumbnail = request.FILES.get("upload_snapshot")
+    user_certifications = request.FILES.getlist('upload_cer')
+
+    # 接著來更新資料庫吧
+    the_teacher_info_object = \
+        teacher_profile.objects.filter(auth_id=auth_id).first()
+    
+    if the_teacher_info_object is None:
+        response['status'] = 'failed'
+        response['errCode'] = '1'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        # 找不到該用戶
+    else:
+        # 先全部刪掉再重新建立好了，反正最多就 7 筆資料
+        available_week_time_dictionary = dict()
+        general_available_time.objects.filter(teacher_model__auth_id=auth_id).delete()
+        for each_weekday_times_set in  [_ for _ in teacher_general_availabale_time.split(';') if len(_)]:
+            week, time = each_weekday_times_set.split(':')
+            available_week_time_dictionary[int(week)] = time
+            general_available_time.objects.create(
+                teacher_model=the_teacher_info_object,
+                week=week,
+                time=time).save()
+        
+        # 接下來來建立未來半年的 specific_time 吧，這裡比照上面，全部刪掉重建吧
+        specific_available_time.objects.filter(teacher_model__auth_id=auth_id).delete()
+        today_date = date_function.today()
+        for each_incremental_day in range(184):
+            that_date = today_date + timedelta(each_incremental_day)
+            if that_date.weekday() in available_week_time_dictionary.keys():
+                # 有這天的空閒再處理就好
+                specific_available_time.objects.create(
+                    teacher_model = the_teacher_info_object,
+                    date = that_date,
+                    time = available_week_time_dictionary[that_date.weekday()]
+                ).save()
+
+
+        the_teacher_info_object.nickname = nickname
+        the_teacher_info_object.intro = intro
+        the_teacher_info_object.mobile = mobile
+        the_teacher_info_object.tutor_experience = tutor_experience
+        the_teacher_info_object.subject_type = subject_type
+        the_teacher_info_object.education_1 = education_1
+        the_teacher_info_object.education_2 = education_2
+        the_teacher_info_object.education_3 = education_3
+        the_teacher_info_object.company = company
+        the_teacher_info_object.special_exp = special_exp
+
+        if user_thumbnail:
+            # 老師有傳新大頭照
+            folder_where_are_uploaded_files_be ='user_upload/teachers/' + the_teacher_info_object.username
+            fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
+            file_exten = user_thumbnail.name.split('.')[-1]
+            fs.save('thumbnail.' + file_exten, user_thumbnail) # 檔名統一改成thumbnail開頭
+            the_teacher_info_object.thumbnail_dir = '/' + folder_where_are_uploaded_files_be + '/thumbnail.' + file_exten
+
+        is_new_certification_uploaded = False
+        for each_file in user_certifications:
+            # 老師有傳新認證資料
+            folder_where_are_uploaded_files_be ='user_upload/teachers/' + the_teacher_info_object.username + '/unaproved_cer'
+            fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
+            fs.save(each_file.name, each_file)
+            is_new_certification_uploaded = True
+        
+        if is_new_certification_uploaded:
+            the_teacher_info_object.is_approved = False
+
+        the_teacher_info_object.save()  # 儲存資料
+
+        # ================更新課程小卡================
+        the_lesson_card_manager = lesson_card_manager()
+        
+        all_lesson_ids_of_the_teacher = list(lesson_info.objects.filter(teacher__auth_id=auth_id).values_list('id', flat=True))
+        for each_lesson_id in all_lesson_ids_of_the_teacher:
+            the_lesson_card_manager.setup_a_lesson_card(
+                teacher_auth_id=auth_id,
+                corresponding_lesson_id=each_lesson_id
+            )
+        # ================更新課程小卡================
+
+    response['status'] = 'success'
+    response['errCode'] = None
+    response['errMsg'] = None
+
     return JsonResponse(response)
 
 
@@ -435,10 +524,10 @@ def create_a_teacher_user(request):
     # # http://127.0.0.1:8000/api/create_teacher/?username=testUser3&password=1111&name=tata3&birth_date=19901225&is_male=1
     user_folder = username #.replace('@', 'at')
     print('收到老師註冊資料')
-    if False not in [
+    if check_if_all_variables_are_true(
         username, password, name, intro, subject_type, mobile,
-        tutor_experience, subject_type
-    ] and is_male is not None:
+        tutor_experience, subject_type) and is_male is not None:
+    
         print('判斷收到老師資料是正常的')
         # 先檢查有沒有這個username存在，存在的話會return None給obj
         obj = teacher_profile.objects.filter(username=username).first()
@@ -539,17 +628,33 @@ def create_a_teacher_user(request):
             # (否則無法建立)
             teacher_object = teacher_profile.objects.get(username=username)
             general_time = request.POST.get('teacher_general_availabale_time', False)
-            temp_general_time = general_time.split(';')
-            print(general_time)
-            for every_week in temp_general_time[0:-1]:
-                temp_every_week = every_week.split(':')
+            temp_general_time = [_ for _ in general_time.split(';') if len(_) > 0]
+            # print(general_time)
+            available_week_time_dictionary = dict()
+            # 建立一個dict以備晚點 specific time 可以直接call，不用再從 DB query
+            for every_week in temp_general_time:
+                week, time = every_week.split(':')
+                available_week_time_dictionary[int(week)] = time
 
                 general_available_time.objects.create(
                     teacher_model = teacher_object,
-                    week = temp_every_week[0],
-                    time = temp_every_week[1]
+                    week = week,
+                    time = time
                                 ).save()
-            print('老師成功建立 一般時間') 
+            print('老師成功建立 一般時間')
+
+            # 接下來來建立未來半年的 specific_time 吧
+            today_date = date_function.today()
+            for each_incremental_day in range(184):
+                that_date = today_date + timedelta(each_incremental_day)
+                if that_date.weekday() in available_week_time_dictionary.keys():
+                    # 有這天的空閒再處理就好
+                    specific_available_time.objects.create(
+                        teacher_model = teacher_object,
+                        date = that_date,
+                        time = available_week_time_dictionary[that_date.weekday()]
+                    ).save()
+            print('老師成功建立 特定時間')   # 是說這個要什麼時候更新啦QQ
 
             # 建立老師與system的聊天室
             chat_tool = chat_room_manager()

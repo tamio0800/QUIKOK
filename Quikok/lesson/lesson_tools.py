@@ -229,14 +229,18 @@ class lesson_manager:
 
     def setup_a_lesson(self, teacher_auth_id, a_request_object, lesson_id, action):
         # 全新的課程建立
+
         _temp_lesson_info = dict()
         exclude_columns = [
             'id', 'teacher', 'created_time', 'edited_time',
             'lesson_avg_score', 'lesson_reviewed_times', 'background_picture_path']
+
         columns_to_be_read = \
                 [field.name for field in lesson_info._meta.get_fields() if field.name not in exclude_columns]
+
         for each_column_to_be_read in columns_to_be_read:
             _arg = a_request_object.POST.get(each_column_to_be_read, 'was_None')
+
             if _arg == 'was_None':
                 self.status = 'failed'
                 self.errCode = '0'
@@ -244,21 +248,26 @@ class lesson_manager:
                 return (self.status, self.errCode, self.errMsg)
             else:
                 _temp_lesson_info[each_column_to_be_read] = _arg
+
         _temp_lesson_info['lesson_has_one_hour_package'] = \
-            _temp_lesson_info['lesson_has_one_hour_package'] in ['true', True]
+            _temp_lesson_info['lesson_has_one_hour_package'] in ['true', True, 'True']
+
         # 轉成boolean
         # if a_request_object.POST.get('unitClassPrice', False):
             # 代表其非為空值，且非為None
         #    _temp_lesson_info['lesson_has_one_hour_package'] = True
         _temp_lesson_info['teacher'] = teacher_profile.objects.filter(auth_id=teacher_auth_id).first()
+
         if action == 'createLesson':
             _temp_lesson_info['lesson_avg_score'] = 0
             _temp_lesson_info['lesson_reviewed_times'] = 0
             if _temp_lesson_info['teacher'] is None:
                 self.status = 'failed'
                 self.errCode = '2'
-                self.errMsg = 'Found No Teacher.'
+                self.errMsg = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                self.data = None
                 return (self.status, self.errCode, self.errMsg)
+
             try:
                 # 建立老師的lessons資料夾, 下方的lesson_id資料夾，如
                 # user_uploaded/teachers/username/lessons/3(<< which is the lesson id)
@@ -293,30 +302,38 @@ class lesson_manager:
                     corresponding_lesson_id = created_lesson.id,
                     teacher_auth_id = teacher_auth_id
                 )  # 建立課程小卡資訊
+
                 self.status = 'success'
                 self.errCode = None
                 self.errMsg = None
-                return (self.status, self.errCode, self.errMsg)
+                self.data = created_lesson.id
+                return (self.status, self.errCode, self.errMsg, self.data)
+
             except Exception as e:
                 print(e)
                 self.status = 'failed'
                 self.errCode = '3'
-                self.errMsg = 'Error While Writting In Database.'
-                return (self.status, self.errCode, self.errMsg)
+                self.errMsg = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                self.data = None
+                return (self.status, self.errCode, self.errMsg, self.data)
+        
         elif action == 'editLesson':
+
             if _temp_lesson_info['teacher'] is None:
                 self.status = 'failed'
-                self.errCode = '2'
-                self.errMsg = 'Found No Teacher.'
-                return (self.status, self.errCode, self.errMsg)    
+                self.errCode = '1'
+                self.errMsg = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                self.data = None
+                return (self.status, self.errCode, self.errMsg, self.data)    
             try:
                 edited_lesson = lesson_info.objects.filter(teacher__auth_id=teacher_auth_id).filter(id=lesson_id).first()
                 if edited_lesson is None:
                     # 代表課程跟老師對應不起來
                     self.status = 'failed'
                     self.errCode = '2'
-                    self.errMsg = 'Found No Matched Teacher And The Lesson.'
-                    return (self.status, self.errCode, self.errMsg)
+                    self.errMsg = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                    self.data = None
+                    return (self.status, self.errCode, self.errMsg, self.data)
                 # 建立老師的lessons資料夾 & 下方lesson_id資料夾(如果沒有建立的話)
                 lessons_folder_path = \
                     'user_upload/teachers/' + _temp_lesson_info['teacher'].username + '/lessons' 
@@ -361,13 +378,16 @@ class lesson_manager:
                 self.status = 'success'
                 self.errCode = None
                 self.errMsg = None
-                return (self.status, self.errCode, self.errMsg)
+                self.data = lesson_id
+                return (self.status, self.errCode, self.errMsg, self.data)
+
             except Exception as e:
                 print(e)
                 self.status = 'failed'
                 self.errCode = '3'
-                self.errMsg = 'Error While Writting In Database.'
-                return (self.status, self.errCode, self.errMsg)
+                self.errMsg = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                self.data = None
+                return (self.status, self.errCode, self.errMsg, self.data)
     
     
     def setup_batch_lessons(self, teacher_auth_ids, nums_of_lesson):
@@ -473,13 +493,16 @@ class lesson_manager:
                 )  # 建立課程小卡資訊
                 
 class lesson_card_manager: 
+    
     def __init__(self):
         self.lesson_card_info = dict()
+    
     def setup_a_lesson_card(self, **kwargs):
         # 當課程建立或是修改時，同步編修課程小卡資料
         #print("Activate setup_a_lesson_card!!!!")
         from account.models import teacher_profile
         from lesson.models import lesson_info, lesson_reviews, lesson_card
+        
         try:
             teacher_object = teacher_profile.objects.filter(auth_id = kwargs['teacher_auth_id']).first()
             lesson_object = lesson_info.objects.filter(id = kwargs['corresponding_lesson_id']).first()
@@ -527,8 +550,6 @@ class lesson_card_manager:
                 self.lesson_card_info['working_experience'] =  teacher_object.special_exp
                 self.lesson_card_info['working_experience_is_approved'] =  teacher_object.other_approved
 
-
-            
             # 先確認這個課程小卡是否存在，不存在的話建立，存在的話修改
             lesson_card_object = lesson_card.objects.filter(corresponding_lesson_id=self.lesson_card_info['corresponding_lesson_id']).first()
             if lesson_card_object is None:

@@ -1,6 +1,6 @@
 *.pyc
-/migrations/
-/quikok_env/
+migrations/
+quikok_env/
 /vscode/settings.json
 /static/
 /user_upload/teachers/*
