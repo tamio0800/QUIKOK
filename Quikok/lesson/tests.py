@@ -8,13 +8,14 @@ from lesson.models import lesson_info_for_users_not_signed_up
 from lesson.models import lesson_info
 from lesson.models import lesson_card
 from lesson.models import lesson_sales_sets
-from account.models import teacher_profile
+from account.models import student_profile, teacher_profile
+from account.models import specific_available_time
 from django.contrib.auth.models import Permission, User, Group
 from unittest import skip
 
 
 # python manage.py test lesson/ --settings=Quikok.settings_for_test
-class Lesson_Related_Functions_Test(TestCase):
+class Lesson_Info_Related_Functions_Test(TestCase):
  
     def test_before_signing_up_create_or_edit_a_lesson_exist(self):
         # 測試這個函式是否存在，並且應該回傳status='success', errCode=None, errMsg=None
@@ -726,7 +727,7 @@ class Lesson_Related_Functions_Test(TestCase):
         all_lesson_1_sales_sets = \
             list(lesson_sales_sets.objects.filter(lesson_id=1).values_list('sales_set', flat=True))
         
-        print(f'lesson_info.objects.values():  {lesson_info.objects.values()}')
+        # print(f'lesson_info.objects.values():  {lesson_info.objects.values()}')
         # 因為上方有 "試課優惠"，且也有 "單堂方案"，故應該有:
         #   trial、no_discount、10:90、20:80、30:75  這五種 sales_sets
         self.assertListEqual(
@@ -951,3 +952,153 @@ class Lesson_Related_Functions_Test(TestCase):
             shutil.rmtree(f'user_upload/teachers/{test_username}')
         except Exception as e:
             print(f'Error:  {e}')
+
+
+
+class Lesson_Booking_Related_Functions_Test(TestCase):
+
+    def setUp(self):
+        self.client = Client()        
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+        self.test_username = 'test_teacher_user@test.com'
+        teacher_post_data = {
+            'regEmail': self.test_username,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;1:11,13,15,17,19,21,22,25,33;4:1,9,27,28,41;'
+        }
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        self.test_student_name = 'test_student@a.com'
+        student_post_data = {
+            'regEmail': self.test_student_name,
+            'regPwd': '00000000',
+            'regName': 'test_student_name',
+            'regBirth': '1990-12-25',
+            'regGender': 1,
+            'regRole': 'oneself',
+            'regMobile': '0900-111111',
+            'regNotifiemail': ''
+        }
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        # 建立課程
+        lesson_post_data = {
+            'userID': 1,   # 這是老師的auth_id
+            'action': 'createLesson',
+            'big_title': 'big_title',
+            'little_title': 'test',
+            'title_color': '#000000',
+            'background_picture_code': 1,
+            'background_picture_path': '',
+            'lesson_title': 'test',
+            'price_per_hour': 800,
+            'discount_price': '10:90;20:80;30:75;',
+            'selling_status': 'selling',
+            'lesson_has_one_hour_package': True,
+            'trial_class_price': 69,
+            'highlight_1': 'test',
+            'highlight_2': 'test',
+            'highlight_3': 'test',
+            'lesson_intro': 'test',
+            'how_does_lesson_go': 'test',
+            'target_students': 'test',
+            'lesson_remarks': 'test',
+            'syllabus': 'test',
+            'lesson_attributes': 'test'      
+            }
+        self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+
+
+    def tearDown(self):
+        # 刪掉(如果有的話)產生的資料夾
+        try:
+            shutil.rmtree('user_upload/students/' + self.test_student_name)
+            shutil.rmtree('user_upload/teachers/' + self.test_username)
+        except:
+            pass
+
+
+    def test_if_get_lesson_specific_available_time_works_properly(self):
+
+        query_post_data = {
+            'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
+            'lessonID': 1
+            }
+
+        response = self.client.post(
+            path='/api/lesson/getLessonSpecificAvailableTime/',
+            data=query_post_data
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('success', str(response.content, 'utf8'))
+        # print(f"raw response.content: {str(response.content, 'utf8')}")
+
+        # 接下來來隨機調整一些時段，讓它們變成 is_occupied ，看能不能正常產出
+        the_specific_available_time_objects = \
+            specific_available_time.objects.filter(teacher_model=teacher_profile.objects.first())
+        
+        temp_obj = the_specific_available_time_objects.filter(id=4).first()
+        temp_obj.is_occupied = True
+        temp_obj.save()
+        temp_obj = the_specific_available_time_objects.filter(id=14).first()
+        temp_obj.is_occupied = True
+        temp_obj.save()
+        
+        response = self.client.post(
+            path='/api/lesson/getLessonSpecificAvailableTime/',
+            data=query_post_data
+            )
+        
+        self.assertIn('success', str(response.content, 'utf8'))
+        self.assertNotIn('"bookedTime": []', str(response.content, 'utf8')) # 理論上不會是空的了
+        print(f"editted response.content: {str(response.content, 'utf8')}")
+
+
+    def test_if_booking_lessons_received_data(self):
+        '''
+        確認學生預約課程能否成功執行，進行預約功能前，
+        還必須先確認學生有剩餘時數可供預約
+        '''
+
+        booking_post_data = {
+            'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': '2021-01-04:3,4,5;2021-01-29:9,27,28;'
+            }
+
+        response = self.client.post(
+            path='/api/lesson/bookingLessons/',
+            data=booking_post_data
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('success', str(response.content, 'utf8'))
+
+
+
+
+
+        
+
+
+
