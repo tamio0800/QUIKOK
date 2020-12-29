@@ -294,26 +294,32 @@ def edit_teacher_profile(request):
         # 先全部刪掉再重新建立好了，反正最多就 7 筆資料
         available_week_time_dictionary = dict()
         general_available_time.objects.filter(teacher_model__auth_id=auth_id).delete()
-        for each_weekday_times_set in  [_ for _ in teacher_general_availabale_time.split(';') if len(_)]:
-            week, time = each_weekday_times_set.split(':')
-            available_week_time_dictionary[int(week)] = time
-            general_available_time.objects.create(
-                teacher_model=the_teacher_info_object,
-                week=week,
-                time=time).save()
+        if ';' in teacher_general_availabale_time:
+            # 代表用戶有輸入資料
+            # 目前沒有輸入值的話會是 undefined ，假設只輸入一個欄位，會變 >>
+            # 6:33;0:;1:;2:;3:;4:;5:;
+            for each_weekday_times_set in  [_ for _ in teacher_general_availabale_time.split(';') if len(_) > 2]:
+                week, time = each_weekday_times_set.split(':')
+                available_week_time_dictionary[int(week)] = time
+                general_available_time.objects.create(
+                    teacher_model=the_teacher_info_object,
+                    week=week,
+                    time=time).save()
         
         # 接下來來建立未來半年的 specific_time 吧，這裡比照上面，全部刪掉重建吧
         specific_available_time.objects.filter(teacher_model__auth_id=auth_id).delete()
-        today_date = date_function.today()
-        for each_incremental_day in range(184):
-            that_date = today_date + timedelta(each_incremental_day)
-            if that_date.weekday() in available_week_time_dictionary.keys():
-                # 有這天的空閒再處理就好
-                specific_available_time.objects.create(
-                    teacher_model = the_teacher_info_object,
-                    date = that_date,
-                    time = available_week_time_dictionary[that_date.weekday()]
-                ).save()
+        if len(available_week_time_dictionary.keys()):
+            # 代表用戶有輸入資料
+            today_date = date_function.today()
+            for each_incremental_day in range(184):
+                that_date = today_date + timedelta(each_incremental_day)
+                if that_date.weekday() in available_week_time_dictionary.keys():
+                    # 有這天的空閒再處理就好
+                    specific_available_time.objects.create(
+                        teacher_model = the_teacher_info_object,
+                        date = that_date,
+                        time = available_week_time_dictionary[that_date.weekday()]
+                    ).save()
 
 
         the_teacher_info_object.nickname = nickname
