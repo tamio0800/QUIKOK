@@ -140,7 +140,7 @@ class lesson_booking_info(models.Model):
     lesson_id = models.IntegerField()  # 所對應的課程id
     teacher_auth_id = models.IntegerField()
     student_auth_id = models.IntegerField()
-    parent_auth_id = models.IntegerField(default=-999)
+    parent_auth_id = models.IntegerField(default=-1)
     booked_by = models.CharField(max_length = 20)  # teacher or student or parent
     last_changed_by = models.CharField(max_length = 20)  # teacher or student or parent
     booking_set = models.IntegerField()
@@ -159,7 +159,7 @@ class lesson_complete_record(models.Model):
     lesson_booking_info_id = models.IntegerField()  # 所對應的課程id
     teacher_auth_id = models.IntegerField()
     student_auth_id = models.IntegerField()
-    parent_auth_id = models.IntegerField(default=-999)
+    parent_auth_id = models.IntegerField(default=-1)
     real_teaching_time = models.IntegerField()
     # 實際開課時間
     real_start_time = models.DateTimeField(auto_now_add=True)
