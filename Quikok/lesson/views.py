@@ -681,7 +681,7 @@ def set_lesson_s_status(request):
     if not check_if_all_variables_are_true(action, teacher_auth_id, lesson_id):
         response['status'] = 'failed'
         response['errCode'] = '0'
-        response['errMsg'] = 'Received Arguments Failed.'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
         return JsonResponse(response)
     
     vaildated_lesson_object = \
@@ -689,7 +689,7 @@ def set_lesson_s_status(request):
     if vaildated_lesson_object is None:
         response['status'] = 'failed'
         response['errCode'] = '1'
-        response['errMsg'] = 'Unmatched Lesson Id And Teacher Id.'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
         return JsonResponse(response)
     else:
         # 有找到對應的課程
@@ -703,7 +703,7 @@ def set_lesson_s_status(request):
         else:
             response['status'] = 'failed'
             response['errCode'] = '2'
-            response['errMsg'] = 'Unknown Action.'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
             return JsonResponse(response)
 
     
@@ -745,7 +745,7 @@ def lesson_manage(request):
             if lesson_object is None:
                 response['status'] = 'failed'
                 response['errCode'] = '0'
-                response['errMsg'] = 'Found no lesson.'
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
             else:
                 big_title = lesson_object.big_title
                 little_title = lesson_object.little_title
@@ -799,7 +799,7 @@ def lesson_manage(request):
                 else:
                     response['status'] = 'failed'
                     response['errCode'] = '1'
-                    response['errMsg'] = 'query failed: false in required field'
+                    response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
             return JsonResponse(response) 
             #return render(request, 'lesson/create_lesson.html') #測試頁面
 
@@ -882,12 +882,13 @@ def lesson_manage(request):
                 else:
                     response['status'] = 'failed'
                     response['errCode'] = 0
-                    response['errMsg'] = 'update failed:cannot find this lesson'
+                    response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
             
             else:            # 資料傳輸有問題
                 response['status'] = 'failed'
                 response['errCode'] = '1'
-                response['errMsg'] = 'wrong data: false in required field'        
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+
 
 
         # 新增lesson 時的必填欄位, 不得為 False, 雖然前端有做處理但這邊再防傳輸問題
@@ -965,12 +966,12 @@ def lesson_manage(request):
             else:
                 response['status'] = 'failed'
                 response['errCode'] = '1'
-                response['errMsg'] = 'wrong data: false in required field'
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
         else:
             # action不等於任何值
             response['status'] = 'failed'
             response['errCode'] = '2'
-            response['errMsg'] = 'what is action?'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
     #print(response)
     return JsonResponse(response)    
 
@@ -1042,7 +1043,97 @@ def before_signing_up_create_or_edit_a_lesson(request):
         except:
             response['status'] = 'failed'
             response['errCode'] = '1'
-            response['errMsg'] = 'Error: Written In Database'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
             response['data'] = None
     
     return JsonResponse(response)
+
+
+@require_http_methods(['POST'])
+def get_lesson_specific_available_time(request):
+
+    '''
+    回傳該門課程的老師可預約時段，以及已經被預約走了的時段。
+    status: success / failed
+    errCode: None
+    errMsg: None
+    data:[
+        {
+            availableTime://可預約時段,格式：[2020-10-27:2,5;2020-11-03:2;2020-11-10:2...]
+            bookedTime://已預約,格式：[2020-11-03:2]
+        }
+    ]
+    '''
+
+    response = dict()
+    student_auth_id = request.POST.get('userID', False)
+    lesson_id = request.POST.get('lessonID', False)
+
+    if not check_if_all_variables_are_true(student_auth_id, lesson_id):
+        # 資料傳輸錯誤
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+    else:
+        # the_student_object = student_profile.objects.filter(auth_id=student_auth_id).first()
+        # 無須檢查用戶是否存在，畢竟只是看可預約時段而已。
+        #if the_student_object is None:
+        #    # 該名使用者不存在
+        #    response['status'] = 'failed'
+        #    response['errCode'] = '1'
+        #    response['errMsg'] = '不好意思，您需要登入並且'
+        #    response['data'] = None
+        the_lesson_info_object = lesson_info.objects.filter(id=lesson_id).first()
+        
+        if the_lesson_info_object is None:
+            # 該門課程不存在
+            response['status'] = 'failed'
+            response['errCode'] = '1'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['data'] = None
+        
+        else:
+            #corresponding_teacher_auth_id = the_lesson_info_object.teacher__auth_id
+            available_times = list()
+            specific_available_time_objects = \
+                specific_available_time.objects.filter(
+                    teacher_model=the_lesson_info_object.teacher)
+
+            for each_specific_available_time_object in specific_available_time_objects:
+                the_date = str(each_specific_available_time_object.date)
+                available_times.append(
+                    f'{the_date}:{each_specific_available_time_object.time};'
+                )
+
+            inavailable_times = list()
+            specific_inavailable_time_objects = \
+                specific_available_time.objects.filter(
+                    teacher_model=the_lesson_info_object.teacher).filter(is_occupied=True)
+            
+            for each_specific_inavailable_time_object in specific_inavailable_time_objects:
+                the_date = str(each_specific_inavailable_time_object.date)
+                inavailable_times.append(
+                    f'{the_date}:{each_specific_inavailable_time_object.time};'
+                )
+
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+            response['data'] = {
+                'availableTime': available_times,
+                'bookedTime': inavailable_times
+            }
+
+    return JsonResponse(response)
+            
+            
+
+
+
+        
+
+
+
+
+

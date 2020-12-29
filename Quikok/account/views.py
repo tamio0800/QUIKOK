@@ -161,12 +161,12 @@ def create_a_student_user(request):
                 print('此帳號已註冊到全站資料中!')
             response['status'] = 'failed'
             response['errCode'] = '0'
-            response['errMsg'] = 'username taken' # 使用者已註冊
+            response['errMsg'] = '不好意思，這個信箱已經被註冊囉，請您再選擇一個信箱或是點選「忘記密碼」唷。' # 使用者已註冊
     else:
         # 資料傳輸有問題
         response['status'] = 'failed'
         response['errCode'] = '1'
-        response['errMsg'] = 'wrong data'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
     
     return JsonResponse(response)
 
