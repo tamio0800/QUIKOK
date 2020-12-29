@@ -68,8 +68,7 @@ def get_lesson_cards_for_common_users(request):
         request.POST.get('only_show_lessons_by_this_teacher_s_auth_id', False)
     response = {}
     if not check_if_all_variables_are_true(qty, user_auth_id,
-    keywords, only_show_ones_favorites, only_show_lessons_by_this_teacher_s_auth_id,
-    filtered_by, ordered_by):
+    keywords, filtered_by, ordered_by):
         # 之後等加入條件再改寫法 
         # 收取的資料不正確
         response['status'] = 'failed'
