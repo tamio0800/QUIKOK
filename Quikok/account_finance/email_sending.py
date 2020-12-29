@@ -4,15 +4,16 @@ from django.template.loader import render_to_string
 from account.models import teacher_profile, student_profile
 from lesson.models import lesson_info
 from blog.models import article_info
-
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+#from account_finance.email_sending import email_manager
 class email_manager:
-    
     def email_content(self, num):
         pass
     
     def system_msg_new_order_payment_remind(self, **kwargs):
         #data_test = {'studentID':7, 'teacherID':1,'lessonID':1,'lesson_set':'test' ,'price':100}
-        #for data in data_key:
+        
         try:
             price = kwargs['price']                
             student_authID = kwargs['studentID']
@@ -25,14 +26,15 @@ class email_manager:
             teacher_info = teacher_profile.objects.filter(auth_id = teacher_authID).first() 
             teacher_name = teacher_info.nickname
             lesson_title = lesson_info.objects.filter(id = lesson_id).first().lesson_title
-
+            
+            email_body = article_info.objects.filter(id=1).first().content
     
             email = EmailMessage(
                 subject = '訂課匯款提醒',  # 電子郵件標題
-                body = 'test',
+                body = strip_tags(email_body),
                 #body = '您好！QUIKOK!開課收到您選購了'+ teacher_name + '老師的',
                 from_email= settings.EMAIL_HOST_USER,  # 寄件者
-                to =  ['tamio.chou@gmail.com',]# 先用測試用的信箱[student_email_address]  # 收件者
+                to =  ['colorfulday0123@gmail.com']# 先用測試用的信箱[student_email_address]  # 收件者
             )
             email.fail_silently = False
             email.send()
