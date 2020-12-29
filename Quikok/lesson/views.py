@@ -53,9 +53,10 @@ def get_lesson_cards_for_common_users(request):
             for key_auth_id, value_time in live_teacher_auth_ids_and_times_dict.items():
                 # print('get_teacher_auth_ids_who_have_set_available_times',
                 # key_auth_id, value_time, len(value_time))
-                if not len(value_time) == 0:
+                #if not len(value_time) == 0:
                     # 如果沒有空閒時間就可以直接跳過了
-                    matched_teacher_auth_ids.append(key_auth_id)
+                    # 現在先不要這樣好了
+                matched_teacher_auth_ids.append(key_auth_id)
             return matched_teacher_auth_ids
 
     qty = request.POST.get('qty', False) # 暫定六堂課
