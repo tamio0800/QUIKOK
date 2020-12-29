@@ -40,14 +40,14 @@ def storage_order(request):
                         'teacherID':teacher_authID,
                         'lessonID': lesson_id, 
                         'lesson_set': lesson_set, 
-                        'price':price}
+                        'total_lesson_set_price':price}
 
                     # chatroom傳送通知
                     chatroom_notification = ChatConsumer()
-                    chatroom_notification.system_msg_new_order_payment_remind(notification)
+                    chatroom_notification.system_msg_new_order_payment_remind(**notification)
                     # email傳送通知
                     email_notification = email_manager()
-                    email_notification.send_email(notification)
+                    email_notification.send_email(**notification)
 
                     response = {'status':'success',
                     'errCode': None,
