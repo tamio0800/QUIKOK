@@ -1127,7 +1127,51 @@ def get_lesson_specific_available_time(request):
 
     return JsonResponse(response)
             
+
+
+@require_http_methods(['POST'])
+def booking_lessons(request):
+
+    '''
+    學生預約課程的API，進行預約功能前，還必須先確認學生有剩餘時數可供預約。
+    {
+        status: ‘success’ / ’failed’
+        errCode: None
+        errMsg: None
+        data:[]
+    }
+    '''
+
+    response = dict()
+    student_auth_id = request.POST.get('userID', False)
+    lesson_id = request.POST.get('lessonID', False)
+    booking_date_time = request.POST.get('bookingDateTime', False)
+
+    if not check_if_all_variables_are_true(student_auth_id, lesson_id, booking_date_time):
+        # 資料傳輸錯誤
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+    else:
+        the_student_object = student_profile.objects.filter(auth_id=student_auth_id).first()
+        if the_student_object is None:
+            # 該名使用者未註冊或未登入
+            response['status'] = 'failed'
+            response['errCode'] = '1'
+            response['errMsg'] = '不好意思，您需要登入我們才有辦法協助安排課程預約唷，\
+                                  請點選畫面右上角進行登入或註冊，如果有任何問題請告訴我們，讓我們為您服務。'
+            response['data'] = None
+        else:
+            # 接著確認該名使用者有沒有剩餘的時數可供預約
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+            response['data'] = None
+    return JsonResponse(response)
             
+
+
 
 
 

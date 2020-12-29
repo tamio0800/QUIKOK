@@ -8,7 +8,7 @@ from lesson.models import lesson_info_for_users_not_signed_up
 from lesson.models import lesson_info
 from lesson.models import lesson_card
 from lesson.models import lesson_sales_sets
-from account.models import teacher_profile
+from account.models import student_profile, teacher_profile
 from account.models import specific_available_time
 from django.contrib.auth.models import Permission, User, Group
 from unittest import skip
@@ -1040,7 +1040,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
     def test_if_get_lesson_specific_available_time_works_properly(self):
 
         query_post_data = {
-            'userID': 1,  # 學生的auth_id
+            'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
             'lessonID': 1
             }
 
@@ -1072,6 +1072,27 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         self.assertIn('success', str(response.content, 'utf8'))
         self.assertNotIn('"bookedTime": []', str(response.content, 'utf8')) # 理論上不會是空的了
         print(f"editted response.content: {str(response.content, 'utf8')}")
+
+
+    def test_if_booking_lessons_received_data(self):
+        '''
+        確認學生預約課程能否成功執行，進行預約功能前，
+        還必須先確認學生有剩餘時數可供預約
+        '''
+
+        booking_post_data = {
+            'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': '2021-01-04:3,4,5;2021-01-29:9,27,28;'
+            }
+
+        response = self.client.post(
+            path='/api/lesson/bookingLessons/',
+            data=booking_post_data
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('success', str(response.content, 'utf8'))
 
 
 
