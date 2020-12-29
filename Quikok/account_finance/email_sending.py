@@ -1,21 +1,19 @@
 from django.core.mail import EmailMessage
 from django.conf import settings
-from django.template.loader import render_to_string
+from django.template.loader import render_to_string, get_template
 from account.models import teacher_profile, student_profile
 from lesson.models import lesson_info
 from blog.models import article_info
-from django.template.loader import render_to_string
+from django.template import Context, Template
 from django.utils.html import strip_tags
 #from account_finance.email_sending import email_manager
 class email_manager:
     def email_content(self, num):
         pass
-    
     def system_msg_new_order_payment_remind(self, **kwargs):
-        #data_test = {'studentID':7, 'teacherID':1,'lessonID':1,'lesson_set':'test' ,'price':100}
-        
+        #data_test = {'studentID':7, 'teacherID':1,'lessonID':1,'lesson_set':'30:70' ,'total_lesson_set_price':100}
         try:
-            price = kwargs['price']                
+            price = kwargs['total_lesson_set_price']                
             student_authID = kwargs['studentID']
             teacher_authID = kwargs['teacherID']
             lesson_id = kwargs['lessonID']
@@ -27,16 +25,43 @@ class email_manager:
             teacher_name = teacher_info.nickname
             lesson_title = lesson_info.objects.filter(id = lesson_id).first().lesson_title
             
-            email_body = article_info.objects.filter(id=1).first().content
-    
+            if lesson_set == 'trail':
+                lesson_set_name = '試教課程'
+            elif lesson_set == 'no_discount':
+                lesson_set_name = '單堂課程'
+            else:
+                set_info = lesson_set.split(':')
+                set_amount_hour = set_info[0]
+                set_discount = set_info[1]
+                
+                if '0' in set_discount: # 70 折-> 7折
+                    set_discount = set_discount.strip('0')
+                else: # 75折-> 7.5折
+                    set_discount = set_discount[0]+'.'+set_discount[1]
+
+                lesson_set_name = f'總時數：{set_amount_hour}小時，優惠:{set_discount}折'
+
+            #email_body = article_info.objects.filter(id=1).first().content 直接從資料庫取,難以做變數
+            suit_pattern = get_template('./send_new_order_remind.html')
+            
+            email_context = {
+                'user_nickname': student_info.nickname,
+                'teacher_nickname': teacher_info.nickname,
+                'price':price,
+                'lesson_title':lesson_title,
+                'lesson_set':lesson_set_name
+            }
+            email_body = suit_pattern.render(email_context)
+
             email = EmailMessage(
                 subject = '訂課匯款提醒',  # 電子郵件標題
-                body = strip_tags(email_body),
+                body = email_body, #strip_tags(email_body),
                 #body = '您好！QUIKOK!開課收到您選購了'+ teacher_name + '老師的',
                 from_email= settings.EMAIL_HOST_USER,  # 寄件者
-                to =  ['colorfulday0123@gmail.com']# 先用測試用的信箱[student_email_address]  # 收件者
+                to =  ['colorfulday0123@gmail.com']# tamio.chou@gmail.com 先用測試用的信箱[student_email_address]  # 收件者
             )
             email.fail_silently = False
+            email.content_subtype = 'html'
             email.send()
 
             return True
@@ -44,11 +69,9 @@ class email_manager:
             print(f'Exception: {e}')
             return False
 
-    def send_email(self, **kwargs):
-        subject = kwargs['subject']
-        body = kwargs['body']
-        to_whom = kwargs['to_whom']
 
+# 這是一個最基本的寄信範例
+    def send_email(self, **kwargs):
         email = EmailMessage(
             subject = '測試信',  # 電子郵件標題
             body = '測試看看能不能真的發出去的內容',
