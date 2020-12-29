@@ -17,6 +17,9 @@ from account.model_tools import *
 from django.db.models import Q
 from handy_functions import check_if_all_variables_are_true
 from handy_functions import sort_dictionaries_in_a_list_by_specific_key
+from lesson.models import lesson_booking_info
+from account_finance.models import student_remaining_minutes_of_each_purchased_lesson_set
+from django.db.models import Sum
 
 
 @login_required
@@ -1131,7 +1134,6 @@ def get_lesson_specific_available_time(request):
 
 @require_http_methods(['POST'])
 def booking_lessons(request):
-
     '''
     學生預約課程的API，進行預約功能前，還必須先確認學生有剩餘時數可供預約。
     {
@@ -1141,11 +1143,11 @@ def booking_lessons(request):
         data:[]
     }
     '''
-
     response = dict()
     student_auth_id = request.POST.get('userID', False)
     lesson_id = request.POST.get('lessonID', False)
     booking_date_time = request.POST.get('bookingDateTime', False)
+    # booking_date_time 類似這種形式 >> ['2020-11-11:0,1,2,3;', '2020-11-12:0,1,2,3;']
 
     if not check_if_all_variables_are_true(student_auth_id, lesson_id, booking_date_time):
         # 資料傳輸錯誤
@@ -1154,6 +1156,7 @@ def booking_lessons(request):
         response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
         response['data'] = None
     else:
+        print(f'booking_date_time: {booking_date_time}')
         the_student_object = student_profile.objects.filter(auth_id=student_auth_id).first()
         if the_student_object is None:
             # 該名使用者未註冊或未登入
@@ -1164,10 +1167,28 @@ def booking_lessons(request):
             response['data'] = None
         else:
             # 接著確認該名使用者有沒有剩餘的時數可供預約
-            response['status'] = 'success'
-            response['errCode'] = None
-            response['errMsg'] = None
-            response['data'] = None
+            the_remaining_minutes_object = \
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(student_auth_id=student_auth_id).filter(lesson_id=lesson_id)
+            # 計算所有剩餘的時數(分鐘)
+            # remaining_minutes = the_remaining_minutes_object.aggregate(Sum('remaining_minutes'))['remaining_minutes__sum']
+            remaining_minutes = 960
+            print(f'remaining_minutes:  {remaining_minutes}')
+
+            this_time_booking_minutes = \
+                sum([len(_.split(':')[-1][:-1].split(',')) * 30 for _ in booking_date_time])
+            print(f'this_time_booking_minutes:  {this_time_booking_minutes}')
+
+            if this_time_booking_minutes > remaining_minutes:
+                response['status'] = 'failed'
+                response['errCode'] = '2'
+                response['errMsg'] = f'不好意思，您的剩餘時數不足(只能預約{int(remaining_minutes/30)}堂課)，\
+                                       請重新確認預約堂數，或再次訂購課程方案後進行預約唷，謝謝您。'
+                response['data'] = None
+            else:
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = None
     return JsonResponse(response)
             
 
