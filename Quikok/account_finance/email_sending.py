@@ -11,7 +11,7 @@ class email_manager:
         pass
     
     def system_msg_new_order_payment_remind(self, **kwargs):
-        #data_test = {'studentID':1, 'teacherID':1,'lessonID':1,'lesson_set':'test' ,'price':100}
+        #data_test = {'studentID':7, 'teacherID':1,'lessonID':1,'lesson_set':'test' ,'price':100}
         #for data in data_key:
         try:
             price = kwargs['price']                

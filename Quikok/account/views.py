@@ -1387,16 +1387,6 @@ def feedback_view_function(request):
     return JsonResponse(response)
 
 
-def send_email(request):
-    email = EmailMessage(
-        subject = '測試信',  # 電子郵件標題
-        body = '測試看看能不能真的發出去的內容 by Tamio_Test',
-        from_email=settings.EMAIL_HOST_USER,  # 寄件者
-        to = ['tamio.chou@gmail.com', 'alal1p1p@gmail.com']  # 收件者
-    )
-    email.fail_silently = False
-    email.send()
-    return HttpResponse('Success!')
 
 
     

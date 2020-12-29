@@ -5,6 +5,7 @@ from lesson.models import lesson_info, lesson_sales_sets, lesson_booking_info
 from account_finance.email_sending import email_manager
 from django.contrib.auth.models import Group
 import os, shutil
+from django.core import mail
 #python manage.py test account_finance/ --settings=Quikok.settings_for_test
 class test_finance_functions(TestCase):
     def setUp(self):
@@ -82,7 +83,6 @@ class test_finance_functions(TestCase):
                 data=lesson_post_data)
 
     def test_storege_order(self):
-        # 先建立一個老師的帳號，已經在 account.tests 測試過，故毋須重複測試
         # 測試前端傳來三種不同情況的方案時,是否能順利寫入
         lesson_set = ['trail','no_discount','30:70']
         # 還要建立課程才能測試
@@ -109,6 +109,8 @@ class test_finance_functions(TestCase):
         #        'data': None
         #    })
     def test_email_sending_new_order(self):
+        
+        #mail.outbox = [] # 清空暫存記憶裡的信, def結束會自動empty,有需要再用
         data_test = {'studentID':2, 'teacherID':1,'lessonID':1,'lesson_set':'test' ,'price':100}
 
         self.assertIsNotNone(student_profile.objects.filter(auth_id=data_test['studentID']).first())
@@ -119,43 +121,6 @@ class test_finance_functions(TestCase):
         ret = e.system_msg_new_order_payment_remind(**data_test)
         self.assertTrue(ret)
         # 確認程式有正確執行
-
-    def test_email_sendind_works_properly(self):
-        '''
-        詳見: https://docs.djangoproject.com/en/1.11/topics/testing/tools/#email-services
-        
-        If any of your Django views send email using Django’s email functionality, 
-            you probably don’t want to send email each time you run a test using that view. 
-        For this reason, Django’s test runner automatically redirects all Django-sent email to a dummy outbox. 
-        
-        This lets you test every aspect of sending email – 
-            from the number of messages sent to the contents of each message – 
-            without actually sending the messages.
-        '''
-
-        # 這裡有點照抄 send_mail 的意味
-        from django.core import mail
-        from django.conf import settings
-
-        test_subject = '測試信'
-        mail.send_mail(
-            subject = test_subject,  # 電子郵件標題
-            message = '測試看看能不能真的發出去的內容',
-            from_email = settings.EMAIL_HOST_USER,  # 寄件者
-            recipient_list = ['tamio.chou@gmail.com'],  # 收件者
-            fail_silently = False
-        )
-        print(f'mail.outbox: {mail.outbox}')
-        print(f'mail.outbox[0]: {mail.outbox[0]}, {mail.outbox[0].subject}')
-        self.assertEqual(len(mail.outbox), 1, mail.outbox)
-        self.assertEqual(mail.outbox[0].subject, test_subject)
-
-
-    def tearDown(self):
-        # 刪掉(如果有的話)產生的資料夾
-        try:
-            shutil.rmtree('user_upload/students/' + self.test_student_name)
-            shutil.rmtree('user_upload/teachers/' + self.test_username)
-        except:
-            pass
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, '訂課匯款提醒')
 
