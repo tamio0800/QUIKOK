@@ -161,12 +161,12 @@ def create_a_student_user(request):
                 print('此帳號已註冊到全站資料中!')
             response['status'] = 'failed'
             response['errCode'] = '0'
-            response['errMsg'] = 'username taken' # 使用者已註冊
+            response['errMsg'] = '不好意思，這個信箱已經被註冊囉，請您再選擇一個信箱或是點選「忘記密碼」唷。' # 使用者已註冊
     else:
         # 資料傳輸有問題
         response['status'] = 'failed'
         response['errCode'] = '1'
-        response['errMsg'] = 'wrong data'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
     
     return JsonResponse(response)
 
@@ -1387,16 +1387,6 @@ def feedback_view_function(request):
     return JsonResponse(response)
 
 
-def send_email(request):
-    email = EmailMessage(
-        subject = '測試信',  # 電子郵件標題
-        body = '測試看看能不能真的發出去的內容 by Tamio_Test',
-        from_email=settings.EMAIL_HOST_USER,  # 寄件者
-        to = ['tamio.chou@gmail.com', 'alal1p1p@gmail.com']  # 收件者
-    )
-    email.fail_silently = False
-    email.send()
-    return HttpResponse('Success!')
 
 
     

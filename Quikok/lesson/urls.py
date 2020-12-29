@@ -18,5 +18,7 @@ urlpatterns = [
     path('editLesson/', views.lesson_manage),
     path('showLessonDetail/', views.lesson_manage),
     path('fake_form/', views.fake_form),
+    path('getLessonSpecificAvailableTime/', views.get_lesson_specific_available_time),
+    path('bookingLessons/', views.booking_lessons),
     
 ]

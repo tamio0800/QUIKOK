@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from account_finance.models import student_purchase_record
+from account_finance.email_sending import email_manager
 from account.models import teacher_profile
 from lesson.models import lesson_info, lesson_sales_sets, lesson_booking_info
 from django.http import JsonResponse
@@ -33,10 +34,21 @@ def storage_order(request):
                         lesson_name = lesson_obj.lesson_title,
                         lesson_set_id = set_obj.id)
                     new_record.save()
+
+                    notification = {
+                        'studenID' :student_authID, 
+                        'teacherID':teacher_authID,
+                        'lessonID': lesson_id, 
+                        'lesson_set': lesson_set, 
+                        'total_lesson_set_price':price}
+
                     # chatroom傳送通知
-                    chatroom_func = ChatConsumer()
-                    chatroom_func.system_msg_new_order_payment_remind()
+                    chatroom_notification = ChatConsumer()
+                    chatroom_notification.system_msg_new_order_payment_remind(**notification)
                     # email傳送通知
+                    email_notification = email_manager()
+                    email_notification.send_email(**notification)
+
                     response = {'status':'success',
                     'errCode': None,
                     'errMsg': None,
@@ -52,7 +64,7 @@ def storage_order(request):
                 'errMsg': '系統找不到老師或該門課程，請稍後再試，如狀況持續可連絡客服',
                 'data': None}
         else:
-            print(e)
+            
             response = {'status':'failed',
             'errCode': 2,
             'errMsg': '資料庫有問題,請稍後再試,如狀況持續可連絡客服',
