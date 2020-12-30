@@ -300,27 +300,29 @@ def edit_teacher_profile(request):
             # 6:33;0:;1:;2:;3:;4:;5:;
             for each_weekday_times_set in  [_ for _ in teacher_general_availabale_time.split(';') if len(_) > 2]:
                 week, time = each_weekday_times_set.split(':')
-                available_week_time_dictionary[int(week)] = time
-                general_available_time.objects.create(
-                    teacher_model=the_teacher_info_object,
-                    week=week,
-                    time=time).save()
-        
+                if len(time):
+                    available_week_time_dictionary[int(week)] = time
+                    general_available_time.objects.create(
+                        teacher_model=the_teacher_info_object,
+                        week=week,
+                        time=time).save()
+        # print(f'available_week_time_dictionary  {available_week_time_dictionary}')
         # 接下來來建立未來半年的 specific_time 吧，這裡比照上面，全部刪掉重建吧
         specific_available_time.objects.filter(teacher_model__auth_id=auth_id).delete()
         if len(available_week_time_dictionary.keys()):
             # 代表用戶有輸入資料
             today_date = date_function.today()
-            for each_incremental_day in range(184):
-                that_date = today_date + timedelta(each_incremental_day)
-                if that_date.weekday() in available_week_time_dictionary.keys():
-                    # 有這天的空閒再處理就好
-                    specific_available_time.objects.create(
+            specific_date_time_list_to_be_updated = \
+                [
+                    specific_available_time(
                         teacher_model = the_teacher_info_object,
-                        date = that_date,
-                        time = available_week_time_dictionary[that_date.weekday()]
-                    ).save()
-
+                        date = today_date + timedelta(days=each_incremental_day),
+                        time = available_week_time_dictionary[(today_date + timedelta(days=each_incremental_day)).weekday()]
+                    )
+                    for each_incremental_day in range(184) if 
+                    ((today_date + timedelta(days=each_incremental_day)).weekday() in available_week_time_dictionary.keys())
+                ]
+            specific_available_time.objects.bulk_create(specific_date_time_list_to_be_updated)
 
         the_teacher_info_object.nickname = nickname
         the_teacher_info_object.intro = intro
@@ -650,16 +652,20 @@ def create_a_teacher_user(request):
             print('老師成功建立 一般時間')
 
             # 接下來來建立未來半年的 specific_time 吧
-            today_date = date_function.today()
-            for each_incremental_day in range(184):
-                that_date = today_date + timedelta(each_incremental_day)
-                if that_date.weekday() in available_week_time_dictionary.keys():
-                    # 有這天的空閒再處理就好
-                    specific_available_time.objects.create(
-                        teacher_model = teacher_object,
-                        date = that_date,
-                        time = available_week_time_dictionary[that_date.weekday()]
-                    ).save()
+            if len(available_week_time_dictionary.keys()):
+                # 代表用戶有輸入資料
+                today_date = date_function.today()
+                specific_date_time_list_to_be_updated = \
+                    [
+                        specific_available_time(
+                            teacher_model = teacher_object,
+                            date = today_date + timedelta(days=each_incremental_day),
+                            time = available_week_time_dictionary[(today_date + timedelta(days=each_incremental_day)).weekday()]
+                        )
+                        for each_incremental_day in range(184) if 
+                        ((today_date + timedelta(days=each_incremental_day)).weekday() in available_week_time_dictionary.keys())
+                    ]
+                specific_available_time.objects.bulk_create(specific_date_time_list_to_be_updated)
             print('老師成功建立 特定時間')   # 是說這個要什麼時候更新啦QQ
 
             # 建立老師與system的聊天室
