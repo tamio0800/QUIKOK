@@ -19,9 +19,9 @@ urlpatterns = [
     # teacher_info之後要改成動態的 >> teacher_info/teacher_id
     # path('test_datepicker/', views.datepicker),
     # path('get_time/', views.get_time),
-    path('change_specific_time/', views.change_specific_time),
-    path('get_general_time/', views.get_general_time),
-    path('change_general_time/', views.change_general_time),
+    # path('change_specific_time/', views.change_specific_time),
+    # path('get_general_time/', views.get_general_time),
+    # path('change_general_time/', views.change_general_time),
     path('returnTeacherProfileForOneselfViewing/', views.return_teacher_s_profile_for_oneself_viewing),
     path('returnTeacherProfileForPublicViewing/', views.return_teacher_s_profile_for_public_viewing),
     path('returnStudentProfileForOneselfViewing/', views.return_student_profile_for_oneself_viewing),

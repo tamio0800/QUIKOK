@@ -1070,7 +1070,7 @@ def teacher_info_show(request):
 
 def datepicker(request):
     print('request:',request)
-    return render (request, 'account/datepicker.html' )'''
+    return render (request, 'account/datepicker.html' )'
 
 
 def get_time(request):
@@ -1143,7 +1143,7 @@ def change_general_time(request):
 
 
 
-'''def create_batch_student_users():
+def create_batch_student_users():
     response = {}
     print('StARt')
     for i in range(0, 200):

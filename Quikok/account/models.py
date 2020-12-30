@@ -121,7 +121,7 @@ class specific_available_time(models.Model):
     time=models.CharField(max_length=250)  #Example:1,2,3,4,5,4
     is_occupied=models.BooleanField(default=False)  # 該時段是否已經被預訂了  
     def __str__(self):
-        return self.user.username
+        return self.teacher_model.username
 
 class student_studying_history(models.Model):
     # 這個是學生的學習歷程紀錄，先留著之後再完善
