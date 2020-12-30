@@ -1033,6 +1033,8 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         # 時段我都設1,2,3,4,5，所以只要在其中就ok
         self.available_date_1 = specific_available_time.objects.filter(id=1).first().date
         self.available_date_2 = specific_available_time.objects.filter(id=2).first().date
+        self.available_date_3 = specific_available_time.objects.filter(id=3).first().date
+        self.available_date_4 = specific_available_time.objects.filter(id=4).first().date
 
 
     def tearDown(self):
@@ -1105,7 +1107,6 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-    
     def test_if_booking_lessons_check_students_remaining_minutes(self):
         # 測試預約前會檢查學生剩餘時數
         student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
@@ -1147,6 +1148,9 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             path='/api/lesson/bookingLessons/',
             data=booking_post_data)  
         # 只預約一小時 >> ok
+
+        the_remaining_minutes_object = \
+            student_remaining_minutes_of_each_purchased_lesson_set.objects.first()
         the_remaining_minutes_object.remaining_minutes = 60
         the_remaining_minutes_object.save()  # 重建 60 分鐘的額度
 
@@ -1165,6 +1169,52 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         response = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)  
         # 沒有回傳時段，應該會是錯誤
         self.assertIn('failed', str(response.content, 'utf8'))
+
+        booking_post_data['bookingDateTime'] = f'{self.available_date_1}:;{self.available_date_2}:4,5;'
+        response = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)  
+        self.assertIn('success', str(response.content, 'utf8'))
+
+        the_remaining_minutes_object = \
+            student_remaining_minutes_of_each_purchased_lesson_set.objects.first()
+        the_remaining_minutes_object.remaining_minutes = 150
+        the_remaining_minutes_object.save()  # 重建 150 分鐘的額度
+
+        booking_post_data['bookingDateTime'] = f'{self.available_date_1}:;{self.available_date_2}:1,2,3,4,5;'
+        response = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)  
+        self.assertIn('success', str(response.content, 'utf8'))
+
+        the_remaining_minutes_object = \
+            student_remaining_minutes_of_each_purchased_lesson_set.objects.first()
+        the_remaining_minutes_object.remaining_minutes = 150
+        the_remaining_minutes_object.save()  # 重建 150 分鐘的額度
+
+        booking_post_data['bookingDateTime'] = f'{self.available_date_1}:2,3;{self.available_date_2}:1,2;'
+        response = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)  
+        self.assertIn('success', str(response.content, 'utf8'))
+
+    @skip
+    def test_if_booking_lessons_modified_remaining_minutes_after_booking_successfully(self):
+        '''
+        這個測試用在檢查：當預約成功後，是否有從學生那邊扣除剩餘時數。
+        '''
+        student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_auth_id = student_profile.objects.first().auth_id,
+            teacher_auth_id = teacher_profile.objects.first().auth_id,
+            lesson_id = 1,
+            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+            remaining_minutes = 600  # 因為十堂課就是 10 * 60(min) == 600(min)
+        ).save()  # 建立一個試教 set
+
+        booking_post_data = {
+            'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_1}:1,2,3,4,5;{self.available_date_2}:1,2,3;{self.available_date_1}:1,2,3;'
+        }  # 預約了11個30分鐘，成功後應該只剩下270分鐘
+        response = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)
+
+        self.assertIn('success', str(response.content, 'utf8'))
+        self.assertEqual(270,
+            student_remaining_minutes_of_each_purchased_lesson_set.objects.first().remaining_minutes)
 
 
 

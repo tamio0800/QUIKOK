@@ -1203,13 +1203,10 @@ def booking_lessons(request):
                 # 接著確認該名使用者有沒有剩餘的時數可供預約
             
                 the_remaining_minutes_object = \
-                    student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(student_auth_id=student_auth_id, lesson_id=lesson_id)
+                    student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(student_auth_id=student_auth_id, lesson_id=lesson_id).exclude(remaining_minutes=0)
                 # 計算所有剩餘的時數(分鐘)
                 remaining_minutes = the_remaining_minutes_object.aggregate(Sum('remaining_minutes'))['remaining_minutes__sum']
             
-                print(f'this_booking_minutes: {this_booking_minutes}')
-                print(f'booking_date_times_dict: {booking_date_times_dict}')
-                print(f'remaining_minutes: {remaining_minutes}')
 
                 if this_booking_minutes > remaining_minutes:
                     # 預約的總時數超過user剩餘時數
@@ -1220,6 +1217,12 @@ def booking_lessons(request):
                     response['data'] = None
 
                 else:
+                    # 時數足夠預約，預約成功後要扣除原本的時數
+                    # 除了試教只能使用一次以外(即使不滿60分)
+                    # 其他假設有兩個sets分別剩餘25分、100分，預約了120分鐘後，
+                    # 應該分別變成0分、5分。
+
+
                     response['status'] = 'success'
                     response['errCode'] = None
                     response['errMsg'] = None
