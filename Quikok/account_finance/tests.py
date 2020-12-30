@@ -6,6 +6,7 @@ from account_finance.email_sending import email_manager
 from django.contrib.auth.models import Group
 import os, shutil
 from django.core import mail
+from unittest import skip
 #python manage.py test account_finance/ --settings=Quikok.settings_for_test
 class test_finance_functions(TestCase):
     def setUp(self):
@@ -124,6 +125,8 @@ class test_finance_functions(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, '訂課匯款提醒')
 
+
+@skip
 class pure_email_send_test(TestCase):
 
     def test_email_could_send(self):
