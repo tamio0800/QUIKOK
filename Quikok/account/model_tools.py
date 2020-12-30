@@ -204,6 +204,7 @@ class teacher_manager:
             print(general_available_time_to_return)
             print('回傳給前端的確切時間:')
             print(specific_available_time_to_return)
+            print(specific_available_time.objects.values())
 
             _data['general_available_time'] = general_available_time_to_return
             _data['specific_available_time'] = specific_available_time_to_return
