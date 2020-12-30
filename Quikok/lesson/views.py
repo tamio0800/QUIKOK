@@ -1223,6 +1223,10 @@ def booking_lessons(request):
                     # 應該分別變成0分、5分。
                     
                     # 先確認一下該用戶目前有沒有可用的 "試教" 預約
+                    student_available_sets_object = \
+                        student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                            student_auth_id=student_auth_id, lesson_id=lesson_id, 
+                        ).exclude(remaining_minutes=0)
                     
 
 
