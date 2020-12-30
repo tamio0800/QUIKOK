@@ -11,7 +11,9 @@ from django.utils.html import strip_tags
 class email_manager:
     def email_content(self, num):
         pass
-    def system_msg_new_order_payment_remind(self, **kwargs):
+    def system_email_receive_payment_notification(self, **kwargs):
+        pass
+    def system_email_new_order_payment_remind(self, **kwargs):
         #data_test = {'studentID':7, 'teacherID':1,'lessonID':1,'lesson_set':'30:70' ,'total_lesson_set_price':100}
         try:
             price = kwargs['total_lesson_set_price']                
