@@ -604,12 +604,6 @@ class Feedback_Test(TestCase):
         self.assertEqual(feedback.objects.first().is_signed_in, is_signed_in)
 
 
-class EMAIL_SENDING_TEST(TestCase):
 
-    def test_email_could_send(self):
-        self.client = Client()
-        response = self.client.get('/api/account/send_email/')
-        self.assertIn('Success', str(response.content, 'utf8'),
-        str(response.content, 'utf8'))
 
 

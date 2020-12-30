@@ -124,3 +124,10 @@ class test_finance_functions(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, '訂課匯款提醒')
 
+class pure_email_send_test(TestCase):
+
+    def test_email_could_send(self):
+        self.client = Client()
+        response = self.client.get('/api/account/send_email/')
+        self.assertIn('Success', str(response.content, 'utf8'),
+        str(response.content, 'utf8'))

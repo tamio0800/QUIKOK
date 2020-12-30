@@ -6,6 +6,7 @@ from lesson.models import lesson_info
 from blog.models import article_info
 from django.template import Context, Template
 from django.utils.html import strip_tags
+from email.mime.image import MIMEImage
 #from account_finance.email_sending import email_manager
 class email_manager:
     def email_content(self, num):
@@ -58,7 +59,7 @@ class email_manager:
                 body = email_body, #strip_tags(email_body),
                 #body = '您好！QUIKOK!開課收到您選購了'+ teacher_name + '老師的',
                 from_email= settings.EMAIL_HOST_USER,  # 寄件者
-                to =  ['colorfulday0123@gmail.com']# tamio.chou@gmail.com 先用測試用的信箱[student_email_address]  # 收件者
+                to =  ['colorfulday0123@gmail.com']#'mimigood411@gmail.com' tamio.chou@gmail.com 先用測試用的信箱[student_email_address]  # 收件者
             )
             email.fail_silently = False
             email.content_subtype = 'html'
