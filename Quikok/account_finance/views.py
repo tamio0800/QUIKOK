@@ -6,6 +6,8 @@ from lesson.models import lesson_info, lesson_sales_sets, lesson_booking_info
 from django.http import JsonResponse
 from chatroom.consumers import ChatConsumer
 
+def view_email_new_order_remind(request):
+    return render(request, 'send_new_order_remind.html')
 def storage_order(request):
     # 訂單(方案)結帳
     response = dict()

@@ -86,13 +86,12 @@ class auth_check_manager:
             response['errCode'] = '1'
             response['errMsg'] = 'Query Data Failed.'
             response['data'] = None
-        elif num == 5:
+        elif num == 5: # 時效內登入中但沒有權限
             response['status'] = 'success'
             response['errCode'] = None
             response['errMsg'] = 'Permission denied.'
             response['data'] = {'authority' : False }
   
-
         return(response)
     # 這是個很常用到的功能, 但權限檢查用不到
     def check_user_type(self, userID):
@@ -115,7 +114,7 @@ class auth_check_manager:
         if int(userID) >0:
             token_obj = user_token.objects.filter(authID_object=userID).first()
             print('token in db:')
-            print(token_obj)
+            print(token_obj.token)
             time = datetime.now()
             logout_date = token_obj.logout_time
             logout_datetime_type = datetime.strptime(logout_date.split('.')[0],"%Y-%m-%d %H:%M:%S")
@@ -182,8 +181,8 @@ class auth_check_manager:
                         is_token_match = self.check_user_token(userID,token)
                         if is_token_match == 0: # 超過時效或沒登入的訪客進入該頁
                             response = self.response_to_frontend(3)
-                        elif is_token_match == 2: #token不合. no permission
-                            response = self.response_to_frontend(5)    
+                        elif is_token_match == 2: #token不合. 被登出、須重登
+                            response = self.response_to_frontend(3)    
                         elif is_token_match == 1:
                             # gate3
                             self.get_user_group_and_permission_group(userID)

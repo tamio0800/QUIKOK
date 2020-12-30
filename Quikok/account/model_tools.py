@@ -1,4 +1,5 @@
 from account.models import student_profile, teacher_profile, general_available_time, user_token
+from account.models import specific_available_time
 from chatroom.models import chat_room
 from django.contrib.auth.models import User
 from itertools import product as pdt
@@ -178,40 +179,42 @@ class teacher_manager:
             # 一般時間
             general_available_time_object_records = \
                 general_available_time.objects.filter(teacher_model__auth_id=teacher_auth_id).values()
-            if len(general_available_time_object_records) > 0:
-                # 代表有找到老師的時間
-                general_available_time_list = list()
-                for each_record in general_available_time_object_records:
-                    general_available_time_list.append(
-                        each_record['week'] + ':' + each_record['time']
-                        )
-               
-                general_available_time_list = ';'.join(general_available_time_list)
-                general_available_time_list = general_available_time_list + ';' # 加分號到最後面
-                print('回傳給前端的一般時間:')
-                print(general_available_time_list)
-            else:
-                general_available_time_list = ''
-            _data['general_available_time'] = general_available_time_list
 
-            # 特定時間 第一版不做
-            specific_available_time_list = list()
-            specific_time_queryset = teacher_profile_object.first().specific_time.values()
-            if len(specific_time_queryset) > 0: # 表示有特定時間
-                for each_record in specific_time_queryset:
-                    _date = each_record['date']
-                    _time = each_record['time']
-                    specific_available_time_list.append(_date + ':' + _time)
-                specific_available_time_list = ';'.join(specific_available_time_list)
-                _data['specific_available_time'] = specific_available_time_list
-            else:
-                pass # 應該不需要做甚麼事情
+            general_available_time_to_return = ''
+            specific_available_time_to_return = ''
+            if general_available_time.objects.filter(teacher_model__auth_id=teacher_auth_id).count() > 0:
+                # 代表有找到老師的時間，所以也會有 specific_available_time
+                weeks = list(general_available_time.objects.values_list('week', flat=True).filter(teacher_model__auth_id=teacher_auth_id))
+                times = list(general_available_time.objects.values_list('time', flat=True).filter(teacher_model__auth_id=teacher_auth_id))
+            
+                for w, t in zip(weeks, times):
+                    if len(t):
+                        general_available_time_to_return += \
+                            f'{w}:{t};'
 
+                dates = list(specific_available_time.objects.values_list('date', flat=True).filter(teacher_model__auth_id=teacher_auth_id))
+                times = list(specific_available_time.objects.values_list('time', flat=True).filter(teacher_model__auth_id=teacher_auth_id))
+
+                for d, t in zip(dates, times):
+                    if len(t):
+                        specific_available_time_to_return += \
+                            f'{d}:{t};'
+
+            print('回傳給前端的一般時間:')
+            print(general_available_time_to_return)
+            print('回傳給前端的確切時間:')
+            print(specific_available_time_to_return)
+            print(specific_available_time.objects.values())
+
+            _data['general_available_time'] = general_available_time_to_return
+            _data['specific_available_time'] = specific_available_time_to_return
+
+        
             self.status = 'success'
             self.data = _data
             return (self.status, self.errCode, self.errMsg, self.data)
         except Exception as e:
-            print(e)
+            print(f'return_teacher_profile_for_oneself_viewing {e}')
             self.status = 'failed'
             self.errCode = '2'
             self.errMsg = 'Querying Data Failed.'
@@ -242,7 +245,7 @@ class teacher_manager:
             self.data = _data
             return (self.status, self.errCode, self.errMsg, self.data)
         except Exception as e:
-            print(e)
+            print(f'return_teacher_profile_for_public_viewing {e}')
             self.status = 'failed'
             self.errCode = '2'
             self.errMsg = 'Querying Data Failed.'
@@ -347,7 +350,7 @@ class teacher_manager:
                 self.status = 'success'
                 return (self.status, self.errCode, self.errMsg, self.data)
             except Exception as e:
-                print(e)
+                print(f'edit_teacher_profile_tool {e}')
                 self.status = 'failed'
                 self.errCode = '2'
                 self.errMsg = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
