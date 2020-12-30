@@ -115,7 +115,7 @@ class auth_check_manager:
         if int(userID) >0:
             token_obj = user_token.objects.filter(authID_object=userID).first()
             print('token in db:')
-            print(token_obj)
+            print(token_obj.token)
             time = datetime.now()
             logout_date = token_obj.logout_time
             logout_datetime_type = datetime.strptime(logout_date.split('.')[0],"%Y-%m-%d %H:%M:%S")
