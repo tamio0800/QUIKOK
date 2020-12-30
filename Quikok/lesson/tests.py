@@ -1082,7 +1082,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         self.assertNotIn('"bookedTime": []', str(response.content, 'utf8')) # 理論上不會是空的了
         # print(f"editted response.content: {str(response.content, 'utf8')}")
 
-
+    @skip
     def test_if_booking_lessons_received_data(self):
         # 確認這個函式收得到參數
         student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
@@ -1192,7 +1192,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         response = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)  
         self.assertIn('success', str(response.content, 'utf8'))
 
-    @skip
+    
     def test_if_booking_lessons_modified_remaining_minutes_after_booking_successfully(self):
         '''
         這個測試用在檢查：當預約成功後，是否有從學生那邊扣除剩餘時數。
