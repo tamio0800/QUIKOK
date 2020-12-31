@@ -133,21 +133,21 @@ class lesson_reviews(models.Model):
         return str(self.id)
 
 
-class lesson_booking_info(models.Model):
-    '''
-    課程的預約管理table，這個model是用來管理「每一則booking」的狀態與profile
-    '''
+class lesson_booking_info(models.Model): 
+    '''課程的預約管理table，這個model是用來管理「每一則booking」的狀態與profile'''
+    
     lesson_id = models.IntegerField()  # 所對應的課程id
     teacher_auth_id = models.IntegerField()
     student_auth_id = models.IntegerField()
     parent_auth_id = models.IntegerField(default=-1)
     booked_by = models.CharField(max_length = 20)  # teacher or student or parent
     last_changed_by = models.CharField(max_length = 20)  # teacher or student or parent
-    booking_set = models.IntegerField()
+    booking_set_id = models.IntegerField()
     # 預約使用的是該課程的哪一個方案（ID），這個之後會另外建立一個「每個課程的方案table」來做串連。
-    remaining_minutes = models.IntegerField()
+    remaining_minutes = models.IntegerField()  
+    # 這個指的是假設這門課準時上完，則學生還有多少時數，用意是讓老師知道萬一超時會不會多拿到錢
     booking_date_and_time = models.CharField(max_length=400)  
-    # Example: 2020821:1,2,3,4;20200822:3,4,5,6 之類的
+    # Example: 2020-08-21:1,2,3,4;2020-08-22:3,4,5,6; 之類的
     booking_status = models.CharField(max_length = 20)  # to_be_confirmed or confirmed or canceled
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
