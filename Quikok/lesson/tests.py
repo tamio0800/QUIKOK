@@ -1602,21 +1602,24 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
             available_remaining_minutes = 600
         ).save()  # 建立一個 10:90 set
+        self.assertEqual(student_remaining_minutes_of_each_purchased_lesson_set.objects.count(), 1)
 
         booking_post_data = {
             'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
             'lessonID': 1,
             'bookingDateTime': f'{self.available_date_2}:1,2,3,4,5;{self.available_date_3}:1,2,3,5;'
         }  # 預約9個時段，合計270分鐘
-        self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=booking_post_data)
+
+        response = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)
+        self.assertIn('success', str(response.content, 'utf8'), str(response.content, 'utf8'))
+        self.assertEqual(lesson_booking_info.objects.count(), 1, lesson_booking_info.objects.values())
         
         changing_post_data = {
             'userID': student_profile.objects.first().auth_id,
             'bookingID': lesson_booking_info.objects.first().id,
             'bookingStatus': 'canceled'
         }
-
-        response = self.client.post(path='/api/lesson/changingBookingStatus', data=changing_post_data)
+        response = self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=changing_post_data)
 
         self.assertEqual(response.status_code, 200, str(response.content, "utf8"))
         

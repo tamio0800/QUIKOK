@@ -1347,6 +1347,11 @@ def changing_lesson_booking_status(request):
         response['errCode'] = None
         response['errMsg'] = None
         response['data'] = None
+    else:
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
     
     return JsonResponse(response)
 
