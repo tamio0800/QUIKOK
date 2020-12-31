@@ -41,7 +41,7 @@ class email_manager:
             teacher_info = teacher_profile.objects.filter(auth_id = teacher_authID).first() 
             teacher_name = teacher_info.nickname
             lesson_title = lesson_info.objects.filter(id = lesson_id).first().lesson_title
-            
+            # 選擇方案的文字
             if lesson_set == 'trail':
                 lesson_set_name = '試教課程'
             elif lesson_set == 'no_discount':
@@ -58,6 +58,12 @@ class email_manager:
 
                 lesson_set_name = f'總時數：{set_amount_hour}小時，優惠:{set_discount}折'
 
+            # Q幣折抵的文字
+            if q_discount in ('0',0):
+                q_discount_msg = '0（沒有使用Q幣折抵）'
+            else:
+                q_discount_msg = f'折抵{q_discount}元'
+                purchasing_price = int(price) - int(q_discount)
             #email_body = article_info.objects.filter(id=1).first().content 直接從資料庫取,難以做變數
             suit_pattern = get_template(pattern_html)
             
@@ -67,7 +73,8 @@ class email_manager:
                 'price':price,
                 'lesson_title':lesson_title,
                 'lesson_set':lesson_set_name,
-                'q_discount' :q_discount
+                'q_discount' :q_discount_msg,
+                'purchasing_price':purchasing_price
             }
             email_body = suit_pattern.render(email_context)
 
