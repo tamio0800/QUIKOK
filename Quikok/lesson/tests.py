@@ -1649,8 +1649,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
 
 
     def test_if_api_changing_lesson_booking_status_to_canceled_trial_lesson(self):
-        # 這個是測試可以把預約狀態改成確認，理論上不需要做其他事，相對簡單
-        # 記得要到 lesson_sales_sets 的預約成功 +1
+        # 這個是測試可以把試教的預約狀態改成取消
         student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
@@ -1690,14 +1689,9 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             )
         )  # 測試時數有真的改回去
 
-
-
     
-    
-    @skip
-    def test_if_api_changing_lesson_booking_status_to_canceled_common_lesson(self):
-        # 這個是測試可以把預約狀態改成確認，理論上不需要做其他事，相對簡單
-        # 記得要到 lesson_sales_sets 的預約成功 +1
+    def test_if_api_changing_lesson_booking_status_to_canceled_single_common_lesson(self):
+        # 這個是測試可以把一般的課程預約狀態改成取消(只從單一方案扣時數)
         student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
@@ -1721,6 +1715,21 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
         self.assertEqual('canceled', lesson_booking_info.objects.filter(id=lesson_booking_info.objects.first().id).first().booking_status)
         self.assertEqual('teacher', lesson_booking_info.objects.filter(id=lesson_booking_info.objects.first().id).first().last_changed_by)
+        self.assertEqual(
+            (
+                600, 0
+            ),
+            (
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                    lesson_id=1,
+                    lesson_set_id=lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id
+                ).first().available_remaining_minutes,
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                    lesson_id=1,
+                    lesson_set_id=lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id
+                ).first().withholding_minutes
+            )
+        )  # 測試時數有真的改回去
 
         
 

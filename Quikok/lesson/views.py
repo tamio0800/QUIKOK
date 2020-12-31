@@ -20,6 +20,7 @@ from handy_functions import sort_dictionaries_in_a_list_by_specific_key
 from lesson.models import lesson_booking_info
 from account_finance.models import student_remaining_minutes_of_each_purchased_lesson_set
 from django.db.models import Sum
+from handy_functions import booking_date_time_to_minutes_and_cleansing
 
 
 @login_required
@@ -1146,23 +1147,6 @@ def booking_lessons(request):
     booking_date_time = request.POST.get('bookingDateTime', False)
     # booking_date_time 類似這種形式 >> '2020-11-11:0,1,2,3;2020-11-12:0,1,2,3;'
     
-    def booking_date_time_to_minutes_and_cleansing(the_booking_date_time):
-        '''
-        將收到的 booking_date_time，清理後回傳：
-        (
-            總共預約了多少分鐘, 
-            去除空堂如「%Y-%m-%d:;」後的真正有意義的預約時段，以字典的方式回傳。
-        )
-        '''
-        _temp_dict = dict()
-        clean_booking_times = [_ for _ in the_booking_date_time.split(';') if len(_) > 11]
-        time_count = 0
-        for each_booking_time in clean_booking_times:
-            the_date, the_time = each_booking_time.split(':')
-            _temp_dict[the_date] = the_time
-            time_count += len(the_time.split(','))
-        return (time_count*30, _temp_dict)
-
     if not check_if_all_variables_are_true(student_auth_id, lesson_id, booking_date_time):
         # 資料傳輸錯誤
         response['status'] = 'failed'
@@ -1400,7 +1384,7 @@ def changing_lesson_booking_status(request):
                                 lesson_id=that_lesson_booking_info.lesson_id,
                                 lesson_set_id=that_lesson_booking_info.booking_set_id,
                                 available_remaining_minutes=0
-                            ).first()  # 因為理論上一門課只會有一門試教，所以可以直接拿 first
+                            ).first()  # 因為理論上一門課只會有一門試教，所以可以直接拿 first，且其 available_remaining_minutes 必為 0
 
                         student_remaining_minutes_trial_object.available_remaining_minutes = \
                             student_remaining_minutes_trial_object.withholding_minutes
@@ -1411,8 +1395,51 @@ def changing_lesson_booking_status(request):
                         response['errCode'] = None
                         response['errMsg'] = None
                         response['data'] = None
+                    
+                    else:
+                        # 不是試教，因此是什麼方案都無所謂了
+                        # 接下來篩選出非試教的方案們
+                        non_trial_this_lesson_sales_set_ids = \
+                            list(lesson_sales_sets.objects.values_list('id', flat=True).filter(
+                                lesson_id=that_lesson_booking_info.lesson_id
+                            ).exclude(sales_set='trial'))
 
+                        student_remaining_minutes_non_trial_objects = \
+                            student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                                lesson_id=that_lesson_booking_info.lesson_id,
+                                lesson_set_id__in=non_trial_this_lesson_sales_set_ids,
+                            ).exclude(withholding_minutes=0).order_by('-last_changed_time')
 
+                        this_booked_times_in_minutes = booking_date_time_to_minutes_and_cleansing(
+                            that_lesson_booking_info.booking_date_and_time
+                        )[0]
+
+                        how_many_does_this_booked_times_in_minutes_leave = this_booked_times_in_minutes
+
+                        for each_student_remaining_minutes_non_trial_object in student_remaining_minutes_non_trial_objects:
+                            # 先確認當前資料的預扣額度能不能補回預約取消的時數
+                            if each_student_remaining_minutes_non_trial_object.withholding_minutes > how_many_does_this_booked_times_in_minutes_leave:
+                                # 如果該方案的預扣額度可以直接補回取消的時數
+                                each_student_remaining_minutes_non_trial_object.available_remaining_minutes += \
+                                    how_many_does_this_booked_times_in_minutes_leave
+                                each_student_remaining_minutes_non_trial_object.withholding_minutes -= \
+                                    how_many_does_this_booked_times_in_minutes_leave
+                                how_many_does_this_booked_times_in_minutes_leave = 0
+                                each_student_remaining_minutes_non_trial_object.save()
+                                break
+                            else:
+                                # 無法完全補回，先補回所有的預扣時數，接著再依靠下一筆資料
+                                each_student_remaining_minutes_non_trial_object.available_remaining_minutes += \
+                                    each_student_remaining_minutes_non_trial_object.withholding_minutes
+                                how_many_does_this_booked_times_in_minutes_leave -= \
+                                    each_student_remaining_minutes_non_trial_object.withholding_minutes
+                                each_student_remaining_minutes_non_trial_object.withholding_minutes = 0
+                                each_student_remaining_minutes_non_trial_object.save()
+                        
+                        response['status'] = 'success'
+                        response['errCode'] = None
+                        response['errMsg'] = None
+                        response['data'] = None
 
     else:
         response['status'] = 'failed'

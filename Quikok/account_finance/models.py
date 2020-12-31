@@ -66,3 +66,4 @@ class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
         return str(self.id)
+
