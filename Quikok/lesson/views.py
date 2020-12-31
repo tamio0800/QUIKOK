@@ -1382,6 +1382,38 @@ def changing_lesson_booking_status(request):
                     response['errMsg'] = None
                     response['data'] = None
 
+                elif lesson_booking_info_status == 'canceled':
+                    # 除了更改狀態以外，也要記得將預扣時數返還
+
+                    that_lesson_booking_info.last_changed_by = which_one_changes_it
+                    that_lesson_booking_info.booking_status = lesson_booking_info_status
+                    that_lesson_booking_info.save()
+
+                    # 接下來要確認一下是否為 試教
+                    if lesson_sales_sets.objects.filter(
+                        id=that_lesson_booking_info.booking_set_id
+                        ).first().sales_set == 'trial':
+                        # 是試教
+
+                        student_remaining_minutes_trial_object = \
+                            student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                                lesson_id=that_lesson_booking_info.lesson_id,
+                                lesson_set_id=that_lesson_booking_info.booking_set_id,
+                                available_remaining_minutes=0
+                            ).first()  # 因為理論上一門課只會有一門試教，所以可以直接拿 first
+
+                        student_remaining_minutes_trial_object.available_remaining_minutes = \
+                            student_remaining_minutes_trial_object.withholding_minutes
+                        student_remaining_minutes_trial_object.withholding_minutes= 0
+                        student_remaining_minutes_trial_object.save()
+
+                        response['status'] = 'success'
+                        response['errCode'] = None
+                        response['errMsg'] = None
+                        response['data'] = None
+
+
+
     else:
         response['status'] = 'failed'
         response['errCode'] = '0'
