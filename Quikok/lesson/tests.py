@@ -1186,10 +1186,9 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         # 因為是試教，最多只能預約2堂課(1小時)
 
 
-    
-    def test_if_booking_trail_lessons_modified_remaining_minutes_after_booking_successfully(self):
+    def test_if_booking_trial_lessons_modified_remaining_minutes_after_booking_successfully(self):
         '''
-        這個測試用在檢查：當試教預約成功後，是否有從學生那邊扣除剩餘時數。
+        這個測試用在檢查：當試教預約成功後，是否有從學生那邊扣除剩餘時數，並進行對應的資料庫更新。
         '''
         student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
             student_auth_id = student_profile.objects.first().auth_id,
@@ -1347,6 +1346,66 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             student_remaining_minutes_of_each_purchased_lesson_set.objects.first().withholding_minutes)
         print(f'student_remaining_minutes_of_each_purchased_lesson_set4  \
             {student_remaining_minutes_of_each_purchased_lesson_set.objects.values()}')
+
+
+    def test_if_booking_common_lessons_modified_remaining_minutes_after_booking_successfully(self):
+        student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_auth_id = student_profile.objects.first().auth_id,
+            teacher_auth_id = teacher_profile.objects.first().auth_id,
+            lesson_id = 1,
+            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='trial').filter(is_open=True).first().id,
+            available_remaining_minutes = 60  
+        ).save()  # 先建立一個試教 set
+        student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_auth_id = student_profile.objects.first().auth_id,
+            teacher_auth_id = teacher_profile.objects.first().auth_id,
+            lesson_id = 1,
+            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+            available_remaining_minutes = 600
+        ).save()  # 再建立一個 10:90 set
+        self.assertEqual(student_remaining_minutes_of_each_purchased_lesson_set.objects.count(), 2)
+        
+        booking_post_data = {
+            'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_1}:3;{self.available_date_4}:1;'
+        }  # 即使只預約一堂，都應該全部扣除
+        response = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)
+        self.assertIn('success', str(response.content, 'utf8'), str(response.content, 'utf8'))
+        # 此時試教額度應該已經用完了
+
+        # 來進行 10:90 的預約
+        booking_post_data = {
+            'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_2}:1,2,3,4,5;{self.available_date_3}:1,2,3,5;'
+        }  # 預約9個時段，合計270分鐘
+        response = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)
+        self.assertIn('success', str(response.content, 'utf8'), str(response.content, 'utf8'))
+        print(f"str(response.content, 'utf8')  {str(response.content, 'utf8')}")
+        print(lesson_booking_info.objects.values().filter(id=2))
+        self.assertEqual(
+            (
+                270,
+                330,
+            ),
+            (
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                    lesson_set_id=lesson_sales_sets.objects.filter(
+                        teacher_auth_id=teacher_profile.objects.first().auth_id,
+                        sales_set='10:90'
+                    ).first().id
+                ).first().withholding_minutes,
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                    lesson_set_id=lesson_sales_sets.objects.filter(
+                        teacher_auth_id=teacher_profile.objects.first().auth_id,
+                        sales_set='10:90'
+                    ).first().id
+                ).first().available_remaining_minutes,
+            ),
+            student_remaining_minutes_of_each_purchased_lesson_set.objects.values())
+            # 測試預扣時數與可動用時數是否正確
+        
 
 
 
