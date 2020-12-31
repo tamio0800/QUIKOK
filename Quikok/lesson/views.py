@@ -1338,15 +1338,50 @@ def changing_lesson_booking_status(request):
     }
     '''
     response = dict()
-    student_auth_id = request.POST.get('userID', False)
+    user_auth_id = request.POST.get('userID', False)
     lesson_booking_info_id = request.POST.get('bookingID', False)
     lesson_booking_info_status = request.POST.get('bookingStatus', False)
     
-    if check_if_all_variables_are_true(student_auth_id, lesson_booking_info_id, lesson_booking_info_status):
-        response['status'] = 'success'
-        response['errCode'] = None
-        response['errMsg'] = None
-        response['data'] = None
+    if check_if_all_variables_are_true(user_auth_id, lesson_booking_info_id, lesson_booking_info_status):
+        # 檢查一下這個 user_auth_id 應該要屬於老師或是學生，兩者其一
+        the_teacher = teacher_profile.objects.filter(auth_id=user_auth_id).first()
+        the_student = student_profile.objects.filter(auth_id=user_auth_id).first()
+        
+        if the_teacher is None and the_student is None:
+            # 如果兩者都是 None ，雖然想不出來為什麼會這樣，但這不應該發生
+            response['status'] = 'failed'
+            response['errCode'] = '1'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['data'] = user_auth_id
+        
+        else:
+            # 確實有找到用戶，可以進行狀態改變了
+            # 先確認有沒有該預約紀錄
+            that_lesson_booking_info = \
+                lesson_booking_info.objects.filter(id=lesson_booking_info_id).first()
+            
+            if that_lesson_booking_info is None:
+                # 找不到該預約紀錄
+                response['status'] = 'failed'
+                response['errCode'] = '2'
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                response['data'] = lesson_booking_info_id
+
+            else:
+                # 有該預約紀錄
+                which_one_changes_it = 'student' if the_teacher is None else 'teacher'
+                if lesson_booking_info_status == 'confirmed':
+                    # 要怎麼讓 lesson_sets 那邊 +1 呢 > <
+
+                    that_lesson_booking_info.last_changed_by = which_one_changes_it
+                    that_lesson_booking_info.booking_status = lesson_booking_info_status
+                    that_lesson_booking_info.save()
+
+                    response['status'] = 'success'
+                    response['errCode'] = None
+                    response['errMsg'] = None
+                    response['data'] = None
+
     else:
         response['status'] = 'failed'
         response['errCode'] = '0'
