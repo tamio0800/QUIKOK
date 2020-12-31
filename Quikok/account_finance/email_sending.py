@@ -9,18 +9,28 @@ from django.utils.html import strip_tags
 #from email.mime.image import MIMEImage 夾附件用
 #from account_finance.email_sending import email_manager
 class email_manager:
-    def email_content(self, num):
-        pass
+
+    # 管理email標題以及要渲染的html
+    def email_subject_and_pattern(self, pattern_name):
+        self.email_pattern = {
+            '訂課匯款提醒': './send_new_order_remind.html',
+            '收到款項提醒': './send_order_success.html'
+        }
     def system_email_receive_payment_notification(self, **kwargs):
         pass
+
+    # 收到訂單與匯款提醒用
     def system_email_new_order_payment_remind(self, **kwargs):
+    
         #data_test = {'studentID':7, 'teacherID':1,'lessonID':1,'lesson_set':'30:70' ,'total_lesson_set_price':100}
         try:
+            email_pattern_name = kwargs['email_pattren_name']
             price = kwargs['total_lesson_set_price']                
             student_authID = kwargs['studentID']
             teacher_authID = kwargs['teacherID']
             lesson_id = kwargs['lessonID']
             lesson_set = kwargs['lesson_set']
+            q_discount = kwargs['q_discount']
 
             student_info = student_profile.objects.filter(auth_id = student_authID).first()
             student_email_address = student_info.username
@@ -45,14 +55,15 @@ class email_manager:
                 lesson_set_name = f'總時數：{set_amount_hour}小時，優惠:{set_discount}折'
 
             #email_body = article_info.objects.filter(id=1).first().content 直接從資料庫取,難以做變數
-            suit_pattern = get_template('./send_new_order_remind.html')
+            suit_pattern = get_template(self.email_pattern[email_pattern_name])
             
             email_context = {
                 'user_nickname': student_info.nickname,
                 'teacher_nickname': teacher_info.nickname,
                 'price':price,
                 'lesson_title':lesson_title,
-                'lesson_set':lesson_set_name
+                'lesson_set':lesson_set_name,
+                'q_discount' :q_discount
             }
             email_body = suit_pattern.render(email_context)
 
@@ -60,7 +71,7 @@ class email_manager:
                 subject = '訂課匯款提醒',  # 電子郵件標題
                 body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
                 from_email= settings.EMAIL_HOST_USER,  # 寄件者
-                to =  ['colorfulday0123@gmail.com', 'w2003x3@gmail.com']#'mimigood411@gmail.com' tamio.chou@gmail.com 先用測試用的信箱[student_email_address]  # 收件者
+                to =  ['colorfulday0123@gmail.com']#'w2003x3@gmail.com''mimigood411@gmail.com' tamio.chou@gmail.com 先用測試用的信箱[student_email_address]  # 收件者
             )
             email.fail_silently = False
             email.content_subtype = 'html'
