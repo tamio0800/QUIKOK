@@ -1690,7 +1690,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         )  # 測試時數有真的改回去
 
     
-    def test_if_api_changing_lesson_booking_status_to_canceled_single_common_lesson(self):
+    def test_if_api_changing_lesson_booking_status_to_canceled_single_set_common_lesson(self):
         # 這個是測試可以把一般的課程預約狀態改成取消(只從單一方案扣時數)
         student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
             student_auth_id = student_profile.objects.first().auth_id,
@@ -1727,6 +1727,99 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
                 student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
                     lesson_id=1,
                     lesson_set_id=lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id
+                ).first().withholding_minutes
+            )
+        )  # 測試時數有真的改回去
+
+    
+    def test_if_api_changing_lesson_booking_status_to_canceled_multiple_sets_common_lesson(self):
+        # 這個是測試可以把一般的課程預約狀態改成取消(只從單一方案扣時數)
+        student_remaining_1 = student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_auth_id = student_profile.objects.first().auth_id,
+            teacher_auth_id = teacher_profile.objects.first().auth_id,
+            lesson_id = 1,
+            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+            available_remaining_minutes = 20)  
+        student_remaining_1.save()  # 建立一個 10:90 set  20min
+        student_remaining_2 = student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_auth_id = student_profile.objects.first().auth_id,
+            teacher_auth_id = teacher_profile.objects.first().auth_id,
+            lesson_id = 1,
+            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+            available_remaining_minutes = 60)  
+        student_remaining_2.save()  # 建立一個 10:90 set  60min
+        student_remaining_3 = student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_auth_id = student_profile.objects.first().auth_id,
+            teacher_auth_id = teacher_profile.objects.first().auth_id,
+            lesson_id = 1,
+            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+            available_remaining_minutes = 260)  
+        student_remaining_3.save()  # 建立一個 10:90 set  260min
+
+        booking_post_data = {
+            'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_2}:1,2,3,4,5;{self.available_date_3}:1,2,3,5;{self.available_date_1}:3,5;'
+        }  # 預約9個時段，合計330分鐘
+        response = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)
+        self.assertEqual(
+            (
+                10, 250, 0, 60, 0, 20
+            ),
+            (
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                    id=student_remaining_3.id
+                ).first().available_remaining_minutes,
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                    id=student_remaining_3.id
+                ).first().withholding_minutes,
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                    id=student_remaining_2.id
+                ).first().available_remaining_minutes,
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                    id=student_remaining_2.id
+                ).first().withholding_minutes,
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                    id=student_remaining_1.id
+                ).first().available_remaining_minutes,
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                    id=student_remaining_1.id
+                ).first().withholding_minutes
+            )
+        )  # 測試一下是否真的有預扣時數成功
+
+        changing_post_data = {
+            'userID': student_profile.objects.first().auth_id,
+            'bookingID': lesson_booking_info.objects.first().id,
+            'bookingStatus': 'canceled'
+        } # 測試一下學生發起的取消
+        response = self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=changing_post_data)
+
+        self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertEqual('canceled', lesson_booking_info.objects.filter(id=lesson_booking_info.objects.first().id).first().booking_status)
+        self.assertEqual('student', lesson_booking_info.objects.filter(id=lesson_booking_info.objects.first().id).first().last_changed_by)
+        self.assertEqual(
+            (
+                260, 0, 60, 0, 20, 0
+            ),
+            (
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                    id=student_remaining_3.id
+                ).first().available_remaining_minutes,
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                    id=student_remaining_3.id
+                ).first().withholding_minutes,
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                    id=student_remaining_2.id
+                ).first().available_remaining_minutes,
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                    id=student_remaining_2.id
+                ).first().withholding_minutes,
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                    id=student_remaining_1.id
+                ).first().available_remaining_minutes,
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                    id=student_remaining_1.id
                 ).first().withholding_minutes
             )
         )  # 測試時數有真的改回去
