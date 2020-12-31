@@ -89,8 +89,8 @@ class test_finance_functions(TestCase):
         # 還要建立課程才能測試
         for selected_set in lesson_set:
             data = {'userID':1,
-            'teacher_id':2,
-            'lesson_id':1,
+            'teacherID':2,
+            'lessonID':1,
             'lesson_set': selected_set,
             'total_amount_of_the_lesson_set': 300}
 
@@ -112,7 +112,7 @@ class test_finance_functions(TestCase):
     def test_email_sending_new_order(self):
         
         #mail.outbox = [] # 清空暫存記憶裡的信, def結束會自動empty,有需要再用
-        data_test = {'studentID':2, 'teacherID':1,'lessonID':1,'lesson_set':'test' ,'price':100}
+        data_test = {'studentID':2, 'teacherID':1,'lessonID':1,'lesson_set':'30:70' ,'total_lesson_set_price':100}
 
         self.assertIsNotNone(student_profile.objects.filter(auth_id=data_test['studentID']).first())
         self.assertIsNotNone(teacher_profile.objects.filter(auth_id=data_test['teacherID']).first())

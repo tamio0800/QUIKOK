@@ -13,15 +13,16 @@ def storage_order(request):
     response = dict()
     try:
         student_authID = request.POST.get('userID', False)
-        teacher_authID = request.POST.get('teacher_id', False)
-        lesson_id = request.POST.get('lesson_id', False)
+        teacher_authID = request.POST.get('teacherID', False)
+        lesson_id = request.POST.get('lessonID', False)
         lesson_set = request.POST.get('lesson_set', False)
         price = request.POST.get('total_amount_of_the_lesson_set', False)
+        q_discount_amount = request.POST.get('q_discount', False)
         
         teacher_queryset = teacher_profile.objects.filter(auth_id= teacher_authID)
         lesson_queryset = lesson_info.objects.filter(id = lesson_id)
         if False not in [student_authID, teacher_authID,\
-                        lesson_id, lesson_set, price]:
+                        lesson_id, lesson_set, price,q_discount_amount]:
             if len(teacher_queryset) and len(lesson_queryset) > 0:
                 set_queryset = lesson_sales_sets.objects.filter(Q(lesson_id=lesson_id)&Q(sales_set=lesson_set))
                 if len(set_queryset)>0:
@@ -49,6 +50,7 @@ def storage_order(request):
                     chatroom_notification.system_msg_new_order_payment_remind(**notification)
                     # email傳送通知
                     email_notification = email_manager()
+                    email_notification.email_pattern()
                     email_notification.system_email_new_order_payment_remind(**notification)
 
                     response = {'status':'success',

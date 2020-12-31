@@ -11,7 +11,7 @@ from django.utils.html import strip_tags
 class email_manager:
 
     # 管理email標題以及要渲染的html
-    def email_subject_and_pattern(self, num):
+    def email_subject_and_pattern(self, pattern_name):
         self.email_pattern = {
             '訂課匯款提醒': './send_new_order_remind.html',
             '收到款項提醒': './send_order_success.html'
