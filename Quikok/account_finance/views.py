@@ -35,7 +35,8 @@ def storage_order(request):
                         teacher_nickname= teacher_obj.nickname,
                         lesson_id = lesson_id,
                         lesson_name = lesson_obj.lesson_title,
-                        lesson_set_id = set_obj.id)
+                        lesson_set_id = set_obj.id,
+                        )
                     new_record.save()
 
                     notification = {
@@ -43,14 +44,15 @@ def storage_order(request):
                         'teacherID':teacher_authID,
                         'lessonID': lesson_id, 
                         'lesson_set': lesson_set, 
-                        'total_lesson_set_price':price}
+                        'total_lesson_set_price':price,
+                        'email_pattern_name':'訂課匯款提醒',
+                        'q_discount':q_discount_amount}
 
                     # chatroom傳送通知
                     chatroom_notification = ChatConsumer()
                     chatroom_notification.system_msg_new_order_payment_remind(**notification)
                     # email傳送通知
                     email_notification = email_manager()
-                    email_notification.email_pattern()
                     email_notification.system_email_new_order_payment_remind(**notification)
 
                     response = {'status':'success',

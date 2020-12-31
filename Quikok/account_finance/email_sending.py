@@ -5,13 +5,13 @@ from account.models import teacher_profile, student_profile
 from lesson.models import lesson_info
 from blog.models import article_info
 from django.template import Context, Template
-from django.utils.html import strip_tags
+#from django.utils.html import strip_tags
 #from email.mime.image import MIMEImage 夾附件用
 #from account_finance.email_sending import email_manager
 class email_manager:
 
     # 管理email標題以及要渲染的html
-    def email_subject_and_pattern(self, pattern_name):
+    def __init__(self):
         self.email_pattern = {
             '訂課匯款提醒': './send_new_order_remind.html',
             '收到款項提醒': './send_order_success.html'
@@ -21,10 +21,14 @@ class email_manager:
 
     # 收到訂單與匯款提醒用
     def system_email_new_order_payment_remind(self, **kwargs):
-    
-        #data_test = {'studentID':7, 'teacherID':1,'lessonID':1,'lesson_set':'30:70' ,'total_lesson_set_price':100}
+
+#data_test = {'q_discount':20,'studentID':7, 'teacherID':1,'lessonID':1,'lesson_set':'30:70' ,'total_lesson_set_price':100,'email_pattern_name':'訂課匯款提醒'}
         try:
-            email_pattern_name = kwargs['email_pattren_name']
+            email_pattern_name = kwargs['email_pattern_name']
+            for name in self.email_pattern.keys():
+                if name == email_pattern_name:
+                    pattern_html = self.email_pattern[name]
+
             price = kwargs['total_lesson_set_price']                
             student_authID = kwargs['studentID']
             teacher_authID = kwargs['teacherID']
@@ -37,7 +41,7 @@ class email_manager:
             teacher_info = teacher_profile.objects.filter(auth_id = teacher_authID).first() 
             teacher_name = teacher_info.nickname
             lesson_title = lesson_info.objects.filter(id = lesson_id).first().lesson_title
-            
+            # 選擇方案的文字
             if lesson_set == 'trail':
                 lesson_set_name = '試教課程'
             elif lesson_set == 'no_discount':
@@ -54,8 +58,14 @@ class email_manager:
 
                 lesson_set_name = f'總時數：{set_amount_hour}小時，優惠:{set_discount}折'
 
+            # Q幣折抵的文字
+            if q_discount in ('0',0):
+                q_discount_msg = '0（沒有使用Q幣折抵）'
+            else:
+                q_discount_msg = f'折抵{q_discount}元'
+                purchasing_price = int(price) - int(q_discount)
             #email_body = article_info.objects.filter(id=1).first().content 直接從資料庫取,難以做變數
-            suit_pattern = get_template(self.email_pattern[email_pattern_name])
+            suit_pattern = get_template(pattern_html)
             
             email_context = {
                 'user_nickname': student_info.nickname,
@@ -63,7 +73,8 @@ class email_manager:
                 'price':price,
                 'lesson_title':lesson_title,
                 'lesson_set':lesson_set_name,
-                'q_discount' :q_discount
+                'q_discount' :q_discount_msg,
+                'purchasing_price':purchasing_price
             }
             email_body = suit_pattern.render(email_context)
 
