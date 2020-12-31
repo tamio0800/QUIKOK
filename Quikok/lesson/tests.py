@@ -1106,7 +1106,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-    @skip
+    
     def test_if_booking_lessons_check_students_available_remaining_minutes(self):
         # 測試預約前會檢查學生剩餘時數
         student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
@@ -1182,16 +1182,9 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
 
         booking_post_data['bookingDateTime'] = f'{self.available_date_1}:;{self.available_date_2}:1,2,3,4,5;'
         response = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)  
-        self.assertIn('success', str(response.content, 'utf8'))
+        self.assertIn('failed', str(response.content, 'utf8'))
+        # 因為是試教，最多只能預約2堂課(1小時)
 
-        the_available_remaining_minutes_object = \
-            student_remaining_minutes_of_each_purchased_lesson_set.objects.first()
-        the_available_remaining_minutes_object.available_remaining_minutes = 150
-        the_available_remaining_minutes_object.save()  # 重建 150 分鐘的額度
-
-        booking_post_data['bookingDateTime'] = f'{self.available_date_1}:2,3;{self.available_date_2}:1,2;'
-        response = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)  
-        self.assertIn('success', str(response.content, 'utf8'))
 
     
     def test_if_booking_trail_lessons_modified_remaining_minutes_after_booking_successfully(self):
