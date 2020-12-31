@@ -119,7 +119,7 @@ class test_finance_functions(TestCase):
         self.assertIsNotNone(lesson_info.objects.filter(id=data_test['lessonID']).first())
 
         e = email_manager()
-        ret = e.system_msg_new_order_payment_remind(**data_test)
+        ret = e.system_email_new_order_payment_remind(**data_test)
         self.assertTrue(ret)
         # 確認程式有正確執行
         self.assertEqual(len(mail.outbox), 1)
