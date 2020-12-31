@@ -1207,6 +1207,8 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         self.assertIn('success', str(response.content, 'utf8'))
         self.assertEqual(0,
             student_remaining_minutes_of_each_purchased_lesson_set.objects.first().available_remaining_minutes)
+        self.assertEqual(60,
+            student_remaining_minutes_of_each_purchased_lesson_set.objects.first().withholding_minutes)
         print(f'student_remaining_minutes_of_each_purchased_lesson_set1: \
             {student_remaining_minutes_of_each_purchased_lesson_set.objects.values()}')
         self.assertEqual(
@@ -1254,6 +1256,8 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         self.assertIn('success', str(response.content, 'utf8'))
         self.assertEqual(0,
             student_remaining_minutes_of_each_purchased_lesson_set.objects.first().available_remaining_minutes)
+        self.assertEqual(60,
+            student_remaining_minutes_of_each_purchased_lesson_set.objects.first().withholding_minutes)
         print(f'student_remaining_minutes_of_each_purchased_lesson_set2: \
             {student_remaining_minutes_of_each_purchased_lesson_set.objects.values()}')
         self.assertEqual(
@@ -1282,7 +1286,6 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             lesson_booking_info.objects.values()
         )  # 測試 booking_info 有沒有成功建立
 
-
         student_remaining_minutes_of_each_purchased_lesson_set.objects.first().delete()
         lesson_booking_info.objects.first().delete()
         # 重建一個 60min 的試教
@@ -1301,6 +1304,10 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         response = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)
         self.assertIn('failed', str(response.content, 'utf8'))
         self.assertIn('"errCode": "3"', str(response.content, 'utf8'))
+        self.assertEqual(60,
+            student_remaining_minutes_of_each_purchased_lesson_set.objects.first().available_remaining_minutes)
+        self.assertEqual(0,
+            student_remaining_minutes_of_each_purchased_lesson_set.objects.first().withholding_minutes)
         print(f'student_remaining_minutes_of_each_purchased_lesson_set3: \
             {student_remaining_minutes_of_each_purchased_lesson_set.objects.values()}')
         self.assertEqual(lesson_booking_info.objects.count(), 0)

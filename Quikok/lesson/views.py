@@ -1239,12 +1239,12 @@ def booking_lessons(request):
                         pass
                     
                     else:
-                    # 代表使用者有尚未使用的試教使用資格
-                    # 可以預約，但是需要限制在 1小時內(包含)
+                    # 代表使用者有尚未使用的試教使用資格，必須用完才可以進行一般的預約
+                    # 而且需要限制在 1小時內(包含)，因為是試教
                         if this_booking_minutes > 60:
                             response['status'] = 'failed'
                             response['errCode'] = '5'
-                            response['errMsg'] = f'不好意思，試教體驗課程最多只能預約兩堂唷> <，\
+                            response['errMsg'] = f'不好意思，試教體驗課程最多只能預約兩堂唷(合計60分鐘)> <，\
                                                 請重新確認預約堂數，等體驗課程結束後就可以使用其他方案囉，謝謝您。'
                             response['data'] = None
                         else:
