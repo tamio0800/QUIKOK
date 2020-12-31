@@ -1337,7 +1337,20 @@ def changing_lesson_booking_status(request):
         bookingStatus://'confirmed', 'canceled'
     }
     '''
+    response = dict()
+    student_auth_id = request.POST.get('userID', False)
+    lesson_booking_info_id = request.POST.get('bookingID', False)
+    lesson_booking_info_status = request.POST.get('bookingStatus', False)
+    
+    if check_if_all_variables_are_true(student_auth_id, lesson_booking_info_id, lesson_booking_info_status):
+        response['status'] = 'success'
+        response['errCode'] = None
+        response['errMsg'] = None
+        response['data'] = None
+    
+    return JsonResponse(response)
 
+        
 
         
 

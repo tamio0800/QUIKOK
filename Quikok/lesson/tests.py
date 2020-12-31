@@ -1592,7 +1592,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             )
         )
 
-    @skip
+    
     def test_if_api_changing_lesson_booking_status_exist(self):
         
         student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
