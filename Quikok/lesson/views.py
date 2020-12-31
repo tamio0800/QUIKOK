@@ -472,7 +472,6 @@ def return_lesson_details_for_teacher_who_created_it(request):
 
 @require_http_methods(['GET'])
 def return_lesson_details_for_browsing(request):
-    # http://127.0.0.1:8000/api/lesson/returnLessonDetailsForTeacherWhoCreatedIt/?action=5&userID=2&lessonID=1
     response = dict()
     the_lesson_manager = lesson_manager()
     action = request.GET.get('action', False)
@@ -1176,8 +1175,7 @@ def booking_lessons(request):
         print(f'student_auth_id: {student_auth_id}')
         print(f'lesson_id: {lesson_id}')
         print(f'booking_date_time: {booking_date_time}')
-        print(f'student_remaining_minutes_of_each_purchased_lesson_set: \
-             {student_remaining_minutes_of_each_purchased_lesson_set.objects.values()}')
+
         the_student_object = student_profile.objects.filter(auth_id=student_auth_id).first()
         if the_student_object is None:
             # 該名使用者未註冊或未登入
@@ -1197,43 +1195,136 @@ def booking_lessons(request):
                 response['errCode'] = '2'
                 response['errMsg'] = '不好意思，您似乎沒有點選預約時段，請再次確認一下唷，如果持續發生這個問題，\
                                       請與我們聯繫，，讓我們為您服務。'
-                response['data'] = None
-            
-            else:
-                # 接著確認該名使用者有沒有剩餘的時數可供預約
-            
-                the_remaining_minutes_object = \
-                    student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(student_auth_id=student_auth_id, lesson_id=lesson_id).exclude(remaining_minutes=0)
-                # 計算所有剩餘的時數(分鐘)
-                remaining_minutes = the_remaining_minutes_object.aggregate(Sum('remaining_minutes'))['remaining_minutes__sum']
-            
+                response['data'] = booking_date_time
 
-                if this_booking_minutes > remaining_minutes:
-                    # 預約的總時數超過user剩餘時數
-                    response['status'] = 'failed'
-                    response['errCode'] = '3'
-                    response['errMsg'] = f'不好意思，您的剩餘時數不足(只能預約{int(remaining_minutes/30)}堂課)，\
-                                        請重新確認預約堂數，或再次訂購課程方案後進行預約唷，謝謝您。'
-                    response['data'] = None
+            else:
+                # 確實有收到有效的預約時段
+                # 先確認一下該用戶目前有沒有可用的 "試教" 預約
+                student_available_lesson_sets_ids = \
+                    list(student_remaining_minutes_of_each_purchased_lesson_set.objects.values_list(
+                        'lesson_set_id', flat=True).filter(
+                        student_auth_id=student_auth_id, lesson_id=lesson_id, 
+                    ).exclude(available_remaining_minutes=0))
+                #print(f'student_available_lesson_sets_ids  {student_available_lesson_sets_ids}')
+                #print(f'lesson_sales_sets.objects.values().filter(id__in=student_available_lesson_sets_ids)\
+                #      {lesson_sales_sets.objects.values().filter(id__in=student_available_lesson_sets_ids)}')
+                available_purchased_trial_lesson_sales_sets = \
+                    lesson_sales_sets.objects.filter(
+                        id__in=student_available_lesson_sets_ids, sales_set='trial').first()
+                
+                if available_purchased_trial_lesson_sales_sets is None:
+                    # 代表使用者沒有尚未使用的試教使用資格，可以進行一般的預約
+                    
+                    # 接著確認該名使用者有沒有剩餘的時數可供預約
+                    the_available_remaining_minutes_object = \
+                        student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(student_auth_id=student_auth_id, lesson_id=lesson_id).exclude(available_remaining_minutes=0)
+                    # 計算所有剩餘的時數(分鐘)
+                    available_remaining_minutes = the_available_remaining_minutes_object.aggregate(Sum('available_remaining_minutes'))['available_remaining_minutes__sum']
+                
+                    if this_booking_minutes > available_remaining_minutes:
+                        # 預約的總時數超過user可動用剩餘時數
+                        response['status'] = 'failed'
+                        response['errCode'] = '3'
+                        response['errMsg'] = f'不好意思，您的剩餘時數不足，總計為{available_remaining_minutes}分鐘(只能預約{int(available_remaining_minutes/30)}堂課)，\
+                                            請重新確認預約堂數，或再次訂購課程方案後進行預約唷，謝謝您。'
+                        response['data'] = (this_booking_minutes, available_remaining_minutes)
+  
+                    else:
+                        # 時數足夠預約，預約成功後要扣除原本的時數
+                        # 除了試教只能使用一次以外(即使不滿60分)
+                        # 其他假設有兩個sets分別剩餘25分、100分，預約了120分鐘後，
+                        # 應該分別變成0分、5分。
+
+                        student_availbale_purchased_lesson_sets = \
+                            student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                                lesson_id=lesson_id
+                            ).exclude(
+                                available_remaining_minutes=0
+                            ).order_by('available_remaining_minutes')
+                        # 按照剩餘時數，由小到大排序，因為比較少的要先用掉
+
+                        how_many_does_this_booking_minutes_leave = this_booking_minutes
+
+                        for each_set in student_availbale_purchased_lesson_sets:
+                            if each_set.available_remaining_minutes >= how_many_does_this_booking_minutes_leave:
+                                # 本方案的可動用時數就比本次預約多了，直接扣掉、轉移就完事
+                                each_set.available_remaining_minutes -= how_many_does_this_booking_minutes_leave
+                                each_set.withholding_minutes += how_many_does_this_booking_minutes_leave
+                                how_many_does_this_booking_minutes_leave = 0
+                                each_set.save()
+                                break # 跳出迴圈
+                            else:
+                                # 本方案的可動用時數尚不足以扣除本次的預約時數
+                                how_many_does_this_booking_minutes_leave -= each_set.available_remaining_minutes
+                                # 先把本方案可以扣除的時數從 預約時數扣掉
+                                each_set.withholding_minutes += each_set.available_remaining_minutes
+                                # 再加進預扣時數裡面
+                                each_set.available_remaining_minutes = 0
+                                # 最後再把本方案的可動用時數扣掉 >> 因為全部抵用所以歸零
+                                each_set.save()
+                            
+
+                        # 接下來要更新booking狀態
+                        
+                        new_booking_info = lesson_booking_info.objects.create(
+                            lesson_id = lesson_id,
+                            teacher_auth_id = student_availbale_purchased_lesson_sets.first().teacher_auth_id,
+                            student_auth_id = student_auth_id,
+                            booked_by = 'student',
+                            last_changed_by = 'student',
+                            booking_set_id = student_availbale_purchased_lesson_sets.first().lesson_set_id,
+                            remaining_minutes = (available_remaining_minutes - this_booking_minutes),
+                            booking_date_and_time = ''.join([f'{k}:{v};' for k, v in booking_date_times_dict.items()]),
+                            booking_status = 'to_be_confirmed'
+                        )
+                        new_booking_info.save()
+                        response['status'] = 'success'
+                        response['errCode'] = None
+                        response['errMsg'] = None
+                        response['data'] = new_booking_info.id
 
                 else:
-                    # 時數足夠預約，預約成功後要扣除原本的時數
-                    # 除了試教只能使用一次以外(即使不滿60分)
-                    # 其他假設有兩個sets分別剩餘25分、100分，預約了120分鐘後，
-                    # 應該分別變成0分、5分。
-                    
-                    # 先確認一下該用戶目前有沒有可用的 "試教" 預約
-                    student_available_sets_object = \
-                        student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
-                            student_auth_id=student_auth_id, lesson_id=lesson_id, 
-                        ).exclude(remaining_minutes=0)
-                    
+                    # 代表使用者有尚未使用的試教使用資格，必須用完才可以進行一般的預約
+                    # 而且需要限制在 1小時內(包含)，因為是試教
+                    if this_booking_minutes > 60:
+                        # 試教預約超過1個小時
+                        response['status'] = 'failed'
+                        response['errCode'] = '5'
+                        response['errMsg'] = f'不好意思，試教體驗課程最多只能預約兩堂唷(合計60分鐘)> <，\
+                                            請重新確認預約堂數，等體驗課程結束後就可以使用其他方案囉，謝謝您。'
+                        response['data'] = this_booking_minutes
+                    else:
+                        # 進行試教的預約
+                        # 先找到試教方案set的id!!!!!!
+                        # 將學生的該方案先預扣預約時數，因為是試教，故全部扣除
+                        the_target_student_set_of_available_remaining_minutes_of_each_purchased_lesson_set = \
+                            student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                                lesson_set_id=available_purchased_trial_lesson_sales_sets.id,
+                                student_auth_id=student_auth_id,
+                                lesson_id=lesson_id).first()
+                        
+                        the_target_student_set_of_available_remaining_minutes_of_each_purchased_lesson_set.available_remaining_minutes = 0
+                        the_target_student_set_of_available_remaining_minutes_of_each_purchased_lesson_set.withholding_minutes = 60
+                        the_target_student_set_of_available_remaining_minutes_of_each_purchased_lesson_set.save()
+                        # 將預約後的，可動用時數轉移至預扣時數，並儲存
 
-
-                    response['status'] = 'success'
-                    response['errCode'] = None
-                    response['errMsg'] = None
-                    response['data'] = None
+                        # 接下來要更新booking狀態
+                        new_booking_info = lesson_booking_info.objects.create(
+                            lesson_id = lesson_id,
+                            teacher_auth_id = the_target_student_set_of_available_remaining_minutes_of_each_purchased_lesson_set.teacher_auth_id,
+                            student_auth_id = student_auth_id,
+                            booked_by = 'student',
+                            last_changed_by = 'student',
+                            booking_set_id = available_purchased_trial_lesson_sales_sets.id,
+                            remaining_minutes = 0,  # 因為是試教
+                            booking_date_and_time = ''.join([f'{k}:{v};' for k, v in booking_date_times_dict.items()]),
+                            booking_status = 'to_be_confirmed'
+                        )
+                        new_booking_info.save()
+                        response['status'] = 'success'
+                        response['errCode'] = None
+                        response['errMsg'] = None
+                        response['data'] = new_booking_info.id
 
     return JsonResponse(response)
             

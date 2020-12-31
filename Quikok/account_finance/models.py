@@ -58,7 +58,8 @@ class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
     teacher_auth_id = models.IntegerField()  # 開課的老師 auth_id
     lesson_id = models.IntegerField()  # 所對應的課程id
     lesson_set_id = models.IntegerField()  # 對應的方案id
-    remaining_minutes = models.IntegerField()
+    available_remaining_minutes = models.IntegerField()  # 可動用的剩餘時數
+    withholding_minutes = models.IntegerField(default=0) # 預扣時數
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
