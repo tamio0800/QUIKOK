@@ -508,7 +508,6 @@ def return_lesson_details_for_browsing(request):
 def create_or_edit_a_lesson(request):
 
     response = dict()
-
     action = request.POST.get('action', False)
     teacher_auth_id = request.POST.get('userID', False)
     lesson_id = request.POST.get('lessonID', False)  # 新增沒有, 修改才有
@@ -1130,7 +1129,6 @@ def get_lesson_specific_available_time(request):
     return JsonResponse(response)
             
 
-
 @require_http_methods(['POST'])
 def booking_lessons(request):
     '''
@@ -1329,9 +1327,35 @@ def booking_lessons(request):
     return JsonResponse(response)
             
 
+@require_http_methods(['POST'])
+def changing_lesson_booking_status(request):
+    '''
+    更改課程預約的狀態
+    {
+        userID:
+        bookingID://預約序號  >> (這個是 lesson_booking_info 的ID，切記切記)
+        bookingStatus://'confirmed', 'canceled'
+    }
+    '''
+    response = dict()
+    student_auth_id = request.POST.get('userID', False)
+    lesson_booking_info_id = request.POST.get('bookingID', False)
+    lesson_booking_info_status = request.POST.get('bookingStatus', False)
+    
+    if check_if_all_variables_are_true(student_auth_id, lesson_booking_info_id, lesson_booking_info_status):
+        response['status'] = 'success'
+        response['errCode'] = None
+        response['errMsg'] = None
+        response['data'] = None
+    else:
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+    
+    return JsonResponse(response)
 
-
-
+        
 
         
 

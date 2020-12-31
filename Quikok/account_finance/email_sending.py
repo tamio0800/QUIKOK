@@ -11,8 +11,8 @@ from django.utils.html import strip_tags
 class email_manager:
 
     # 管理email標題以及要渲染的html
-    def email_subject_and_pattern(self, num):
-        self.email_pattren = {
+    def email_subject_and_pattern(self, pattern_name):
+        self.email_pattern = {
             '訂課匯款提醒': './send_new_order_remind.html',
             '收到款項提醒': './send_order_success.html'
         }
@@ -24,7 +24,7 @@ class email_manager:
     
         #data_test = {'studentID':7, 'teacherID':1,'lessonID':1,'lesson_set':'30:70' ,'total_lesson_set_price':100}
         try:
-            email_pattren_name = kwargs['email_pattren_num']
+            email_pattern_name = kwargs['email_pattren_name']
             price = kwargs['total_lesson_set_price']                
             student_authID = kwargs['studentID']
             teacher_authID = kwargs['teacherID']
@@ -55,7 +55,7 @@ class email_manager:
                 lesson_set_name = f'總時數：{set_amount_hour}小時，優惠:{set_discount}折'
 
             #email_body = article_info.objects.filter(id=1).first().content 直接從資料庫取,難以做變數
-            suit_pattern = get_template('./send_new_order_remind.html')
+            suit_pattern = get_template(self.email_pattern[email_pattern_name])
             
             email_context = {
                 'user_nickname': student_info.nickname,
