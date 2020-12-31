@@ -472,7 +472,6 @@ def return_lesson_details_for_teacher_who_created_it(request):
 
 @require_http_methods(['GET'])
 def return_lesson_details_for_browsing(request):
-    # http://127.0.0.1:8000/api/lesson/returnLessonDetailsForTeacherWhoCreatedIt/?action=5&userID=2&lessonID=1
     response = dict()
     the_lesson_manager = lesson_manager()
     action = request.GET.get('action', False)
@@ -1288,6 +1287,7 @@ def booking_lessons(request):
                     # 代表使用者有尚未使用的試教使用資格，必須用完才可以進行一般的預約
                     # 而且需要限制在 1小時內(包含)，因為是試教
                     if this_booking_minutes > 60:
+                        # 試教預約超過1個小時
                         response['status'] = 'failed'
                         response['errCode'] = '5'
                         response['errMsg'] = f'不好意思，試教體驗課程最多只能預約兩堂唷(合計60分鐘)> <，\

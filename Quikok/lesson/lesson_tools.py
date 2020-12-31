@@ -202,7 +202,9 @@ class lesson_manager:
                 self.data[each_col] = _data[each_col]
         # 課程的資料加工完畢，來點開課老師本身的資訊
         self.data['is_this_teacher_male'] = \
-            teacher_profile.objects.filter(id=lesson_object.teacher_id).first().is_male   
+            teacher_profile.objects.filter(id=lesson_object.teacher_id).first().is_male
+        self.data['teacher_nickname'] = \
+            teacher_profile.objects.filter(id=lesson_object.teacher_id).first().nickname   
         # 如果for_whom == 'common_users'，要加上資訊: 這門課是不是該user的最愛?   
         # 以及該開課老師的auth_id
         if for_whom == 'common_users':
