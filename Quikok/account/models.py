@@ -116,6 +116,13 @@ class general_available_time(models.Model):
 
 
 class specific_available_time(models.Model):
+    '''
+    這是老師的詳細時段表，假設老師有空的時段如下:
+    0| 2021-01-01| 1,2,3,4| False
+    之後突然確認了 2021-01-01 時段 2 的預約，
+    我們不需要回頭修改 id=0 的資料，直接新增如下即可:
+    1| 2021-01-01| 2| True
+    '''
     teacher_model=models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='specific_time') 
     date=models.DateField()    
     time=models.CharField(max_length=250)  #Example:1,2,3,4,5,4

@@ -15,6 +15,8 @@ class student_purchase_record(models.Model):
     lesson_name = models.CharField(max_length = 30)
     lesson_set_id = models.IntegerField()
     price = models.IntegerField()
+    purchased_with_q_points = models.IntegerField(default=0)  # 用Q幣支付
+    purchased_with_money = models.IntegerField()
     part_of_bank_account_code = models.CharField(max_length=30, default='') # 用戶繳費帳號後5碼,對帳用
     payment_status = models.CharField(max_length = 30, default = 'unpaid')
     # paid, unpaid, cancel.....
@@ -58,8 +60,10 @@ class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
     teacher_auth_id = models.IntegerField()  # 開課的老師 auth_id
     lesson_id = models.IntegerField()  # 所對應的課程id
     lesson_set_id = models.IntegerField()  # 對應的方案id
-    remaining_minutes = models.IntegerField()
+    available_remaining_minutes = models.IntegerField()  # 可動用的剩餘時數
+    withholding_minutes = models.IntegerField(default=0) # 預扣時數
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
         return str(self.id)
+

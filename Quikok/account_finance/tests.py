@@ -7,7 +7,7 @@ from django.contrib.auth.models import Group
 import os, shutil
 from django.core import mail
 from unittest import skip
-#python manage.py test account_finance/ --settings=Quikok.settings_for_test
+#python3 manage.py test account_finance/ --settings=Quikok.settings_for_test
 class test_finance_functions(TestCase):
     def setUp(self):
         self.client =  Client()        
@@ -89,8 +89,8 @@ class test_finance_functions(TestCase):
         # 還要建立課程才能測試
         for selected_set in lesson_set:
             data = {'userID':1,
-            'teacher_id':2,
-            'lesson_id':1,
+            'teacherID':2,
+            'lessonID':1,
             'lesson_set': selected_set,
             'total_amount_of_the_lesson_set': 300}
 
@@ -112,14 +112,17 @@ class test_finance_functions(TestCase):
     def test_email_sending_new_order(self):
         
         #mail.outbox = [] # 清空暫存記憶裡的信, def結束會自動empty,有需要再用
-        data_test = {'studentID':2, 'teacherID':1,'lessonID':1,'lesson_set':'test' ,'price':100}
+        data_test = {'studentID':2, 'teacherID':1,'lessonID':1,
+                    'lesson_set':'30:70' ,'total_lesson_set_price':100,
+                    'email_pattern_name':'訂課匯款提醒',
+                    'q_discount':20}
 
         self.assertIsNotNone(student_profile.objects.filter(auth_id=data_test['studentID']).first())
         self.assertIsNotNone(teacher_profile.objects.filter(auth_id=data_test['teacherID']).first())
         self.assertIsNotNone(lesson_info.objects.filter(id=data_test['lessonID']).first())
 
         e = email_manager()
-        ret = e.system_msg_new_order_payment_remind(**data_test)
+        ret = e.system_email_new_order_payment_remind(**data_test)
         self.assertTrue(ret)
         # 確認程式有正確執行
         self.assertEqual(len(mail.outbox), 1)
