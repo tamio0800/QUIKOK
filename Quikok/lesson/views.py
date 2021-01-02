@@ -1365,21 +1365,6 @@ def changing_lesson_booking_status(request):
                     # 接下來，因為預約變成「確認」了，所以我們必須要將 預約時段 更新到老師的時程裡面
                     the_teacher_model_object = \
                         teacher_profile.objects.filter(auth_id=that_lesson_booking_info.teacher_auth_id).first()
-                    # print(f'booking_date_and_time  {that_lesson_booking_info.booking_date_and_time}')
-                    
-                    '''data_to_be_created = list()
-                    for each_date_time in that_lesson_booking_info.booking_date_and_time.split(';'):
-                        if len(each_date_time) > 11:
-                            the_date, the_time = each_date_time.split(':')
-                            print(f'each_date_time  {each_date_time}  {the_date}  {the_time}')
-                            data_to_be_created.append(
-                                specific_available_time(
-                                    teacher_model=the_teacher_model_object,
-                                    date=turn_date_string_into_date_format(the_date),
-                                    time=the_time,
-                                    is_occupied=True
-                                )
-                            )'''
 
                     data_to_be_created = [
                         specific_available_time(
@@ -1390,8 +1375,8 @@ def changing_lesson_booking_status(request):
                         ) for _ in that_lesson_booking_info.booking_date_and_time.split(';')
                         if len(_)
                     ]
-
                     specific_available_time.objects.bulk_create(data_to_be_created)
+                    # 更新確認預約時段完成
 
                     response['status'] = 'success'
                     response['errCode'] = None
@@ -1400,6 +1385,7 @@ def changing_lesson_booking_status(request):
 
                 elif lesson_booking_info_status == 'canceled':
                     # 除了更改狀態以外，也要記得將預扣時數返還
+                    # 除此之外，也需要將老師原本已經確認預約的時段取消、變成空閒時段
 
                     that_lesson_booking_info.last_changed_by = which_one_changes_it
                     that_lesson_booking_info.booking_status = lesson_booking_info_status
@@ -1472,6 +1458,20 @@ def changing_lesson_booking_status(request):
                         response['errCode'] = None
                         response['errMsg'] = None
                         response['data'] = None
+
+                    # 不論是不是試教，取消教師 已預約時段 的流程都不會改變，故統一在這裡做
+                    the_teacher_model_object = \
+                        teacher_profile.objects.filter(auth_id=that_lesson_booking_info.teacher_auth_id).first()
+                    booked_date_time_dict = \
+                        booking_date_time_to_minutes_and_cleansing(
+                            that_lesson_booking_info.booking_date_and_time
+                        )[1]
+                    # 接下來刪掉 該教師對應的已預約的時段
+                    specific_available_time.objects.filter(
+                        teacher_model=the_teacher_model_object,
+                        date__in=[turn_date_string_into_date_format(_) for _ in booked_date_time_dict.keys()],
+                        time__in=booked_date_time_dict.values()
+                    ).delete()
 
     else:
         response['status'] = 'failed'

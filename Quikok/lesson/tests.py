@@ -1852,10 +1852,9 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             'userID': teacher_profile.objects.first().auth_id,
             'bookingID': lesson_booking_info.objects.first().id,
             'bookingStatus': 'confirmed'
-        }
-        response = self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=changing_post_data)
-        # 由老師確認
-
+        }  # 由老師確認
+        self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=changing_post_data)
+        
         self.assertEqual(
             3, 
             specific_available_time.objects.filter(
@@ -1890,7 +1889,47 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         print(f'specific_available_time.objects.values().filter(is_occupied=True)  \
         {specific_available_time.objects.values().filter(is_occupied=True)}')
 
-        
+        # 接下來來取消這個預約
+        changing_post_data = {
+            'userID': student_profile.objects.first().auth_id,
+            'bookingID': lesson_booking_info.objects.first().id,
+            'bookingStatus': 'canceled'
+        }  # 換學生取消好了
+
+        response = self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=changing_post_data)
+        self.assertIn('success', str(response.content, 'utf8'), str(response.content, 'utf8'))
+
+        self.assertEqual(
+            0,
+            specific_available_time.objects.filter(
+                teacher_model=teacher_profile.objects.first(),
+                is_occupied=True).count(),
+            specific_available_time.objects.values().filter(is_occupied=True))
+        # 現在應該有沒有被預約的時段了
+
+        # 學生應該也恢復 600 分鐘的可用時數了
+        self.assertEqual(
+            (600, 0),
+            (
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                    student_auth_id = student_profile.objects.first().auth_id,
+                    teacher_auth_id = teacher_profile.objects.first().auth_id,
+                    lesson_id = 1,
+                    lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+                ).first().available_remaining_minutes,
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                    student_auth_id = student_profile.objects.first().auth_id,
+                    teacher_auth_id = teacher_profile.objects.first().auth_id,
+                    lesson_id = 1,
+                    lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+                ).first().withholding_minutes
+            )
+        )
+
+
+
+
+    
 
         
 
