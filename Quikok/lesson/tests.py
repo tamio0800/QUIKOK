@@ -9,7 +9,7 @@ from lesson.models import lesson_info_for_users_not_signed_up
 from lesson.models import lesson_info
 from lesson.models import lesson_card
 from lesson.models import lesson_sales_sets
-from account.models import student_profile, teacher_profile
+from account.models import general_available_time, student_profile, teacher_profile
 from account.models import specific_available_time
 from django.contrib.auth.models import Permission, User, Group
 from unittest import skip
@@ -1825,6 +1825,70 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         )  # 測試時數有真的改回去
 
         
+    def test_if_api_changing_lesson_booking_status_to_update_teacher_s_specific_time(self):
+        student_remaining_1 = student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_auth_id = student_profile.objects.first().auth_id,
+            teacher_auth_id = teacher_profile.objects.first().auth_id,
+            lesson_id = 1,
+            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+            available_remaining_minutes = 600)  
+        student_remaining_1.save()  # 建立一個 10:90 set  600min
+
+        booking_post_data = {
+            'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_2}:1,2,3,4,5;{self.available_date_3}:1,2,3,5;{self.available_date_1}:3,5;'
+        }  # 預約9個時段，合計330分鐘
+
+        self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)
+
+        self.assertEqual(0, specific_available_time.objects.filter(
+            teacher_model=teacher_profile.objects.first(),
+            is_occupied=True).count(),
+            specific_available_time.objects.values())
+        # 目前老師應該沒有被預約的時段
+
+        changing_post_data = {
+            'userID': teacher_profile.objects.first().auth_id,
+            'bookingID': lesson_booking_info.objects.first().id,
+            'bookingStatus': 'confirmed'
+        }
+        response = self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=changing_post_data)
+        # 由老師確認
+
+        self.assertEqual(
+            3, 
+            specific_available_time.objects.filter(
+                teacher_model=teacher_profile.objects.first(),
+                is_occupied=True).count(),
+            specific_available_time.objects.values().filter(is_occupied=True))
+        # 現在應該有三個被預約的時段了
+
+        self.assertEqual(
+            (
+                1, 1, 1
+            ),
+            (
+                specific_available_time.objects.filter(
+                    teacher_model=teacher_profile.objects.first(),
+                    is_occupied=True,
+                    time='1,2,3,4,5'
+                ).count(),
+                specific_available_time.objects.filter(
+                    teacher_model=teacher_profile.objects.first(),
+                    is_occupied=True,
+                    time='1,2,3,5'
+                ).count(),
+                specific_available_time.objects.filter(
+                    teacher_model=teacher_profile.objects.first(),
+                    is_occupied=True,
+                    time='3,5'
+                ).count()
+            ),
+            specific_available_time.objects.values().filter(is_occupied=True)
+        )  # 確認預約細項無誤
+        print(f'specific_available_time.objects.values().filter(is_occupied=True)  \
+        {specific_available_time.objects.values().filter(is_occupied=True)}')
 
         
 

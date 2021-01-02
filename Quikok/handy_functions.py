@@ -1,3 +1,4 @@
+from datetime import date
 import os
 
 def check_if_all_variables_are_true(*args):
@@ -86,5 +87,13 @@ def booking_date_time_to_minutes_and_cleansing(the_booking_date_time):
             _temp_dict[the_date] = the_time
             time_count += len(the_time.split(','))
         return (time_count*30, _temp_dict)
+
+
+def turn_date_string_into_date_format(target_string):
+    '''
+    將 yyyy-mm-dd 的 string 轉化為 date 的形式
+    '''
+    y, m, d = target_string.split('-')
+    return date(year=int(y), month=int(m), day=int(d))
 
 

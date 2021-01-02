@@ -21,6 +21,7 @@ from lesson.models import lesson_booking_info
 from account_finance.models import student_remaining_minutes_of_each_purchased_lesson_set
 from django.db.models import Sum
 from handy_functions import booking_date_time_to_minutes_and_cleansing
+from handy_functions import turn_date_string_into_date_format
 
 
 @login_required
@@ -1100,7 +1101,7 @@ def get_lesson_specific_available_time(request):
             available_times = list()
             specific_available_time_objects = \
                 specific_available_time.objects.filter(
-                    teacher_model=the_lesson_info_object.teacher)
+                    teacher_model=the_lesson_info_object.teacher).filter(is_occupied=False)
 
             for each_specific_available_time_object in specific_available_time_objects:
                 the_date = str(each_specific_available_time_object.date)
@@ -1360,6 +1361,37 @@ def changing_lesson_booking_status(request):
                     that_lesson_booking_info.last_changed_by = which_one_changes_it
                     that_lesson_booking_info.booking_status = lesson_booking_info_status
                     that_lesson_booking_info.save()
+
+                    # 接下來，因為預約變成「確認」了，所以我們必須要將 預約時段 更新到老師的時程裡面
+                    the_teacher_model_object = \
+                        teacher_profile.objects.filter(auth_id=that_lesson_booking_info.teacher_auth_id).first()
+                    # print(f'booking_date_and_time  {that_lesson_booking_info.booking_date_and_time}')
+                    
+                    '''data_to_be_created = list()
+                    for each_date_time in that_lesson_booking_info.booking_date_and_time.split(';'):
+                        if len(each_date_time) > 11:
+                            the_date, the_time = each_date_time.split(':')
+                            print(f'each_date_time  {each_date_time}  {the_date}  {the_time}')
+                            data_to_be_created.append(
+                                specific_available_time(
+                                    teacher_model=the_teacher_model_object,
+                                    date=turn_date_string_into_date_format(the_date),
+                                    time=the_time,
+                                    is_occupied=True
+                                )
+                            )'''
+
+                    data_to_be_created = [
+                        specific_available_time(
+                            teacher_model=the_teacher_model_object,
+                            date=turn_date_string_into_date_format(_.split(':')[0]),
+                            time=_.split(':')[1],
+                            is_occupied=True
+                        ) for _ in that_lesson_booking_info.booking_date_and_time.split(';')
+                        if len(_)
+                    ]
+
+                    specific_available_time.objects.bulk_create(data_to_be_created)
 
                     response['status'] = 'success'
                     response['errCode'] = None
