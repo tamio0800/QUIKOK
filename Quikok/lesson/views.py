@@ -1333,7 +1333,7 @@ def changing_lesson_booking_status(request):
         the_student = student_profile.objects.filter(auth_id=user_auth_id).first()
         
         if the_teacher is None and the_student is None:
-            # 如果兩者都是 None ，雖然想不出來為什麼會這樣，但這不應該發生
+            # 如果兩者都是 None ，雖然想不出來為什麼會找不到發起人，但這不應該發生
             response['status'] = 'failed'
             response['errCode'] = '1'
             response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
@@ -1474,6 +1474,7 @@ def changing_lesson_booking_status(request):
                     ).delete()
 
     else:
+        # 沒有收到前端的資料
         response['status'] = 'failed'
         response['errCode'] = '0'
         response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
