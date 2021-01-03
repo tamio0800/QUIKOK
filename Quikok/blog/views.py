@@ -35,7 +35,7 @@ def main_blog(request):
         ip_address=get_client_ip(request),
         url_path=request.META.get('PATH_INFO'),
         model_name='article_info',
-        object_name=None,
+        object_name='main_blog_page',
         object_id=None,
         action_type='reading',
         remark=None) # 傳送訊號
