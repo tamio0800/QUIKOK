@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'chatroom',
     'Quikok',
     'account',   # 用來處理註冊/個人訊息的呈現app
@@ -35,7 +36,8 @@ INSTALLED_APPS = [
     'blog',  # quikok的文章專區,
     'tinymce',
     'line_function',
-    'logentry_admin',  # This is to show all LogEntry objects in the Django admin site.
+    'analytics'
+    # 'logentry_admin',  # This is to show all LogEntry objects in the Django admin site.
 ]
 # 加入 logentry_admin 後，可能會遇到問題：
 #   「Database returned an invalid datetime value. Are time zone definitions for your database installed?」
