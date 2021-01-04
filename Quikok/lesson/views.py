@@ -22,6 +22,8 @@ from account_finance.models import student_remaining_minutes_of_each_purchased_l
 from django.db.models import Sum
 from handy_functions import booking_date_time_to_minutes_and_cleansing
 from handy_functions import turn_date_string_into_date_format
+from analytics.signals import object_accessed_signal
+from analytics.utils import get_client_ip
 
 
 @login_required
@@ -527,6 +529,18 @@ def create_or_edit_a_lesson(request):
         response['status'], response['errCode'], response['errMsg'], response['data']= \
             the_leeson_manager.setup_a_lesson(
                 teacher_auth_id, request, None, action)
+
+        object_accessed_signal.send(
+            sender='create_or_edit_a_lesson',
+            auth_id=teacher_auth_id,
+            ip_address=get_client_ip(request),
+            url_path=request.META.get('PATH_INFO'),
+            model_name='lesson_info',
+            object_name=request.POST.get('lesson_title'),
+            object_id=response.get('data'),
+            user_agent=request.META.get('HTTP_USER_AGENT'),
+            action_type='create lesson after signup',
+            remark=None) # 傳送訊號
 
         if response['status'] == 'success':
             try:
@@ -1038,6 +1052,18 @@ def before_signing_up_create_or_edit_a_lesson(request):
                 **arguments_dict
             )
             temp_lesson_info.save()
+
+            object_accessed_signal.send(
+            sender='before_signing_up_create_or_edit_a_lesson',
+            auth_id=None,
+            ip_address=get_client_ip(request),
+            url_path=request.META.get('PATH_INFO'),
+            model_name='lesson_info_for_users_not_signed_up',
+            object_name=dummy_teacher_id,
+            object_id=temp_lesson_info.id,
+            user_agent=request.META.get('HTTP_USER_AGENT'),
+            action_type='create lesson before signup',
+            remark=None) # 傳送訊號
 
             response['status'] = 'success'
             response['errCode'] = None

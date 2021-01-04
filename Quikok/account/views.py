@@ -34,6 +34,7 @@ from handy_functions import date_string_2_dateformat
 from handy_functions import clean_files
 from analytics.signals import object_accessed_signal
 from analytics.utils import get_client_ip
+from blog.models import article_info
 
 ## 0916改成api的版本,之前的另存成views_old, 之後依據該檔把已設計好的功能寫過來
 ##### 學生區 #####
@@ -144,6 +145,18 @@ def create_a_student_user(request):
             )
             new_student.save()
             # print('student_profile建立')
+
+            object_accessed_signal.send(
+                sender='create_a_student_user',
+                auth_id=user_created_object.id,
+                ip_address=get_client_ip(request),
+                url_path=request.META.get('PATH_INFO'),
+                model_name='student_profile',
+                object_name=user_created_object.username,
+                object_id=new_student.id,
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                action_type='student register',
+                remark=None) # 傳送訊號
             
             # 建立學生與system的聊天室
             chat_tool = chat_room_manager()
@@ -157,17 +170,6 @@ def create_a_student_user(request):
             response['errMsg'] = None
             #response['data'] = None
 
-            object_accessed_signal.send(
-                sender='create_a_student_user',
-                auth_id=new_student.auth_id,
-                ip_address=get_client_ip(request),
-                url_path=request.META.get('PATH_INFO'),
-                model_name='student_profile',
-                object_name=username,
-                object_id=new_student.id,
-                action_type='student register',
-                remark='done register') # 傳送訊號
-
         else:
             if obj is not None:
                 print('此帳號已註冊過學生類別!')
@@ -177,16 +179,6 @@ def create_a_student_user(request):
             response['errCode'] = '0'
             response['errMsg'] = '不好意思，這個信箱已經被註冊囉，請您再選擇一個信箱或是點選「忘記密碼」唷。' # 使用者已註冊
 
-            object_accessed_signal.send(
-                sender='create_a_student_user',
-                auth_id=None,
-                ip_address=get_client_ip(request),
-                url_path=request.META.get('PATH_INFO'),
-                model_name='student_profile',
-                object_name=None,
-                object_id=None,
-                action_type='student register',
-                remark=f'username taken: {username}') # 傳送訊號
     else:
         # 資料傳輸有問題
         response['status'] = 'failed'
@@ -210,17 +202,6 @@ def return_student_profile_for_oneself_viewing(request):
     else:    
         response['status'], response['errCode'], response['errMsg'], response['data'] = \
             the_student_manager.return_student_profile_for_oneself_viewing(student_auth_id)
-
-    object_accessed_signal.send(
-        sender='return_student_profile_for_oneself_viewing',
-        auth_id=student_auth_id,
-        ip_address=get_client_ip(request),
-        url_path=request.META.get('PATH_INFO'),
-        model_name='student_profile',
-        object_name=response['data']['username'],
-        object_id=None,
-        action_type='self view profile',
-        remark=None) # 傳送訊號
 
     return JsonResponse(response)
 
@@ -634,7 +615,7 @@ def create_a_teacher_user(request):
             user_created_object.save()
             print('老師成功建立 User.objects')
             
-            teacher_profile.objects.create(
+            teacher_created_object = teacher_profile.objects.create(
                     auth_id = user_created_object.id,
                     username = username,
                     password = password,
@@ -664,8 +645,22 @@ def create_a_teacher_user(request):
                     #occupation = if_false_return_empty_else_do_nothing(occupation), 
                     company = company,
                     special_exp = special_exp
-            ).save()
+            )
+            teacher_created_object.save()
             print('成功建立 teacher_profile')
+
+            object_accessed_signal.send(
+                sender='create_a_teacher_user',
+                auth_id=user_created_object.id,
+                ip_address=get_client_ip(request),
+                url_path=request.META.get('PATH_INFO'),
+                model_name='teacher_profile',
+                object_name=user_created_object.username,
+                object_id=teacher_created_object.id,
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                action_type='teacher register',
+                remark=None) # 傳送訊號
+
             ## 寫入一般時間table
             # 因為models設定general_available_time與 teacher_profile 
             # 的teacher_name有foreignkey的關係
@@ -881,6 +876,21 @@ def auth_check(request):
             token_from_user = token_from_user_raw.split(' ')[1]  
         else:
             token_from_user = ''
+        
+        if re.search(
+            r'^/blog/post/.*|^/blog/main|^/landing|^/account/register/teacher.*|^/account/register/student.*|^/lesson/guestready|^/lesson/ready/add', 
+            str(url)) is not None:
+            object_accessed_signal.send(
+                sender='auth_check',
+                auth_id=None if int(user_id) == -1 else user_id,
+                ip_address=get_client_ip(request),
+                url_path=str(url),
+                model_name='user_token',
+                object_name=None,
+                object_id=None,
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                action_type='auth_check',
+                remark=None) # 傳送訊號
         
         print('token is :'+ str(token_from_user))
         page_auth = auth_check_manager()

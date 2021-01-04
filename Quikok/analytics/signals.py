@@ -10,6 +10,7 @@ object_accessed_signal = \
             'api_name',
             'model_name',
             'object_id',
+            'user_agent',
             'action_type',
             'remark',
         ])

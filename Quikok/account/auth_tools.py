@@ -38,7 +38,7 @@ class auth_check_manager:
             '首頁' : ('/home', 'public'),
             '課程搜尋頁' : ('^/lesson/search|/lesson/search[?]q=.*', 'public'),
             '課程資訊頁' : ('^/lesson/main/view/.*', 'public'),
-            '註冊新老師' : ('/account/register/teacher.*', 'public'),
+            '註冊新老師' : ('^/account/register/teacher.*', 'public'),
             '註冊新學生' : ('^/account/register/student.*', 'public'),
             '部落格首頁':('^/blog/main', 'public'),
             '部落格文章內頁':('^/blog/post/.*', 'public'),

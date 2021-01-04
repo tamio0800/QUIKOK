@@ -24,6 +24,10 @@ class student_purchase_record(models.Model):
     def __str__(self):
         return str(self.id)
 
+    class Meta:
+        verbose_name = '學生購買紀錄'
+        verbose_name_plural = '學生購買紀錄'
+
 # 學生退款紀錄
 class student_refund(models.Model):
     student_auth_id = models.IntegerField()
@@ -38,6 +42,10 @@ class student_refund(models.Model):
     bank_code = models.CharField(max_length=5, default='')
     def __str__(self):
         return str(self.id)
+    
+    class Meta:
+        verbose_name = '學生退款紀錄'
+        verbose_name_plural = '學生退款紀錄'
 
 # 老師提款紀錄(預設系統每個月自動轉帳
 class teacher_refund(models.Model):
@@ -53,6 +61,10 @@ class teacher_refund(models.Model):
     bank_code = models.CharField(max_length=5, default='')
     def __str__(self):
         return str(self.id)
+
+    class Meta:
+        verbose_name = '老師提款紀錄'
+        verbose_name_plural = '老師提款紀錄'
 
 
 class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
@@ -70,5 +82,5 @@ class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
     class Meta:
         #ordering= ['-last_changed_time']  # 越新的會被呈現在越上面
         verbose_name = '學生課程方案剩餘時數'
-        #verbose_name_plural = 'Objects Viewed'
+        verbose_name_plural = '學生課程方案剩餘時數'
 

@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
+
 class user_token(models.Model):
     authID_object = models.ForeignKey(User, on_delete=models.CASCADE)
     token = models.CharField(max_length=128) # hash密碼
@@ -43,6 +44,11 @@ class student_profile(models.Model):
     def __str__(self):
         return self.username
 
+    class Meta:
+        #ordering= ['-last_changed_time']  # 越新的會被呈現在越上面
+        verbose_name = '學生個人資料'
+        verbose_name_plural = '學生個人資料'
+
 class teacher_profile(models.Model):
     # 這是for存放老師的額外資訊
     auth_id = models.IntegerField()  # 將用戶的auth_id聯動過來，方便進行query
@@ -83,6 +89,11 @@ class teacher_profile(models.Model):
     total_number_of_remark = models.IntegerField(default=0) # 評分筆數
     def __str__(self):
         return self.username
+
+    class Meta:
+        #ordering= ['-last_changed_time']  # 越新的會被呈現在越上面
+        verbose_name = '老師個人資料'
+        verbose_name_plural = '老師個人資料'
 
 class connects(models.Model):
     # 關係人table用來標註哪些人可以接收到哪些人的學習報告、資料等，有串聯的再於這個table中建立資料。

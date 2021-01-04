@@ -12,6 +12,7 @@ class ObjectAccessedAdmin(admin.ModelAdmin):
         'model_name',
         'object_name',
         'object_id',
+        'user_agent',
         'action_type',
         'timestamp'
         )

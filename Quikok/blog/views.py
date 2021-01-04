@@ -29,7 +29,7 @@ def main_blog(request):
     #print(the_one_big_picture)
     #print(str(the_one_big_picture.picture.url))
 
-    object_accessed_signal.send(
+    '''object_accessed_signal.send(
         sender='main_blog',
         auth_id=None,
         ip_address=get_client_ip(request),
@@ -37,8 +37,9 @@ def main_blog(request):
         model_name='article_info',
         object_name='main_blog_page',
         object_id=None,
+        user_agent=request.META.get('HTTP_USER_AGENT'),
         action_type='reading',
-        remark=None) # 傳送訊號
+        remark=None) # 傳送訊號'''
 
     articles_in_list = list()
     # 將文章應該有的資訊再度整合成一個物件（字典形式）
@@ -90,7 +91,7 @@ def aritcle_content(request, article_id):
     the_articles = article_info.objects.all()
     all_unique_categories = _get_all_categories_for_blog()
 
-    object_accessed_signal.send(
+    '''object_accessed_signal.send(
         sender='aritcle_content',
         auth_id=None,
         ip_address=get_client_ip(request),
@@ -98,8 +99,9 @@ def aritcle_content(request, article_id):
         model_name='article_info',
         object_name=the_article.title,
         object_id=article_id,
+        user_agent=request.META.get('HTTP_USER_AGENT'),
         action_type='reading',
-        remark=None) # 傳送訊號
+        remark=None) # 傳送訊號'''
     
     return render(
         request,

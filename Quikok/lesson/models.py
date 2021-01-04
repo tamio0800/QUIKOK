@@ -57,6 +57,10 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     def __str__(self):
         return self.lesson_title
 
+    class Meta:
+        verbose_name = '課程詳細資訊'
+        verbose_name_plural = '課程詳細資訊'
+
 
 class lesson_card(models.Model):
     # 這個table用來儲存課程小卡的資訊，原因是當我們課程變多的時候，
@@ -87,6 +91,10 @@ class lesson_card(models.Model):
   
     def __str__(self):
         return self.lesson_title
+
+    class Meta:
+        verbose_name = '課程小卡資訊'
+        verbose_name_plural = '課程小卡資訊'
 
 
 '''class lesson_info_snapshot(models.Model): 
@@ -132,6 +140,10 @@ class lesson_reviews(models.Model):
     def __str__(self):
         return str(self.id)
 
+    class Meta:
+        verbose_name = '課程評價'
+        verbose_name_plural = '課程評價'
+
 
 class lesson_booking_info(models.Model): 
     '''課程的預約管理table，這個model是用來管理「每一則booking」的狀態與profile'''
@@ -153,6 +165,10 @@ class lesson_booking_info(models.Model):
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
         return str(self.id)
+
+    class Meta:
+        verbose_name = '課程預約資訊'
+        verbose_name_plural = '課程預約資訊'
 
 
 class lesson_complete_record(models.Model):
@@ -178,6 +194,10 @@ class lesson_complete_record(models.Model):
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
         return str(self.id)
+
+    class Meta:
+        verbose_name = '完課紀錄'
+        verbose_name_plural = '完課紀錄'
         
 
 class lesson_sales_sets(models.Model):
@@ -209,6 +229,10 @@ class lesson_sales_sets(models.Model):
     is_open = models.BooleanField(default=True)  #是否為老師該課程目前使用中的方案
     def __str__(self):
         return str(self.id)
+    
+    class Meta:
+        verbose_name = '課程方案資訊'
+        verbose_name_plural = '課程方案資訊'
 
 class lesson_info_for_users_not_signed_up(models.Model): 
     # 因為有一個先期導入版本，我們利用一個暫存的lesson_info先存放這些資訊，
