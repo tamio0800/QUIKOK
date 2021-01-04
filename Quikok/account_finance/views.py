@@ -17,7 +17,7 @@ def storage_order(request):
         student_authID = request.POST.get('userID', False)
         teacher_authID = request.POST.get('teacherID', False)
         lesson_id = request.POST.get('lessonID', False)
-        lesson_set = request.POST.get('lesson_set', False)
+        lesson_set = request.POST.get('sales_set', False)
         price = request.POST.get('total_amount_of_the_lesson_set', False)
         q_discount_amount = request.POST.get('q_discount', False)
 
@@ -91,9 +91,9 @@ def storage_order(request):
         else:
             response = {'status':'failed',
             'errCode': 2,
-            'errMsg': '資料庫有問題,請稍後再試,如狀況持續可連絡客服',
+            'errMsg': '資料庫有問題，請稍後再試，如狀況持續可連絡客服',
             'data': None}
-            
+
         return JsonResponse(response)
 
     
