@@ -85,30 +85,31 @@ class test_finance_functions(TestCase):
 
     def test_storege_order(self):
         # 測試前端傳來三種不同情況的方案時,是否能順利寫入
-        lesson_set = ['trail','no_discount','30:70']
+        lesson_set = ['trial']#,'no_discount','30:70']
         # 還要建立課程才能測試
         for selected_set in lesson_set:
-            data = {'userID':1,
-            'teacherID':2,
+            data = {'userID':2,
+            'teacherID':1,
             'lessonID':1,
             'lesson_set': selected_set,
-            'total_amount_of_the_lesson_set': 300}
+            'total_amount_of_the_lesson_set': 300,
+            'q_discount':0}
 
             response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
-            print(response)
+            #print(response)
             self.assertEqual(response.status_code, 200)
 
         # 目前都會回傳沒有老師,因為給test.py用的批次建立老師跟課程假資料還沒寫
         # 如果filter沒找到東西都一定會failed,
         # 所以就先不測試回傳有沒有success
-        #self.assertJSONEqual(
-        #    str(response.content, encoding='utf8'),
-        #    {
-        #        'status': 'success',
-        #        'errCode': None,
-        #        'errMsg': None,
-        #        'data': None
-        #    })
+            self.assertJSONEqual(
+                str(response.content, encoding='utf8'),
+                {
+                    'status': 'success',
+                    'errCode': None,
+                    'errMsg': None,
+                    'data': None
+                })
     def test_email_sending_new_order(self):
         
         #mail.outbox = [] # 清空暫存記憶裡的信, def結束會自動empty,有需要再用
