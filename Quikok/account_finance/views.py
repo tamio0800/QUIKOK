@@ -109,3 +109,6 @@ def confirm_lesson_order_payment_page(request):
     all_unconfirm_users = student_purchase_record.objects.filter(payment_status='unpaid')
     return render(request, 'confirm_order_payment.html',
     {'all_unconfirm_users':all_unconfirm_users})
+
+def create_student_purchase_remain_minutes(request):
+    pass

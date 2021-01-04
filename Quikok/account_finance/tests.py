@@ -92,7 +92,7 @@ class test_finance_functions(TestCase):
             'teacherID':1,
             'lessonID':1,
             'sales_set': selected_set,
-            'total_amount_of_the_lesson_set': 300,
+            'total_amount_of_the_sales_set': 300,
             'q_discount':0}
 
             response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
@@ -131,6 +131,11 @@ class test_finance_functions(TestCase):
     def test_receive_user_payment_page(self):
         response = self.client.post(path='/api/account_finance/confirm_lesson_order_payment/')
         self.assertEqual(response.status_code, 200)
+    def create_student_purchase_remain_minutes(self):
+        response = self.client.post(path='/api/account_finance/create_lesson_order_minute/')
+        self.assertEqual(response.status_code, 200)
+
+
 @skip
 class pure_email_send_test(TestCase):
 
