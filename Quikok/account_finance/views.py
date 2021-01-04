@@ -18,7 +18,7 @@ def storage_order(request):
         teacher_authID = request.POST.get('teacherID', False)
         lesson_id = request.POST.get('lessonID', False)
         lesson_set = request.POST.get('sales_set', False)
-        price = request.POST.get('total_amount_of_the_lesson_set', False)
+        price = request.POST.get('total_amount_of_the_sales_set', False)
         q_discount_amount = request.POST.get('q_discount', False)
 
         if q_discount_amount != '0':

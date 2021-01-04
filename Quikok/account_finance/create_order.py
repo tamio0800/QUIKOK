@@ -1,0 +1,2 @@
+data = {'userID':2,'teacherID':1,'lessonID':1,'sales_set': selected_set,'total_amount_of_the_lesson_set': 300,'q_discount':0}
+response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
