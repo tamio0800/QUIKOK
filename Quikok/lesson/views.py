@@ -1177,7 +1177,7 @@ def booking_lessons(request):
                 response['status'] = 'failed'
                 response['errCode'] = '2'
                 response['errMsg'] = '不好意思，您似乎沒有點選預約時段，請再次確認一下唷，如果持續發生這個問題，\
-                                      請與我們聯繫，，讓我們為您服務。'
+                                      請與我們聯繫，讓我們為您服務。'
                 response['data'] = booking_date_time
 
             else:
@@ -1204,7 +1204,14 @@ def booking_lessons(request):
                     # 計算所有剩餘的時數(分鐘)
                     available_remaining_minutes = the_available_remaining_minutes_object.aggregate(Sum('available_remaining_minutes'))['available_remaining_minutes__sum']
                 
-                    if this_booking_minutes > available_remaining_minutes:
+                    if available_remaining_minutes is None:
+                        # 用戶沒有購買任何課程
+                        response['status'] = 'failed'
+                        response['errCode'] = '6'
+                        response['errMsg'] = f'不好意思，您並未購買相關課程，請重新確認課程購買狀況後再進行預約唷，如果持續出現這個問題請您再告訴我們，謝謝您。'
+                        response['data'] = (this_booking_minutes, available_remaining_minutes)
+                    
+                    elif this_booking_minutes > available_remaining_minutes:
                         # 預約的總時數超過user可動用剩餘時數
                         response['status'] = 'failed'
                         response['errCode'] = '3'
