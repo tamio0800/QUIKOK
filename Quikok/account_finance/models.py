@@ -67,3 +67,8 @@ class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
     def __str__(self):
         return str(self.id)
 
+    class Meta:
+        #ordering= ['-last_changed_time']  # 越新的會被呈現在越上面
+        verbose_name = '學生課程方案剩餘時數'
+        #verbose_name_plural = 'Objects Viewed'
+
