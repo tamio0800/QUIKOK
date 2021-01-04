@@ -128,9 +128,9 @@ class test_finance_functions(TestCase):
         # 確認程式有正確執行
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, '訂課匯款提醒')
-    def test_email_sending_receive_user_payment(self):
-        
-
+    def test_receive_user_payment_page(self):
+        response = self.client.post(path='/api/account_finance/confirm_lesson_order_payment/')
+        self.assertEqual(response.status_code, 200)
 @skip
 class pure_email_send_test(TestCase):
 

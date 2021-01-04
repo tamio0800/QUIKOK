@@ -104,3 +104,6 @@ def storage_order(request):
         'errMsg': '資料庫有問題,請稍後再試,如狀況持續可連絡客服',
         'data': None}
         return JsonResponse(response)
+
+def confirm_lesson_order_payment_page(request):
+    return render(request, 'confirm_order_payment.html')
