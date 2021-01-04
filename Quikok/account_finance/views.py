@@ -91,7 +91,7 @@ def storage_order(request):
         else:
             response = {'status':'failed',
             'errCode': 2,
-            'errMsg': '資料庫有問題，請稍後再試，如狀況持續可連絡客服',
+            'errMsg': '資料庫有問題，請稍後再試',
             'data': None}
 
         return JsonResponse(response)
@@ -101,7 +101,7 @@ def storage_order(request):
         print(f'Exception {e}')
         response = {'status':'failed',
         'errCode': 3,
-        'errMsg': '資料庫有問題,請稍後再試,如狀況持續可連絡客服',
+        'errMsg': '資料庫有問題，請稍後再試',
         'data': None}
         return JsonResponse(response)
 

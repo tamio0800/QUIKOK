@@ -91,7 +91,7 @@ class test_finance_functions(TestCase):
             data = {'userID':2,
             'teacherID':1,
             'lessonID':1,
-            'lesson_set': selected_set,
+            'sales_set': selected_set,
             'total_amount_of_the_lesson_set': 300,
             'q_discount':0}
 
