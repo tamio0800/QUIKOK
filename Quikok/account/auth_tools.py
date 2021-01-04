@@ -31,7 +31,8 @@ class auth_check_manager:
             '學生會員中心' : ('^/account/info/student', 1,4,5),
             '商品結帳' :('^/store/checkout',1,5),
             '帳務中心' :('^/account/finance',1,2,5),
-            '預約管理' :('^/account/reservation',1,2,5),
+            '預約管理' :('^/account/reservation',2,5),
+            '課程預約' :('^/lesson/appointment',1,5),
             '學習歷程' :('^/account/history',1,5),
             # 以下為公開頁面
             '首頁' : ('/home', 'public'),
