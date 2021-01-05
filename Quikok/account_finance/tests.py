@@ -158,9 +158,9 @@ class test_finance_functions(TestCase):
         )
 
 
-    def test_if_student_remaining_time_table_updated_after_unpaid_turned_into_paid(self):
+    def test_if_student_remaining_time_table_updated_after_unpaid_turned_into_paid_common_set(self):
         '''
-        這個函式用來測試，當學生付完款後，管理員或程式把該筆訂單的付款狀態設定為「已付款」後，
+        這個函式用來測試，當學生付完款(一般的方案)後，管理員或程式把該筆訂單的付款狀態設定為「已付款」後，
         學生的 student_remaining_minutes_of_each_purchased_lesson_set table 有沒有長出對應的資料。
         '''
         lesson_set = '10:90'
@@ -201,8 +201,97 @@ class test_finance_functions(TestCase):
                 1, 600
             )
         )  # 確認有正確更新
-        
 
+
+    def test_if_student_remaining_time_table_updated_after_unpaid_turned_into_paid_trial_set(self):
+        '''
+        這個函式用來測試，當學生付完款(試教方案)後，管理員或程式把該筆訂單的付款狀態設定為「已付款」後，
+        學生的 student_remaining_minutes_of_each_purchased_lesson_set table 有沒有長出對應的資料。
+        '''
+        lesson_set = 'trial'
+        post_data = {
+            'userID':2,
+            'teacherID':1,
+            'lessonID':1,
+            'sales_set': lesson_set,
+            'total_amount_of_the_sales_set': int(self.lesson_post_data['price_per_hour'] * 10 * 0.9),
+            'q_discount':0
+        }  #測試 trial 看看是否成功
+        self.client.post(path='/api/account_finance/storageOrder/', data=post_data)
+
+        self.assertEqual(
+            student_purchase_record.objects.get(id=1).payment_status,
+            'unpaid',
+            student_purchase_record.objects.values()
+        )  # 目前應該是未付款的狀態
+
+        # 如果我們將它設定為已付款，理論上應該會連動更新學生的 student_remaining_minutes_of_each_purchased_lesson_set
+        the_student_purchase_record_object = \
+            student_purchase_record.objects.get(id=1)
+        the_student_purchase_record_object.payment_status = 'paid'
+        the_student_purchase_record_object.save()
+
+        self.assertEqual(
+            student_purchase_record.objects.get(id=1).payment_status,
+            'paid',
+            student_purchase_record.objects.values()
+        )  # 確認變成已付款了
+
+        self.assertEqual(
+            (
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.count(),
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.get(id=1).available_remaining_minutes
+            ),
+            (
+                1, 60
+            )
+        )  # 確認有正確更新
+
+    
+    def test_if_student_remaining_time_table_updated_after_unpaid_turned_into_paid_no_discount_set(self):
+        '''
+        這個函式用來測試，當學生付完款(單堂方案)後，管理員或程式把該筆訂單的付款狀態設定為「已付款」後，
+        學生的 student_remaining_minutes_of_each_purchased_lesson_set table 有沒有長出對應的資料。
+        '''
+        lesson_set = 'trial'
+        post_data = {
+            'userID':2,
+            'teacherID':1,
+            'lessonID':1,
+            'sales_set': lesson_set,
+            'total_amount_of_the_sales_set': int(self.lesson_post_data['price_per_hour'] * 10 * 0.9),
+            'q_discount':0
+        }  #測試 no_discount 看看是否成功
+        self.client.post(path='/api/account_finance/storageOrder/', data=post_data)
+
+        self.assertEqual(
+            student_purchase_record.objects.get(id=1).payment_status,
+            'unpaid',
+            student_purchase_record.objects.values()
+        )  # 目前應該是未付款的狀態
+
+        # 如果我們將它設定為已付款，理論上應該會連動更新學生的 student_remaining_minutes_of_each_purchased_lesson_set
+        the_student_purchase_record_object = \
+            student_purchase_record.objects.get(id=1)
+        the_student_purchase_record_object.payment_status = 'paid'
+        the_student_purchase_record_object.save()
+
+        self.assertEqual(
+            student_purchase_record.objects.get(id=1).payment_status,
+            'paid',
+            student_purchase_record.objects.values()
+        )  # 確認變成已付款了
+
+        self.assertEqual(
+            (
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.count(),
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.get(id=1).available_remaining_minutes
+            ),
+            (
+                1, 60
+            )
+        )  # 確認有正確更新
+        
 
     def test_email_sending_new_order(self):
         
