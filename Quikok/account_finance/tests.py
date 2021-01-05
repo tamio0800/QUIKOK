@@ -109,7 +109,7 @@ class test_finance_functions(TestCase):
                     'status': 'success',
                     'errCode': None,
                     'errMsg': None,
-                    'data': None
+                    'data': 1 # 建立1號訂單
                 })
 
 
@@ -136,23 +136,26 @@ class test_finance_functions(TestCase):
             'teacherID':1,
             'lessonID':1,
             'sales_set': lesson_set,
-            'price': int(self.lesson_post_data['price_per_hour'] * 10 * 0.9),
+            'total_amount_of_the_sales_set': int(self.lesson_post_data['price_per_hour'] * 10 * 0.9),
             'q_discount':0
         }
         response = self.client.post(path='/api/account_finance/storageOrder/', data=post_data)
         self.assertIn('success', str(response.content, 'utf8'), str(response.content, 'utf8'))
         # 確認狀態成功
-
-
+        # 確認總共有幾個課及訂單數量
+        self.assertEqual(len(lesson_info.objects.all()),1)
+        #self.assertEqual(len(lesson_sales_sets.objects.all()),1)
+        print(lesson_sales_sets.objects.all())
+        self.assertEqual(len(student_purchase_record.objects.all()),1)
         # 接下來要確認抓到的 sales_set 是不是真正要的那個
-        self.assertEqual(
-            student_purchase_record.objects.filter(id=1).lesson_set_id,
-            lesson_sales_sets.objects.filter(
-                sales_set='10:90',
-                total_amount_of_the_sales_set=int(self.lesson_post_data['price_per_hour'] * 10 * 0.9)
-            ).id,
-            lesson_sales_sets.objects.values()
-        )
+        #self.assertEqual(
+        #    student_purchase_record.objects.filter(id=1).first().lesson_set_id,
+        #    lesson_sales_sets.objects.filter(
+        #        sales_set='10:90',
+        #        total_amount_of_the_sales_set=int(self.lesson_post_data['price_per_hour'] * 10 * 0.9)
+        #    ).first().id,
+        #    lesson_sales_sets.objects.values()
+        #)
 
 
 
