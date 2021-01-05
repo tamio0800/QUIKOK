@@ -77,7 +77,7 @@ def storage_order(request):
                     #chatroom_notification.system_msg_new_order_payment_remind(**notification)
                     # email傳送通知
                     email_notification = email_manager()
-                    email_notification.system_email_new_order_payment_remind(**notification)
+                    email_notification.system_email_new_order_and_payment_remind(**notification)
 
                     response = {'status':'success',
                     'errCode': None,

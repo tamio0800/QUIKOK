@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
-
+from account_finance.email_sending import email_manager
 
 # 學生購買紀錄
 class student_purchase_record(models.Model):
@@ -95,6 +95,7 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
     else:
         previous = student_purchase_record.objects.get(id=instance.id)
         if previous.payment_status == 'unpaid' and instance.payment_status == 'paid' :
+
             from lesson.models import lesson_sales_sets
             # 代表確認付完款了
             # 現在要看看究竟買了多少時數
@@ -115,4 +116,15 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
                 lesson_set_id = instance.lesson_set_id,
                 available_remaining_minutes = times_of_the_sales_set_in_minutes
             )
+            send_email_reminder = email_manager()
+            send_email_data = {
+                'email_pattern_name':'收到款項提醒',
+                'total_lesson_set_price':previous.price,
+                'studentID':previous.student_auth_id,
+                'teacherID':previous.teacher_auth_id,
+                'lessonID': previous.lesson_id,
+                'lesson_set':previous.lesson_set_id,
+                'q_discount':previous.purchased_with_q_points
+            }
+            send_email_reminder.system_email_new_order_and_payment_remind(**send_email_data)
 
