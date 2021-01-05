@@ -78,6 +78,7 @@ class test_finance_functions(TestCase):
             'syllabus': 'test',
             'lesson_attributes': 'test'      
             }
+        self.lesson_post_data = lesson_post_data
         response = \
             self.client.post(
                 path='/api/lesson/createOrEditLesson/',
@@ -110,6 +111,51 @@ class test_finance_functions(TestCase):
                     'errMsg': None,
                     'data': None
                 })
+
+
+    def test_if_storege_order_select_active_lesson_sales_set(self):
+        '''
+        這個測試用來確認，當老師修改課程內容後，購買的方案是不是真正要的那個方案
+        '''
+        # 嘗試更新課程
+        self.lesson_post_data['action'] = 'editLesson'
+        self.lesson_post_data['lessonID'] = 1  # 因為是課程編輯，所以需要給課程的id
+        self.lesson_post_data['little_title'] = '新的圖片小標題'
+        self.lesson_post_data['lesson_title'] = '新的課程標題'
+        self.lesson_post_data['price_per_hour'] = 1230
+        self.lesson_post_data['trial_class_price'] = -999  # 不試教了
+        self.lesson_post_data['discount_price'] = '5:95;10:90;50:70;'
+        
+        response = self.client.post(path='/api/lesson/createOrEditLesson/', data=self.lesson_post_data)
+        self.assertIn('success', str(response.content, 'utf8'), str(response.content, 'utf8'))
+        # 確認課程更新成功
+        
+        lesson_set = '10:90'
+        post_data = {
+            'userID':2,
+            'teacherID':1,
+            'lessonID':1,
+            'sales_set': lesson_set,
+            'price': int(self.lesson_post_data['price_per_hour'] * 10 * 0.9),
+            'q_discount':0
+        }
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=post_data)
+        self.assertIn('success', str(response.content, 'utf8'), str(response.content, 'utf8'))
+        # 確認狀態成功
+
+
+        # 接下來要確認抓到的 sales_set 是不是真正要的那個
+        self.assertEqual(
+            student_purchase_record.objects.filter(id=1).lesson_set_id,
+            lesson_sales_sets.objects.filter(
+                sales_set='10:90',
+                total_amount_of_the_sales_set=int(self.lesson_post_data['price_per_hour'] * 10 * 0.9)
+            ).id,
+            lesson_sales_sets.objects.values()
+        )
+
+
+
     def test_email_sending_new_order(self):
         
         #mail.outbox = [] # 清空暫存記憶裡的信, def結束會自動empty,有需要再用

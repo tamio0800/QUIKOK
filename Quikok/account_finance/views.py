@@ -33,14 +33,18 @@ def storage_order(request):
         #                lesson_id, lesson_set, price,q_discount_amount]:
             print(student_authID, teacher_authID,
             lesson_id, lesson_set, price, q_discount_amount)
-            if len(teacher_queryset) and len(lesson_queryset) > 0:
+            if len(teacher_queryset) and len(lesson_queryset):
+    
                 set_queryset = lesson_sales_sets.objects.filter(lesson_id=lesson_id, sales_set=lesson_set)
-                if len(set_queryset)>0:
+                
+                if len(set_queryset):
+
                     set_obj = set_queryset.first()
                     teacher_obj = teacher_queryset.first()
                     lesson_obj = lesson_queryset.first()
                     purchase_date = date_function.today()
                     payment_deadline = purchase_date+timedelta(days=6)
+
                     new_record = student_purchase_record.objects.create(
                         student_auth_id= student_authID,
                         teacher_auth_id= teacher_authID,
@@ -77,7 +81,7 @@ def storage_order(request):
                     response = {'status':'success',
                     'errCode': None,
                     'errMsg': None,
-                    'data': None}
+                    'data': new_record.id}
                 else:
                     response = {'status':'failed',
                     'errCode': 1,
@@ -98,7 +102,7 @@ def storage_order(request):
 
     
     except Exception as e:
-        print(f'Exception {e}')
+        print(f'storage_order Exception {e}')
         response = {'status':'failed',
         'errCode': 3,
         'errMsg': '資料庫有問題，請稍後再試',
