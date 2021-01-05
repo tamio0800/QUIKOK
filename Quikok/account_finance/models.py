@@ -17,7 +17,8 @@ class student_purchase_record(models.Model):
     price = models.IntegerField() # total
     purchased_with_q_points = models.IntegerField(default=0)  # 用Q幣支付
     purchased_with_money = models.IntegerField() # 實際要支付的費用 total_price -purchased_with_q_points
-    part_of_bank_account_code = models.CharField(max_length=30, default='') # 用戶繳費帳號後5碼,對帳用
+    part_of_bank_account_code = models.CharField(max_length=30, default='') 
+    # 用戶繳費帳號後5碼,對帳用
     payment_status = models.CharField(max_length = 30, default = 'unpaid')
     # paid, unpaid, cancel.....
     update_time = models.DateTimeField(auto_now_add=True)

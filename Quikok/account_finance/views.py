@@ -33,7 +33,7 @@ def storage_order(request):
         #                lesson_id, lesson_set, price,q_discount_amount]:
 
             if len(teacher_queryset) and len(lesson_queryset):
-                set_queryset = lesson_sales_sets.objects.filter(lesson_id=lesson_id, sales_set=lesson_set).order_by('-created_time')
+                set_queryset = lesson_sales_sets.objects.filter(lesson_id=lesson_id, sales_set=lesson_set, is_open= True)
                 
                 if len(set_queryset):
 
