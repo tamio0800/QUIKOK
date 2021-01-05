@@ -1515,8 +1515,15 @@ def changing_lesson_booking_status(request):
     return JsonResponse(response)
 
         
+def get_student_s_available_remaining_minutes(self):
+    response = dict()
 
-        
+    response['status'] = 'success'
+    response['errCode'] = None
+    response['errMsg'] = None
+    response['data'] = None
+
+    return JsonResponse(response)
 
 
 

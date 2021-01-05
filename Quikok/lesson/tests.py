@@ -1927,11 +1927,20 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         )
 
 
-    def test_get_student_s_available_remaining_time_exist(self):
+    def test_get_student_s_available_remaining_minutes_exist(self):
         '''
         測試 取得學生目前對於 某門課程的所有可預約時數 的函式存在
         '''
-        pass
+        post_data = {
+            'userID': student_profile.objects.first().id,
+            'lessonID': lesson_info.objects.first().id}
+
+        response = self.client.post(
+            path='/api/lesson/getStudentsAvailableRemainingMinutes/',
+            data=post_data)
+        
+        self.assertEqual(response.status_code, 200)
+        
     
 
         
