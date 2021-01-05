@@ -1,6 +1,7 @@
 from django.db import models
-from account.models import teacher_profile, student_profile
-from lesson.models import lesson_info
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
+
 
 # 學生購買紀錄
 class student_purchase_record(models.Model):
@@ -84,4 +85,34 @@ class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
         #ordering= ['-last_changed_time']  # 越新的會被呈現在越上面
         verbose_name = '學生課程方案剩餘時數'
         verbose_name_plural = '學生課程方案剩餘時數'
+
+
+
+@receiver(pre_save, sender=student_purchase_record)
+def on_change(sender, instance:student_purchase_record, **kwargs):
+    if instance.id is None:
+        pass  # 建立新資料不需要做什麼事情
+    else:
+        previous = student_purchase_record.objects.get(id=instance.id)
+        if previous.payment_status == 'unpaid' and instance.payment_status == 'paid' :
+            from lesson.models import lesson_sales_sets
+            # 代表確認付完款了
+            # 現在要看看究竟買了多少時數
+            the_sales_set = \
+                lesson_sales_sets.objects.get(id=instance.lesson_set_id).sales_set
+            
+            if the_sales_set in ('trial', 'no_discount'):
+                times_of_the_sales_set_in_minutes = 60
+            else:
+                # 長得類似 \d+:\d+
+                times_of_the_sales_set_in_minutes = \
+                    int(the_sales_set.split(':')[0]) * 60
+
+            student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+                student_auth_id = instance.student_auth_id,
+                teacher_auth_id = instance.teacher_auth_id,
+                lesson_id = instance.lesson_id,
+                lesson_set_id = instance.lesson_set_id,
+                available_remaining_minutes = times_of_the_sales_set_in_minutes
+            )
 

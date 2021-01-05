@@ -8,8 +8,11 @@ from chatroom.consumers import ChatConsumer
 from datetime import datetime, timedelta, date as date_function
 from handy_functions import check_if_all_variables_are_true
 
+
 def view_email_new_order_remind(request):
     return render(request, 'send_new_order_remind.html')
+
+
 def storage_order(request):
     # 訂單(方案)結帳
     response = dict()
@@ -107,10 +110,10 @@ def storage_order(request):
         'data': None}
         return JsonResponse(response)
 
+
 def confirm_lesson_order_payment_page(request):
     all_unconfirm_users = student_purchase_record.objects.filter(payment_status='unpaid')
     return render(request, 'confirm_order_payment.html',
     {'all_unconfirm_users':all_unconfirm_users})
 
-def create_student_purchase_remain_minutes(request):
-    pass
+
