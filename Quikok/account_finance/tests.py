@@ -243,7 +243,7 @@ class test_finance_functions(TestCase):
                 student_remaining_minutes_of_each_purchased_lesson_set.objects.get(id=1).available_remaining_minutes
             ),
             (
-                1, 60
+                1, 30
             )
         )  # 確認有正確更新
 
@@ -253,7 +253,7 @@ class test_finance_functions(TestCase):
         這個函式用來測試，當學生付完款(單堂方案)後，管理員或程式把該筆訂單的付款狀態設定為「已付款」後，
         學生的 student_remaining_minutes_of_each_purchased_lesson_set table 有沒有長出對應的資料。
         '''
-        lesson_set = 'trial'
+        lesson_set = 'no_discount'
         post_data = {
             'userID':2,
             'teacherID':1,
