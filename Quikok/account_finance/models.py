@@ -101,8 +101,9 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
             # 現在要看看究竟買了多少時數
             the_sales_set = \
                 lesson_sales_sets.objects.get(id=instance.lesson_set_id).sales_set
-            
-            if the_sales_set in ('trial', 'no_discount'):
+            if the_sales_set == 'trial':
+                times_of_the_sales_set_in_minutes = 30
+            elif the_sales_set == 'no_discount':
                 times_of_the_sales_set_in_minutes = 60
             else:
                 # 長得類似 \d+:\d+

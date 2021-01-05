@@ -1093,7 +1093,6 @@ def get_lesson_specific_available_time(request):
         }
     ]
     '''
-
     response = dict()
     student_auth_id = request.POST.get('userID', False)
     lesson_id = request.POST.get('lessonID', False)
@@ -1181,9 +1180,9 @@ def booking_lessons(request):
         response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
         response['data'] = None
     else:
-        print(f'student_auth_id: {student_auth_id}')
-        print(f'lesson_id: {lesson_id}')
-        print(f'booking_date_time: {booking_date_time}')
+        #print(f'student_auth_id: {student_auth_id}')
+        #print(f'lesson_id: {lesson_id}')
+        #print(f'booking_date_time: {booking_date_time}')
 
         the_student_object = student_profile.objects.filter(auth_id=student_auth_id).first()
         if the_student_object is None:
@@ -1247,7 +1246,7 @@ def booking_lessons(request):
   
                     else:
                         # 時數足夠預約，預約成功後要扣除原本的時數
-                        # 除了試教只能使用一次以外(即使不滿60分)
+                        # 除了試教只能使用一次以外(即使不滿30分)
                         # 其他假設有兩個sets分別剩餘25分、100分，預約了120分鐘後，
                         # 應該分別變成0分、5分。
 
@@ -1301,12 +1300,12 @@ def booking_lessons(request):
 
                 else:
                     # 代表使用者有尚未使用的試教使用資格，必須用完才可以進行一般的預約
-                    # 而且需要限制在 1小時內(包含)，因為是試教
-                    if this_booking_minutes > 60:
+                    # 而且需要限制在 30min 內(包含)，因為是試教
+                    if this_booking_minutes > 30:
                         # 試教預約超過1個小時
                         response['status'] = 'failed'
                         response['errCode'] = '5'
-                        response['errMsg'] = f'不好意思，試教體驗課程最多只能預約兩堂唷(合計60分鐘)> <，\
+                        response['errMsg'] = f'不好意思，試教體驗課程最多只能預約一堂唷(但是時數不限)> <，\
                                             請重新確認預約堂數，等體驗課程結束後就可以使用其他方案囉，謝謝您。'
                         response['data'] = this_booking_minutes
                     else:
@@ -1320,7 +1319,7 @@ def booking_lessons(request):
                                 lesson_id=lesson_id).first()
                         
                         the_target_student_set_of_available_remaining_minutes_of_each_purchased_lesson_set.available_remaining_minutes = 0
-                        the_target_student_set_of_available_remaining_minutes_of_each_purchased_lesson_set.withholding_minutes = 60
+                        the_target_student_set_of_available_remaining_minutes_of_each_purchased_lesson_set.withholding_minutes = 30
                         the_target_student_set_of_available_remaining_minutes_of_each_purchased_lesson_set.save()
                         # 將預約後的，可動用時數轉移至預扣時數，並儲存
 
