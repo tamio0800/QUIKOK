@@ -142,20 +142,20 @@ class test_finance_functions(TestCase):
         response = self.client.post(path='/api/account_finance/storageOrder/', data=post_data)
         self.assertIn('success', str(response.content, 'utf8'), str(response.content, 'utf8'))
         # 確認狀態成功
-        # 確認總共有幾個課及訂單數量
-        self.assertEqual(len(lesson_info.objects.all()),1)
-        #self.assertEqual(len(lesson_sales_sets.objects.all()),1)
+        # 確認DB總共有幾個課, sets及訂單數量
+        self.assertEqual(lesson_info.objects.count(),1)
+        #self.assertEqual(lesson_sales_sets.objects.count()),9) 更新set之後變成9種
         print(lesson_sales_sets.objects.all())
-        self.assertEqual(len(student_purchase_record.objects.all()),1)
+        self.assertEqual(student_purchase_record.objects.count(),1)
         # 接下來要確認抓到的 sales_set 是不是真正要的那個
-        #self.assertEqual(
-        #    student_purchase_record.objects.filter(id=1).first().lesson_set_id,
-        #    lesson_sales_sets.objects.filter(
-        #        sales_set='10:90',
-        #        total_amount_of_the_sales_set=int(self.lesson_post_data['price_per_hour'] * 10 * 0.9)
-        #    ).first().id,
-        #    lesson_sales_sets.objects.values()
-        #)
+        self.assertEqual(
+            student_purchase_record.objects.filter(id=1).first().lesson_set_id,
+            lesson_sales_sets.objects.filter(
+                sales_set='10:90',
+                total_amount_of_the_sales_set=int(self.lesson_post_data['price_per_hour'] * 10 * 0.9)
+            ).first().id,
+            lesson_sales_sets.objects.values()
+        )
 
 
 
