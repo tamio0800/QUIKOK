@@ -316,6 +316,8 @@ class test_finance_functions(TestCase):
         這個函式用來測試，當學生付完款(一般的方案)後，管理員或程式把該筆訂單的付款狀態設定為「已付款」後，
         要寄出一封email告訴學生我們收到款項了
         '''
+        mail.outbox = []
+        self.assertEqual(len(mail.outbox), 0)
         lesson_set = '10:90'
         post_data = {
             'userID':2,
@@ -343,23 +345,29 @@ class test_finance_functions(TestCase):
             student_purchase_record.objects.values()
         )  # 確認變成已付款了
         
-        def test_email_sending_receive_order_payment(self):
+        self.assertEqual(len(mail.outbox), 2) # 這是第二封信, 建立訂單時會寄出第一封信
+        self.assertEqual(mail.outbox[0].subject, '訂課匯款提醒')
+        self.assertEqual(mail.outbox[1].subject, '收到款項提醒')
+
+
+    def test_email_sending_receive_order_payment(self):
         #mail.outbox = [] # 清空暫存記憶裡的信, def結束會自動empty,有需要再用
-            data_test = {'studentID':2, 'teacherID':1,'lessonID':1,
-                        'lesson_set':'30:70' ,'total_lesson_set_price':100,
-                        'email_pattern_name':'收到款項提醒',
-                        'q_discount':20}
+        data_test = {'studentID':2, 'teacherID':1,'lessonID':1,
+                    'lesson_set':'30:70' ,'total_lesson_set_price':100,
+                    'email_pattern_name':'收到款項提醒',
+                    'q_discount':20}
 
-            self.assertIsNotNone(student_profile.objects.filter(auth_id=data_test['studentID']).first())
-            self.assertIsNotNone(teacher_profile.objects.filter(auth_id=data_test['teacherID']).first())
-            self.assertIsNotNone(lesson_info.objects.filter(id=data_test['lessonID']).first())
+        self.assertIsNotNone(student_profile.objects.filter(auth_id=data_test['studentID']).first())
+        self.assertIsNotNone(teacher_profile.objects.filter(auth_id=data_test['teacherID']).first())
+        self.assertIsNotNone(lesson_info.objects.filter(id=data_test['lessonID']).first())
 
-            e = email_manager()
-            ret = e.system_email_new_order_and_payment_remind(**data_test)
-            self.assertTrue(ret)
-            # 確認程式有正確執行
-            self.assertEqual(len(mail.outbox), 1)
-            self.assertEqual(mail.outbox[0].subject, '收到款項提醒')
+        mail.outbox = []
+        e = email_manager()
+        ret = e.system_email_new_order_and_payment_remind(**data_test)
+        self.assertTrue(ret)
+        # 確認程式有正確執行
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, '收到款項提醒')
 
 
 

@@ -82,7 +82,7 @@ class email_manager:
             email_body = suit_pattern.render(email_context)
 
             email = EmailMessage(
-                subject = '訂課匯款提醒',  # 電子郵件標題
+                subject = email_pattern_name,  # 電子郵件標題
                 body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
                 from_email= settings.EMAIL_HOST_USER,  # 寄件者
                 to =  ['colorfulday0123@gmail.com']#,'w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
