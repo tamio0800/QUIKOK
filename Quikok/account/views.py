@@ -32,6 +32,9 @@ from handy_functions import is_num
 from handy_functions import clean_files
 from handy_functions import date_string_2_dateformat
 from handy_functions import clean_files
+from analytics.signals import object_accessed_signal
+from analytics.utils import get_client_ip
+from blog.models import article_info
 
 ## 0916改成api的版本,之前的另存成views_old, 之後依據該檔把已設計好的功能寫過來
 ##### 學生區 #####
@@ -59,12 +62,12 @@ def create_a_student_user(request):
     update_someone_by_email = request.POST.get('regNotifiemail', False)
 
     # print('接收資料')
-    print('學生名稱:',username, password, name, '生日:',birth_date, '角色:',role,'手機:', mobile,':信箱', update_someone_by_email,is_male)
+    # print('學生名稱:',username, password, name, '生日:',birth_date, '角色:',role,'手機:', mobile,':信箱', update_someone_by_email,is_male)
     if check_if_all_variables_are_true(
         username, password, name, birth_date, role, 
         is_male, mobile, update_someone_by_email):
 
-        print('接收資料內容正常')
+        # print('接收資料內容正常')
         # 先檢查有沒有這個username存在，存在的話會return None給obj
         obj = student_profile.objects.filter(username=username).first()
         auth_obj = User.objects.filter(username=username).first()
@@ -93,12 +96,12 @@ def create_a_student_user(request):
             # 存到 user_upload 該使用者的資料夾
 
             #大頭照
-            print('學生個人資料夾建立')
+            # print('學生個人資料夾建立')
            
             # 如果沒東西 會是空的  user_upload 看前端取甚麼名字 
             each_file = request.FILES.get("upload_snapshot")
             if each_file :
-                print('收到學生大頭照: ', each_file.name)
+                # print('收到學生大頭照: ', each_file.name)
                 folder_where_are_uploaded_files_be ='user_upload/students/' + username
                 fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
                 file_exten = each_file.name.split('.')[-1]
@@ -120,8 +123,8 @@ def create_a_student_user(request):
                 )
             # 用create()的寫法是為了知道這個user在auth裡面的id為何
             user_created_object.save()
-            print('auth建立')
-            print('建立新學生資料')
+            # print('auth建立')
+            # print('建立新學生資料')
             new_student = student_profile.objects.create(
                 auth_id = user_created_object.id,
                 username = username,
@@ -140,12 +143,25 @@ def create_a_student_user(request):
                 thumbnail_dir = thumbnail_dir ,
                 update_someone_by_email = update_someone_by_email
             )
-            print('student_profile建立')
+            new_student.save()
+            # print('student_profile建立')
+
+            object_accessed_signal.send(
+                sender='create_a_student_user',
+                auth_id=user_created_object.id,
+                ip_address=get_client_ip(request),
+                url_path=request.META.get('PATH_INFO'),
+                model_name='student_profile',
+                object_name=user_created_object.username,
+                object_id=new_student.id,
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                action_type='student register',
+                remark=None) # 傳送訊號
             
             # 建立學生與system的聊天室
             chat_tool = chat_room_manager()
             chat_tool.create_system2user_chatroom(userID=new_student.auth_id, user_type = 'student')
-            print('建立學生與Mr.Q 聊天室')
+            # print('建立學生與Mr.Q 聊天室')
             # 建立group, 現在學生都是測試:4
             user_created_object.groups.add(4)
             # 回前端
@@ -162,12 +178,13 @@ def create_a_student_user(request):
             response['status'] = 'failed'
             response['errCode'] = '0'
             response['errMsg'] = '不好意思，這個信箱已經被註冊囉，請您再選擇一個信箱或是點選「忘記密碼」唷。' # 使用者已註冊
+
     else:
         # 資料傳輸有問題
         response['status'] = 'failed'
         response['errCode'] = '1'
         response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
-    
+
     return JsonResponse(response)
 
 
@@ -181,11 +198,12 @@ def return_student_profile_for_oneself_viewing(request):
         response['errCode'] = '0'
         response['errMsg'] = 'Received Arguments Failed.'
         response['data'] = None
-        return JsonResponse(response)
+        
     else:    
         response['status'], response['errCode'], response['errMsg'], response['data'] = \
             the_student_manager.return_student_profile_for_oneself_viewing(student_auth_id)
-        return JsonResponse(response)
+
+    return JsonResponse(response)
 
 @require_http_methods(['POST'])
 def edit_student_profile(request):
@@ -597,7 +615,7 @@ def create_a_teacher_user(request):
             user_created_object.save()
             print('老師成功建立 User.objects')
             
-            teacher_profile.objects.create(
+            teacher_created_object = teacher_profile.objects.create(
                     auth_id = user_created_object.id,
                     username = username,
                     password = password,
@@ -627,8 +645,22 @@ def create_a_teacher_user(request):
                     #occupation = if_false_return_empty_else_do_nothing(occupation), 
                     company = company,
                     special_exp = special_exp
-            ).save()
+            )
+            teacher_created_object.save()
             print('成功建立 teacher_profile')
+
+            object_accessed_signal.send(
+                sender='create_a_teacher_user',
+                auth_id=user_created_object.id,
+                ip_address=get_client_ip(request),
+                url_path=request.META.get('PATH_INFO'),
+                model_name='teacher_profile',
+                object_name=user_created_object.username,
+                object_id=teacher_created_object.id,
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                action_type='teacher register',
+                remark=None) # 傳送訊號
+
             ## 寫入一般時間table
             # 因為models設定general_available_time與 teacher_profile 
             # 的teacher_name有foreignkey的關係
@@ -844,6 +876,21 @@ def auth_check(request):
             token_from_user = token_from_user_raw.split(' ')[1]  
         else:
             token_from_user = ''
+        
+        if re.search(
+            r'^/blog/post/.*|^/blog/main|^/landing|^/account/register/teacher.*|^/account/register/student.*|^/lesson/guestready|^/lesson/ready/add', 
+            str(url)) is not None:
+            object_accessed_signal.send(
+                sender='auth_check',
+                auth_id=None if int(user_id) == -1 else user_id,
+                ip_address=get_client_ip(request),
+                url_path=str(url),
+                model_name='user_token',
+                object_name=None,
+                object_id=None,
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                action_type='auth_check',
+                remark=None) # 傳送訊號
         
         print('token is :'+ str(token_from_user))
         page_auth = auth_check_manager()

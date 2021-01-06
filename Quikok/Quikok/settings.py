@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'chatroom',
     'Quikok',
     'account',   # 用來處理註冊/個人訊息的呈現app
@@ -34,8 +35,16 @@ INSTALLED_APPS = [
     'django_api', # 用來放api們
     'blog',  # quikok的文章專區,
     'tinymce',
-    'line_function'
+    'line_function',
+    'analytics'
+    # 'logentry_admin',  # This is to show all LogEntry objects in the Django admin site.
 ]
+# 加入 logentry_admin 後，可能會遇到問題：
+#   「Database returned an invalid datetime value. Are time zone definitions for your database installed?」
+# 這時到 MySQL 部屬的主機，執行下列語句即可：
+# mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql -u root -p mysql
+# 即使出現 Warning: Unable to load '/usr/share/zoneinfo/iso3166.tab' as time zone. Skipping it. 之類的句子也無須擔心，
+# 只是警告而已，應該還是有解決成功的。
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 

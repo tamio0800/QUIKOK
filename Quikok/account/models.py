@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
+
 class user_token(models.Model):
     authID_object = models.ForeignKey(User, on_delete=models.CASCADE)
     token = models.CharField(max_length=128) # hash密碼
@@ -42,6 +43,11 @@ class student_profile(models.Model):
     # 為了使回傳platform名稱而不是object
     def __str__(self):
         return self.username
+
+    class Meta:
+        #ordering= ['-last_changed_time']  # 越新的會被呈現在越上面
+        verbose_name = '學生個人資料'
+        verbose_name_plural = '學生個人資料'
 
 class teacher_profile(models.Model):
     # 這是for存放老師的額外資訊
@@ -84,6 +90,11 @@ class teacher_profile(models.Model):
     def __str__(self):
         return self.username
 
+    class Meta:
+        #ordering= ['-last_changed_time']  # 越新的會被呈現在越上面
+        verbose_name = '老師個人資料'
+        verbose_name_plural = '老師個人資料'
+
 class connects(models.Model):
     # 關係人table用來標註哪些人可以接收到哪些人的學習報告、資料等，有串聯的再於這個table中建立資料。
     username = models.CharField(max_length = 191)
@@ -116,6 +127,13 @@ class general_available_time(models.Model):
 
 
 class specific_available_time(models.Model):
+    '''
+    這是老師的詳細時段表，假設老師有空的時段如下:
+    0| 2021-01-01| 1,2,3,4| False
+    之後突然確認了 2021-01-01 時段 2 的預約，
+    我們不需要回頭修改 id=0 的資料，直接新增如下即可:
+    1| 2021-01-01| 2| True
+    '''
     teacher_model=models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='specific_time') 
     date=models.DateField()    
     time=models.CharField(max_length=250)  #Example:1,2,3,4,5,4

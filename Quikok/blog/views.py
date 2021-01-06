@@ -5,6 +5,12 @@ from account.models import student_profile, teacher_profile
 from blog.models import article_info ,author_profile, uploaded_pictures
 from datetime import datetime
 import re
+from analytics.signals import object_accessed_signal
+#from django.dispatch import receiver
+from analytics.models import object_accessed_info
+from analytics.utils import get_client_ip
+
+
 
 def _get_all_categories_for_blog(excluded=['Mail',]):
     '''
@@ -20,8 +26,6 @@ def main_blog(request):
     all_unique_categories = _get_all_categories_for_blog()
     the_articles = article_info.objects.filter(category__in=all_unique_categories)
     the_one_big_picture = uploaded_pictures.objects.filter(special_tag='blog_s_main_picture').first()
-    #print(the_one_big_picture)
-    #print(str(the_one_big_picture.picture.url))
 
     articles_in_list = list()
     # 將文章應該有的資訊再度整合成一個物件（字典形式）
@@ -54,7 +58,6 @@ def main_blog(request):
     
 
 def aritcle_content(request, article_id):
-    
     the_article = article_info.objects.filter(id = article_id).first()
     if the_article is None:
         # 萬一找不到該文章的id，直接回到blog首頁。

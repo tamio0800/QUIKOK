@@ -1,3 +1,4 @@
+from datetime import date
 import os
 
 def check_if_all_variables_are_true(*args):
@@ -68,3 +69,31 @@ def clean_files(folder_path, key_words):
     for each_file in os.listdir(folder_path):
         if key_words in each_file:
             os.unlink(os.path.join(folder_path, each_file))
+
+
+def booking_date_time_to_minutes_and_cleansing(the_booking_date_time):
+        '''
+        將收到的 booking_date_time，清理後回傳：
+        (
+            總共預約了多少分鐘, 
+            去除空堂如「%Y-%m-%d:;」後的真正有意義的預約時段，以字典的方式回傳。
+        )
+        '''
+        _temp_dict = dict()
+        clean_booking_times = [_ for _ in the_booking_date_time.split(';') if len(_) > 11]
+        time_count = 0
+        for each_booking_time in clean_booking_times:
+            the_date, the_time = each_booking_time.split(':')
+            _temp_dict[the_date] = the_time
+            time_count += len(the_time.split(','))
+        return (time_count*30, _temp_dict)
+
+
+def turn_date_string_into_date_format(target_string):
+    '''
+    將 yyyy-mm-dd 的 string 轉化為 date 的形式
+    '''
+    y, m, d = target_string.split('-')
+    return date(year=int(y), month=int(m), day=int(d))
+
+

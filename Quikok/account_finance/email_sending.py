@@ -20,14 +20,18 @@ class email_manager:
         pass
 
     # 收到訂單與匯款提醒用
-    def system_email_new_order_payment_remind(self, **kwargs):
+    def system_email_new_order_and_payment_remind(self, **kwargs):
 
 #data_test = {'q_discount':20,'studentID':7, 'teacherID':1,'lessonID':1,'lesson_set':'30:70' ,'total_lesson_set_price':100,'email_pattern_name':'訂課匯款提醒'}
         try:
             email_pattern_name = kwargs['email_pattern_name']
             for name in self.email_pattern.keys():
                 if name == email_pattern_name:
-                    pattern_html = self.email_pattern[name]
+                    pattern_html = self.email_pattern[name]      
+            try:
+                len(pattern_html) - 3
+            except:
+                return False
 
             price = kwargs['total_lesson_set_price']                
             student_authID = kwargs['studentID']
@@ -42,7 +46,7 @@ class email_manager:
             teacher_name = teacher_info.nickname
             lesson_title = lesson_info.objects.filter(id = lesson_id).first().lesson_title
             # 選擇方案的文字
-            if lesson_set == 'trail':
+            if lesson_set == 'trial':
                 lesson_set_name = '試教課程'
             elif lesson_set == 'no_discount':
                 lesson_set_name = '單堂課程'
@@ -50,19 +54,18 @@ class email_manager:
                 set_info = lesson_set.split(':')
                 set_amount_hour = set_info[0]
                 set_discount = set_info[1]
-                
                 if '0' in set_discount: # 70 折-> 7折
                     set_discount = set_discount.strip('0')
                 else: # 75折-> 7.5折
                     set_discount = set_discount[0]+'.'+set_discount[1]
-
-                lesson_set_name = f'總時數：{set_amount_hour}小時，優惠:{set_discount}折'
+                lesson_set_name = f'總時數：{set_amount_hour}小時，優惠：{set_discount}折'
 
             # Q幣折抵的文字
             if q_discount in ('0',0):
                 q_discount_msg = '0（沒有使用Q幣折抵）'
+                purchasing_price = price
             else:
-                q_discount_msg = f'折抵{q_discount}元'
+                q_discount_msg = f'已折抵 {q_discount} 元'
                 purchasing_price = int(price) - int(q_discount)
             #email_body = article_info.objects.filter(id=1).first().content 直接從資料庫取,難以做變數
             suit_pattern = get_template(pattern_html)
@@ -79,10 +82,10 @@ class email_manager:
             email_body = suit_pattern.render(email_context)
 
             email = EmailMessage(
-                subject = '訂課匯款提醒',  # 電子郵件標題
+                subject = email_pattern_name,  # 電子郵件標題
                 body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
                 from_email= settings.EMAIL_HOST_USER,  # 寄件者
-                to =  ['colorfulday0123@gmail.com']#'w2003x3@gmail.com''mimigood411@gmail.com' tamio.chou@gmail.com 先用測試用的信箱[student_email_address]  # 收件者
+                to =  ['colorfulday0123@gmail.com']#,'w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
             )
             email.fail_silently = False
             email.content_subtype = 'html'
