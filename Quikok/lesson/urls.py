@@ -22,4 +22,5 @@ urlpatterns = [
     path('bookingLessons/', views.booking_lessons),
     path('changingLessonBookingStatus/', views.changing_lesson_booking_status),
     path('getStudentsAvailableRemainingMinutes/', views.get_student_s_available_remaining_minutes),
+    path('getTeachersBookingHistory/', views.get_teacher_s_booking_history),
 ]
