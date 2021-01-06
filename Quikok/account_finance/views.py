@@ -39,10 +39,14 @@ def storage_order(request):
                     # 學生欲使用Q幣折抵現金
                     if q_discount_amount != '0':
                         real_price = int(price) - int(q_discount_amount)
-                        # 更新學生Q幣餘額
+                        # 更新學生Q幣預扣餘額
                         student_obj = student_profile.objects.get(auth_id=student_authID)
-                        student_obj.balance = student_obj.balance - int(q_discount_amount)
-                        student_obj.withholding_balance = q_discount_amount
+                        # 如果原本就還有預扣額度尚未更新,不能覆蓋,要加上去
+                        if student_obj.withholding_balance != 0:
+                            student_obj.withholding_balance = \
+                            student_obj.withholding_balance + int(q_discount_amount)
+                        else:
+                            student_obj.withholding_balance = int(q_discount_amount)
                         student_obj.save()
                     else:
                         real_price = int(price)
