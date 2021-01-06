@@ -55,14 +55,16 @@ class test_finance_functions(TestCase):
             }
             self.client.post(path='/api/account/signupStudent/', data=student_post_data)
         # 1號學生給q幣50元
+        self.dummy_q = 50
         student1_obj = student_profile.objects.get(id=1)
-        student1_obj.balance = 50
+        student1_obj.balance = self.dummy_q
         student1_obj.save()
         self.assertEqual(student_profile.objects.get(id=1).balance, 50)
         # 2號學生:q幣50元,預扣已有20元(表示他另一堂課花了20q幣來折抵)
+        self.dummy_withhoding = 20
         student2_obj = student_profile.objects.get(id=2)
-        student2_obj.balance = 50
-        student2_obj.withholding_balance = 20
+        student2_obj.balance = self.dummy_q
+        student2_obj.withholding_balance = self.dummy_withhoding
         student2_obj.save()
         self.assertEqual(student_profile.objects.get(id=2).withholding_balance, 20)
 
@@ -105,7 +107,7 @@ class test_finance_functions(TestCase):
         'lessonID':1,
         'sales_set': 'trial',#,'no_discount','30:70']
         'total_amount_of_the_sales_set': 300,
-        'q_discount':0}
+        'q_discount': 0}
 
         response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
         self.assertEqual(response.status_code, 200)
@@ -117,6 +119,7 @@ class test_finance_functions(TestCase):
                 'errMsg': None,
                 'data': 1 # 建立1號訂單
             })
+    @skip
     def test_storege_order_student_use_Qcoin_with_no_withholding_balance(self):
         '''
         如果學生使用Q幣, 那送出訂單後使用的Q更新到他的profile中的withholding_balance_change.
@@ -142,7 +145,7 @@ class test_finance_functions(TestCase):
                 'errMsg': None,
                 'data': 1 # 建立1號訂單
             })
-
+    @skip
     def test_storege_order_student_use_Qcoin_already_have_withholding_balance(self):
         '''
         如果學生使用Q幣, 那送出訂單後使用的Q更新到他的profile中的withholding_balance_change.
@@ -168,14 +171,40 @@ class test_finance_functions(TestCase):
                 'errMsg': None,
                 'data': 1 # 建立1號訂單
             })
-    
+    @skip    
     def test_student_withholding_balance_change_after_paid(self):
         '''
         當我們確認學生已繳費, unpaid改成paid之後,若有使用Q幣, 此時他的profile中的withholding_balance_change
-        會歸零,而 balance會扣除
+        會歸零,而 balance會扣除。用1號學生測試,當他的預扣額
         '''
-        response = self.client.post(path='/api/account_finance/confirm_lesson_order_payment/')
-        self.assertEqual(response.status_code, 200)
+        lesson_set = '10:90'
+        use_q_coin = 20  #使用q幣
+        post_data = {
+            'userID':2,
+            'teacherID':1,
+            'lessonID':1,
+            'sales_set': lesson_set,
+            'total_amount_of_the_sales_set': int(self.lesson_post_data['price_per_hour'] * 10 * 0.9),
+            'q_discount': use_q_coin
+        }  #先測試 10:90 看看是否成功
+        self.client.post(path='/api/account_finance/storageOrder/', data=post_data)
+        self.assertEqual(
+            student_purchase_record.objects.get(id=1).payment_status,'unpaid')  # 目前應該是未付款的狀態
+        student_obj = student_profile.objects.get(id=1)
+        self.assertEqual(student_obj.balance, self.dummy_q)
+        self.assertEqual(student_obj.withholding_balance, use_q_coin)
+        student_purchase_obj = student_purchase_record.objects.get(id=1)
+        student_purchase_obj.payment_status = 'paid'
+        student_purchase_obj.save()
+        self.assertEqual(
+            student_purchase_record.objects.get(id=1).payment_status,'paid')  # 確認變成已付款
+        
+        # 如果我們將它設定為已付款，q_discount要同時從預扣額跟總額中扣除
+        # 確認是否扣除
+       
+        self.assertEqual(student_obj.balance, self.dummy_q - use_q_coin)
+        self.assertEqual(student_obj.withholding_balance, 0)
+
 
     def test_if_storege_order_select_active_lesson_sales_set(self):
         '''

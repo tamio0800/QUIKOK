@@ -1,7 +1,9 @@
 from django.db import models
 from django.db.models.signals import pre_save
-from django.dispatch import receiver
+from django.dispatch import receiver,Signal
 from account_finance.email_sending import email_manager
+#from account.models import student_profile
+#from account_finance.handel_order import test_re
 
 # 學生購買紀錄
 class student_purchase_record(models.Model):
@@ -88,11 +90,17 @@ class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
 
 
 
+
 @receiver(pre_save, sender=student_purchase_record)
 def on_change(sender, instance:student_purchase_record, **kwargs):
     if instance.id is None:
         pass  # 建立新資料不需要做什麼事情
     else:
+        from account_finance.handel_order import happy_test
+        #h = happy_test()
+        #new_order_paid_signal = Signal(providing_args=['a'])
+        #new_order_paid_signal.send(sender= student_purchase_record,a=1)
+
         previous = student_purchase_record.objects.get(id=instance.id)
         if previous.payment_status == 'unpaid' and instance.payment_status == 'paid' :
             from lesson.models import lesson_sales_sets
@@ -117,6 +125,17 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
                 lesson_set_id = instance.lesson_set_id,
                 available_remaining_minutes = times_of_the_sales_set_in_minutes
             )
+            # 如果有用q幣,更改學生的q幣額度及預扣額度
+            #if previous.purchased_with_q_points != 0 :
+            #    student_info_obj = student_profile.objects.get(auth_id=previous.student_auth_id)
+
+            #    student_info_obj.withholding_balance = student_info_obj.withholding_balance - previous.purchased_with_q_points
+            #    student_info_obj.balance = student_info_obj.balance - previous.purchased_with_q_points
+            #    student_info_obj.save()
+            #else:
+            #    pass # db不需要更新
+            
+            # 寄給學生收到款項提醒email
             lesson_set_name =  lesson_sales_sets.objects.filter(id = previous.lesson_set_id).first().sales_set
             send_email_reminder = email_manager()
             send_email_data = {
