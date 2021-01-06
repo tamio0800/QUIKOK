@@ -1219,7 +1219,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
             lesson_set_id = lesson_sales_sets.objects.filter(sales_set='trial').filter(is_open=True).first().id,
-            available_remaining_minutes = 60
+            available_remaining_minutes = 30
         ).save()  # 建立一個試教 set
         self.assertEqual(student_remaining_minutes_of_each_purchased_lesson_set.objects.count(), 1,
         student_remaining_minutes_of_each_purchased_lesson_set.objects.values())
@@ -1262,9 +1262,9 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
 
         self.assertIn('success', str(response.content, 'utf8'))
 
-        booking_post_data['bookingDateTime'] = f'{self.available_date_1}:2,3;{self.available_date_2}:4;'
+        booking_post_data['bookingDateTime'] = f'{self.available_date_1}:3;{self.available_date_2}:4;'
         # print(f"booking_post_data['bookingDateTime'] {booking_post_data['bookingDateTime']}")
-        # 預約了1.5小時，超過 30min 的額度 >> rejected
+        # 預約了1小時，超過 30min 的額度 >> rejected
 
         response = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)  
 
@@ -1289,6 +1289,36 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         response = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)  
         self.assertIn('failed', str(response.content, 'utf8'))
         # 因為是試教，最多只能預約1堂課(30min)
+
+
+    def test_if_booking_trial_lessons_split_each_continuous_times_to_bookings(self):
+        '''
+        這個函式在測試  假設學生預約 2020-01-01:1,2,3,5,6,7;，應該分成2筆預約：
+            2020-01-01:1,2,3;
+            2020-01-01:5,6,7;
+        如果是2020-01-01:1,2,3,5,6,7;2020-01-02:6,7,8;，則應該是3筆預約：
+            2020-01-01:1,2,3;
+            2020-01-01:5,6,7;
+            2020-01-02:6,7,8;
+        '''
+        student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_auth_id = student_profile.objects.first().auth_id,
+            teacher_auth_id = teacher_profile.objects.first().auth_id,
+            lesson_id = 1,
+            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+            available_remaining_minutes = 600  
+        ).save()  # 建立一個 10:90 set
+
+        booking_post_data = {
+            'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_1}:1,2,4,5,6;'
+        }  # 應該拆成兩筆 預約訂單
+        self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)
+        self.assertEqual(
+            lesson_booking_info.objects.filter(student_auth_id=student_profile.objects.first().auth_id).count(),
+            2
+        )
 
 
     def test_if_booking_trial_lessons_modified_remaining_minutes_after_booking_successfully(self):
@@ -1578,15 +1608,20 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         
         self.assertEqual(
             (
-                1,
-                f'{self.available_date_1}:1,2,3,4,5;{self.available_date_2}:1,2,3,4,5;{self.available_date_3}:1,2,3,4,5;{self.available_date_4}:1,2,3,4,5;{self.available_date_5}:1,2,3,4,5;',
-                1160
+                5, 1160
             ),
             (
                 lesson_booking_info.objects.count(),
-                lesson_booking_info.objects.first().booking_date_and_time,
                 lesson_booking_info.objects.first().remaining_minutes
             )
+        )
+        self.assertListEqual(
+            [
+                f'{self.available_date_1}:1,2,3,4,5;', f'{self.available_date_2}:1,2,3,4,5;',
+                f'{self.available_date_3}:1,2,3,4,5;', f'{self.available_date_4}:1,2,3,4,5;',
+                f'{self.available_date_5}:1,2,3,4,5;'
+            ],
+            list(lesson_booking_info.objects.values_list('booking_date_and_time', flat=True))
         )
 
     
@@ -1603,9 +1638,10 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
             'lessonID': 1,
             'bookingDateTime': f'{self.available_date_2}:1,2,3,4,5;{self.available_date_3}:1,2,3,5;'
-        }  # 預約9個時段，合計270分鐘
+        }  # 預約9個時段，合計270分鐘  > 分成 3 個預約
         response = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)
-        self.assertEqual(lesson_booking_info.objects.count(), 1)
+        self.assertEqual(lesson_booking_info.objects.count(), 3)
+        
         changing_post_data = {
             'userID': student_profile.objects.first().auth_id,
             'bookingID': lesson_booking_info.objects.first().id,
@@ -1711,9 +1747,12 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
         self.assertEqual('canceled', lesson_booking_info.objects.filter(id=lesson_booking_info.objects.first().id).first().booking_status)
         self.assertEqual('teacher', lesson_booking_info.objects.filter(id=lesson_booking_info.objects.first().id).first().last_changed_by)
+        
+        canceled_minutes = \
+            len(lesson_booking_info.objects.first().booking_date_and_time.split(':')[1].split(',')) * 30
         self.assertEqual(
             (
-                600, 0
+                330 + canceled_minutes, 270 - canceled_minutes
             ),
             (
                 student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
@@ -1756,7 +1795,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
             'lessonID': 1,
             'bookingDateTime': f'{self.available_date_2}:1,2,3,4,5;{self.available_date_3}:1,2,3,5;{self.available_date_1}:3,5;'
-        }  # 預約9個時段，合計330分鐘
+        }  # 預約9個時段，合計330分鐘  >>  5 bookings
         response = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)
         self.assertEqual(
             (
@@ -1784,13 +1823,14 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             )
         )  # 測試一下是否真的有預扣時數成功
 
-        changing_post_data = {
-            'userID': student_profile.objects.first().auth_id,
-            'bookingID': lesson_booking_info.objects.first().id,
-            'bookingStatus': 'canceled'
-        } # 測試一下學生發起的取消
-        response = self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=changing_post_data)
-
+        for each_booking_id in list(lesson_booking_info.objects.values_list('id', flat=True)):
+            changing_post_data = {
+                'userID': student_profile.objects.first().auth_id,
+                'bookingID': each_booking_id,
+                'bookingStatus': 'canceled'
+            } # 測試一下學生發起的取消
+            response = self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=changing_post_data)
+        
         self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
         self.assertEqual('canceled', lesson_booking_info.objects.filter(id=lesson_booking_info.objects.first().id).first().booking_status)
         self.assertEqual('student', lesson_booking_info.objects.filter(id=lesson_booking_info.objects.first().id).first().last_changed_by)
@@ -1834,7 +1874,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
             'lessonID': 1,
             'bookingDateTime': f'{self.available_date_2}:1,2,3,4,5;{self.available_date_3}:1,2,3,5;{self.available_date_1}:3,5;'
-        }  # 預約9個時段，合計330分鐘
+        }  # 預約11個時段，合計330分鐘
 
         self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)
 
@@ -1844,24 +1884,25 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             specific_available_time.objects.values())
         # 目前老師應該沒有被預約的時段
 
-        changing_post_data = {
-            'userID': teacher_profile.objects.first().auth_id,
-            'bookingID': lesson_booking_info.objects.first().id,
-            'bookingStatus': 'confirmed'
-        }  # 由老師確認
-        self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=changing_post_data)
+        for each_booking_id in lesson_booking_info.objects.values_list('id', flat=True):
+            changing_post_data = {
+                'userID': teacher_profile.objects.first().auth_id,
+                'bookingID': each_booking_id,
+                'bookingStatus': 'confirmed'
+            }  # 由老師確認
+            self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=changing_post_data)
         
         self.assertEqual(
-            3, 
+            5, 
             specific_available_time.objects.filter(
                 teacher_model=teacher_profile.objects.first(),
                 is_occupied=True).count(),
             specific_available_time.objects.values().filter(is_occupied=True))
-        # 現在應該有三個被預約的時段了
+        # 現在應該有五個被預約的時段了  1,2,3,4,5  1,2,3  5  3  5
 
         self.assertEqual(
             (
-                1, 1, 1
+                1, 1, 2, 1
             ),
             (
                 specific_available_time.objects.filter(
@@ -1872,12 +1913,17 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
                 specific_available_time.objects.filter(
                     teacher_model=teacher_profile.objects.first(),
                     is_occupied=True,
-                    time='1,2,3,5'
+                    time='1,2,3'
                 ).count(),
                 specific_available_time.objects.filter(
                     teacher_model=teacher_profile.objects.first(),
                     is_occupied=True,
-                    time='3,5'
+                    time='5'
+                ).count(),
+                specific_available_time.objects.filter(
+                    teacher_model=teacher_profile.objects.first(),
+                    is_occupied=True,
+                    time='3'
                 ).count()
             ),
             specific_available_time.objects.values().filter(is_occupied=True)
@@ -1885,27 +1931,33 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         print(f'specific_available_time.objects.values().filter(is_occupied=True)  \
         {specific_available_time.objects.values().filter(is_occupied=True)}')
 
+        booking_id_to_be_canceled = \
+            lesson_booking_info.objects.get(
+                booking_date_and_time=f"{self.available_date_2}:1,2,3,4,5;"
+            ).id
+        print(f'booking_id_to_be_canceled  {booking_id_to_be_canceled, lesson_booking_info.objects.values()}')
         # 接下來來取消這個預約
         changing_post_data = {
             'userID': student_profile.objects.first().auth_id,
-            'bookingID': lesson_booking_info.objects.first().id,
+            'bookingID': booking_id_to_be_canceled,
             'bookingStatus': 'canceled'
         }  # 換學生取消好了
-
         response = self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=changing_post_data)
+        print(f'booking_id_after_canceled  {booking_id_to_be_canceled, lesson_booking_info.objects.values()}')
         self.assertIn('success', str(response.content, 'utf8'), str(response.content, 'utf8'))
 
         self.assertEqual(
-            0,
+            4,
             specific_available_time.objects.filter(
                 teacher_model=teacher_profile.objects.first(),
                 is_occupied=True).count(),
             specific_available_time.objects.values().filter(is_occupied=True))
-        # 現在應該有沒有被預約的時段了
+        # 取消一筆預約
 
+        canceled_minutes = 150
         # 學生應該也恢復 600 分鐘的可用時數了
         self.assertEqual(
-            (600, 0),
+            (270+canceled_minutes, 330-canceled_minutes),
             (
                 student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
                     student_auth_id = student_profile.objects.first().auth_id,
@@ -2144,7 +2196,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             student_purchase_record.objects.first()
         the_purchase_object.payment_status = 'paid'
         the_purchase_object.save()
-        # 理論上現在已經購買、付款完成了，所以 學生應該有30min的可用時數
+        # 理論上現在已經購買、付款完成了，所以 學生應該有600min的可用時數
 
         booking_post_data = {
             'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
@@ -2269,7 +2321,7 @@ class BOOKING_HISTORY_TESTS(TestCase):
         except:
             pass
 
-
+    @skip 
     def test_get_teacher_s_booking_history_api_exist(self):
         '''
         測試 回傳該名老師所有預約、課程的狀態 這支api 存在
@@ -2284,7 +2336,7 @@ class BOOKING_HISTORY_TESTS(TestCase):
             registered_from_date//起始日期1990-01-01
             registered_to_date//結束日期1990-01-01
         }
-        '''
+        ''' 
         booking_history_post_data = {
             'userID': teacher_profile.objects.first().auth_id,
             'filtered_by': 'to_be_confirmed',
@@ -2298,12 +2350,80 @@ class BOOKING_HISTORY_TESTS(TestCase):
         
         self.assertEqual(response.status_code, 200, str(response.content, "utf8"))
 
+    @skip 
+    def test_get_teacher_s_booking_history_api_work_when_teacher_has_no_booking_history_at_all(self):
+        booking_history_post_data = {
+            'userID': teacher_profile.objects.first().auth_id,
+            'filtered_by': '',
+            'registered_from_date': '2000-01-01',
+            'registered_to_date': '2021-01-31'
+        }
 
+        response = self.client.post(
+            path='/api/lesson/getTeachersBookingHistory/', 
+            data=booking_history_post_data)
         
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertIn('"data": null', str(response.content, "utf8"))
 
+    @skip 
+    def test_get_teacher_s_booking_history_api_work_when_teacher_auth_id_not_exist(self):
+        booking_history_post_data = {
+            'userID': 35,
+            'filtered_by': '',
+            'registered_from_date': '2000-01-01',
+            'registered_to_date': '2021-01-31'
+        }
 
+        response = self.client.post(
+            path='/api/lesson/getTeachersBookingHistory/', 
+            data=booking_history_post_data)
+        
+        self.assertIn('failed', str(response.content, "utf8"))
 
+    @skip 
+    def test_get_teacher_s_booking_history_api_work_when_teacher_has_1_to_be_confirmed_booking_info(self):
+        purchase_post_data = {
+            'userID':student_profile.objects.first().auth_id,
+            'teacherID':teacher_profile.objects.first().auth_id,
+            'lessonID':lesson_info.objects.first().id,
+            'sales_set': '10:90',
+            'total_amount_of_the_sales_set': int(800*10*0.9),
+            'q_discount':0}
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
+        the_purchase_object = \
+            student_purchase_record.objects.first()
+        the_purchase_object.payment_status = 'paid'
+        the_purchase_object.save()
+        # 理論上現在已經購買、付款完成了，所以 學生1應該有600min的可用時數
+
+        booking_post_data = {
+            'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_1}:1,2,5;{self.available_date_2}:1,2,3,4,5;{self.available_date_4}:1,3,4;'
+        }  # 預約 330min
+
+        response = self.client.post(
+            path='/api/lesson/bookingLessons/',
+            data=booking_post_data)  # 送出預約，此時老師應該有一則 待確認 預約訊息
+        
+        booking_history_post_data = {
+            'userID': teacher_profile.objects.first().auth_id,
+            'filtered_by': 'to_be_confirmed',
+            'registered_from_date': '2020-01-01',
+            'registered_to_date': '2022-01-01'
+        }
+
+        response = self.client.post(
+            path='/api/lesson/getTeachersBookingHistory/', 
+            data=booking_history_post_data)
+        
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertIn(f'"booked_date": {self.available_date_1}', str(response.content, "utf8"))
+        self.assertIn(f'"booked_date": {self.available_date_2}', str(response.content, "utf8"))
+        self.assertIn(f'"booked_date": {self.available_date_4}', str(response.content, "utf8"))
+        self.assertIn(f'"booked_status": "to_be_confirmed"', str(response.content, "utf8"))
 
         
 
