@@ -226,7 +226,8 @@ class lesson_sales_sets(models.Model):
     fulfilled_volume = models.IntegerField(default=0)  # 已完成課程的總量
     created_time = models.DateTimeField(auto_now_add=True)
     last_sold_time = models.DateTimeField(auto_now=True)
-    is_open = models.BooleanField(default=True)  #是否為老師該課程目前使用中的方案
+    is_open = models.BooleanField(default=True)  
+    #是否為目前使用中的方案, 是的話才可選
     def __str__(self):
         return str(self.id)
     

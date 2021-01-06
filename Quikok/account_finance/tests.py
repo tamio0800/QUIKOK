@@ -157,7 +157,7 @@ class test_finance_functions(TestCase):
             lesson_sales_sets.objects.values()
         )
 
-
+    
     def test_if_student_remaining_time_table_updated_after_unpaid_turned_into_paid_common_set(self):
         '''
         這個函式用來測試，當學生付完款(一般的方案)後，管理員或程式把該筆訂單的付款狀態設定為「已付款」後，
@@ -202,7 +202,7 @@ class test_finance_functions(TestCase):
             )
         )  # 確認有正確更新
 
-
+    
     def test_if_student_remaining_time_table_updated_after_unpaid_turned_into_paid_trial_set(self):
         '''
         這個函式用來測試，當學生付完款(試教方案)後，管理員或程式把該筆訂單的付款狀態設定為「已付款」後，
@@ -247,7 +247,7 @@ class test_finance_functions(TestCase):
             )
         )  # 確認有正確更新
 
-    
+        
     def test_if_student_remaining_time_table_updated_after_unpaid_turned_into_paid_no_discount_set(self):
         '''
         這個函式用來測試，當學生付完款(單堂方案)後，管理員或程式把該筆訂單的付款狀態設定為「已付款」後，
@@ -294,7 +294,6 @@ class test_finance_functions(TestCase):
         
 
     def test_email_sending_new_order(self):
-        
         #mail.outbox = [] # 清空暫存記憶裡的信, def結束會自動empty,有需要再用
         data_test = {'studentID':2, 'teacherID':1,'lessonID':1,
                     'lesson_set':'30:70' ,'total_lesson_set_price':100,
@@ -306,11 +305,72 @@ class test_finance_functions(TestCase):
         self.assertIsNotNone(lesson_info.objects.filter(id=data_test['lessonID']).first())
 
         e = email_manager()
-        ret = e.system_email_new_order_payment_remind(**data_test)
+        ret = e.system_email_new_order_and_payment_remind(**data_test)
         self.assertTrue(ret)
         # 確認程式有正確執行
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, '訂課匯款提醒')
+    
+    def test_email_sending_receive_order_payment_when_unpaid_turned_into_paid(self):
+        '''
+        這個函式用來測試，當學生付完款(一般的方案)後，管理員或程式把該筆訂單的付款狀態設定為「已付款」後，
+        要寄出一封email告訴學生我們收到款項了
+        '''
+        mail.outbox = []
+        self.assertEqual(len(mail.outbox), 0)
+        lesson_set = '10:90'
+        post_data = {
+            'userID':2,
+            'teacherID':1,
+            'lessonID':1,
+            'sales_set': lesson_set,
+            'total_amount_of_the_sales_set': int(self.lesson_post_data['price_per_hour'] * 10 * 0.9),
+            'q_discount':0
+        }  #先測試 10:90 看看是否成功
+        self.client.post(path='/api/account_finance/storageOrder/', data=post_data)
+        self.assertEqual(
+            student_purchase_record.objects.get(id=1).payment_status,'unpaid',
+            student_purchase_record.objects.values()
+        )  # 目前應該是未付款的狀態
+
+        # 如果我們將它設定為已付款，理論上要寄出一封確認信
+        the_student_purchase_record_object = \
+            student_purchase_record.objects.get(id=1)
+        the_student_purchase_record_object.payment_status = 'paid'
+        the_student_purchase_record_object.save()
+
+        self.assertEqual(
+            student_purchase_record.objects.get(id=1).payment_status,
+            'paid',
+            student_purchase_record.objects.values()
+        )  # 確認變成已付款了
+        
+        self.assertEqual(len(mail.outbox), 2) # 這是第二封信, 建立訂單時會寄出第一封信
+        self.assertEqual(mail.outbox[0].subject, '訂課匯款提醒')
+        self.assertEqual(mail.outbox[1].subject, '收到款項提醒')
+
+
+    def test_email_sending_receive_order_payment(self):
+        #mail.outbox = [] # 清空暫存記憶裡的信, def結束會自動empty,有需要再用
+        data_test = {'studentID':2, 'teacherID':1,'lessonID':1,
+                    'lesson_set':'30:70' ,'total_lesson_set_price':100,
+                    'email_pattern_name':'收到款項提醒',
+                    'q_discount':20}
+
+        self.assertIsNotNone(student_profile.objects.filter(auth_id=data_test['studentID']).first())
+        self.assertIsNotNone(teacher_profile.objects.filter(auth_id=data_test['teacherID']).first())
+        self.assertIsNotNone(lesson_info.objects.filter(id=data_test['lessonID']).first())
+
+        mail.outbox = []
+        e = email_manager()
+        ret = e.system_email_new_order_and_payment_remind(**data_test)
+        self.assertTrue(ret)
+        # 確認程式有正確執行
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, '收到款項提醒')
+
+
+
     def test_receive_user_payment_page(self):
         response = self.client.post(path='/api/account_finance/confirm_lesson_order_payment/')
         self.assertEqual(response.status_code, 200)

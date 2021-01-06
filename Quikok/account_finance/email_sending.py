@@ -20,14 +20,18 @@ class email_manager:
         pass
 
     # 收到訂單與匯款提醒用
-    def system_email_new_order_payment_remind(self, **kwargs):
+    def system_email_new_order_and_payment_remind(self, **kwargs):
 
 #data_test = {'q_discount':20,'studentID':7, 'teacherID':1,'lessonID':1,'lesson_set':'30:70' ,'total_lesson_set_price':100,'email_pattern_name':'訂課匯款提醒'}
         try:
             email_pattern_name = kwargs['email_pattern_name']
             for name in self.email_pattern.keys():
                 if name == email_pattern_name:
-                    pattern_html = self.email_pattern[name]
+                    pattern_html = self.email_pattern[name]      
+            try:
+                len(pattern_html) - 3
+            except:
+                return False
 
             price = kwargs['total_lesson_set_price']                
             student_authID = kwargs['studentID']
@@ -78,10 +82,10 @@ class email_manager:
             email_body = suit_pattern.render(email_context)
 
             email = EmailMessage(
-                subject = '訂課匯款提醒',  # 電子郵件標題
+                subject = email_pattern_name,  # 電子郵件標題
                 body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
                 from_email= settings.EMAIL_HOST_USER,  # 寄件者
-                to =  ['colorfulday0123@gmail.com']#'w2003x3@gmail.com''mimigood411@gmail.com' tamio.chou@gmail.com 先用測試用的信箱[student_email_address]  # 收件者
+                to =  ['colorfulday0123@gmail.com']#,'w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
             )
             email.fail_silently = False
             email.content_subtype = 'html'

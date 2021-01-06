@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
-
+from account_finance.email_sending import email_manager
 
 # 學生購買紀錄
 class student_purchase_record(models.Model):
@@ -108,7 +108,8 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
                 # 長得類似 \d+:\d+
                 times_of_the_sales_set_in_minutes = \
                     int(the_sales_set.split(':')[0]) * 60
-
+        
+            
             student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
                 student_auth_id = instance.student_auth_id,
                 teacher_auth_id = instance.teacher_auth_id,
@@ -116,4 +117,16 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
                 lesson_set_id = instance.lesson_set_id,
                 available_remaining_minutes = times_of_the_sales_set_in_minutes
             )
+            lesson_set_name =  lesson_sales_sets.objects.filter(id = previous.lesson_set_id).first().sales_set
+            send_email_reminder = email_manager()
+            send_email_data = {
+                'email_pattern_name':'收到款項提醒',
+                'total_lesson_set_price':previous.price,
+                'studentID':previous.student_auth_id,
+                'teacherID':previous.teacher_auth_id,
+                'lessonID': previous.lesson_id,
+                'lesson_set':lesson_set_name,
+                'q_discount':previous.purchased_with_q_points
+            }
+            send_email_reminder.system_email_new_order_and_payment_remind(**send_email_data)
 
