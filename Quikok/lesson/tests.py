@@ -14,7 +14,7 @@ from account.models import specific_available_time
 from django.contrib.auth.models import Permission, User, Group
 from unittest import skip
 from lesson.models import lesson_booking_info
-from account_finance.models import student_remaining_minutes_of_each_purchased_lesson_set
+from account_finance.models import student_purchase_record, student_remaining_minutes_of_each_purchased_lesson_set
 
 
 # python manage.py test lesson/ --settings=Quikok.settings_for_test
@@ -1056,7 +1056,7 @@ class Lesson_Info_Test(TestCase):
         }
         response = self.client.get(path='/api/lesson/returnLessonDetailsForBrowsing/', data=browsing_post_data)
 
-        print(f"for_browsing str(response.content, 'utf8')  {str(response.content, 'utf8')}")
+        # print(f"for_browsing str(response.content, 'utf8')  {str(response.content, 'utf8')}")
         self.assertIn('success', str(response.content, 'utf8'), str(response.content, 'utf8'))
         self.assertIn(teacher_profile.objects.first().nickname, str(response.content, 'utf8'))
         
@@ -1942,6 +1942,236 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         self.assertEqual(response.status_code, 200)
         
     
+    def test_get_student_s_available_remaining_minutes_works_when_having_trial(self):
+        '''
+        測試 可以取得學生的 可預約時數 及 是否有試教課程還沒用，
+        當他有試教課程還沒使用時，是否可以成功回傳其他情況下的正確數值。
+        '''
+        # 還要建立課程才能測試
+        purchase_post_data = \
+            {
+                'userID':student_profile.objects.first().auth_id,
+                'teacherID':teacher_profile.objects.first().auth_id,
+                'lessonID':lesson_info.objects.first().id,
+                'sales_set': 'trial',
+                'total_amount_of_the_sales_set': 69,
+                'q_discount':0}
+
+        response = \
+            self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+        # 建立購買資料
+        self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
+
+        post_data = {
+            'userID': student_profile.objects.first().auth_id,
+            'lessonID': lesson_info.objects.first().id}
+        # 先嘗試查詢看看
+        response = self.client.post(
+            path='/api/lesson/getStudentsAvailableRemainingMinutes/',
+            data=post_data)
+        # 因為還未確認付款成功，此時學生應該還沒有可用時數
+        self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('[0, false]', str(response.content, "utf8"), str(response.content, "utf8"))
+
+        the_purchase_object = \
+            student_purchase_record.objects.first()
+        the_purchase_object.payment_status = 'paid'
+        the_purchase_object.save()
+        # 理論上現在已經購買、付款完成了，所以 學生應該有30min的可用時數
+
+        # 確認 資料庫裡面 有正確的資料了
+        self.assertEqual(
+            student_remaining_minutes_of_each_purchased_lesson_set.objects.get(
+                id=1).available_remaining_minutes,
+            30
+        )
+        #print(f'lesson_sales_sets: \
+        #    {lesson_sales_sets.objects.values()}')
+        #print(f'student_remaining_minutes_of_each_purchased_lesson_set.objects: \
+        #    {student_remaining_minutes_of_each_purchased_lesson_set.objects.values()}')
+
+        post_data = {
+            'userID': student_profile.objects.first().auth_id,
+            'lessonID': lesson_info.objects.first().id}
+
+        response = self.client.post(
+            path='/api/lesson/getStudentsAvailableRemainingMinutes/',
+            data=post_data)
+        
+        self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('[30, true]', str(response.content, "utf8"),
+        student_remaining_minutes_of_each_purchased_lesson_set.objects.values())
+        # 理論上會回傳類似這樣的形式 >> (remaining_minutes(INT), has_unused_trial(Bool))
+
+        # 此時再購買一個 20:80 的方案
+        purchase_post_data = \
+            {
+                'userID':student_profile.objects.first().auth_id,
+                'teacherID':teacher_profile.objects.first().auth_id,
+                'lessonID':lesson_info.objects.first().id,
+                'sales_set': '20:80',
+                'total_amount_of_the_sales_set': int(800*20*0.8),
+                'q_discount':0}
+
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+        # 建立購買資料
+
+        # 再嘗試查詢看看
+        response = self.client.post(
+            path='/api/lesson/getStudentsAvailableRemainingMinutes/',
+            data=post_data)
+        # 因為還未確認付款成功，此時學生應該只有試教課程，跟可預約的30min
+        self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('[30, true]', str(response.content, "utf8"))
+
+        # 如果付款成功...
+        the_purchase_object = \
+            student_purchase_record.objects.order_by('-update_time').first()
+        the_purchase_object.payment_status = 'paid'
+        the_purchase_object.save()
+
+        # 再一次嘗試查詢看看
+        response = self.client.post(
+            path='/api/lesson/getStudentsAvailableRemainingMinutes/',
+            data=post_data)
+        # 因為確認付款成功，此時學生應該有試教課程，跟可預約的30min + 1200min = 1230min
+        self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('[1230, true]', str(response.content, "utf8"))
+
+
+    def test_get_student_s_available_remaining_minutes_works_when_not_having_trial(self):
+        '''
+        測試 可以取得學生的 可預約時數 及 是否有試教課程還沒用，
+        當他沒有試教課程還沒使用時，是否可以成功回傳其他情況下的正確數值。
+        '''
+        # 此時再購買一個 20:80 的方案
+        purchase_post_data = \
+            {
+                'userID':student_profile.objects.first().auth_id,
+                'teacherID':teacher_profile.objects.first().auth_id,
+                'lessonID':lesson_info.objects.first().id,
+                'sales_set': '30:75',
+                'total_amount_of_the_sales_set': int(800*30*0.75),
+                'q_discount':0}
+
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+        # 建立購買資料
+
+        post_data = {
+            'userID': student_profile.objects.first().auth_id,
+            'lessonID': lesson_info.objects.first().id}
+
+        response = self.client.post(
+            path='/api/lesson/getStudentsAvailableRemainingMinutes/',
+            data=post_data)
+        # 因為還沒確認付款，故應該會失敗
+        self.assertIn('[0, false]', str(response.content, "utf8"), str(response.content, "utf8"))
+
+        the_purchase_object = \
+            student_purchase_record.objects.first()
+        the_purchase_object.payment_status = 'paid'
+        the_purchase_object.save()
+        # 理論上現在已經購買、付款完成了，所以 學生應該有1800min的可用時數
+
+        response = self.client.post(
+            path='/api/lesson/getStudentsAvailableRemainingMinutes/',
+            data=post_data)
+
+        self.assertIn('[1800, false]', str(response.content, "utf8"),
+        student_remaining_minutes_of_each_purchased_lesson_set.objects.values())
+
+    
+    def test_get_student_s_available_remaining_minutes_works_after_booking_trial_successfully(self):
+        '''
+        測試學生預約試教後，回傳資訊正不正確
+        '''
+        purchase_post_data = \
+            {
+                'userID':student_profile.objects.first().auth_id,
+                'teacherID':teacher_profile.objects.first().auth_id,
+                'lessonID':lesson_info.objects.first().id,
+                'sales_set': 'trial',
+                'total_amount_of_the_sales_set': 69,
+                'q_discount':0}
+
+        response = \
+            self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+        # 建立購買資料
+        self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
+
+        the_purchase_object = \
+            student_purchase_record.objects.first()
+        the_purchase_object.payment_status = 'paid'
+        the_purchase_object.save()
+        # 理論上現在已經購買、付款完成了，所以 學生應該有30min的可用時數
+
+        booking_post_data = {
+            'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_1}:2;'
+        }  # 只預約 30min >> ok
+
+        response = self.client.post(
+            path='/api/lesson/bookingLessons/',
+            data=booking_post_data)  # 送出預約
+
+        post_data = {
+            'userID': student_profile.objects.first().auth_id,
+            'lessonID': lesson_info.objects.first().id}
+
+        response = self.client.post(
+            path='/api/lesson/getStudentsAvailableRemainingMinutes/',
+            data=post_data)
+        # 此時因為已經預約的關係，學生應該會呈現沒有可用的 試教 與可用時數
+        self.assertIn('[0, false]', str(response.content, "utf8"), str(response.content, "utf8"))
+
+    
+    def test_get_student_s_available_remaining_minutes_works_after_booking_common_successfully(self):
+        '''
+        測試學生預約一般課程後，回傳資訊正不正確
+        '''
+        purchase_post_data = \
+            {
+                'userID':student_profile.objects.first().auth_id,
+                'teacherID':teacher_profile.objects.first().auth_id,
+                'lessonID':lesson_info.objects.first().id,
+                'sales_set': '10:90',
+                'total_amount_of_the_sales_set': int(800*10*0.9),
+                'q_discount':0}
+
+        response = \
+            self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+        # 建立購買資料
+        self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
+
+        the_purchase_object = \
+            student_purchase_record.objects.first()
+        the_purchase_object.payment_status = 'paid'
+        the_purchase_object.save()
+        # 理論上現在已經購買、付款完成了，所以 學生應該有30min的可用時數
+
+        booking_post_data = {
+            'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_1}:1,2,5;{self.available_date_2}:1,2,3,4,5;{self.available_date_4}:1,3,4;'
+        }  # 預約 330min
+
+        response = self.client.post(
+            path='/api/lesson/bookingLessons/',
+            data=booking_post_data)  # 送出預約
+
+        post_data = {
+            'userID': student_profile.objects.first().auth_id,
+            'lessonID': lesson_info.objects.first().id}
+
+        response = self.client.post(
+            path='/api/lesson/getStudentsAvailableRemainingMinutes/',
+            data=post_data)
+        # 此時因為已經預約的關係，學生應該會呈現沒有可用的 試教 與 270min可用時數
+        self.assertIn('[270, false]', str(response.content, "utf8"), str(response.content, "utf8"))
+
+
+
 
         
 

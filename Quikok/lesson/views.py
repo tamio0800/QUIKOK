@@ -1515,17 +1515,67 @@ def changing_lesson_booking_status(request):
     return JsonResponse(response)
 
         
-def get_student_s_available_remaining_minutes(self):
+def get_student_s_available_remaining_minutes(request):
     response = dict()
+    none_to_zero = lambda x: 0 if x is None else x
 
-    response['status'] = 'success'
-    response['errCode'] = None
-    response['errMsg'] = None
-    response['data'] = None
+    student_auth_id = request.POST.get('userID', False)
+    lesson_id = request.POST.get('lessonID', False)
+
+    if check_if_all_variables_are_true(student_auth_id, lesson_id):
+
+        all_available_remaining_minutes_queryset = \
+            student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                lesson_id=lesson_id,
+                student_auth_id=student_auth_id).exclude(
+                    available_remaining_minutes=0)
+
+        all_trial_sales_sets_of_this_lesson_query_set = \
+            lesson_sales_sets.objects.filter(
+                lesson_id=lesson_id, sales_set='trial')
+
+        student_all_available_set_ids = \
+            all_available_remaining_minutes_queryset.values_list('lesson_set_id', flat=True)
+        
+        all_trial_set_ids_of_the_lesson = \
+                all_trial_sales_sets_of_this_lesson_query_set.values_list('id', flat=True)
+        
+        if any(_ in all_trial_set_ids_of_the_lesson for _ in student_all_available_set_ids):
+            # 任何一筆有重疊，代表user有未使用的該門課程的試教方案
+            student_has_unused_trial_lesson_sales_set = True
+            all_available_remaining_minutes_of_this_lesson = \
+                    all_available_remaining_minutes_queryset.aggregate(Sum('available_remaining_minutes'))['available_remaining_minutes__sum']
+            
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+            response['data'] = (all_available_remaining_minutes_of_this_lesson, student_has_unused_trial_lesson_sales_set)
+        
+        else:
+            # 代表 user 沒有未使用的該門課程的試教方案
+            student_has_unused_trial_lesson_sales_set = False
+            all_available_remaining_minutes_of_this_lesson = none_to_zero(
+                all_available_remaining_minutes_queryset.aggregate(Sum('available_remaining_minutes'))['available_remaining_minutes__sum'])
+            
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+            response['data'] = (all_available_remaining_minutes_of_this_lesson, student_has_unused_trial_lesson_sales_set)
+
+
+    else:
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+    
+    print(response)
+    print('XXXXXX3')
 
     return JsonResponse(response)
 
 
+    
 
 
 
