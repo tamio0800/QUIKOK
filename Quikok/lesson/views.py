@@ -15,7 +15,7 @@ from lesson.lesson_tools import *
 from django.contrib.auth.decorators import login_required
 from account.model_tools import *
 from django.db.models import Q
-from handy_functions import check_if_all_variables_are_true
+from handy_functions import check_if_all_variables_are_true, date_string_2_dateformat
 from handy_functions import sort_dictionaries_in_a_list_by_specific_key
 from lesson.models import lesson_booking_info
 from account_finance.models import student_remaining_minutes_of_each_purchased_lesson_set
@@ -1514,7 +1514,8 @@ def changing_lesson_booking_status(request):
     
     return JsonResponse(response)
 
-        
+
+@require_http_methods(['POST'])
 def get_student_s_available_remaining_minutes(request):
     response = dict()
     none_to_zero = lambda x: 0 if x is None else x
@@ -1569,12 +1570,73 @@ def get_student_s_available_remaining_minutes(request):
         response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
         response['data'] = None
     
-    print(response)
-    print('XXXXXX3')
-
     return JsonResponse(response)
 
 
+@require_http_methods(['POST'])
+def get_teacher_s_booking_history(request):
+    '''
+    回傳該名老師所有預約、課程的狀態。
+    接收：
+    {
+        userID (teacher_auth_id)
+        filtered_by: string // 依照什麼做篩選 _狀態
+                字串顯示：
+                        /預約成功（confirmed）
+                        /待回覆（to_be_confirmed）
+                        /已完課（finished）
+                        /已取消（canceled）
+        registered_from_date//起始日期1990-01-01
+        registered_to_date//結束日期1990-01-01
+    }
+    回傳：
+    {
+        status: “success“ / “failed“ 
+        errCode: None 
+        errMsg: None
+        data:[
+            {
+                booked_date：預約日期，如1990-01-01,
+                booked_time：預約時間以陣列代碼顯示，如['10', '11'], *只能是連續的代碼
+                booked_status: 預約狀態: 預約成功、待回覆...
+                                        /預約成功（confirmed）
+                                        /待回覆（to_be_confirmed）
+                                        /已完課（finished）
+                                        /已取消（canceled）
+                lesson_title: 預約課程名稱,
+                student_nickname: 學生暱稱,
+                discount_price:  課程方案，
+                                    如:'trial'(試課優惠)
+                                        /'no_discount'(單堂原價)
+                                        /'HH:XX'(HH小時XX折)
+                remaining_time：學生購買剩餘時數
+            }
+        ]
+    }
+    '''
+    response = dict()
+    teacher_auth_id = request.POST.get('userID', False)
+    filtered_by = request.POST.get('filtered_by', False)
+    registered_from_date = \
+        date_string_2_dateformat(request.POST.get('registered_from_date', False))
+    registered_to_date = \
+        date_string_2_dateformat(request.POST.get('registered_to_date', False))
+
+    if check_if_all_variables_are_true(teacher_auth_id, filtered_by, 
+    registered_from_date, registered_to_date):
+        # 有正確收到資料
+        
+        response['status'] = 'success'
+        response['errCode'] = None
+        response['errMsg'] = None
+
+    else:
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+    
+    return JsonResponse(response)
     
 
 
