@@ -1213,9 +1213,6 @@ def booking_lessons(request):
                         'lesson_set_id', flat=True).filter(
                         student_auth_id=student_auth_id, lesson_id=lesson_id, 
                     ).exclude(available_remaining_minutes=0))
-                #print(f'student_available_lesson_sets_ids  {student_available_lesson_sets_ids}')
-                #print(f'lesson_sales_sets.objects.values().filter(id__in=student_available_lesson_sets_ids)\
-                #      {lesson_sales_sets.objects.values().filter(id__in=student_available_lesson_sets_ids)}')
                 available_purchased_trial_lesson_sales_sets = \
                     lesson_sales_sets.objects.filter(
                         id__in=student_available_lesson_sets_ids, sales_set='trial').first()
