@@ -121,15 +121,16 @@ class test_finance_functions(TestCase):
         'lessonID':1,
         'sales_set': 'trial',#,'no_discount','30:70']
         'total_amount_of_the_sales_set': 300,
-        'q_discount':20}
+        'q_discount':20} # 要用20q幣折抵
 
         response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
-        #首先確認1號學生有q幣 50元
+        # 1號學生有q幣 50元
         
-        #student_profile.objects.get(id=1).balance
-        #student_profile.objects.get(id=1).withholding_balance
+        #stu_balance =  student_profile.objects.get(id=1).balance
+        stu_withholding_balance = student_profile.objects.get(id=1).withholding_balance
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(stu_withholding_balance, 20)
+
         self.assertJSONEqual(
             str(response.content, encoding='utf8'),
             {
