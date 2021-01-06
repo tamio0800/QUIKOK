@@ -2630,6 +2630,8 @@ class BOOKING_HISTORY_TESTS(TestCase):
         str(response.content, "utf8")) # 應該只有1門 to_be_confirmed
         self.assertEquals(1, str(response.content, "utf8").count('"booked_time"'),
         str(response.content, "utf8")) # 共1筆
+        self.assertIn(f'"discount_price": "trial"', str(response.content, "utf8"))
+        
 
         purchase_post_data = {
             'userID':student_profile.objects.first().auth_id,
@@ -2676,6 +2678,10 @@ class BOOKING_HISTORY_TESTS(TestCase):
         str(response.content, "utf8")) # 應該有3門 to_be_confirmed
         self.assertEquals(3, str(response.content, "utf8").count('"booked_time"'),
         str(response.content, "utf8")) # 共3筆
+        self.assertEquals(2, str(response.content, "utf8").count('"discount_price": "no_discount"'),
+        str(response.content, "utf8")) # 共2筆
+        self.assertEquals(1, str(response.content, "utf8").count('"discount_price": "trial"'),
+        str(response.content, "utf8")) # 共1筆
 
         # 加入學生 auth_id = 2
         purchase_post_data = {
@@ -2723,6 +2729,8 @@ class BOOKING_HISTORY_TESTS(TestCase):
         str(response.content, "utf8")) # 應該有6門 to_be_confirmed
         self.assertEquals(6, str(response.content, "utf8").count('"booked_time"'),
         str(response.content, "utf8")) # 共6筆
+        self.assertEquals(3, str(response.content, "utf8").count('"discount_price": "10:90"'),
+        str(response.content, "utf8")) # 共3筆
 
 
 
