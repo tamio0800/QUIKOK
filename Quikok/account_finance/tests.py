@@ -40,19 +40,20 @@ class test_finance_functions(TestCase):
             'teacher_general_availabale_time': '0:1,2,3,4,5;1:11,13,15,17,19,21,22,25,33;4:1,9,27,28,41;'
         }
         self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
-        
-        self.test_student_name = 'test_student@a.com'
-        student_post_data = {
-            'regEmail': self.test_student_name,
-            'regPwd': '00000000',
-            'regName': 'test_student_name',
-            'regBirth': '1990-12-25',
-            'regGender': 1,
-            'regRole': 'oneself',
-            'regMobile': '0900-111111',
-            'regNotifiemail': ''
-        }
-        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        # 建立兩個學生
+        self.test_student_name = ['test_student1@a.com','test_student2@a.com']
+        for user_name in self.test_student_name:
+            student_post_data = {
+                'regEmail': user_name,
+                'regPwd': '00000000',
+                'regName': 'test_student_name',
+                'regBirth': '1990-12-25',
+                'regGender': 1,
+                'regRole': 'oneself',
+                'regMobile': '0900-111111',
+                'regNotifiemail': ''
+            }
+            self.client.post(path='/api/account/signupStudent/', data=student_post_data)
         # 建立課程
         lesson_post_data = {
             'userID': 1,   # 這是老師的auth_id
