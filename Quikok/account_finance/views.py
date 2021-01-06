@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from account_finance.models import student_purchase_record
 from account_finance.email_sending import email_manager
-from account.models import teacher_profile
+from account.models import teacher_profile, student_profile
 from lesson.models import lesson_info, lesson_sales_sets, lesson_booking_info
 from django.http import JsonResponse
 from chatroom.consumers import ChatConsumer
@@ -24,10 +24,7 @@ def storage_order(request):
         price = request.POST.get('total_amount_of_the_sales_set', False)
         q_discount_amount = request.POST.get('q_discount', False)
 
-        if q_discount_amount != '0':
-            real_price = int(price) - int(q_discount_amount)
-        else:
-            real_price = int(price)
+
         teacher_queryset = teacher_profile.objects.filter(auth_id= teacher_authID)
         lesson_queryset = lesson_info.objects.filter(id = lesson_id)
         if check_if_all_variables_are_true(student_authID, teacher_authID,
@@ -39,6 +36,20 @@ def storage_order(request):
                 set_queryset = lesson_sales_sets.objects.filter(lesson_id=lesson_id, sales_set=lesson_set, is_open= True)
                 
                 if len(set_queryset):
+                    # 學生欲使用Q幣折抵現金
+                    if q_discount_amount != '0':
+                        real_price = int(price) - int(q_discount_amount)
+                        # 更新學生Q幣預扣餘額
+                        student_obj = student_profile.objects.get(auth_id=student_authID)
+                        # 如果原本就還有預扣額度尚未更新,不能覆蓋,要加上去
+                        if student_obj.withholding_balance != 0:
+                            student_obj.withholding_balance = \
+                            student_obj.withholding_balance + int(q_discount_amount)
+                        else:
+                            student_obj.withholding_balance = int(q_discount_amount)
+                        student_obj.save()
+                    else:
+                        real_price = int(price)
 
                     set_obj = set_queryset.first()
                     teacher_obj = teacher_queryset.first()
@@ -46,6 +57,8 @@ def storage_order(request):
                     purchase_date = date_function.today()
                     payment_deadline = purchase_date+timedelta(days=6)
 
+
+                    # 建立訂單
                     new_record = student_purchase_record.objects.create(
                         student_auth_id= student_authID,
                         teacher_auth_id= teacher_authID,
@@ -61,6 +74,9 @@ def storage_order(request):
                         )
                     new_record.save()
 
+                    
+
+                    # 寄通知
                     notification = {
                         'studentID' :student_authID, 
                         'teacherID':teacher_authID,

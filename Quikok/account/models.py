@@ -24,8 +24,8 @@ class student_profile(models.Model):
     auth_id = models.IntegerField()  # 將用戶的auth_id聯動過來，方便進行query
     username = models.CharField(max_length = 150)
     password = models.CharField(max_length = 128)
-    balance = models.IntegerField(default=0)  # 這個是帳戶餘額
-    withholding_balance = models.IntegerField(default=0)  # 這個是帳戶預扣額度
+    balance = models.IntegerField(default=0)  # 帳戶餘額, = Q幣 -預扣額度
+    withholding_balance = models.IntegerField(default=0)  # 帳戶預扣額度
     name = models.CharField(max_length = 40)
     nickname = models.CharField(max_length = 40)
     birth_date = models.DateField(blank=True, null=True)
