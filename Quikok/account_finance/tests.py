@@ -54,6 +54,12 @@ class test_finance_functions(TestCase):
                 'regNotifiemail': ''
             }
             self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        # 1號學生給q幣50元
+        student1_obj = student_profile.objects.get(id=1)
+        student1_obj.balance = 50
+        student1_obj.save()
+        self.assertEqual(student_profile.objects.get(id=1).balance, 50)
+
         # 建立課程
         lesson_post_data = {
             'userID': 1,   # 這是老師的auth_id
@@ -87,32 +93,59 @@ class test_finance_functions(TestCase):
 
     def test_storege_order(self):
         # 測試前端傳來三種不同情況的方案時,是否能順利寫入
-        lesson_set = ['trial']#,'no_discount','30:70']
-        # 還要建立課程才能測試
-        for selected_set in lesson_set:
-            data = {'userID':2,
-            'teacherID':1,
-            'lessonID':1,
-            'sales_set': selected_set,
-            'total_amount_of_the_sales_set': 300,
-            'q_discount':0}
+        # 要建立課程才能測試
+        data = {'userID':2,
+        'teacherID':1,
+        'lessonID':1,
+        'sales_set': 'trial',#,'no_discount','30:70']
+        'total_amount_of_the_sales_set': 300,
+        'q_discount':0}
 
-            response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
-            #print(response)
-            self.assertEqual(response.status_code, 200)
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(
+            str(response.content, encoding='utf8'),
+            {
+                'status': 'success',
+                'errCode': None,
+                'errMsg': None,
+                'data': 1 # 建立1號訂單
+            })
+    def test_storege_order_student_withholding_balance_change(self):
+        '''
+        如果學生使用Q幣, 那送出訂單後Q就要從他的profile中的withholding_balance_change扣除
+        '''
+        
+        data = {'userID':2,
+        'teacherID':1,
+        'lessonID':1,
+        'sales_set': 'trial',#,'no_discount','30:70']
+        'total_amount_of_the_sales_set': 300,
+        'q_discount':20}
 
-        # 目前都會回傳沒有老師,因為給test.py用的批次建立老師跟課程假資料還沒寫
-        # 如果filter沒找到東西都一定會failed,
-        # 所以就先不測試回傳有沒有success
-            self.assertJSONEqual(
-                str(response.content, encoding='utf8'),
-                {
-                    'status': 'success',
-                    'errCode': None,
-                    'errMsg': None,
-                    'data': 1 # 建立1號訂單
-                })
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
+        #首先確認1號學生有q幣 50元
+        
+        #student_profile.objects.get(id=1).balance
+        #student_profile.objects.get(id=1).withholding_balance
 
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(
+            str(response.content, encoding='utf8'),
+            {
+                'status': 'success',
+                'errCode': None,
+                'errMsg': None,
+                'data': 1 # 建立1號訂單
+            })
+    
+    def test_student_withholding_balance_change_after_paid(self):
+        '''
+        當我們確認學生已繳費, unpaid改成paid之後,若有使用Q幣, 此時他的profile中的withholding_balance_change
+        會歸零,而 balance會扣除
+        '''
+        response = self.client.post(path='/api/account_finance/confirm_lesson_order_payment/')
+        self.assertEqual(response.status_code, 200)
 
     def test_if_storege_order_select_active_lesson_sales_set(self):
         '''
@@ -370,11 +403,6 @@ class test_finance_functions(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, '收到款項提醒')
 
-
-
-    def test_receive_user_payment_page(self):
-        response = self.client.post(path='/api/account_finance/confirm_lesson_order_payment/')
-        self.assertEqual(response.status_code, 200)
     def create_student_purchase_remain_minutes(self):
         response = self.client.post(path='/api/account_finance/create_lesson_order_minute/')
         self.assertEqual(response.status_code, 200)
