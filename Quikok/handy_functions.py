@@ -71,23 +71,67 @@ def clean_files(folder_path, key_words):
             os.unlink(os.path.join(folder_path, each_file))
 
 
+def split_non_continuous_times(times_as_string):
+    # times_as_string >> 1,2,3,6,7,8 >> 1,2,3 & 6,7,8
+    num_as_int_in_list = [int(_) for _ in times_as_string.split(',')]
+    num_of_elements = len(num_as_int_in_list)
+    
+    if num_of_elements == 0:
+        return ['',]
+    elif num_of_elements == 1:
+        return [times_as_string,]
+    else:
+        _temp_list_of_lists = list()
+        _temp_list = list()
+        
+        for i, element in enumerate(num_as_int_in_list[:-1]):
+            # 預留1位數的空間
+            if abs(element-num_as_int_in_list[i+1]) == 1:
+                _temp_list.append(str(element))
+            else:
+                _temp_list.append(str(element))
+                _temp_list_of_lists.append(','.join(_temp_list))
+                _temp_list = list()
+        
+        if len(_temp_list):
+            # 有東西
+            _temp_list.append(str(num_as_int_in_list[-1]))
+            _temp_list_of_lists.append(','.join(_temp_list))
+        
+        if str(num_as_int_in_list[-1]) not in ','.join(_temp_list_of_lists):
+            _temp_list_of_lists.append(str(num_as_int_in_list[-1]))
+        
+        return _temp_list_of_lists
+
+
 def booking_date_time_to_minutes_and_cleansing(the_booking_date_time):
         '''
         將收到的 booking_date_time，清理後回傳：
         (
-            總共預約了多少分鐘, 
-            去除空堂如「%Y-%m-%d:;」後的真正有意義的預約時段，以字典的方式回傳。
+            1. 總共預約了多少分鐘, 
+               去除空堂如「%Y-%m-%d:;」後的真正有意義的預約時段，以字典的方式回傳。
+            2. 將諸如 2020-01-01:1,2,3,6,7,8; 的預約 拆成：
+               2020-01-01:1,2,3;
+               2020-01-01:6,7,8;
         )
         '''
         _temp_dict = dict()
-        clean_booking_times = [_ for _ in the_booking_date_time.split(';') if len(_) > 11]
+        splited_clean_date_time = list()
         time_count = 0
-        for each_booking_time in clean_booking_times:
-            the_date, the_time = each_booking_time.split(':')
-            _temp_dict[the_date] = the_time
-            time_count += len(the_time.split(','))
-        return (time_count*30, _temp_dict)
+        for each_booking_time in the_booking_date_time.split(';'):
+            if len(each_booking_time) > 11:
 
+                the_date, the_time = each_booking_time.split(':')
+                times_list = list()
+
+                for each_splited_time in split_non_continuous_times(the_time):
+                    time_count += len(each_splited_time.split(','))
+                    times_list.append(each_splited_time)
+
+                _temp_dict[the_date] = times_list
+            
+        #print(f'the_booking_date_time  {(the_booking_date_time, time_count*30, _temp_dict)}')
+        return (time_count*30, _temp_dict)
 
 def turn_date_string_into_date_format(target_string):
     '''
