@@ -159,7 +159,7 @@ class lesson_booking_info(models.Model):
     remaining_minutes = models.IntegerField()  
     # 這個指的是假設這門課準時上完，則學生還有多少時數，用意是讓老師知道萬一超時會不會多拿到錢
     booking_date_and_time = models.CharField(max_length=400)  
-    # Example: 2020-08-21:1,2,3,4;2020-08-22:3,4,5,6; 之類的
+    # Example: 2020-08-21:1,2,3,4; 之類的
     booking_status = models.CharField(max_length = 20)  # to_be_confirmed or confirmed or canceled
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)

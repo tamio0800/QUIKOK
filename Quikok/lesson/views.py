@@ -1409,21 +1409,97 @@ def changing_lesson_booking_status(request):
                     that_lesson_booking_info.save()
 
                     # 接下來，因為預約變成「確認」了，所以我們必須要將 預約時段 更新到老師的時程裡面
-            
                     the_teacher_model_object = \
                         teacher_profile.objects.filter(auth_id=that_lesson_booking_info.teacher_auth_id).first()
 
-                    data_to_be_created = [
-                        specific_available_time(
-                            teacher_model=the_teacher_model_object,
-                            date=turn_date_string_into_date_format(_.split(':')[0]),
-                            time=_.split(':')[1],
-                            is_occupied=True
-                        ) for _ in that_lesson_booking_info.booking_date_and_time.split(';')
-                        if len(_)
-                    ]
-                    specific_available_time.objects.bulk_create(data_to_be_created)
+                    the_date_string, the_time_string = \
+                        that_lesson_booking_info.booking_date_and_time[:-1].split(':')
+                    the_date = turn_date_string_into_date_format(the_date_string)
+                    
+                    specific_available_time.objects.create(
+                        teacher_model=the_teacher_model_object,
+                        date=the_date,
+                        time=the_time_string,
+                        is_occupied=True
+                    ).save()
                     # 更新確認預約時段完成
+
+                    # 接下來要將其它衝突時段的待確認課程預約取消
+                    other_to_be_confirmed_lesson_bookings_of_the_teacher_queryset = \
+                        lesson_booking_info.objects.filter(
+                            teacher_auth_id = that_lesson_booking_info.teacher_auth_id,
+                            booking_status = 'to_be_confirmed',
+                            booking_date_and_time__contains = the_date_string,
+                        ) # 先選出當天的課程
+                    if other_to_be_confirmed_lesson_bookings_of_the_teacher_queryset.count():
+                        # 代表有符合條件的預約
+                        the_time_string_splited_as_list = the_time_string.split(',')
+                        # 如果時段中有跟 the_time_string_splited_as_list 的元素重疊到，就取消
+                        for each_booking_info_object in other_to_be_confirmed_lesson_bookings_of_the_teacher_queryset:
+                            each_booking_info_object_s_time_splited_as_list = \
+                                each_booking_info_object.booking_date_and_time[:-1].split(':')[1].split(',')
+                            if any(_ in each_booking_info_object_s_time_splited_as_list for _ in the_time_string_splited_as_list):
+                                # 有重疊到，需要拒絕，並返還那些人的預扣時數
+                                each_booking_info_object.last_changed_by = 'teacher'
+                                each_booking_info_object.booking_status = 'canceled'
+                                each_booking_info_object.save()
+                                # 接下來要確認一下是否為 試教
+                                if lesson_sales_sets.objects.filter(
+                                    id=each_booking_info_object.booking_set_id
+                                    ).first().sales_set == 'trial':
+                                    # 是試教
+
+                                    student_remaining_minutes_trial_object = \
+                                        student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                                            lesson_id=each_booking_info_object.lesson_id,
+                                            lesson_set_id=each_booking_info_object.booking_set_id,
+                                            available_remaining_minutes=0
+                                        ).first()  # 因為理論上一門課只會有一門試教，所以可以直接拿 first，且其 available_remaining_minutes 必為 0
+
+                                    student_remaining_minutes_trial_object.available_remaining_minutes = \
+                                        student_remaining_minutes_trial_object.withholding_minutes
+                                    student_remaining_minutes_trial_object.withholding_minutes= 0
+                                    student_remaining_minutes_trial_object.save()
+                                else:
+                                    # 不是試教，因此是什麼方案都無所謂了
+                                    # 接下來篩選出非試教的方案們
+                                    non_trial_this_lesson_sales_set_ids = \
+                                        list(lesson_sales_sets.objects.values_list('id', flat=True).filter(
+                                            lesson_id=each_booking_info_object.lesson_id
+                                        ).exclude(sales_set='trial'))
+
+                                    student_remaining_minutes_non_trial_objects = \
+                                        student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                                            lesson_id=each_booking_info_object.lesson_id,
+                                            lesson_set_id__in=non_trial_this_lesson_sales_set_ids,
+                                        ).exclude(withholding_minutes=0).order_by('-last_changed_time')
+
+                                    this_booked_times_in_minutes = booking_date_time_to_minutes_and_cleansing(
+                                        each_booking_info_object.booking_date_and_time
+                                    )[0]
+
+                                    how_many_does_this_booked_times_in_minutes_leave = this_booked_times_in_minutes
+
+                                    for each_student_remaining_minutes_non_trial_object in student_remaining_minutes_non_trial_objects:
+                                        # 先確認當前資料的預扣額度能不能補回預約取消的時數
+                                        if each_student_remaining_minutes_non_trial_object.withholding_minutes > how_many_does_this_booked_times_in_minutes_leave:
+                                            # 如果該方案的預扣額度可以直接補回取消的時數
+                                            each_student_remaining_minutes_non_trial_object.available_remaining_minutes += \
+                                                how_many_does_this_booked_times_in_minutes_leave
+                                            each_student_remaining_minutes_non_trial_object.withholding_minutes -= \
+                                                how_many_does_this_booked_times_in_minutes_leave
+                                            how_many_does_this_booked_times_in_minutes_leave = 0
+                                            each_student_remaining_minutes_non_trial_object.save()
+                                            break
+                                        else:
+                                            # 無法完全補回，先補回所有的預扣時數，接著再依靠下一筆資料
+                                            each_student_remaining_minutes_non_trial_object.available_remaining_minutes += \
+                                                each_student_remaining_minutes_non_trial_object.withholding_minutes
+                                            how_many_does_this_booked_times_in_minutes_leave -= \
+                                                each_student_remaining_minutes_non_trial_object.withholding_minutes
+                                            each_student_remaining_minutes_non_trial_object.withholding_minutes = 0
+                                            each_student_remaining_minutes_non_trial_object.save()
+                                
 
                     response['status'] = 'success'
                     response['errCode'] = None

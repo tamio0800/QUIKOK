@@ -1990,7 +1990,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         )
 
 
-    @skip
+    
     def test_if_2_students_can_book_overlapped_time_to_a_teacher(self):
         # 測試學生們可否預約同一個老師的重複(部分或完全)時段
         order_post_data = {
@@ -2090,6 +2090,30 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
                 booking_date_and_time=f'{self.available_date_2}:1,2,3,4,5;'
             ).first()
         )  # 如果老師接受了學生2的試教，應該取消學生1的對應的預約
+
+        # 讓學生2再預約一點課程
+        order_post_data = {
+            'userID': student_profile.objects.get(id=2).auth_id,
+            'teacherID': teacher_profile.objects.first().auth_id,
+            'lessonID': lesson_info.objects.first().id,
+            'sales_set': '20:80',
+            'total_amount_of_the_sales_set': int(20*800*0.8),
+            'q_discount':0
+        }  #測試 trial 看看是否成功
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=order_post_data)
+        # 將它設定為已付款
+        self.assertIn('success', str(response.content, 'utf8'), str(response.content, 'utf8'))
+        the_student_purchase_record_object = \
+            student_purchase_record.objects.get(student_auth_id=student_profile.objects.get(id=2).auth_id)
+        the_student_purchase_record_object.payment_status = 'paid'
+        the_student_purchase_record_object.save()  # 學生2號設定完成
+
+        booking_post_data_2 = {
+            'userID': student_profile.objects.get(id=2).auth_id,  # 學生2 的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_3}:1,2,3,5;{self.available_date_1}:3,5;'
+        }  # 預約11個時段，合計330分鐘 >> 12345 123 5 3 5  >> 5門課
+        response1 = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data_1)
 
 
 
