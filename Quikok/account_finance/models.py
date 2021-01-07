@@ -10,7 +10,7 @@ class student_purchase_record(models.Model):
     teacher_nickname = models.CharField(max_length = 40)
     purchase_date = models.DateTimeField(auto_now_add=True) 
     # 下訂日期, 原則上= created_time
-    payment_deadline = models.DateTimeField(auto_now_add=True) 
+    payment_deadline = models.DateTimeField() 
     #繳費期限=下訂日期+3天,到第三天的00:00
     lesson_id = models.IntegerField()
     lesson_name = models.CharField(max_length = 30)
@@ -22,7 +22,7 @@ class student_purchase_record(models.Model):
     # 用戶繳費帳號後5碼,對帳用
     payment_status = models.CharField(max_length = 30, default = 'unpaid')
     # paid, unpaid, cancel.....
-    update_time = models.DateTimeField(auto_now_add=True)
+    updated_time = models.DateTimeField(auto_now=True)
     def __str__(self):
         return str(self.id)
 
