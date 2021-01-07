@@ -8,7 +8,7 @@ class student_purchase_record(models.Model):
     student_auth_id = models.IntegerField()
     teacher_auth_id = models.IntegerField()
     teacher_nickname = models.CharField(max_length = 40)
-    purchase_date = models.DateTimeField(auto_now_add=True) 
+    purchase_date = models.DateTimeField() 
     # 下訂日期, 原則上= created_time
     payment_deadline = models.DateTimeField() 
     #繳費期限=下訂日期+3天,到第三天的00:00

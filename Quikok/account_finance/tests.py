@@ -7,6 +7,7 @@ from django.contrib.auth.models import Group
 import os, shutil
 from django.core import mail
 from unittest import skip
+from django.contrib.auth.models import User
 #python3 manage.py test account_finance/ --settings=Quikok.settings_for_test
 class test_finance_functions(TestCase):
     def setUp(self):
@@ -466,12 +467,94 @@ class test_finance_functions(TestCase):
         response = self.client.post(path='/api/account_finance/create_lesson_order_minute/')
         self.assertEqual(response.status_code, 200)
 
-
-@skip
-class pure_email_send_test(TestCase):
-
-    def test_email_could_send(self):
-        self.client = Client()
-        response = self.client.get('/api/account/send_email/')
-        self.assertIn('Success', str(response.content, 'utf8'),
-        str(response.content, 'utf8'))
+class test_student_purchase_payment_status(TestCase):
+    #def query_order_info_status1_unpaid(self):
+    def setUp(self):
+        self.client =  Client()        
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+        self.test_username = 'test_teacher_user@test.com'
+        teacher_post_data = {
+            'regEmail': self.test_username,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;1:11,13,15,17,19,21,22,25,33;4:1,9,27,28,41;'
+        }
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        # 建立1個學生
+        student_post_data = {
+                'regEmail': 'test_student_name',
+                'regPwd': '00000000',
+                'regName': 'test_student_name',
+                'regBirth': '1990-12-25',
+                'regGender': 1,
+                'regRole': 'oneself',
+                'regMobile': '0900-111111',
+                'regNotifiemail': ''
+            }
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        self.assertEqual(User.objects.all().count() , 2) # 確認目前產生了2個user
+        # 建立課程
+        lesson_post_data = {
+            'userID': 1,   # 這是老師的auth_id
+            'action': 'createLesson',
+            'big_title': 'big_title',
+            'little_title': 'test',
+            'title_color': '#000000',
+            'background_picture_code': 1,
+            'background_picture_path': '',
+            'lesson_title': 'test',
+            'price_per_hour': 800,
+            'discount_price': '10:90;20:80;30:75;',
+            'selling_status': 'selling',
+            'lesson_has_one_hour_package': True,
+            'trial_class_price': 69,
+            'highlight_1': 'test',
+            'highlight_2': 'test',
+            'highlight_3': 'test',
+            'lesson_intro': 'test',
+            'how_does_lesson_go': 'test',
+            'target_students': 'test',
+            'lesson_remarks': 'test',
+            'syllabus': 'test',
+            'lesson_attributes': 'test'      
+            }
+        self.lesson_post_data = lesson_post_data
+        response = \
+            self.client.post(
+                path='/api/lesson/createOrEditLesson/',
+                data=lesson_post_data)
+        
+        # 建立6筆訂單, 以測試6種狀態
+        #  0-待付款/1-對帳中/2-已付款/3-退款中/4-已退款/5-已取消
+        
+        data = {'userID':2,
+        'teacherID':1,
+        'lessonID':1,
+        'sales_set': 'no_discount',#'trial',,'30:70']
+        'total_amount_of_the_sales_set': 300,
+        'q_discount': 0}
+        for num in range(0,6):
+            response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
+        self.assertEqual(student_purchase_record.objects.all().count() , 6)
+    def test_setup(self):
+        print('ya')
