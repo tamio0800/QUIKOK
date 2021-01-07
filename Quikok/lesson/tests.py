@@ -2232,7 +2232,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         self.assertIn('"student_has_unused_trial_lesson_sales_set": false', str(response.content, "utf8"), str(response.content, "utf8"))
 
 
-class BOOKING_HISTORY_TESTS(TestCase):
+class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
     
     def setUp(self):
         self.client = Client()        
