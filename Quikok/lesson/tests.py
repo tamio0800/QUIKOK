@@ -1094,6 +1094,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;'
         }
         self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        
         self.test_student_name = 'test_student@a.com'
         student_post_data = {
             'regEmail': self.test_student_name,
@@ -1104,8 +1105,22 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             'regRole': 'oneself',
             'regMobile': '0900-111111',
             'regNotifiemail': ''
-        }
+        }  # 建立學生1號
         self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        self.test_student_name2 = 'test_student2@a.com'
+        student_post_data2 = {
+            'regEmail': self.test_student_name2,
+            'regPwd': '00000000',
+            'regName': 'test_student_name',
+            'regBirth': '1990-12-25',
+            'regGender': 1,
+            'regRole': 'oneself',
+            'regMobile': '0900-111111',
+            'regNotifiemail': ''
+        }  # 建立學生2號
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data2)
+        
         # 建立課程
         lesson_post_data = {
             'userID': 1,   # 這是老師的auth_id
@@ -1973,6 +1988,50 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
                 ).first().withholding_minutes
             )
         )
+
+
+    def test_if_2_students_can_book_overlapped_time_to_a_teacher(self):
+        # 測試學生們可否預約同一個老師的重複(部分或完全)時段
+        student_remaining_1 = student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_auth_id = student_profile.objects.get(id=1).auth_id,
+            teacher_auth_id = teacher_profile.objects.first().auth_id,
+            lesson_id = 1,
+            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+            available_remaining_minutes = 600)  
+        student_remaining_1.save()  # 建立一個 10:90 set  600min  by student 1
+
+        student_remaining_2 = student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_auth_id = student_profile.objects.get(id=2).auth_id,
+            teacher_auth_id = teacher_profile.objects.first().auth_id,
+            lesson_id = 1,
+            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='trial').filter(is_open=True).first().id,
+            available_remaining_minutes = 30)  
+        student_remaining_2.save()  # 建立一個 10:90 set  30min  by student 2
+
+        booking_post_data_1 = {
+            'userID': student_profile.objects.get(id=1).auth_id,  # 學生1 的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_2}:1,2,3,4,5;{self.available_date_3}:1,2,3,5;{self.available_date_1}:3,5;'
+        }  # 預約11個時段，合計330分鐘 >> 12345 123 5 3 5  >> 5門課
+        response1 = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data_1)
+
+        # 接下來讓學生2 同樣預約 self.available_date_2 的 時段 2
+        booking_post_data_2 = {
+            'userID': student_profile.objects.get(id=2).auth_id,  # 學生1 的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_2}:2;'
+        }  # 預約1個時段，合計30分鐘 >> 1門試教課
+        response2 = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data_2)
+
+        self.assertEqual(
+            (True, True),
+            (
+                'success' in str(response1.content, 'utf8'),
+                'success' in str(response2.content, 'utf8')
+            ),
+            str(response2.content, 'utf8')
+        )
+
 
 
     def test_get_student_s_available_remaining_minutes_exist(self):
@@ -2904,6 +2963,5 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
             shutil.rmtree('user_upload/teachers/' + self.test_username)
         except:
             pass
-
 
 

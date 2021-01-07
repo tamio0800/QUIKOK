@@ -1363,6 +1363,9 @@ def changing_lesson_booking_status(request):
         bookingID://預約序號  >> (這個是 lesson_booking_info 的ID，切記切記)
         bookingStatus://'confirmed', 'canceled'
     }
+
+    2021.01.07:
+        想到還沒有加入，當確認預約後，要將其他衝突時段的預約自動取消掉
     '''
     response = dict()
     user_auth_id = request.POST.get('userID', False)
@@ -1405,6 +1408,7 @@ def changing_lesson_booking_status(request):
                     that_lesson_booking_info.save()
 
                     # 接下來，因為預約變成「確認」了，所以我們必須要將 預約時段 更新到老師的時程裡面
+            
                     the_teacher_model_object = \
                         teacher_profile.objects.filter(auth_id=that_lesson_booking_info.teacher_auth_id).first()
 
