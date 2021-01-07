@@ -1990,23 +1990,42 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         )
 
 
+    
     def test_if_2_students_can_book_overlapped_time_to_a_teacher(self):
         # 測試學生們可否預約同一個老師的重複(部分或完全)時段
-        student_remaining_1 = student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
-            student_auth_id = student_profile.objects.get(id=1).auth_id,
-            teacher_auth_id = teacher_profile.objects.first().auth_id,
-            lesson_id = 1,
-            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
-            available_remaining_minutes = 600)  
-        student_remaining_1.save()  # 建立一個 10:90 set  600min  by student 1
+        order_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'teacherID': teacher_profile.objects.first().auth_id,
+            'lessonID': lesson_info.objects.first().id,
+            'sales_set': '10:90',
+            'total_amount_of_the_sales_set': int(800 * 10 * 0.9),
+            'q_discount':0
+        }  #測試 trial 看看是否成功
+        self.client.post(path='/api/account_finance/storageOrder/', data=order_post_data)
+        # 將它設定為已付款
+        the_student_purchase_record_object = \
+            student_purchase_record.objects.get(student_auth_id=student_profile.objects.get(id=1).auth_id)
+        the_student_purchase_record_object.payment_status = 'paid'
+        the_student_purchase_record_object.save()  # 學生1號設定完成
 
-        student_remaining_2 = student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
-            student_auth_id = student_profile.objects.get(id=2).auth_id,
-            teacher_auth_id = teacher_profile.objects.first().auth_id,
-            lesson_id = 1,
-            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='trial').filter(is_open=True).first().id,
-            available_remaining_minutes = 30)  
-        student_remaining_2.save()  # 建立一個 10:90 set  30min  by student 2
+        order_post_data = {
+            'userID': student_profile.objects.get(id=2).auth_id,
+            'teacherID': teacher_profile.objects.first().auth_id,
+            'lessonID': lesson_info.objects.first().id,
+            'sales_set': 'trial',
+            'total_amount_of_the_sales_set': 69,
+            'q_discount':0
+        }  #測試 trial 看看是否成功
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=order_post_data)
+        # 將它設定為已付款
+        self.assertIn('success', str(response.content, 'utf8'), str(response.content, 'utf8'))
+        the_student_purchase_record_object = \
+            student_purchase_record.objects.get(student_auth_id=student_profile.objects.get(id=2).auth_id)
+        the_student_purchase_record_object.payment_status = 'paid'
+        the_student_purchase_record_object.save()  # 學生2號設定完成
+        self.assertEqual(30, 
+        student_remaining_minutes_of_each_purchased_lesson_set.objects.get(student_auth_id=student_profile.objects.get(id=2).auth_id).available_remaining_minutes,
+        student_remaining_minutes_of_each_purchased_lesson_set.objects.values().filter(student_auth_id=student_profile.objects.get(id=2).auth_id))
 
         booking_post_data_1 = {
             'userID': student_profile.objects.get(id=1).auth_id,  # 學生1 的auth_id
@@ -2014,10 +2033,27 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             'bookingDateTime': f'{self.available_date_2}:1,2,3,4,5;{self.available_date_3}:1,2,3,5;{self.available_date_1}:3,5;'
         }  # 預約11個時段，合計330分鐘 >> 12345 123 5 3 5  >> 5門課
         response1 = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data_1)
+        self.assertEqual(5, 
+            lesson_booking_info.objects.filter(student_auth_id=student_profile.objects.get(id=1).auth_id).count(),
+            lesson_booking_info.objects.values().filter(student_auth_id=student_profile.objects.get(id=1).auth_id))
+        self.assertEqual(600-330,
+            lesson_booking_info.objects.filter(student_auth_id=student_profile.objects.get(id=1).auth_id).first().remaining_minutes,
+            lesson_booking_info.objects.values().filter(student_auth_id=student_profile.objects.get(id=1).auth_id))
+
+        self.assertEqual(
+                (600-330, 330),
+                (
+                    student_remaining_minutes_of_each_purchased_lesson_set.objects.get(
+                        student_auth_id=student_profile.objects.get(id=1).auth_id).available_remaining_minutes,
+                    student_remaining_minutes_of_each_purchased_lesson_set.objects.get(
+                        student_auth_id=student_profile.objects.get(id=1).auth_id).withholding_minutes
+                ),
+                lesson_booking_info.objects.values().filter(student_auth_id=student_profile.objects.get(id=1).auth_id)
+            )  # 測試是否如預期般被扣除
 
         # 接下來讓學生2 同樣預約 self.available_date_2 的 時段 2
         booking_post_data_2 = {
-            'userID': student_profile.objects.get(id=2).auth_id,  # 學生1 的auth_id
+            'userID': student_profile.objects.get(id=2).auth_id,  # 學生2 的auth_id
             'lessonID': 1,
             'bookingDateTime': f'{self.available_date_2}:2;'
         }  # 預約1個時段，合計30分鐘 >> 1門試教課
@@ -2030,7 +2066,55 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
                 'success' in str(response2.content, 'utf8')
             ),
             str(response2.content, 'utf8')
-        )
+        ) # 測試能不能同時兩個學生預約重疊的時間
+
+        changing_post_data = {
+            'userID': teacher_profile.objects.first().auth_id,
+            'bookingID': lesson_booking_info.objects.get(
+                student_auth_id=student_profile.objects.get(id=2).auth_id,
+                booking_date_and_time=f'{self.available_date_2}:2;'
+            ).id,
+            'bookingStatus': 'confirmed'
+        } # 接下來測試看看如果老師接受了學生2的試教，會不會取消學生1的對應的預約
+        response = self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=changing_post_data)
+        self.assertIn('success', str(response.content, 'utf8'), str(response.content, 'utf8'))
+
+        self.assertEqual(
+            'canceled',
+            lesson_booking_info.objects.get(
+                student_auth_id=student_profile.objects.get(id=1).auth_id,
+                booking_date_and_time=f'{self.available_date_2}:1,2,3,4,5;'
+            ).booking_status,
+            lesson_booking_info.objects.values().filter(
+                student_auth_id=student_profile.objects.get(id=1).auth_id,
+                booking_date_and_time=f'{self.available_date_2}:1,2,3,4,5;'
+            ).first()
+        )  # 如果老師接受了學生2的試教，應該取消學生1的對應的預約
+
+        # 讓學生2再預約一點課程
+        order_post_data = {
+            'userID': student_profile.objects.get(id=2).auth_id,
+            'teacherID': teacher_profile.objects.first().auth_id,
+            'lessonID': lesson_info.objects.first().id,
+            'sales_set': '20:80',
+            'total_amount_of_the_sales_set': int(20*800*0.8),
+            'q_discount':0
+        }  #測試 trial 看看是否成功
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=order_post_data)
+        # 將它設定為已付款
+        self.assertIn('success', str(response.content, 'utf8'), str(response.content, 'utf8'))
+        the_student_purchase_record_object = \
+            student_purchase_record.objects.get(student_auth_id=student_profile.objects.get(id=2).auth_id)
+        the_student_purchase_record_object.payment_status = 'paid'
+        the_student_purchase_record_object.save()  # 學生2號設定完成
+
+        booking_post_data_2 = {
+            'userID': student_profile.objects.get(id=2).auth_id,  # 學生2 的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_3}:1,2,3,5;{self.available_date_1}:3,5;'
+        }  # 預約11個時段，合計330分鐘 >> 12345 123 5 3 5  >> 5門課
+        response1 = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data_1)
+
 
 
 
@@ -2138,7 +2222,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
 
         # 如果付款成功...
         the_purchase_object = \
-            student_purchase_record.objects.order_by('-update_time').first()
+            student_purchase_record.objects.order_by('-updated_time').first()
         the_purchase_object.payment_status = 'paid'
         the_purchase_object.save()
 
