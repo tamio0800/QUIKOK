@@ -108,7 +108,12 @@ class connects(models.Model):
 class general_available_time(models.Model):
     teacher_model = models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='general_time')        
     week=models.CharField(max_length=1)      #sun=6, mon=0, tue=1,...,
-    time=models.CharField(max_length=250)       #Example:0,1,2,3,4,5,47
+    time=models.CharField(max_length=250)       #Example:0,1,2,3,4,5...,47
+    # 0 > 00:00 - 00:30
+    # 1 > 00:30 - 01:00
+    # .................
+    # 46: 23:00 - 23:30
+    # 47: 23:30 - 24:00
     # len(','.join([str(__ for _ in range(48)])) >> 133 
     def __str__(self):
         return self.teacher_model.username

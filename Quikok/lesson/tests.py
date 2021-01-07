@@ -2232,7 +2232,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         self.assertIn('"student_has_unused_trial_lesson_sales_set": false', str(response.content, "utf8"), str(response.content, "utf8"))
 
 
-class BOOKING_HISTORY_TESTS(TestCase):
+class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
     
     def setUp(self):
         self.client = Client()        
@@ -2748,6 +2748,162 @@ class BOOKING_HISTORY_TESTS(TestCase):
         str(response.content, "utf8")) # 共3筆
         self.assertEquals(3, str(response.content, "utf8").count('"remaining_time": 420'),
         str(response.content, "utf8")) # 共3筆
+
+
+class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
+    
+    def setUp(self):
+        self.client = Client()        
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+        self.test_teacher_name1 = 'test_teacher1_user@test.com'
+        teacher_post_data = {
+            'regEmail': self.test_teacher_name1,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;'
+        }
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+
+        self.test_teacher_name2 = 'test_teacher2_user@test.com'
+        teacher_post_data = {
+            'regEmail': self.test_teacher_name2,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '十年以上',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;'
+        }
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        
+        self.test_student_name1 = 'test_student1@a.com'
+        student_post_data = {
+            'regEmail': self.test_student_name1,
+            'regPwd': '00000000',
+            'regName': 'test_student_name',
+            'regBirth': '1990-12-25',
+            'regGender': 1,
+            'regRole': 'oneself',
+            'regMobile': '0900-111111',
+            'regNotifiemail': ''
+        }
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        self.test_student_name2 = 'test_student2@a.com'
+        student_post_data['regEmail'] = self.test_student_name2
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        self.test_student_name3 = 'test_student3@a.com'
+        student_post_data['regEmail'] = self.test_student_name3
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        # 建了3個學生
+        
+        # 建立課程
+        lesson_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,   # 這是老師的auth_id
+            'action': 'createLesson',
+            'big_title': 'big_title',
+            'little_title': 'test',
+            'title_color': '#000000',
+            'background_picture_code': 1,
+            'background_picture_path': '',
+            'lesson_title': 'test',
+            'price_per_hour': 800,
+            'discount_price': '10:90;20:80;30:75;',
+            'selling_status': 'selling',
+            'lesson_has_one_hour_package': True,
+            'trial_class_price': 69,
+            'highlight_1': 'test',
+            'highlight_2': 'test',
+            'highlight_3': 'test',
+            'lesson_intro': 'test',
+            'how_does_lesson_go': 'test',
+            'target_students': 'test',
+            'lesson_remarks': 'test',
+            'syllabus': 'test',
+            'lesson_attributes': 'test'      
+            }
+        self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+
+        lesson_post_data = {
+            'userID': teacher_profile.objects.get(id=2).auth_id,   # 這是老師的auth_id
+            'action': 'createLesson',
+            'big_title': 'big_title',
+            'little_title': 'test',
+            'title_color': '#000000',
+            'background_picture_code': 1,
+            'background_picture_path': '',
+            'lesson_title': 'test',
+            'price_per_hour': 1200,
+            'discount_price': '5:90;20:80;30:70;',
+            'selling_status': 'selling',
+            'lesson_has_one_hour_package': True,
+            'trial_class_price': -999,
+            'highlight_1': 'test',
+            'highlight_2': 'test',
+            'highlight_3': 'test',
+            'lesson_intro': 'test',
+            'how_does_lesson_go': 'test',
+            'target_students': 'test',
+            'lesson_remarks': 'test',
+            'syllabus': 'test',
+            'lesson_attributes': 'test'      
+            }
+        self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+
+        # 先取得兩個可預約日期，避免hard coded未來出錯
+        # 時段我都設1,2,3,4,5，所以只要在其中就ok
+        self.available_date_1_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=1)).first().date
+        self.available_date_2_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=1))[1].date
+        self.available_date_3_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=1))[2].date
+        self.available_date_4_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=1))[3].date
+        self.available_date_5_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=1))[4].date
+
+        self.available_date_1_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=2)).first().date
+        self.available_date_2_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=2))[1].date
+        self.available_date_3_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=2))[2].date
+        self.available_date_4_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=2))[3].date
+        self.available_date_5_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=2))[4].date
+
+
+    def tearDown(self):
+        # 刪掉(如果有的話)產生的資料夾
+        try:
+            shutil.rmtree('user_upload/students/' + self.test_student_name1)
+            shutil.rmtree('user_upload/students/' + self.test_student_name2)
+            shutil.rmtree('user_upload/students/' + self.test_student_name3)
+            shutil.rmtree('user_upload/teachers/' + self.test_username)
+        except:
+            pass
 
 
 

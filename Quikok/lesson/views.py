@@ -24,6 +24,8 @@ from handy_functions import booking_date_time_to_minutes_and_cleansing
 from handy_functions import turn_date_string_into_date_format
 from analytics.signals import object_accessed_signal
 from analytics.utils import get_client_ip
+from handy_functions import turn_current_time_into_time_interval
+from datetime import date as date_function
 
 
 @login_required
@@ -1092,6 +1094,7 @@ def get_lesson_specific_available_time(request):
             bookedTime://已預約,格式：[2020-11-03:2]
         }
     ]
+    20210107 >> 加進 距今的兩個小時不顯示 「可預約 & 已預約」，避免學生誤點
     '''
     response = dict()
     student_auth_id = request.POST.get('userID', False)
@@ -1123,10 +1126,13 @@ def get_lesson_specific_available_time(request):
         
         else:
             #corresponding_teacher_auth_id = the_lesson_info_object.teacher__auth_id
+
             available_times = list()
             specific_available_time_objects = \
                 specific_available_time.objects.filter(
-                    teacher_model=the_lesson_info_object.teacher).filter(is_occupied=False)
+                    teacher_model=the_lesson_info_object.teacher,
+                    date__gte=date_function.today()).filter(is_occupied=False)
+                # show出 >= 今日日期的資料
 
             for each_specific_available_time_object in specific_available_time_objects:
                 the_date = str(each_specific_available_time_object.date)
@@ -1137,7 +1143,8 @@ def get_lesson_specific_available_time(request):
             inavailable_times = list()
             specific_inavailable_time_objects = \
                 specific_available_time.objects.filter(
-                    teacher_model=the_lesson_info_object.teacher).filter(is_occupied=True)
+                    teacher_model=the_lesson_info_object.teacher,
+                    date__gte=date_function.today()).filter(is_occupied=True)
             
             for each_specific_inavailable_time_object in specific_inavailable_time_objects:
                 the_date = str(each_specific_inavailable_time_object.date)
