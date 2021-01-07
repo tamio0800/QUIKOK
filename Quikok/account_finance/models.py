@@ -111,7 +111,6 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
                 times_of_the_sales_set_in_minutes = \
                     int(the_sales_set.split(':')[0]) * 60
         
-            
             student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
                 student_purchase_record_id = previous.id,
                 student_auth_id = instance.student_auth_id,
@@ -119,7 +118,7 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
                 lesson_id = instance.lesson_id,
                 lesson_set_id = instance.lesson_set_id,
                 available_remaining_minutes = times_of_the_sales_set_in_minutes
-            )
+            ).save()
             # 如果有用q幣,更改學生的q幣額度及預扣額度
             if previous.purchased_with_q_points != 0 :
                 update_student_balance = email_manager()
