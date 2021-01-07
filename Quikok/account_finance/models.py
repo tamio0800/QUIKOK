@@ -70,6 +70,7 @@ class teacher_refund(models.Model):
 
 
 class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
+    student_purchase_record_id = models.IntegerField()
     student_auth_id = models.IntegerField()
     teacher_auth_id = models.IntegerField()  # 開課的老師 auth_id
     lesson_id = models.IntegerField()  # 所對應的課程id
@@ -112,6 +113,7 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
         
             
             student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+                student_purchase_record_id = previous.id,
                 student_auth_id = instance.student_auth_id,
                 teacher_auth_id = instance.teacher_auth_id,
                 lesson_id = instance.lesson_id,
