@@ -56,8 +56,6 @@ def storage_order(request):
                     lesson_obj = lesson_queryset.first()
                     purchase_date = date_function.today()
                     payment_deadline = purchase_date+timedelta(days=6)
-                    print(purchase_date)
-                    print(payment_deadline)
 
                     # 建立訂單
                     new_record = student_purchase_record.objects.create(
@@ -126,9 +124,29 @@ def storage_order(request):
         return JsonResponse(response)
 
 
-def confirm_lesson_order_payment_page(request):
-    all_unconfirm_users = student_purchase_record.objects.filter(payment_status='unpaid')
-    return render(request, 'confirm_order_payment.html',
-    {'all_unconfirm_users':all_unconfirm_users})
+def student_order_history(request):
+    try:
+        student_authID = request.POST.get('userID', False)
+        token = request.POST.get('token', False)
+        user_type = request.POST.get('type', False)
+        
+        
+        response = {'status':'success',
+                    'errCode': None,
+                    'errMsg': None,
+                    'data': ''}
+
+    except Exception as e:
+        print(f'storage_order Exception {e}')
+        response = {'status':'failed',
+        'errCode': 3,
+        'errMsg': '資料庫有問題，請稍後再試',
+        'data': None}
+    return JsonResponse(response)
+
+#def confirm_lesson_order_payment_page(request):
+#    all_unconfirm_users = student_purchase_record.objects.filter(payment_status='unpaid')
+#    return render(request, 'confirm_order_payment.html',
+#    {'all_unconfirm_users':all_unconfirm_users})
 
 
