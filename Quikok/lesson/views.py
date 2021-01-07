@@ -1557,7 +1557,9 @@ def get_student_s_available_remaining_minutes(request):
             response['status'] = 'success'
             response['errCode'] = None
             response['errMsg'] = None
-            response['data'] = (all_available_remaining_minutes_of_this_lesson, student_has_unused_trial_lesson_sales_set)
+            response['data'] = {
+                'all_available_remaining_minutes_of_this_lesson': all_available_remaining_minutes_of_this_lesson,
+                'student_has_unused_trial_lesson_sales_set': student_has_unused_trial_lesson_sales_set}
         
         else:
             # 代表 user 沒有未使用的該門課程的試教方案
@@ -1568,7 +1570,9 @@ def get_student_s_available_remaining_minutes(request):
             response['status'] = 'success'
             response['errCode'] = None
             response['errMsg'] = None
-            response['data'] = (all_available_remaining_minutes_of_this_lesson, student_has_unused_trial_lesson_sales_set)
+            response['data'] = {
+                'all_available_remaining_minutes_of_this_lesson': all_available_remaining_minutes_of_this_lesson,
+                'student_has_unused_trial_lesson_sales_set': student_has_unused_trial_lesson_sales_set}
 
 
     else:

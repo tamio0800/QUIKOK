@@ -2019,7 +2019,8 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             data=post_data)
         # 因為還未確認付款成功，此時學生應該還沒有可用時數
         self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
-        self.assertIn('[0, false]', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('"all_available_remaining_minutes_of_this_lesson": 0', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('"student_has_unused_trial_lesson_sales_set": false', str(response.content, "utf8"), str(response.content, "utf8"))
 
         the_purchase_object = \
             student_purchase_record.objects.first()
@@ -2047,8 +2048,10 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             data=post_data)
         
         self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
-        self.assertIn('[30, true]', str(response.content, "utf8"),
-        student_remaining_minutes_of_each_purchased_lesson_set.objects.values())
+        #self.assertIn('[30, true]', str(response.content, "utf8"),
+        #student_remaining_minutes_of_each_purchased_lesson_set.objects.values())
+        self.assertIn('"all_available_remaining_minutes_of_this_lesson": 30', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('"student_has_unused_trial_lesson_sales_set": true', str(response.content, "utf8"), str(response.content, "utf8"))
         # 理論上會回傳類似這樣的形式 >> (remaining_minutes(INT), has_unused_trial(Bool))
 
         # 此時再購買一個 20:80 的方案
@@ -2070,7 +2073,9 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             data=post_data)
         # 因為還未確認付款成功，此時學生應該只有試教課程，跟可預約的30min
         self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
-        self.assertIn('[30, true]', str(response.content, "utf8"))
+        #self.assertIn('[30, true]', str(response.content, "utf8"))
+        self.assertIn('"all_available_remaining_minutes_of_this_lesson": 30', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('"student_has_unused_trial_lesson_sales_set": true', str(response.content, "utf8"), str(response.content, "utf8"))
 
         # 如果付款成功...
         the_purchase_object = \
@@ -2084,7 +2089,9 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             data=post_data)
         # 因為確認付款成功，此時學生應該有試教課程，跟可預約的30min + 1200min = 1230min
         self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
-        self.assertIn('[1230, true]', str(response.content, "utf8"))
+        #self.assertIn('[1230, true]', str(response.content, "utf8"))
+        self.assertIn('"all_available_remaining_minutes_of_this_lesson": 1230', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('"student_has_unused_trial_lesson_sales_set": true', str(response.content, "utf8"), str(response.content, "utf8"))
 
 
     def test_get_student_s_available_remaining_minutes_works_when_not_having_trial(self):
@@ -2113,7 +2120,8 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             path='/api/lesson/getStudentsAvailableRemainingMinutes/',
             data=post_data)
         # 因為還沒確認付款，故應該會失敗
-        self.assertIn('[0, false]', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('"all_available_remaining_minutes_of_this_lesson": 0', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('"student_has_unused_trial_lesson_sales_set": false', str(response.content, "utf8"), str(response.content, "utf8"))
 
         the_purchase_object = \
             student_purchase_record.objects.first()
@@ -2125,8 +2133,10 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             path='/api/lesson/getStudentsAvailableRemainingMinutes/',
             data=post_data)
 
-        self.assertIn('[1800, false]', str(response.content, "utf8"),
-        student_remaining_minutes_of_each_purchased_lesson_set.objects.values())
+        #self.assertIn('[1800, false]', str(response.content, "utf8"),
+        #student_remaining_minutes_of_each_purchased_lesson_set.objects.values())
+        self.assertIn('"all_available_remaining_minutes_of_this_lesson": 1800', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('"student_has_unused_trial_lesson_sales_set": false', str(response.content, "utf8"), str(response.content, "utf8"))
 
     
     def test_get_student_s_available_remaining_minutes_works_after_booking_trial_successfully(self):
@@ -2171,7 +2181,9 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             path='/api/lesson/getStudentsAvailableRemainingMinutes/',
             data=post_data)
         # 此時因為已經預約的關係，學生應該會呈現沒有可用的 試教 與可用時數
-        self.assertIn('[0, false]', str(response.content, "utf8"), str(response.content, "utf8"))
+        #self.assertIn('[0, false]', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('"all_available_remaining_minutes_of_this_lesson": 0', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('"student_has_unused_trial_lesson_sales_set": false', str(response.content, "utf8"), str(response.content, "utf8"))
 
     
     def test_get_student_s_available_remaining_minutes_works_after_booking_common_successfully(self):
@@ -2216,7 +2228,8 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             path='/api/lesson/getStudentsAvailableRemainingMinutes/',
             data=post_data)
         # 此時因為已經預約的關係，學生應該會呈現沒有可用的 試教 與 270min可用時數
-        self.assertIn('[270, false]', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('"all_available_remaining_minutes_of_this_lesson": 270', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('"student_has_unused_trial_lesson_sales_set": false', str(response.content, "utf8"), str(response.content, "utf8"))
 
 
 class BOOKING_HISTORY_TESTS(TestCase):
@@ -2730,6 +2743,10 @@ class BOOKING_HISTORY_TESTS(TestCase):
         self.assertEquals(6, str(response.content, "utf8").count('"booked_time"'),
         str(response.content, "utf8")) # 共6筆
         self.assertEquals(3, str(response.content, "utf8").count('"discount_price": "10:90"'),
+        str(response.content, "utf8")) # 共3筆
+        self.assertEquals(3, str(response.content, "utf8").count('"remaining_time": 0'),
+        str(response.content, "utf8")) # 共3筆
+        self.assertEquals(3, str(response.content, "utf8").count('"remaining_time": 420'),
         str(response.content, "utf8")) # 共3筆
 
 
