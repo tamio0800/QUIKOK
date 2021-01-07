@@ -74,8 +74,6 @@ def storage_order(request):
                         )
                     new_record.save()
 
-                    
-
                     # 寄通知
                     notification = {
                         'studentID' :student_authID, 

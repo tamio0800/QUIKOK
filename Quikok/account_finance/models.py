@@ -1,6 +1,6 @@
 from django.db import models
 from django.db.models.signals import pre_save
-from django.dispatch import receiver
+from django.dispatch import receiver,Signal
 from account_finance.email_sending import email_manager
 
 # 學生購買紀錄
@@ -88,6 +88,7 @@ class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
 
 
 
+
 @receiver(pre_save, sender=student_purchase_record)
 def on_change(sender, instance:student_purchase_record, **kwargs):
     if instance.id is None:
@@ -117,6 +118,17 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
                 lesson_set_id = instance.lesson_set_id,
                 available_remaining_minutes = times_of_the_sales_set_in_minutes
             )
+            # 如果有用q幣,更改學生的q幣額度及預扣額度
+            if previous.purchased_with_q_points != 0 :
+                update_student_balance = email_manager()
+                update_student_balance.edit_student_balance_after_receive_payment(
+                student_authID = previous.student_auth_id,
+                q_discount = previous.purchased_with_q_points)
+            
+            else:
+                pass # db不需要更新
+            
+            # 寄給學生收到款項提醒email
             lesson_set_name =  lesson_sales_sets.objects.filter(id = previous.lesson_set_id).first().sales_set
             send_email_reminder = email_manager()
             send_email_data = {
