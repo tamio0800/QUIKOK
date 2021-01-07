@@ -1232,7 +1232,7 @@ def booking_lessons(request):
                         student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(student_auth_id=student_auth_id, lesson_id=lesson_id).exclude(available_remaining_minutes=0)
                     # 計算所有剩餘的時數(分鐘)
                     available_remaining_minutes = the_available_remaining_minutes_object.aggregate(Sum('available_remaining_minutes'))['available_remaining_minutes__sum']
-                
+                    
                     if available_remaining_minutes is None:
                         # 用戶沒有購買任何課程
                         response['status'] = 'failed'
@@ -1256,7 +1256,8 @@ def booking_lessons(request):
 
                         student_availbale_purchased_lesson_sets = \
                             student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
-                                lesson_id=lesson_id
+                                lesson_id=lesson_id,
+                                student_auth_id=student_auth_id
                             ).exclude(
                                 available_remaining_minutes=0
                             ).order_by('available_remaining_minutes')
