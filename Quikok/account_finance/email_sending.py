@@ -16,8 +16,14 @@ class email_manager:
             '訂課匯款提醒': './send_new_order_remind.html',
             '收到款項提醒': './send_order_success.html'
         }
-    def system_email_receive_payment_notification(self, **kwargs):
-        pass
+    def edit_student_balance_after_receive_payment(self, **kwargs):
+        q_discount = kwargs['q_discount']
+        studentID = kwargs['student_authID'] 
+        student_info_obj = student_profile.objects.get(auth_id=studentID)
+
+        student_info_obj.withholding_balance = student_info_obj.withholding_balance - q_discount
+        student_info_obj.balance = student_info_obj.balance - q_discount
+        student_info_obj.save()
 
     # 收到訂單與匯款提醒用
     def system_email_new_order_and_payment_remind(self, **kwargs):
