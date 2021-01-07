@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from account_finance.models import student_purchase_record
+from account_finance.models import student_purchase_record, student_remaining_minutes_of_each_purchased_lesson_set
 from account_finance.email_sending import email_manager
 from account.models import teacher_profile, student_profile
 from lesson.models import lesson_info, lesson_sales_sets, lesson_booking_info
@@ -24,17 +24,12 @@ def storage_order(request):
         price = request.POST.get('total_amount_of_the_sales_set', False)
         q_discount_amount = request.POST.get('q_discount', False)
 
-
         teacher_queryset = teacher_profile.objects.filter(auth_id= teacher_authID)
         lesson_queryset = lesson_info.objects.filter(id = lesson_id)
         if check_if_all_variables_are_true(student_authID, teacher_authID,
                         lesson_id, lesson_set, price,q_discount_amount):
-        #if False not in [student_authID, teacher_authID,\
-        #                lesson_id, lesson_set, price,q_discount_amount]:
-
             if len(teacher_queryset) and len(lesson_queryset):
                 set_queryset = lesson_sales_sets.objects.filter(lesson_id=lesson_id, sales_set=lesson_set, is_open= True)
-                
                 if len(set_queryset):
                     # 學生欲使用Q幣折抵現金
                     if q_discount_amount != '0':
@@ -98,7 +93,7 @@ def storage_order(request):
                     'data': new_record.id}
                 else:
                     response = {'status':'failed',
-                    'errCode': 1,
+                    'errCode': 0,
                     'errMsg': '系統找不到該門課程方案，請稍後再試，如狀況持續可連絡客服',
                     'data': None}
             else:
@@ -129,12 +124,41 @@ def student_order_history(request):
         student_authID = request.POST.get('userID', False)
         token = request.POST.get('token', False)
         user_type = request.POST.get('type', False)
-        
-        
-        response = {'status':'success',
-                    'errCode': None,
-                    'errMsg': None,
-                    'data': ''}
+        if check_if_all_variables_are_true(student_authID, token, user_type):
+            data = []
+            for record in student_purchase_record.objects.filter(student_auth_id=student_authID):
+                record.payment_status
+                record.purchase_date
+                record.teacher_auth_id
+                record.teacher_nickname
+                record.lesson_name
+                record.lesson_id
+                record.lesson_set_id
+                record.part_of_bank_account_code # 後五碼
+                set_name = lesson_sales_sets.objects.filter(id=record.lesson_set_id).first()
+                set_name.sales_set
+
+                data = {
+                    '匯款資訊':{
+                        '銀行代碼': '088',
+                        '銀行名稱': '國泰世華銀行',
+                        '銀行分行': '板橋分行',
+                        '銀行帳號':'012345-411153',
+                        '銀行戶名': '豆沙科技股份有限公司'}
+
+                    }
+
+
+            
+            response = {'status':'success',
+                        'errCode': None,
+                        'errMsg': None,
+                        'data': ''}
+        else:
+            response = {'status':'failed',
+            'errCode': 0,
+            'errMsg': '系統沒有收到資料，請重新整理，如狀況持續可連絡客服',
+            'data': None}
 
     except Exception as e:
         print(f'storage_order Exception {e}')
