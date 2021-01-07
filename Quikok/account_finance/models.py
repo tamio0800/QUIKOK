@@ -8,9 +8,9 @@ class student_purchase_record(models.Model):
     student_auth_id = models.IntegerField()
     teacher_auth_id = models.IntegerField()
     teacher_nickname = models.CharField(max_length = 40)
-    purchase_date = models.DateTimeField(auto_now_add=True) 
+    purchase_date = models.DateTimeField() 
     # 下訂日期, 原則上= created_time
-    payment_deadline = models.DateTimeField(auto_now_add=True) 
+    payment_deadline = models.DateTimeField() 
     #繳費期限=下訂日期+3天,到第三天的00:00
     lesson_id = models.IntegerField()
     lesson_name = models.CharField(max_length = 30)
@@ -21,7 +21,8 @@ class student_purchase_record(models.Model):
     part_of_bank_account_code = models.CharField(max_length=30, default='') 
     # 用戶繳費帳號後5碼,對帳用
     payment_status = models.CharField(max_length = 30, default = 'unpaid')
-    # paid, unpaid, cancel.....
+    # unpaid, reconciliation, paid, refunding, refund, cancel
+    # 目前6種情況 0-待付款/1-對帳中/2-已付款/3-退款中/4-已退款/5-已取消
     update_time = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return str(self.id)

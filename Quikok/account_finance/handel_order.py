@@ -11,9 +11,10 @@ from django.dispatch import receiver, Signal
 a_signal = Signal(providing_args=['a'])
 
 class happy_test:
-    def test_re(sender, **kwargs):
-        a_signal.send(sender=student_purchase_record, a=1)
-        
+#    def test_re(sender, **kwargs):
+#        a_signal.send(sender=student_purchase_record, a=1)
+
+# 以下用法確定可以        
     new_order_paid_signal = Signal(providing_args=['a'])
     new_order_paid_signal.send(sender= student_purchase_record,a=1)
 

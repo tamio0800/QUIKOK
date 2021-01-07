@@ -56,15 +56,16 @@ def storage_order(request):
                     lesson_obj = lesson_queryset.first()
                     purchase_date = date_function.today()
                     payment_deadline = purchase_date+timedelta(days=6)
-
+                    print(purchase_date)
+                    print(payment_deadline)
 
                     # 建立訂單
                     new_record = student_purchase_record.objects.create(
                         student_auth_id= student_authID,
                         teacher_auth_id= teacher_authID,
                         teacher_nickname= teacher_obj.nickname,
-                        purchase_date = purchase_date,
-                        payment_deadline = payment_deadline,
+                        purchase_date = date_function.today(),
+                        payment_deadline = date_function.today()+timedelta(days=6),
                         lesson_id = lesson_id,
                         lesson_name = lesson_obj.lesson_title,
                         lesson_set_id = set_obj.id,
