@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from chatroom.consumers import ChatConsumer
 from datetime import datetime, timedelta, date as date_function
 from handy_functions import check_if_all_variables_are_true
+from django.views.decorators.http import require_http_methods
 
 
 def view_email_new_order_remind(request):
@@ -130,5 +131,65 @@ def confirm_lesson_order_payment_page(request):
     all_unconfirm_users = student_purchase_record.objects.filter(payment_status='unpaid')
     return render(request, 'confirm_order_payment.html',
     {'all_unconfirm_users':all_unconfirm_users})
+
+
+@require_http_methods(['POST'])
+def get_lesson_sales_history(request):
+    '''
+    回傳老師的課程方案販賣紀錄，目前只做老師
+    收取資料: {
+        userID: teacher's auth_id,
+        type: "teacher" or "student"
+    }
+    回傳資料:{
+            status: “success“ / “failed“ 
+            errCode: None 
+            errMsg: None
+            data:[
+                    {
+                    售課紀錄ID: 0
+                    狀態: 0-進行中/1-已結案/2-已退費  >> "on_going"、"finished"、"refunded"
+                    日期: 2020-01-01
+                    學生暱稱: XX
+                    學生ID: 0
+                    課程名稱: XXXXX
+                    lessonID: 0
+                    購買方案: 10:90
+                    金額: 000
+                    剩餘可預約時間(分鐘): 135,
+                    剩餘未完課時間(分鐘): 135
+                    is_selling: Boolean   (該方案是否仍然在架上販賣)
+                    }...
+            ]
+    }'''
+    response = dict()
+    teacher_auth_id = request.POST.get('userID', False)
+    user_type = request.POST.get('type', False)
+    
+    if check_if_all_variables_are_true(teacher_auth_id, user_type):
+        # 資料傳輸成功
+        the_teacher_object = teacher_profile.objects.filter(auth_id=teacher_auth_id).first()
+        if the_teacher_object is not None:
+            # 這名老師確實存在
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+            response['data'] = None
+        else:
+            # 這名老師並不存在
+            response['status'] = 'failed'
+            response['errCode'] = '1'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['data'] = None
+    else:
+        # 傳輸有問題
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+    
+    return JsonResponse(response)
+
+
 
 
