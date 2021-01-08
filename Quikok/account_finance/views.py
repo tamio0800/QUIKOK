@@ -118,7 +118,7 @@ def storage_order(request):
         'data': None}
         return JsonResponse(response)
 
-
+#回傳訂單紀錄
 def student_order_history(request):
     try:
         student_authID = request.POST.get('userID', False)
@@ -128,21 +128,21 @@ def student_order_history(request):
             data = []
             for record in student_purchase_record.objects.filter(student_auth_id=student_authID):
                 set_name = lesson_sales_sets.objects.filter(id=record.lesson_set_id).first()
-                if set_name.sales_set == 'trial':
-                    record_set_name = '試教'
-                elif set_name.sales_set == 'no_discount':
-                    record_set_name = '單堂'
-                else:
-                    lesson_time = set_name.sales_set.split[0]
-                    lesson_discount = set_name.sales_set.split[1]
-                    if '0' in lesson_discount: # 70 折-> 7折
-                        lesson_discount = set_discount.strip('0')
-                    record_set_name = f'{lesson_time}小時{lesson_discount}折'
+                #if set_name.sales_set == 'trial':
+                #    record_set_name = '試教'
+                #elif set_name.sales_set == 'no_discount':
+                #    record_set_name = '單堂'
+                #else:
+                #    lesson_time = set_name.sales_set.split[0]
+                #    lesson_discount = set_name.sales_set.split[1]
+                #    if '0' in lesson_discount: # 70 折-> 7折
+                #        lesson_discount = set_discount.strip('0')
+                #    record_set_name = f'{lesson_time}小時{lesson_discount}折'
                 
-                remain_info = student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(student_auth_id=student_authID,student_purchase_record_ID)
+                remain_info = student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(student_auth_id=student_authID,student_purchase_record_ID=record.id)
                 # 假設我買了200小時的課 已經上完100小時
                 # 並且預約了60小時, 老師還在確認中.
-                # api31的剩餘可預約 = 40, 剩餘未進行 = ? 
+                # api31的剩餘可預約 = 40, 剩餘未進行 = 100 
                 # 此時db (student_remaining_minutes_of_each_purchased_lesson_set)裡的
                 # available_remaining_minutes = 40
                 # withholding_minutes = 60
@@ -155,7 +155,7 @@ def student_order_history(request):
                 '課程名稱': record.lesson_name,
                 'lessonID': record.lesson_id,
                 #record.lesson_set_id,
-                '購買方案': record_set_name, 
+                '購買方案': set_name, 
                 '金額':record.purchased_with_money,
                 '剩餘可預約時間（分鐘）': 'remain_info.available_remaining_minutes',
                 '剩餘未進行時間（分鐘）':'',
