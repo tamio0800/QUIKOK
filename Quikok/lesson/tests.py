@@ -1206,6 +1206,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
     def test_if_booking_lessons_received_data(self):
         # 確認這個函式收得到參數
         student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_purchase_record_id = 1,
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
@@ -1230,6 +1231,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
     def test_if_booking_lessons_check_students_available_remaining_minutes(self):
         # 測試預約前會檢查學生剩餘時數
         student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_purchase_record_id = 1,
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
@@ -1317,6 +1319,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             2020-01-02:6,7,8;
         '''
         student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_purchase_record_id = 1,
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
@@ -1341,6 +1344,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         這個測試用在檢查：當試教預約成功後，是否有從學生那邊扣除剩餘時數，並進行對應的資料庫更新。
         '''
         student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_purchase_record_id = 1,
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
@@ -1390,6 +1394,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         lesson_booking_info.objects.first().delete()
         # 重建一個 60min 的試教
         student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_purchase_record_id = 1,
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
@@ -1439,6 +1444,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         lesson_booking_info.objects.first().delete()
         # 重建一個 60min 的試教
         student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_purchase_record_id = 1,
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
@@ -1464,6 +1470,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         # 接著嘗試建立一般的set，測試是否在還有試教方案前，不能進行一般預約
 
         student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_purchase_record_id = 1,
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
@@ -1500,6 +1507,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
 
     def test_if_booking_common_lessons_modified_remaining_minutes_after_booking_successfully(self):
         student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_purchase_record_id = 1,
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
@@ -1507,6 +1515,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             available_remaining_minutes = 30  
         ).save()  # 先建立一個試教 set
         student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_purchase_record_id = 1,
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
@@ -1563,6 +1572,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         舉例來說，假設有兩個sets分別剩餘25分、100分，預約了120分鐘後，應該分別變成0分、5分。
         '''
         student_remaining_minutes_1 = student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_purchase_record_id = 1,
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
@@ -1570,6 +1580,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             available_remaining_minutes = 20)
         student_remaining_minutes_1.save()  # 建立一個 10:90 set，只有 20 分鐘
         student_remaining_minutes_2 = student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_purchase_record_id = 1,
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
@@ -1577,6 +1588,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             available_remaining_minutes = 90)
         student_remaining_minutes_2.save()  # 建立一個 10:90 set，只有 90 分鐘  # 再建立一個 10:90 set，只有 90 分鐘
         student_remaining_minutes_3 = student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_purchase_record_id = 1,
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
@@ -1643,6 +1655,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
     def test_if_api_changing_lesson_booking_status_exist(self):
         
         student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_purchase_record_id = 1,
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
@@ -1671,6 +1684,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         # 這個是測試可以把預約狀態改成確認，理論上不需要做其他事，相對簡單
         # 記得要到 lesson_sales_sets 的預約成功 +1
         student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_purchase_record_id = 1,
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
@@ -1698,6 +1712,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
     def test_if_api_changing_lesson_booking_status_to_canceled_trial_lesson(self):
         # 這個是測試可以把試教的預約狀態改成取消
         student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_purchase_record_id = 1,
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
@@ -1740,6 +1755,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
     def test_if_api_changing_lesson_booking_status_to_canceled_single_set_common_lesson(self):
         # 這個是測試可以把一般的課程預約狀態改成取消(只從單一方案扣時數)
         student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_purchase_record_id = 1,
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
@@ -1785,6 +1801,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
     def test_if_api_changing_lesson_booking_status_to_canceled_multiple_sets_common_lesson(self):
         # 這個是測試可以把一般的課程預約狀態改成取消(只從單一方案扣時數)
         student_remaining_1 = student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_purchase_record_id = 1,
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
@@ -1792,6 +1809,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             available_remaining_minutes = 20)  
         student_remaining_1.save()  # 建立一個 10:90 set  20min
         student_remaining_2 = student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_purchase_record_id = 1,
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
@@ -1799,6 +1817,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             available_remaining_minutes = 60)  
         student_remaining_2.save()  # 建立一個 10:90 set  60min
         student_remaining_3 = student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_purchase_record_id = 1,
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
@@ -1878,6 +1897,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         
     def test_if_api_changing_lesson_booking_status_to_update_teacher_s_specific_time(self):
         student_remaining_1 = student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_purchase_record_id = 1,
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
@@ -1975,12 +1995,14 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             (270+canceled_minutes, 330-canceled_minutes),
             (
                 student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                    student_purchase_record_id = 1,
                     student_auth_id = student_profile.objects.first().auth_id,
                     teacher_auth_id = teacher_profile.objects.first().auth_id,
                     lesson_id = 1,
                     lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
                 ).first().available_remaining_minutes,
                 student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                    student_purchase_record_id = 1,
                     student_auth_id = student_profile.objects.first().auth_id,
                     teacher_auth_id = teacher_profile.objects.first().auth_id,
                     lesson_id = 1,
@@ -1988,7 +2010,6 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
                 ).first().withholding_minutes
             )
         )
-
 
     
     def test_if_2_students_can_book_overlapped_time_to_a_teacher(self):
@@ -2104,16 +2125,63 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         # 將它設定為已付款
         self.assertIn('success', str(response.content, 'utf8'), str(response.content, 'utf8'))
         the_student_purchase_record_object = \
-            student_purchase_record.objects.get(student_auth_id=student_profile.objects.get(id=2).auth_id)
+            student_purchase_record.objects.filter(
+                student_auth_id=student_profile.objects.get(id=2).auth_id,
+                price=int(20*800*0.8),
+                ).first()
         the_student_purchase_record_object.payment_status = 'paid'
         the_student_purchase_record_object.save()  # 學生2號設定完成
-
-        booking_post_data_2 = {
+        self.assertEqual(2,
+            student_purchase_record.objects.filter(
+                student_auth_id=student_profile.objects.get(id=2).auth_id).count(),
+            student_purchase_record.objects.values().filter(
+                student_auth_id=student_profile.objects.get(id=2).auth_id))
+        print(f'student_purchase_record.objects.values()XX \
+            {student_purchase_record.objects.values().filter(student_auth_id=student_profile.objects.get(id=2).auth_id)}')
+        print(student_remaining_minutes_of_each_purchased_lesson_set.objects.values().filter(
+            student_auth_id=student_profile.objects.get(id=2).auth_id
+        ))
+        
+        booking_post_data_3 = {
             'userID': student_profile.objects.get(id=2).auth_id,  # 學生2 的auth_id
             'lessonID': 1,
-            'bookingDateTime': f'{self.available_date_3}:1,2,3,5;{self.available_date_1}:3,5;'
-        }  # 預約11個時段，合計330分鐘 >> 12345 123 5 3 5  >> 5門課
-        response1 = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data_1)
+            'bookingDateTime': f'{self.available_date_3}:1,2;'
+        }  # 預約2個時段，合計60分鐘 >> 12  >> 1門課
+        response3 = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data_3)
+        self.assertIn('success', str(response3.content, 'utf8'), str(response3.content, 'utf8'))
+        self.assertEqual(
+            'to_be_confirmed',
+            lesson_booking_info.objects.get(
+                student_auth_id=student_profile.objects.get(id=2).auth_id,
+                booking_date_and_time=f'{self.available_date_3}:1,2;'
+            ).booking_status,
+            lesson_booking_info.objects.values().filter(
+                student_auth_id=student_profile.objects.get(id=2).auth_id,
+                booking_date_and_time=f'{self.available_date_3}:1,2;'
+            ).first()
+        )
+
+
+        changing_post_data = {
+            'userID': teacher_profile.objects.first().auth_id,
+            'bookingID': lesson_booking_info.objects.get(
+                student_auth_id=student_profile.objects.get(id=1).auth_id,
+                booking_date_and_time=f'{self.available_date_3}:1,2,3;'
+            ).id,
+            'bookingStatus': 'confirmed'
+        } # 接下來測試看看如果老師接受了學生1的{self.available_date_3}:1,2,3，會不會取消學生2的新建預約
+        response = self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=changing_post_data)
+        self.assertIn('success', str(response.content, 'utf8'), str(response.content, 'utf8'))
+
+        self.assertEqual(
+            'canceled',
+            lesson_booking_info.objects.filter(
+                student_auth_id=student_profile.objects.get(id=2).auth_id,
+                booking_date_and_time=f'{self.available_date_3}:1,2;'
+            ).first().booking_status,
+            lesson_booking_info.objects.values().filter(
+                student_auth_id=student_profile.objects.get(id=2).auth_id)
+        )  # 如果老師接受了學生1{self.available_date_3}:1,2,3，應該取消學生2的對應的預約
 
 
 
@@ -2804,7 +2872,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         the_purchase_object.payment_status = 'paid'
         the_purchase_object.save()
         # 理論上現在已經購買、付款完成了，所以 學生1應該有60min的可用時數
-        print(f'student_remaining_minutes_of_each_purchased_lesson_set.XX {student_remaining_minutes_of_each_purchased_lesson_set.objects.values()}')
+        # print(f'student_remaining_minutes_of_each_purchased_lesson_set.XX {student_remaining_minutes_of_each_purchased_lesson_set.objects.values()}')
         self.assertEquals(
             60,
             student_remaining_minutes_of_each_purchased_lesson_set.objects.get(lesson_set_id=2).available_remaining_minutes,
@@ -2854,7 +2922,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         the_purchase_object.payment_status = 'paid'
         the_purchase_object.save()
         # 理論上現在已經購買、付款完成了，所以 學生2應該有600min的可用時數
-        print(f'student_remaining_minutes_of_each_purchased_lesson_set.XX {student_remaining_minutes_of_each_purchased_lesson_set.objects.values()}')
+        # print(f'student_remaining_minutes_of_each_purchased_lesson_set.XX {student_remaining_minutes_of_each_purchased_lesson_set.objects.values()}')
         self.assertEquals(
             600,
             student_remaining_minutes_of_each_purchased_lesson_set.objects.get(
