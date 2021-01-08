@@ -742,9 +742,9 @@ class LESSON_SALES_HISTORY_TEST(TestCase):
         self.assertIn('"data": null', str(response.content, "utf8"), str(response.content, "utf8"))
 
 
-    def test_get_lesson_sales_history_failed_when_teacher_exist_and_has_booked_lesson(self):
+    def test_get_lesson_sales_history_when_teacher_exist_and_has_purchased_lesson_sales_set(self):
 
-        # 先讓學生預約一門課程
+        # 先讓學生購買課程方案
         purchase_post_data = {
             'userID':student_profile.objects.first().auth_id,
             'teacherID':teacher_profile.objects.first().auth_id,
@@ -758,17 +758,7 @@ class LESSON_SALES_HISTORY_TEST(TestCase):
             student_purchase_record.objects.first()
         the_purchase_object.payment_status = 'paid'
         the_purchase_object.save()
-        # 理論上現在已經購買、付款完成了，所以 學生1應該有30min的可用時數
-
-        booking_post_data = {
-            'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
-            'lessonID': 1,
-            'bookingDateTime': f'{self.available_date_2_t1}:1,2,3,4;{self.available_date_3_t1}:1,3,4,5;'
-        }  # 預約 240min  >> 1234 1 345 3門課
-
-        self.client.post(
-            path='/api/lesson/bookingLessons/',
-            data=booking_post_data)  # 送出預約，此時學生應該有3則送出的 待確認 預約訊息
+        # 理論上現在已經購買、付款完成了
 
         query_history_post_data = {
             'userID': teacher_profile.objects.get(id=1).auth_id,
@@ -792,7 +782,29 @@ class LESSON_SALES_HISTORY_TEST(TestCase):
         self.assertIn('"is_selling"', str(response.content, "utf8"))
 
 
+    def test_get_lesson_sales_history_when_teacher_exist_and_has_booked_lesson_counting_is_right(self):
+        pass
 
 
 
+
+
+
+'''
+the_purchase_object = \
+    student_purchase_record.objects.first()
+the_purchase_object.payment_status = 'paid'
+the_purchase_object.save()
+# 理論上現在已經購買、付款完成了，所以 學生1應該有30min的可用時數
+
+booking_post_data = {
+    'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
+    'lessonID': 1,
+    'bookingDateTime': f'{self.available_date_2_t1}:1,2,3,4;{self.available_date_3_t1}:1,3,4,5;'
+}  # 預約 240min  >> 1234 1 345 3門課
+
+self.client.post(
+    path='/api/lesson/bookingLessons/',
+    data=booking_post_data)  # 送出預約，此時學生應該有3則送出的 待確認 預約訊息
+'''
 

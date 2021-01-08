@@ -171,10 +171,11 @@ def get_lesson_sales_history(request):
         the_teacher_object = teacher_profile.objects.filter(auth_id=teacher_auth_id).first()
         if the_teacher_object is not None:
             # 這名老師確實存在
-            # 來把跟他有關的購買紀錄都列出來吧，並且把最新的購買日期放在最上面 >> time desc.
+            # 來把跟他有關的已購買的購買紀錄都列出來吧，並且把最新的購買日期放在最上面 >> time desc.
             his_related_purchased_record_queryset = \
                 student_purchase_record.objects.filter(
-                    teacher_auth_id = teacher_auth_id
+                    teacher_auth_id = teacher_auth_id,
+                    payment_status = 'paid'
                 ).order_by('-purchase_date')
             
             if (his_related_purchased_record_queryset.count()):
