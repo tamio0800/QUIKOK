@@ -548,7 +548,6 @@ class test_student_purchase_payment_status(TestCase):
         
         # 建立6筆訂單, 以測試6種狀態
         #  0-待付款/1-對帳中/2-已付款/3-退款中/4-已退款/5-已取消
-        
         data = {'userID':2,
         'teacherID':1,
         'lessonID':1,

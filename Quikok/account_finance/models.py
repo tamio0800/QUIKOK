@@ -21,7 +21,8 @@ class student_purchase_record(models.Model):
     part_of_bank_account_code = models.CharField(max_length=30, default='') 
     # 用戶繳費帳號後5碼,對帳用
     payment_status = models.CharField(max_length = 30, default = 'unpaid')
-    # paid, unpaid, cancel.....
+    # unpaid, reconciliation, paid, refunding, refund, cancel 
+    # 0-待付款/1-對帳中/2-已付款/3-退款中/4-已退款/5-已取消
     updated_time = models.DateTimeField(auto_now=True)
     def __str__(self):
         return str(self.id)

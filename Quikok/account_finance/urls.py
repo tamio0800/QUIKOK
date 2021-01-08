@@ -3,6 +3,7 @@ from django.urls import path
 
 urlpatterns = [
     path('storageOrder/', views.storage_order),
+    path('studentOrderHistory/', views.student_order_history),
     path('read_email/', views.view_email_new_order_remind),
     path('confirm_lesson_order_payment/', views.confirm_lesson_order_payment_page),
     path('getLessonSalesHistory/', views.get_lesson_sales_history),
