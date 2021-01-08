@@ -144,7 +144,7 @@ def student_order_history(request):
                 # 並且預約了60小時, 老師還在確認中.
                 # api31的剩餘可預約 = 40, 剩餘未進行 = ? 
                 # 此時db (student_remaining_minutes_of_each_purchased_lesson_set)裡的
-                # available_remaining_minutes = 100
+                # available_remaining_minutes = 40
                 # withholding_minutes = 60
 
                 record_history = {
