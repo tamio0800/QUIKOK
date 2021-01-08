@@ -171,10 +171,44 @@ def get_lesson_sales_history(request):
         the_teacher_object = teacher_profile.objects.filter(auth_id=teacher_auth_id).first()
         if the_teacher_object is not None:
             # 這名老師確實存在
-            response['status'] = 'success'
-            response['errCode'] = None
-            response['errMsg'] = None
-            response['data'] = None
+            # 來把跟他有關的購買紀錄都列出來吧，並且把最新的購買日期放在最上面 >> time desc.
+            his_related_purchased_record_queryset = \
+                student_purchase_record.objects.filter(
+                    teacher_auth_id = teacher_auth_id
+                ).order_by('-purchase_date')
+            
+            if (his_related_purchased_record_queryset.count()):
+                response['data'] = list()
+                # 代表這個老師有與他相關的購買紀錄
+                # 接著儲存相關的資料
+                for each_his_related_purchased_record in his_related_purchased_record_queryset:
+                    response['data'].append(
+                        {
+                            'purchased_record_id': each_his_related_purchased_record.id,
+                            'purchased_lesson_sales_set_status': '',
+                            'created_date': '',
+                            'student_nickname': '',
+                            'student_auth_id': '',
+                            'lesson_title': '',
+                            'lessonID': '',
+                            'lesson_sales_set': '',
+                            'total_amount': '',
+                            'available_remaining_minutes': '',
+                            'unconsumed_minutes': '',
+                            'is_selling': ''
+                        }
+                    )
+
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+            else:
+                # 這名老師並沒有任何與之相關的購買紀錄
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = None
+
         else:
             # 這名老師並不存在
             response['status'] = 'failed'

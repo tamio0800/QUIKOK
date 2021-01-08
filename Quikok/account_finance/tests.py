@@ -600,7 +600,11 @@ class LESSON_SALES_HISTORY_TEST(TestCase):
         self.test_teacher_name2 = 'test_teacher2_user@test.com'
         teacher_post_data['regEmail'] = self.test_teacher_name2,
         self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
-        # 建了2個老師
+
+        self.test_teacher_name3 = 'test_teacher3_user@test.com'
+        teacher_post_data['regEmail'] = self.test_teacher_name3,
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        # 建了3個老師
         
         self.test_student_name1 = 'test_student1@a.com'
         student_post_data = {
@@ -724,6 +728,69 @@ class LESSON_SALES_HISTORY_TEST(TestCase):
             self.client.post(path='/api/account_finance/getLessonSalesHistory/', data=query_history_post_data)
 
         self.assertIn('failed', str(response.content, "utf8"), str(response.content, "utf8"))
+
+    
+    def test_get_lesson_sales_history_failed_when_teacher_exist_and_no_lesson(self):
+        query_history_post_data = {
+            'userID': teacher_profile.objects.get(id=3).auth_id,
+            'type': 'teacher'
+        }
+        response = \
+            self.client.post(path='/api/account_finance/getLessonSalesHistory/', data=query_history_post_data)
+
+        self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('"data": null', str(response.content, "utf8"), str(response.content, "utf8"))
+
+
+    def test_get_lesson_sales_history_failed_when_teacher_exist_and_has_booked_lesson(self):
+
+        # 先讓學生預約一門課程
+        purchase_post_data = {
+            'userID':student_profile.objects.first().auth_id,
+            'teacherID':teacher_profile.objects.first().auth_id,
+            'lessonID':lesson_info.objects.first().id,
+            'sales_set': '10:90',
+            'total_amount_of_the_sales_set': int(10*800*0.9),
+            'q_discount':0}
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+
+        the_purchase_object = \
+            student_purchase_record.objects.first()
+        the_purchase_object.payment_status = 'paid'
+        the_purchase_object.save()
+        # 理論上現在已經購買、付款完成了，所以 學生1應該有30min的可用時數
+
+        booking_post_data = {
+            'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_2_t1}:1,2,3,4;{self.available_date_3_t1}:1,3,4,5;'
+        }  # 預約 240min  >> 1234 1 345 3門課
+
+        self.client.post(
+            path='/api/lesson/bookingLessons/',
+            data=booking_post_data)  # 送出預約，此時學生應該有3則送出的 待確認 預約訊息
+
+        query_history_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'type': 'teacher'
+        }
+        response = \
+            self.client.post(path='/api/account_finance/getLessonSalesHistory/', data=query_history_post_data)
+
+        self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('"purchased_record_id"', str(response.content, "utf8"))
+        self.assertIn('"purchased_lesson_sales_set_status"', str(response.content, "utf8"))
+        self.assertIn('"created_date"', str(response.content, "utf8"))
+        self.assertIn('"student_nickname"', str(response.content, "utf8"))
+        self.assertIn('"student_auth_id"', str(response.content, "utf8"))
+        self.assertIn('"lesson_title"', str(response.content, "utf8"))
+        self.assertIn('"lessonID"', str(response.content, "utf8"))
+        self.assertIn('"lesson_sales_set"', str(response.content, "utf8"))
+        self.assertIn('"total_amount"', str(response.content, "utf8"))
+        self.assertIn('"available_remaining_minutes"', str(response.content, "utf8"))
+        self.assertIn('"unconsumed_minutes"', str(response.content, "utf8"))
+        self.assertIn('"is_selling"', str(response.content, "utf8"))
+
 
 
 
