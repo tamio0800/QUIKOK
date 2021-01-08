@@ -557,8 +557,41 @@ class test_student_purchase_payment_status(TestCase):
         for num in range(0,6):
             response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
         self.assertEqual(student_purchase_record.objects.all().count() , 6)
-    def test_setup(self):
-        print('ya')
+            # 訂單1 待付款, 為預設狀態,不用改
+        # 訂單2 對帳中
+        order = student_purchase_record.objects.get(id=2)
+        order.payment_status = 'reconciliation'
+        order.save()
+        # 訂單3 已付款
+        order = student_purchase_record.objects.get(id=3)
+        order.payment_status = 'paid'
+        order.save()
+        # 訂單4 退款中
+        order = student_purchase_record.objects.get(id=4)
+        order.payment_status = 'refunding'
+        order.save()
+        # 訂單5 已退款
+        order = student_purchase_record.objects.get(id=5)
+        order.payment_status = 'refund'
+        order.save()
+        # 訂單5 已取消
+        order = student_purchase_record.objects.get(id=5)
+        order.payment_status = 'cancel'
+        order.save()
+    @skip    
+    def test_unpaid_response(self):
+        data = {
+            'userID':2,
+            'token':1,
+            'user_type':1
+        }
+        response = self.client.post(path='/api/account_finance/studentOrderHistory/', data=data)
+        self.assertEqual(response.status_code, 200)
+
+        test_response ={
+
+        }
+        
 
 
 class LESSON_SALES_HISTORY_TEST(TestCase):

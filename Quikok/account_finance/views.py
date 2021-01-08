@@ -149,6 +149,7 @@ def student_order_history(request):
                 # withholding_minutes = 60
 
                 record_history = {
+                '訂單紀錄ID':record.id,
                 '狀態':record.payment_status,
                 '日期':record.purchase_date,
                 '老師ID':record.teacher_auth_id,
@@ -162,17 +163,17 @@ def student_order_history(request):
                 '剩餘未進行時間（分鐘）':'',
                 '付款末五碼': record.part_of_bank_account_code} # 後五碼
 
+                
+                remittance_info = {
+                    '銀行代碼': '088',
+                    '銀行名稱': '國泰世華銀行',
+                    '銀行分行': '板橋分行',
+                    '銀行帳號':'012345-411153',
+                    '銀行戶名': '豆沙科技股份有限公司'}
+
+                record_history['匯款資訊'] = remittance_info
+                    
                 data.append(record_history)
-                data = {
-                    '匯款資訊':{
-                        '銀行代碼': '088',
-                        '銀行名稱': '國泰世華銀行',
-                        '銀行分行': '板橋分行',
-                        '銀行帳號':'012345-411153',
-                        '銀行戶名': '豆沙科技股份有限公司'}
-
-                    }
-
 
             
             response = {'status':'success',
