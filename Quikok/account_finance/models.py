@@ -77,6 +77,8 @@ class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
     lesson_set_id = models.IntegerField()  # 對應的方案id
     available_remaining_minutes = models.IntegerField()  # 可動用的剩餘時數
     withholding_minutes = models.IntegerField(default=0) # 預扣時數
+    to_be_confirmed_consumed_minutes = models.IntegerField(default=0) # 待確認的上課時數
+    confirmed_consumed_minutes = models.IntegerField(default=0)  # 已確認的上課時數
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
