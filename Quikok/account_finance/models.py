@@ -84,6 +84,23 @@ class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
         return str(self.id)
+    # 時數的名詞解釋範例:
+    # 假設我買了100小時的課 已經上完30小時,其中28小時已經確認上完課,
+    # 2小時老師跟學生雙方還在確認,實際上那堂課上了3小時
+    # 並且另外預約了6小時, 老師還沒確認是否要接受預約.
+    # 可動用的剩餘 available_remaining_minutes = 70*60
+    # withholding_minutes = 6*60 ,當老師確認預約後,這個就會跑到待確認(下面)
+    # 已確認預約未上課會跟已確認預約尚未確認完課的都算在be_confirmed
+    # to_be_confirmed_consumed_minutes=2*60
+    # confirmed_consumed_minutes=28*60
+    # 當確認完課的時候, lesson_complete_record 的check_time=3*60
+    # ?? 可是如果老師確認預約,這時候的be_confirmed = (6+2)*60
+    # ?? 我要怎麼知道 -3 就是 2 那堂預約呢
+    # 透過lesson_complete_record的lesson_booking_info_id
+    # lesson_booking_info裡面有booking_date_and_time
+    # 這邊會寫這堂預約我約兩小時
+
+
 
     class Meta:
         #ordering= ['-last_changed_time']  # 越新的會被呈現在越上面

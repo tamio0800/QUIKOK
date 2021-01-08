@@ -170,7 +170,7 @@ class lesson_booking_info(models.Model):
         verbose_name = '課程預約資訊'
         verbose_name_plural = '課程預約資訊'
 
-
+# 上課與完課紀錄
 class lesson_complete_record(models.Model):
     lesson_booking_info_id = models.IntegerField()  # 所對應的課程id
     teacher_auth_id = models.IntegerField()
@@ -274,4 +274,4 @@ class lesson_info_for_users_not_signed_up(models.Model):
         return self.lesson_title
         # 理論上一個老師在這張table只會有一個row的資料，所以這樣寫比較好看
 
-# 上課與完課紀錄
+
