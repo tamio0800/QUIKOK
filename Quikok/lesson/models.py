@@ -147,8 +147,9 @@ class lesson_reviews(models.Model):
 
 class lesson_booking_info(models.Model): 
     '''課程的預約管理table，這個model是用來管理「每一則booking」的狀態與profile'''
-    
-    lesson_id = models.IntegerField()  # 所對應的課程id
+    student_remaining_minutes_of_each_purchased_lesson_set_id= models.IntegerField()
+    # 對應的訂單所剩的時數
+    lesson_id = models.IntegerField()  # 對應的課程id
     teacher_auth_id = models.IntegerField()
     student_auth_id = models.IntegerField()
     parent_auth_id = models.IntegerField(default=-1)
@@ -160,7 +161,8 @@ class lesson_booking_info(models.Model):
     # 這個指的是假設這門課準時上完，則學生還有多少時數，用意是讓老師知道萬一超時會不會多拿到錢
     booking_date_and_time = models.CharField(max_length=400)  
     # Example: 2020-08-21:1,2,3,4; 之類的
-    booking_status = models.CharField(max_length = 20)  # to_be_confirmed or confirmed or canceled
+    booking_status = models.CharField(max_length = 20)  
+    # to_be_confirmed or confirmed or canceled
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
@@ -172,24 +174,25 @@ class lesson_booking_info(models.Model):
 
 # 上課與完課紀錄
 class lesson_complete_record(models.Model):
-    lesson_booking_info_id = models.IntegerField()  # 所對應的課程id
+    lesson_booking_info_id = models.IntegerField()  # 對應的課程id
+    student_remaining_minutes_of_each_purchased_lesson_set_id= models.IntegerField()
+    # 對應的訂單所剩的時數
     teacher_auth_id = models.IntegerField()
     student_auth_id = models.IntegerField()
     parent_auth_id = models.IntegerField(default=-1)
-    real_teaching_time = models.IntegerField()
-    # 實際開課時間
+    estimated_time = models.IntegerField() # 預估上課時間時數,單位分鐘,是用預約的時間計算的
+    real_teaching_time = models.IntegerField() 
+    # 實際開課時間總時數,可能課程實際時間會比原本預約時有所增減(單位是分鐘)
     real_start_time = models.DateTimeField(auto_now_add=True)
-    # 實際下課時間
+    # 實際上課時間,單位是分鐘,10分鐘一跳
     real_end_time = models.DateTimeField(auto_now_add=True)
-    # 實際上課時數, 1分鐘為單位, 10分鐘一跳
-    check_time = models.IntegerField()
-    # 實際應付老師金額
+    # 實際下課時數, 單位是分鐘, 10分鐘一跳
     real_teaching_fee = models.IntegerField()
-    # # Example: 2020821:1,2,3,4;20200822:3,4,5,6 之類的
+    # 實際應付老師金額
     teaching_status = models.CharField(max_length = 20)  
     # 還沒上課 unprocess, 已完課 over or canceled
-    is_student_confirm = models.BooleanField(default=0)
-    # default=0,當老師送出向學生確認後改為1, 萬一需要協調時數用
+    is_student_confirm_time = models.BooleanField(default=0)
+    # default=0,當學生確認時數後改為1, 萬一需要協調時數用
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
