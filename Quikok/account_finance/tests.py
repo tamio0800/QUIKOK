@@ -899,9 +899,20 @@ class LESSON_SALES_HISTORY_TEST(TestCase):
         response = \
             self.client.post(path='/api/account_finance/getLessonSalesHistory/', data=query_history_post_data)
         
-        # 先確認購買紀錄的id是正確的
-        self.assertIn('"purchased_record_id": 1', str(response.content, "utf8"), str(response.content, "utf8"))
-        self.assertIn('"purchased_lesson_sales_set_status": "on_going"', str(response.content, "utf8"), str(response.content, "utf8"))
+
+        # 先確認一下回傳數量是對的
+        self.assertEqual(1, str(response.content, "utf8").count('"total_amount"'))
+        # 再確認購買紀錄的id是正確的
+        self.assertIn('"purchased_record_id": 1', str(response.content, "utf8"))
+        self.assertIn('"purchased_lesson_sales_set_status": "on_going"', str(response.content, "utf8"))
+        self.assertIn(f'"created_date": "{date_function.today()}"', str(response.content, "utf8"))
+        self.assertIn(f'"student_nickname": "{student_profile.objects.first().nickname}"', str(response.content, "utf8"))
+        self.assertIn(f'"student_auth_id": {student_profile.objects.first().auth_id}', str(response.content, "utf8"))
+        self.assertIn(f'"lesson_title": "{lesson_info.objects.first().lesson_title}"', str(response.content, "utf8"))
+        self.assertIn(f'"lessonID": {lesson_info.objects.first().id}', str(response.content, "utf8"))
+        self.assertIn(f'"lesson_sales_set": "{lesson_sales_sets.objects.get(id=the_purchase_object.lesson_sales_set_id).sales_set}"', str(response.content, "utf8"))
+        self.assertIn(f'"total_amount": {lesson_sales_sets.objects.get(id=the_purchase_object.lesson_sales_set_id).total_amount_of_the_sales_set}', str(response.content, "utf8"))
+
         
 
 

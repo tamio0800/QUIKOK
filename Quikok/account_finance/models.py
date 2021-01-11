@@ -13,7 +13,7 @@ class student_purchase_record(models.Model):
     payment_deadline = models.DateTimeField() 
     #繳費期限=下訂日期+3天,到第三天的00:00
     lesson_id = models.IntegerField()
-    lesson_name = models.CharField(max_length = 30)
+    lesson_title = models.CharField(max_length = 30)
     lesson_set_id = models.IntegerField()
     price = models.IntegerField() # total
     purchased_with_q_points = models.IntegerField(default=0)  # 用Q幣支付
@@ -22,7 +22,8 @@ class student_purchase_record(models.Model):
     # 用戶繳費帳號後5碼,對帳用
     payment_status = models.CharField(max_length = 30, default = 'unpaid')
     # unpaid, reconciliation, paid, refunding, refund, cancel 
-    # 0-待付款/1-對帳中/2-已付款/3-退款中/4-已退款/5-已取消
+    # 0-待付款/1-對帳中/2-已付款/3-退款中/4-已退款/5-已取消  >>  給前端看的，
+    # 取消指的是 把購買的課程退掉、轉成Q幣； 退款指的是 把Q幣換成現金轉到帳戶裡
     updated_time = models.DateTimeField(auto_now=True)
     def __str__(self):
         return str(self.id)
@@ -75,7 +76,7 @@ class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
     student_auth_id = models.IntegerField()
     teacher_auth_id = models.IntegerField()  # 開課的老師 auth_id
     lesson_id = models.IntegerField()  # 所對應的課程id
-    lesson_set_id = models.IntegerField()  # 對應的方案id
+    lesson_sales_set_id = models.IntegerField()  # 對應的方案id
     available_remaining_minutes = models.IntegerField()  # 可動用的剩餘時數
     withholding_minutes = models.IntegerField(default=0) # 預扣時數
     to_be_confirmed_consumed_minutes = models.IntegerField(default=0) # 待確認的上課時數
