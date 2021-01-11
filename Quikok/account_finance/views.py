@@ -241,7 +241,7 @@ def get_lesson_sales_history(request):
             his_related_purchased_record_queryset = \
                 student_purchase_record.objects.filter(
                     teacher_auth_id = teacher_auth_id,
-                    payment_status = 'paid'
+                    payment_status__in = ['paid', 'refunding', 'refund', 'cancel']
                 ).order_by('-purchase_date')
             
             if (his_related_purchased_record_queryset.count()):
@@ -249,22 +249,48 @@ def get_lesson_sales_history(request):
                 # 代表這個老師有與他相關的購買紀錄
                 # 接著儲存相關的資料
                 for each_his_related_purchased_record in his_related_purchased_record_queryset:
-                    response['data'].append(
-                        {
-                            'purchased_record_id': each_his_related_purchased_record.id,
-                            'purchased_lesson_sales_set_status': '',
-                            'created_date': '',
-                            'student_nickname': '',
-                            'student_auth_id': '',
-                            'lesson_title': '',
-                            'lessonID': '',
-                            'lesson_sales_set': '',
-                            'total_amount': '',
-                            'available_remaining_minutes': '',
-                            'unconsumed_minutes': '',
-                            'is_selling': ''
-                        }
-                    )
+                    correspondent_student_remaining_minutes_object = \
+                        student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                            student_purchase_record_id = each_his_related_purchased_record.id
+                        ).first() # 上面這段是為了求得目前這個方案的狀態是：已經成功結束了、進行中、或是已退費之類的
+
+                    # 因為一門課程的一個方案，可能被購買了許多次，所以需要進行這個環節
+                    if correspondent_student_remaining_minutes_object is not None:
+                        # 如果是None的話代表沒有進到paid，這一步，因此不需要做紀錄
+
+                        if correspondent_student_remaining_minutes_object.is_refunded == True:
+                            purchased_lesson_sales_set_status = 'refunded'
+                        elif correspondent_student_remaining_minutes_object.available_remaining_minutes + \
+                            correspondent_student_remaining_minutes_object.withholding_minutes == 0:
+                            # 可預約時間 跟 預扣時間 都為零，代表已經消耗殆盡了 >> 已結束
+                            purchased_lesson_sales_set_status = 'finished'
+                        else:
+                            # 代表課程進行中
+                            purchased_lesson_sales_set_status = 'on_going'
+                    
+                        created_date = str(correspondent_student_remaining_minutes_object.created_time).split()[0]
+                        # 完成結帳，產生對應tables時的那一天
+                        student_auth_id = correspondent_student_remaining_minutes_object.student_auth_id
+                        student_nickname = student_profile.objects.get(auth_id=student_auth_id).nickname
+                        lesson_title = each_his_related_purchased_record.lesson_title
+                        lesson_id = each_his_related_purchased_record.lesson_title
+                        
+                        response['data'].append(
+                            {
+                                'purchased_record_id': each_his_related_purchased_record.id,
+                                'purchased_lesson_sales_set_status': purchased_lesson_sales_set_status,
+                                'created_date': created_date,
+                                'student_nickname': student_nickname,
+                                'student_auth_id': student_auth_id,
+                                'lesson_title': '',
+                                'lessonID': '',
+                                'lesson_sales_set': '',
+                                'total_amount': '',
+                                'available_remaining_minutes': '',
+                                'unconsumed_minutes': '',
+                                'is_selling': ''
+                            }
+                        )
 
                 response['status'] = 'success'
                 response['errCode'] = None
