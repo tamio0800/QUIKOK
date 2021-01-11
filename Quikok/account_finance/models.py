@@ -14,7 +14,7 @@ class student_purchase_record(models.Model):
     #繳費期限=下訂日期+3天,到第三天的00:00
     lesson_id = models.IntegerField()
     lesson_title = models.CharField(max_length = 30)
-    lesson_set_id = models.IntegerField()
+    lesson_sales_set_id = models.IntegerField()
     price = models.IntegerField() # total
     purchased_with_q_points = models.IntegerField(default=0)  # 用Q幣支付
     purchased_with_money = models.IntegerField() # 實際要支付的費用 total_price -purchased_with_q_points
@@ -41,7 +41,7 @@ class student_refund(models.Model):
     created_time = models.DateTimeField(auto_now_add=True)
     refund_status = models.CharField(max_length = 30, default = 'unpaid')
     # already_paid, unpaid, cancel.....
-    update_time = models.DateTimeField(auto_now_add=True)
+    update_time = models.DateTimeField(auto_now=True)
     bank_account_code = models.CharField(max_length=30, default='')
     bank_code = models.CharField(max_length=5, default='')
     def __str__(self):
@@ -60,7 +60,7 @@ class teacher_refund(models.Model):
     created_time = models.DateTimeField(auto_now_add=True)
     refund_status = models.CharField(max_length=30, default='unpaid')
     # paid, unpaid, cancel.....
-    update_time = models.DateTimeField(auto_now_add=True)
+    update_time = models.DateTimeField(auto_now=True)
     bank_account_code = models.CharField(max_length=30, default='')
     bank_code = models.CharField(max_length=5, default='')
     def __str__(self):
