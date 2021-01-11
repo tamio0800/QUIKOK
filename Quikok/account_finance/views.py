@@ -119,7 +119,7 @@ def storage_order(request):
         'data': None}
         return JsonResponse(response)
 
-#回傳訂單紀錄
+#回傳訂單紀錄, 我的存摺頁
 def student_order_history(request):
     try:
         student_authID = request.POST.get('userID', False)
@@ -129,57 +129,56 @@ def student_order_history(request):
             data = []
             for record in student_purchase_record.objects.filter(student_auth_id=student_authID):
                 set_name = lesson_sales_sets.objects.filter(id=record.lesson_set_id).first()
-                #if set_name.sales_set == 'trial':
+                
+                # 所有尚未確認時間計算用
+                 
+                if set_name.sales_set == 'trial':
+                    total_time = 30
+                # 試教總時數等於半小時
                 #    record_set_name = '試教'
-                #elif set_name.sales_set == 'no_discount':
+                elif set_name.sales_set == 'no_discount':
+                    total_time = 60
+                #買單堂課的時數為一個小時((嚴格來說是兩堂課
                 #    record_set_name = '單堂'
-                #else:
-                #    lesson_time = set_name.sales_set.split[0]
+                else:
+                    lesson_time = set_name.sales_set.split[0]
+                    total_time = int(lesson_time)*60 # 小時轉成分鐘
                 #    lesson_discount = set_name.sales_set.split[1]
                 #    if '0' in lesson_discount: # 70 折-> 7折
                 #        lesson_discount = set_discount.strip('0')
                 #    record_set_name = f'{lesson_time}小時{lesson_discount}折'
                 
-                remain_info = student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(student_auth_id=student_authID,student_purchase_record_ID=record.id)
-                # 假設我買了200小時的課 已經上完100小時
-                # 並且預約了60小時, 老師還在確認中.
-                # api31的剩餘可預約 = 40, 剩餘未進行 = 100 
-                # 此時db (student_remaining_minutes_of_each_purchased_lesson_set)裡的
-                # available_remaining_minutes = 40
-                # withholding_minutes = 60
+                remain_time_info = student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(student_purchase_record_id=record.id)
+                total_unconfirmed_time = total_time - remain_time_info.confirmed_consumed_minutes
 
                 record_history = {
-                '訂單紀錄ID':record.id,
-                '狀態':record.payment_status,
-                '日期':record.purchase_date,
-                '老師ID':record.teacher_auth_id,
-                '老師暱稱': record.teacher_nickname,
-                '課程名稱': record.lesson_name,
+                'purchase_recordID':record.id,
+                'payment_status':record.payment_status,
+                'purchase_date':record.purchase_date,
+                'teacher_authID':record.teacher_auth_id,
+                'teacher_nickname': record.teacher_nickname,
+                'lesson_title': record.lesson_title,
                 'lessonID': record.lesson_id,
-                #record.lesson_set_id,
-                '購買方案': set_name, 
-                '金額':record.purchased_with_money,
-                '剩餘可預約時間（分鐘）': 'remain_info.available_remaining_minutes',
-                '剩餘未進行時間（分鐘）':'',
-                '付款末五碼': record.part_of_bank_account_code} # 後五碼
+                'lesson_sale_set': set_name, 
+                'purchased_with_money':record.purchased_with_money,
+                'available_remaining_minutes': remain_time_info.available_remaining_minutes,
+                'total_unconfirmed_time': total_unconfirmed_time} #全部時數減掉已confirm完課的時數,主要是給老師看的
+                #'付款末五碼': record.part_of_bank_account_code} # 後五碼
 
-                
                 remittance_info = {
-                    '銀行代碼': '088',
-                    '銀行名稱': '國泰世華銀行',
-                    '銀行分行': '板橋分行',
-                    '銀行帳號':'012345-411153',
-                    '銀行戶名': '豆沙科技股份有限公司'}
+                    'bank_code': '088',
+                    'bank_name': '國泰世華銀行',
+                    'bank_branches': '板橋分行',
+                    'bank_account':'012345-411153',
+                    'bank_account_name': '豆沙科技股份有限公司'}
 
-                record_history['匯款資訊'] = remittance_info
-                    
+                record_history['edony_bank_info'] = remittance_info
                 data.append(record_history)
 
-            
             response = {'status':'success',
                         'errCode': None,
                         'errMsg': None,
-                        'data': ''}
+                        'data': data}
         else:
             response = {'status':'failed',
             'errCode': 0,
@@ -189,7 +188,7 @@ def student_order_history(request):
     except Exception as e:
         print(f'storage_order Exception {e}')
         response = {'status':'failed',
-        'errCode': 3,
+        'errCode': 1,
         'errMsg': '資料庫有問題，請稍後再試',
         'data': None}
     return JsonResponse(response)
