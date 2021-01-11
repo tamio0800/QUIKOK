@@ -1217,7 +1217,7 @@ def booking_lessons(request):
                 # 先確認一下該用戶目前有沒有可用的 "試教" 預約
                 student_available_lesson_sets_ids = \
                     list(student_remaining_minutes_of_each_purchased_lesson_set.objects.values_list(
-                        'lesson_set_id', flat=True).filter(
+                        'lesson_sales_set_id', flat=True).filter(
                         student_auth_id=student_auth_id, lesson_id=lesson_id, 
                     ).exclude(available_remaining_minutes=0))
                 available_purchased_trial_lesson_sales_sets = \
@@ -1295,7 +1295,7 @@ def booking_lessons(request):
                                         student_auth_id = student_auth_id,
                                         booked_by = 'student',
                                         last_changed_by = 'student',
-                                        booking_set_id = student_availbale_purchased_lesson_sets.first().lesson_set_id,
+                                        booking_set_id = student_availbale_purchased_lesson_sets.first().lesson_sales_set_id,
                                         remaining_minutes = (available_remaining_minutes - this_booking_minutes),
                                         booking_date_and_time = f'{each_date}:{each_continuous_time};',
                                         booking_status = 'to_be_confirmed'
@@ -1323,7 +1323,7 @@ def booking_lessons(request):
                         # 將學生的該方案先預扣預約時數，因為是試教，故全部扣除
                         the_target_student_set_of_available_remaining_minutes_of_each_purchased_lesson_set = \
                             student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
-                                lesson_set_id=available_purchased_trial_lesson_sales_sets.id,
+                                lesson_sales_set_id=available_purchased_trial_lesson_sales_sets.id,
                                 student_auth_id=student_auth_id,
                                 lesson_id=lesson_id).first()
                         
@@ -1452,7 +1452,7 @@ def changing_lesson_booking_status(request):
                                     student_remaining_minutes_trial_object = \
                                         student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
                                             lesson_id=each_booking_info_object.lesson_id,
-                                            lesson_set_id=each_booking_info_object.booking_set_id,
+                                            lesson_sales_set_id=each_booking_info_object.booking_set_id,
                                             available_remaining_minutes=0
                                         ).first()  # 因為理論上一門課只會有一門試教，所以可以直接拿 first，且其 available_remaining_minutes 必為 0
 
@@ -1471,7 +1471,7 @@ def changing_lesson_booking_status(request):
                                     student_remaining_minutes_non_trial_objects = \
                                         student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
                                             lesson_id=each_booking_info_object.lesson_id,
-                                            lesson_set_id__in=non_trial_this_lesson_sales_set_ids,
+                                            lesson_sales_set_id__in=non_trial_this_lesson_sales_set_ids,
                                         ).exclude(withholding_minutes=0).order_by('-last_changed_time')
 
                                     this_booked_times_in_minutes = booking_date_time_to_minutes_and_cleansing(
@@ -1523,7 +1523,7 @@ def changing_lesson_booking_status(request):
                         student_remaining_minutes_trial_object = \
                             student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
                                 lesson_id=that_lesson_booking_info.lesson_id,
-                                lesson_set_id=that_lesson_booking_info.booking_set_id,
+                                lesson_sales_set_id=that_lesson_booking_info.booking_set_id,
                                 available_remaining_minutes=0
                             ).first()  # 因為理論上一門課只會有一門試教，所以可以直接拿 first，且其 available_remaining_minutes 必為 0
 
@@ -1548,7 +1548,7 @@ def changing_lesson_booking_status(request):
                         student_remaining_minutes_non_trial_objects = \
                             student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
                                 lesson_id=that_lesson_booking_info.lesson_id,
-                                lesson_set_id__in=non_trial_this_lesson_sales_set_ids,
+                                lesson_sales_set_id__in=non_trial_this_lesson_sales_set_ids,
                             ).exclude(withholding_minutes=0).order_by('-last_changed_time')
 
                         this_booked_times_in_minutes = booking_date_time_to_minutes_and_cleansing(
@@ -1631,7 +1631,7 @@ def get_student_s_available_remaining_minutes(request):
                 lesson_id=lesson_id, sales_set='trial')
 
         student_all_available_set_ids = \
-            all_available_remaining_minutes_queryset.values_list('lesson_set_id', flat=True)
+            all_available_remaining_minutes_queryset.values_list('lesson_sales_set_id', flat=True)
         
         all_trial_set_ids_of_the_lesson = \
                 all_trial_sales_sets_of_this_lesson_query_set.values_list('id', flat=True)

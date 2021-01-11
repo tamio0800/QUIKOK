@@ -1210,7 +1210,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
-            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='trial').filter(is_open=True).first().id,
+            lesson_sales_set_id = lesson_sales_sets.objects.filter(sales_set='trial').filter(is_open=True).first().id,
             available_remaining_minutes = 60
         ).save()  # 建立一個試教 set
 
@@ -1235,7 +1235,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
-            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='trial').filter(is_open=True).first().id,
+            lesson_sales_set_id = lesson_sales_sets.objects.filter(sales_set='trial').filter(is_open=True).first().id,
             available_remaining_minutes = 30
         ).save()  # 建立一個試教 set
         self.assertEqual(student_remaining_minutes_of_each_purchased_lesson_set.objects.count(), 1,
@@ -1323,7 +1323,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
-            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+            lesson_sales_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
             available_remaining_minutes = 600  
         ).save()  # 建立一個 10:90 set
 
@@ -1348,7 +1348,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
-            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='trial').filter(is_open=True).first().id,
+            lesson_sales_set_id = lesson_sales_sets.objects.filter(sales_set='trial').filter(is_open=True).first().id,
             available_remaining_minutes = 60  
         ).save()  # 建立一個試教 set
         booking_post_data = {
@@ -1398,7 +1398,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
-            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='trial').filter(is_open=True).first().id,
+            lesson_sales_set_id = lesson_sales_sets.objects.filter(sales_set='trial').filter(is_open=True).first().id,
             available_remaining_minutes = 60  
         ).save()
         booking_post_data = {
@@ -1448,7 +1448,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
-            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='trial').filter(is_open=True).first().id,
+            lesson_sales_set_id = lesson_sales_sets.objects.filter(sales_set='trial').filter(is_open=True).first().id,
             available_remaining_minutes = 60  
         ).save()
         booking_post_data = {
@@ -1474,7 +1474,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
-            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+            lesson_sales_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
             available_remaining_minutes = 10*60
         ).save()  # 建立一個 10:90 set
 
@@ -1511,7 +1511,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
-            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='trial').filter(is_open=True).first().id,
+            lesson_sales_set_id = lesson_sales_sets.objects.filter(sales_set='trial').filter(is_open=True).first().id,
             available_remaining_minutes = 30  
         ).save()  # 先建立一個試教 set
         student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
@@ -1519,7 +1519,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
-            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+            lesson_sales_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
             available_remaining_minutes = 600
         ).save()  # 再建立一個 10:90 set
         self.assertEqual(student_remaining_minutes_of_each_purchased_lesson_set.objects.count(), 2)
@@ -1550,13 +1550,13 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             ),
             (
                 student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
-                    lesson_set_id=lesson_sales_sets.objects.filter(
+                    lesson_sales_set_id=lesson_sales_sets.objects.filter(
                         teacher_auth_id=teacher_profile.objects.first().auth_id,
                         sales_set='10:90'
                     ).first().id
                 ).first().withholding_minutes,
                 student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
-                    lesson_set_id=lesson_sales_sets.objects.filter(
+                    lesson_sales_set_id=lesson_sales_sets.objects.filter(
                         teacher_auth_id=teacher_profile.objects.first().auth_id,
                         sales_set='10:90'
                     ).first().id
@@ -1576,7 +1576,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
-            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+            lesson_sales_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
             available_remaining_minutes = 20)
         student_remaining_minutes_1.save()  # 建立一個 10:90 set，只有 20 分鐘
         student_remaining_minutes_2 = student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
@@ -1584,7 +1584,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
-            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+            lesson_sales_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
             available_remaining_minutes = 90)
         student_remaining_minutes_2.save()  # 建立一個 10:90 set，只有 90 分鐘  # 再建立一個 10:90 set，只有 90 分鐘
         student_remaining_minutes_3 = student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
@@ -1592,7 +1592,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
-            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='30:75').filter(is_open=True).first().id,
+            lesson_sales_set_id = lesson_sales_sets.objects.filter(sales_set='30:75').filter(is_open=True).first().id,
             available_remaining_minutes = 30*60)
         student_remaining_minutes_3.save()  # 再建立一個 30:75 set，有 1800 分鐘
         self.assertEqual(student_remaining_minutes_of_each_purchased_lesson_set.objects.count(), 3)
@@ -1659,7 +1659,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
-            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+            lesson_sales_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
             available_remaining_minutes = 600
         ).save()  # 建立一個 10:90 set
         booking_post_data = {
@@ -1688,7 +1688,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
-            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+            lesson_sales_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
             available_remaining_minutes = 600
         ).save()  # 建立一個 10:90 set
         booking_post_data = {
@@ -1716,7 +1716,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
-            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='trial').filter(is_open=True).first().id,
+            lesson_sales_set_id = lesson_sales_sets.objects.filter(sales_set='trial').filter(is_open=True).first().id,
             available_remaining_minutes = 30
         ).save()  # 建立一個 trial set
         booking_post_data = {
@@ -1742,11 +1742,11 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             (
                 student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
                     lesson_id=1,
-                    lesson_set_id=lesson_sales_sets.objects.filter(sales_set='trial').filter(is_open=True).first().id
+                    lesson_sales_set_id=lesson_sales_sets.objects.filter(sales_set='trial').filter(is_open=True).first().id
                 ).first().available_remaining_minutes,
                 student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
                     lesson_id=1,
-                    lesson_set_id=lesson_sales_sets.objects.filter(sales_set='trial').filter(is_open=True).first().id
+                    lesson_sales_set_id=lesson_sales_sets.objects.filter(sales_set='trial').filter(is_open=True).first().id
                 ).first().withholding_minutes
             )
         )  # 測試時數有真的改回去
@@ -1759,7 +1759,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
-            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+            lesson_sales_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
             available_remaining_minutes = 600
         ).save()  # 建立一個 10:90 set
         booking_post_data = {
@@ -1788,11 +1788,11 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             (
                 student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
                     lesson_id=1,
-                    lesson_set_id=lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id
+                    lesson_sales_set_id=lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id
                 ).first().available_remaining_minutes,
                 student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
                     lesson_id=1,
-                    lesson_set_id=lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id
+                    lesson_sales_set_id=lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id
                 ).first().withholding_minutes
             )
         )  # 測試時數有真的改回去
@@ -1805,7 +1805,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
-            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+            lesson_sales_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
             available_remaining_minutes = 20)  
         student_remaining_1.save()  # 建立一個 10:90 set  20min
         student_remaining_2 = student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
@@ -1813,7 +1813,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
-            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+            lesson_sales_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
             available_remaining_minutes = 60)  
         student_remaining_2.save()  # 建立一個 10:90 set  60min
         student_remaining_3 = student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
@@ -1821,7 +1821,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
-            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+            lesson_sales_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
             available_remaining_minutes = 260)  
         student_remaining_3.save()  # 建立一個 10:90 set  260min
 
@@ -1901,7 +1901,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             student_auth_id = student_profile.objects.first().auth_id,
             teacher_auth_id = teacher_profile.objects.first().auth_id,
             lesson_id = 1,
-            lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+            lesson_sales_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
             available_remaining_minutes = 600)  
         student_remaining_1.save()  # 建立一個 10:90 set  600min
 
@@ -1999,14 +1999,14 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
                     student_auth_id = student_profile.objects.first().auth_id,
                     teacher_auth_id = teacher_profile.objects.first().auth_id,
                     lesson_id = 1,
-                    lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+                    lesson_sales_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
                 ).first().available_remaining_minutes,
                 student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
                     student_purchase_record_id = 1,
                     student_auth_id = student_profile.objects.first().auth_id,
                     teacher_auth_id = teacher_profile.objects.first().auth_id,
                     lesson_id = 1,
-                    lesson_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
+                    lesson_sales_set_id = lesson_sales_sets.objects.filter(sales_set='10:90').filter(is_open=True).first().id,
                 ).first().withholding_minutes
             )
         )
@@ -2873,7 +2873,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         # print(f'student_remaining_minutes_of_each_purchased_lesson_set.XX {student_remaining_minutes_of_each_purchased_lesson_set.objects.values()}')
         self.assertEquals(
             60,
-            student_remaining_minutes_of_each_purchased_lesson_set.objects.get(lesson_set_id=2).available_remaining_minutes,
+            student_remaining_minutes_of_each_purchased_lesson_set.objects.get(lesson_sales_set_id=2).available_remaining_minutes,
             student_remaining_minutes_of_each_purchased_lesson_set.objects.values())
 
         booking_post_data = {
@@ -3486,7 +3486,7 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         the_purchase_object = \
             student_purchase_record.objects.get(
                 student_auth_id = student_profile.objects.first().auth_id,
-                lesson_set_id = lesson_sales_sets.objects.filter(
+                lesson_sales_set_id = lesson_sales_sets.objects.filter(
                     lesson_id = 1,
                     sales_set = 'no_discount'
                 ).first().id
@@ -3498,7 +3498,7 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         self.assertEquals(
             60,
             student_remaining_minutes_of_each_purchased_lesson_set.objects.get(
-                lesson_set_id=lesson_sales_sets.objects.filter(lesson_id=1, sales_set='no_discount').first().id
+                lesson_sales_set_id=lesson_sales_sets.objects.filter(lesson_id=1, sales_set='no_discount').first().id
                 ).available_remaining_minutes,
             student_remaining_minutes_of_each_purchased_lesson_set.objects.values())
 
@@ -3545,7 +3545,7 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         the_purchase_object = \
             student_purchase_record.objects.get(
                 student_auth_id = student_profile.objects.get(id=2).auth_id,
-                lesson_set_id = lesson_sales_sets.objects.filter(
+                lesson_sales_set_id = lesson_sales_sets.objects.filter(
                     lesson_id = 1,
                     sales_set = '10:90'
                 ).first().id

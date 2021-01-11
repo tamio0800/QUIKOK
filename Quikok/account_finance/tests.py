@@ -245,7 +245,7 @@ class test_finance_functions(TestCase):
         self.assertEqual(student_purchase_record.objects.count(),1)
         # 接下來要確認抓到的 sales_set 是不是真正要的那個
         self.assertEqual(
-            student_purchase_record.objects.filter(id=1).first().lesson_set_id,
+            student_purchase_record.objects.filter(id=1).first().lesson_sales_set_id,
             lesson_sales_sets.objects.filter(
                 sales_set='10:90',
                 total_amount_of_the_sales_set=int(self.lesson_post_data['price_per_hour'] * 10 * 0.9)

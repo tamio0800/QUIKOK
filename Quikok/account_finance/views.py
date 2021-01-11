@@ -21,14 +21,14 @@ def storage_order(request):
         student_authID = request.POST.get('userID', False)
         teacher_authID = request.POST.get('teacherID', False)
         lesson_id = request.POST.get('lessonID', False)
-        lesson_sales_set = request.POST.get('sales_set', False)
+        lesson_set = request.POST.get('sales_set', False)
         price = request.POST.get('total_amount_of_the_sales_set', False)
         q_discount_amount = request.POST.get('q_discount', False)
 
         teacher_queryset = teacher_profile.objects.filter(auth_id= teacher_authID)
         lesson_queryset = lesson_info.objects.filter(id = lesson_id)
         if check_if_all_variables_are_true(student_authID, teacher_authID,
-                        lesson_id, lesson_sales_set, price,q_discount_amount):
+                        lesson_id, lesson_set, price,q_discount_amount):
             if len(teacher_queryset) and len(lesson_queryset):
                 set_queryset = lesson_sales_sets.objects.filter(lesson_id=lesson_id, sales_set=lesson_set, is_open= True)
                 if len(set_queryset):
@@ -41,6 +41,9 @@ def storage_order(request):
                         if student_obj.withholding_balance != 0:
                             student_obj.withholding_balance = \
                             student_obj.withholding_balance + int(q_discount_amount)
+                            # tata:
+                            #   這個可以寫成 >>
+                            #   student_obj.withholding_balance += int(q_discount_amount)
                         else:
                             student_obj.withholding_balance = int(q_discount_amount)
                         student_obj.save()
@@ -51,7 +54,7 @@ def storage_order(request):
                     teacher_obj = teacher_queryset.first()
                     lesson_obj = lesson_queryset.first()
                     purchase_date = date_function.today()
-                    payment_deadline = purchase_date+timedelta(days=6)
+                    payment_deadline = purchase_date + timedelta(days=6)
 
                     # 建立訂單
                     new_record = student_purchase_record.objects.create(
@@ -74,7 +77,7 @@ def storage_order(request):
                         'studentID' :student_authID, 
                         'teacherID':teacher_authID,
                         'lessonID': lesson_id, 
-                        'lesson_set': lesson_sales_set, 
+                        'lesson_set': lesson_set, 
                         'total_lesson_set_price':price,
                         'email_pattern_name':'訂課匯款提醒',
                         'q_discount':q_discount_amount,

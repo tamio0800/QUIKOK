@@ -147,7 +147,7 @@ class lesson_reviews(models.Model):
 
 class lesson_booking_info(models.Model): 
     '''課程的預約管理table，這個model是用來管理「每一則booking」的狀態與profile'''
-    student_remaining_minutes_of_each_purchased_lesson_set_id= models.IntegerField()
+    # student_remaining_minutes_of_each_purchased_lesson_set_id= models.IntegerField()
     # 對應的訂單所剩的時數
     lesson_id = models.IntegerField()  # 對應的課程id
     teacher_auth_id = models.IntegerField()
