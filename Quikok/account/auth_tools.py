@@ -33,7 +33,7 @@ class auth_check_manager:
             '帳務中心' :('^/account/finance',1,2,5),
             '預約管理' :('^/account/reservation',2,5),
             '課程預約' :('^/lesson/appointment',1,5),
-            '學習歷程' :('^/account/history',1,5),
+            '學習歷程' :('^/account/study',1,5),
             # 以下為公開頁面
             '首頁' : ('/home', 'public'),
             '課程搜尋頁' : ('^/lesson/search|/lesson/search[?]q=.*', 'public'),
