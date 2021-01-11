@@ -82,6 +82,9 @@ class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
     confirmed_consumed_minutes = models.IntegerField(default=0)  # 已確認的上課時數
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
+    is_refunded = models.BooleanField(default=False)
+    # 代表學生有沒有退費這門方案，並且成功通過退費。
+
     def __str__(self):
         return str(self.id)
     # 時數的名詞解釋範例:
@@ -99,8 +102,6 @@ class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
     # 透過lesson_complete_record的lesson_booking_info_id
     # lesson_booking_info裡面有booking_date_and_time
     # 這邊會寫這堂預約我約兩小時
-
-
 
     class Meta:
         #ordering= ['-last_changed_time']  # 越新的會被呈現在越上面

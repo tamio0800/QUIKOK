@@ -250,6 +250,16 @@ def get_lesson_sales_history(request):
                 # 代表這個老師有與他相關的購買紀錄
                 # 接著儲存相關的資料
                 for each_his_related_purchased_record in his_related_purchased_record_queryset:
+                    correspondant_student_remaining_minutes_object = \
+                        student_remaining_minutes_of_each_purchased_lesson_set.objects.get(
+                            student_purchase_record_id = each_his_related_purchased_record.id
+                        ) # 上面這段是為了求得目前這個方案的狀態是：已經成功結束了、進行中、或是已退費之類的 
+                    if correspondant_student_remaining_minutes_object.available_remaining_minutes + \
+                        correspondant_student_remaining_minutes_object.withholding_minutes == 0:
+                        # 可預約時間 跟 預扣時間 都為零，代表已經消耗殆盡了 >> 已結束
+                        purchased_lesson_sales_set_status = 'finished'
+                    
+                    
                     response['data'].append(
                         {
                             'purchased_record_id': each_his_related_purchased_record.id,
