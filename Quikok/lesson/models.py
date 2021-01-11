@@ -173,7 +173,7 @@ class lesson_booking_info(models.Model):
         verbose_name_plural = '課程預約資訊'
 
 # 上課與完課紀錄
-class lesson_complete_record(models.Model):
+class lesson_completed_record(models.Model):
     lesson_booking_info_id = models.IntegerField()  # 對應的課程id
     student_remaining_minutes_of_each_purchased_lesson_set_id= models.IntegerField()
     # 對應的訂單所剩的時數
@@ -190,8 +190,8 @@ class lesson_complete_record(models.Model):
     real_teaching_fee = models.IntegerField()
     # 實際應付老師金額
     teaching_status = models.CharField(max_length = 20)  
-    # 還沒上課 unprocess, 已完課 over or canceled
-    is_student_confirm_time = models.BooleanField(default=0)
+    # 這個欄位好像用不到還沒上課 unprocess, 已完課 over or canceled
+    is_student_confirm_time = models.BooleanField(default= False)
     # default=0,當學生確認時數後改為1, 萬一需要協調時數用
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
