@@ -8,9 +8,9 @@ class student_purchase_record(models.Model):
     student_auth_id = models.IntegerField()
     teacher_auth_id = models.IntegerField()
     teacher_nickname = models.CharField(max_length = 40)
-    purchase_date = models.DateTimeField(auto_now_add=True) 
+    purchase_date = models.DateTimeField() 
     # 下訂日期, 原則上= created_time
-    payment_deadline = models.DateTimeField(auto_now_add=True) 
+    payment_deadline = models.DateTimeField() 
     #繳費期限=下訂日期+3天,到第三天的00:00
     lesson_id = models.IntegerField()
     lesson_name = models.CharField(max_length = 30)
@@ -21,8 +21,9 @@ class student_purchase_record(models.Model):
     part_of_bank_account_code = models.CharField(max_length=30, default='') 
     # 用戶繳費帳號後5碼,對帳用
     payment_status = models.CharField(max_length = 30, default = 'unpaid')
-    # paid, unpaid, cancel.....
-    update_time = models.DateTimeField(auto_now_add=True)
+    # unpaid, reconciliation, paid, refunding, refund, cancel 
+    # 0-待付款/1-對帳中/2-已付款/3-退款中/4-已退款/5-已取消
+    updated_time = models.DateTimeField(auto_now=True)
     def __str__(self):
         return str(self.id)
 
@@ -70,16 +71,36 @@ class teacher_refund(models.Model):
 
 
 class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
+    student_purchase_record_id = models.IntegerField()
     student_auth_id = models.IntegerField()
     teacher_auth_id = models.IntegerField()  # 開課的老師 auth_id
     lesson_id = models.IntegerField()  # 所對應的課程id
     lesson_set_id = models.IntegerField()  # 對應的方案id
     available_remaining_minutes = models.IntegerField()  # 可動用的剩餘時數
     withholding_minutes = models.IntegerField(default=0) # 預扣時數
+    to_be_confirmed_consumed_minutes = models.IntegerField(default=0) # 待確認的上課時數
+    confirmed_consumed_minutes = models.IntegerField(default=0)  # 已確認的上課時數
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
         return str(self.id)
+    # 時數的名詞解釋範例:
+    # 假設我買了100小時的課 已經上完30小時,其中28小時已經確認上完課,
+    # 2小時老師跟學生雙方還在確認,實際上那堂課上了3小時
+    # 並且另外預約了6小時, 老師還沒確認是否要接受預約.
+    # 可動用的剩餘 available_remaining_minutes = 70*60
+    # withholding_minutes = 6*60 ,當老師確認預約後,這個就會跑到待確認(下面)
+    # 已確認預約未上課會跟已確認預約尚未確認完課的都算在be_confirmed
+    # to_be_confirmed_consumed_minutes=2*60
+    # confirmed_consumed_minutes=28*60
+    # 當確認完課的時候, lesson_complete_record 的check_time=3*60
+    # ?? 可是如果老師確認預約,這時候的be_confirmed = (6+2)*60
+    # ?? 我要怎麼知道 -3 就是 2 那堂預約呢
+    # 透過lesson_complete_record的lesson_booking_info_id
+    # lesson_booking_info裡面有booking_date_and_time
+    # 這邊會寫這堂預約我約兩小時
+
+
 
     class Meta:
         #ordering= ['-last_changed_time']  # 越新的會被呈現在越上面
@@ -110,14 +131,14 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
                 times_of_the_sales_set_in_minutes = \
                     int(the_sales_set.split(':')[0]) * 60
         
-            
             student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+                student_purchase_record_id = previous.id,
                 student_auth_id = instance.student_auth_id,
                 teacher_auth_id = instance.teacher_auth_id,
                 lesson_id = instance.lesson_id,
                 lesson_set_id = instance.lesson_set_id,
                 available_remaining_minutes = times_of_the_sales_set_in_minutes
-            )
+            ).save()
             # 如果有用q幣,更改學生的q幣額度及預扣額度
             if previous.purchased_with_q_points != 0 :
                 update_student_balance = email_manager()

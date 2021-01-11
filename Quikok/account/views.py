@@ -196,7 +196,7 @@ def return_student_profile_for_oneself_viewing(request):
     if student_auth_id == False:
         response['status'] = 'failed'
         response['errCode'] = '0'
-        response['errMsg'] = 'Received Arguments Failed.'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
         response['data'] = None
         
     else:    
@@ -756,7 +756,7 @@ def return_teacher_s_profile_for_public_viewing(request):
     if teacher_auth_id == False:
         response['status'] = 'failed'
         response['errCode'] = '0'
-        response['errMsg'] = 'Received Arguments Failed.'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
         response['data'] = None
         return JsonResponse(response)
     
@@ -781,7 +781,7 @@ def signin(request):
             # 使用者不存在
             response['status'] = 'failed'
             response['errCode'] = '1'
-            response['errMsg'] = 'username does not exist'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
             response['data'] = None
             print('使用者不存在')
         else: #使用者存在
@@ -846,7 +846,7 @@ def signin(request):
             # 密碼錯誤
                 response['status'] = 'failed'
                 response['errCode'] = '2'
-                response['errMsg'] = 'wrong password'
+                response['errMsg'] = '您的密碼輸入錯誤'
                 response['data'] = None
                 print('password error')
     else:
@@ -1440,7 +1440,7 @@ def feedback_view_function(request):
         # 傳輸有問題
         response['status'] = 'failed'
         response['errCode'] = '0'
-        response['errMsg'] = 'Error: Received None.'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
         response['data'] = None
 
     return JsonResponse(response)

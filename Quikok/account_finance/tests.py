@@ -7,6 +7,9 @@ from django.contrib.auth.models import Group
 import os, shutil
 from django.core import mail
 from unittest import skip
+from django.contrib.auth.models import User
+from account.models import specific_available_time
+from datetime import datetime, timedelta, date as date_function
 #python3 manage.py test account_finance/ --settings=Quikok.settings_for_test
 class test_finance_functions(TestCase):
     def setUp(self):
@@ -467,11 +470,460 @@ class test_finance_functions(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-@skip
-class pure_email_send_test(TestCase):
+class test_student_purchase_payment_status(TestCase):
+    #def query_order_info_status1_unpaid(self):
+    def setUp(self):
+        self.client =  Client()        
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+        self.test_username = 'test_teacher_user@test.com'
+        teacher_post_data = {
+            'regEmail': self.test_username,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;1:11,13,15,17,19,21,22,25,33;4:1,9,27,28,41;'
+        }
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        # 建立1個學生
+        student_post_data = {
+                'regEmail': 'test_student_name',
+                'regPwd': '00000000',
+                'regName': 'test_student_name',
+                'regBirth': '1990-12-25',
+                'regGender': 1,
+                'regRole': 'oneself',
+                'regMobile': '0900-111111',
+                'regNotifiemail': ''
+            }
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        self.assertEqual(User.objects.all().count() , 2) # 確認目前產生了2個user
+        # 建立課程
+        lesson_post_data = {
+            'userID': 1,   # 這是老師的auth_id
+            'action': 'createLesson',
+            'big_title': 'big_title',
+            'little_title': 'test',
+            'title_color': '#000000',
+            'background_picture_code': 1,
+            'background_picture_path': '',
+            'lesson_title': 'test',
+            'price_per_hour': 800,
+            'discount_price': '10:90;20:80;30:75;',
+            'selling_status': 'selling',
+            'lesson_has_one_hour_package': True,
+            'trial_class_price': 69,
+            'highlight_1': 'test',
+            'highlight_2': 'test',
+            'highlight_3': 'test',
+            'lesson_intro': 'test',
+            'how_does_lesson_go': 'test',
+            'target_students': 'test',
+            'lesson_remarks': 'test',
+            'syllabus': 'test',
+            'lesson_attributes': 'test'      
+            }
+        self.lesson_post_data = lesson_post_data
+        response = \
+            self.client.post(
+                path='/api/lesson/createOrEditLesson/',
+                data=lesson_post_data)
+        
+        # 建立6筆訂單, 以測試6種狀態
+        #  0-待付款/1-對帳中/2-已付款/3-退款中/4-已退款/5-已取消
+        data = {'userID':2,
+        'teacherID':1,
+        'lessonID':1,
+        'sales_set': 'no_discount',#'trial',,'30:70']
+        'total_amount_of_the_sales_set': 300,
+        'q_discount': 0}
+        for num in range(0,6):
+            response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
+        self.assertEqual(student_purchase_record.objects.all().count() , 6)
+            # 訂單1 待付款, 為預設狀態,不用改
+        # 訂單2 對帳中
+        order = student_purchase_record.objects.get(id=2)
+        order.payment_status = 'reconciliation'
+        order.save()
+        # 訂單3 已付款
+        order = student_purchase_record.objects.get(id=3)
+        order.payment_status = 'paid'
+        order.save()
+        # 訂單4 退款中
+        order = student_purchase_record.objects.get(id=4)
+        order.payment_status = 'refunding'
+        order.save()
+        # 訂單5 已退款
+        order = student_purchase_record.objects.get(id=5)
+        order.payment_status = 'refund'
+        order.save()
+        # 訂單5 已取消
+        order = student_purchase_record.objects.get(id=5)
+        order.payment_status = 'cancel'
+        order.save()
+    @skip    
+    def test_unpaid_response(self):
+        data = {
+            'userID':2,
+            'token':1,
+            'user_type':1
+        }
+        response = self.client.post(path='/api/account_finance/studentOrderHistory/', data=data)
+        self.assertEqual(response.status_code, 200)
 
-    def test_email_could_send(self):
-        self.client = Client()
-        response = self.client.get('/api/account/send_email/')
-        self.assertIn('Success', str(response.content, 'utf8'),
-        str(response.content, 'utf8'))
+        test_response ={
+
+        }
+        
+
+
+class LESSON_SALES_HISTORY_TEST(TestCase):
+    
+    
+    def setUp(self):
+        self.client = Client()        
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+        self.test_teacher_name1 = 'test_teacher1_user@test.com'
+        teacher_post_data = {
+            'regEmail': self.test_teacher_name1,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;'
+        }
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        
+        self.test_teacher_name2 = 'test_teacher2_user@test.com'
+        teacher_post_data['regEmail'] = self.test_teacher_name2,
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+
+        self.test_teacher_name3 = 'test_teacher3_user@test.com'
+        teacher_post_data['regEmail'] = self.test_teacher_name3,
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        # 建了3個老師
+        
+        self.test_student_name1 = 'test_student1@a.com'
+        student_post_data = {
+            'regEmail': self.test_student_name1,
+            'regPwd': '00000000',
+            'regName': 'test_student_name',
+            'regBirth': '1990-12-25',
+            'regGender': 1,
+            'regRole': 'oneself',
+            'regMobile': '0900-111111',
+            'regNotifiemail': ''
+        }
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        self.test_student_name2 = 'test_student2@a.com'
+        student_post_data['regEmail'] = self.test_student_name2
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        self.test_student_name3 = 'test_student3@a.com'
+        student_post_data['regEmail'] = self.test_student_name3
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        # 建了3個學生
+        
+        # 建立課程
+        lesson_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,   # 這是老師1的auth_id
+            'action': 'createLesson',
+            'big_title': 'big_title',
+            'little_title': 'test',
+            'title_color': '#000000',
+            'background_picture_code': 1,
+            'background_picture_path': '',
+            'lesson_title': 'test',
+            'price_per_hour': 800,
+            'discount_price': '10:90;20:80;30:75;',
+            'selling_status': 'selling',
+            'lesson_has_one_hour_package': True,
+            'trial_class_price': 69,
+            'highlight_1': 'test',
+            'highlight_2': 'test',
+            'highlight_3': 'test',
+            'lesson_intro': 'test',
+            'how_does_lesson_go': 'test',
+            'target_students': 'test',
+            'lesson_remarks': 'test',
+            'syllabus': 'test',
+            'lesson_attributes': 'test'      
+            }
+        self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+
+        lesson_post_data = {
+            'userID': teacher_profile.objects.get(id=2).auth_id,   # 這是老師2的auth_id
+            'action': 'createLesson',
+            'big_title': 'big_title',
+            'little_title': 'test',
+            'title_color': '#000000',
+            'background_picture_code': 1,
+            'background_picture_path': '',
+            'lesson_title': 'test',
+            'price_per_hour': 1200,
+            'discount_price': '5:90;20:80;30:70;',
+            'selling_status': 'selling',
+            'lesson_has_one_hour_package': True,
+            'trial_class_price': -999,
+            'highlight_1': 'test',
+            'highlight_2': 'test',
+            'highlight_3': 'test',
+            'lesson_intro': 'test',
+            'how_does_lesson_go': 'test',
+            'target_students': 'test',
+            'lesson_remarks': 'test',
+            'syllabus': 'test',
+            'lesson_attributes': 'test'      
+            }
+        self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+
+        # 先取得兩個可預約日期，避免hard coded未來出錯
+        # 時段我都設1,2,3,4,5，所以只要在其中就ok
+        self.available_date_1_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=1)).first().date
+        self.available_date_2_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=1))[1].date
+        self.available_date_3_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=1))[2].date
+        self.available_date_4_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=1))[3].date
+        self.available_date_5_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=1))[4].date
+
+        self.available_date_11_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=2))[10].date
+        self.available_date_12_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=2))[11].date
+        self.available_date_13_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=2))[12].date
+        self.available_date_4_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=2))[3].date
+        self.available_date_15_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=2))[14].date
+
+
+    def tearDown(self):
+        # 刪掉(如果有的話)產生的資料夾
+        try:
+            shutil.rmtree('user_upload/students/' + self.test_student_name1)
+            shutil.rmtree('user_upload/students/' + self.test_student_name2)
+            shutil.rmtree('user_upload/students/' + self.test_student_name3)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name1)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name2)
+        except:
+            pass
+
+    
+    def test_get_lesson_sales_history_exist(self):
+        query_history_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'type': 'teacher'
+        }
+        response = \
+            self.client.post(path='/api/account_finance/getLessonSalesHistory/', data=query_history_post_data)
+
+        self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
+
+
+    def test_get_lesson_sales_history_failed_when_teacher_doesnt_exist(self):
+        query_history_post_data = {
+            'userID': 99,
+            'type': 'teacher'
+        }
+        response = \
+            self.client.post(path='/api/account_finance/getLessonSalesHistory/', data=query_history_post_data)
+
+        self.assertIn('failed', str(response.content, "utf8"), str(response.content, "utf8"))
+
+    
+    def test_get_lesson_sales_history_failed_when_teacher_exist_and_no_lesson(self):
+        query_history_post_data = {
+            'userID': teacher_profile.objects.get(id=3).auth_id,
+            'type': 'teacher'
+        }
+        response = \
+            self.client.post(path='/api/account_finance/getLessonSalesHistory/', data=query_history_post_data)
+
+        self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('"data": null', str(response.content, "utf8"), str(response.content, "utf8"))
+
+
+    def test_get_lesson_sales_history_when_teacher_exist_and_has_purchased_lesson_sales_set(self):
+
+        # 先讓學生購買課程方案
+        purchase_post_data = {
+            'userID':student_profile.objects.first().auth_id,
+            'teacherID':teacher_profile.objects.first().auth_id,
+            'lessonID':lesson_info.objects.first().id,
+            'sales_set': '10:90',
+            'total_amount_of_the_sales_set': int(10*800*0.9),
+            'q_discount':0}
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+
+        the_purchase_object = \
+            student_purchase_record.objects.first()
+        the_purchase_object.payment_status = 'paid'
+        the_purchase_object.save()
+        # 理論上現在已經購買、付款完成了
+
+        query_history_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'type': 'teacher'
+        }
+        response = \
+            self.client.post(path='/api/account_finance/getLessonSalesHistory/', data=query_history_post_data)
+
+        self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('"purchased_record_id"', str(response.content, "utf8"))
+        self.assertIn('"purchased_lesson_sales_set_status"', str(response.content, "utf8"))
+        self.assertIn('"created_date"', str(response.content, "utf8"))
+        self.assertIn('"student_nickname"', str(response.content, "utf8"))
+        self.assertIn('"student_auth_id"', str(response.content, "utf8"))
+        self.assertIn('"lesson_title"', str(response.content, "utf8"))
+        self.assertIn('"lessonID"', str(response.content, "utf8"))
+        self.assertIn('"lesson_sales_set"', str(response.content, "utf8"))
+        self.assertIn('"total_amount"', str(response.content, "utf8"))
+        self.assertIn('"available_remaining_minutes"', str(response.content, "utf8"))
+        self.assertIn('"unconsumed_minutes"', str(response.content, "utf8"))
+        self.assertIn('"is_selling"', str(response.content, "utf8"))
+
+
+    def test_get_lesson_sales_history_when_teacher_exist_and_has_purchased_lesson_and_its_lessons_counting_is_right(self):
+        '''
+        這裏測試當學生連續買了兩門課程後，是否data中真的有而且只有兩筆資料。
+        '''
+        # 先讓學生購買2門課程方案
+        purchase_post_data = {
+            'userID':student_profile.objects.first().auth_id,
+            'teacherID':teacher_profile.objects.first().auth_id,
+            'lessonID':lesson_info.objects.first().id,
+            'sales_set': 'trial',
+            'total_amount_of_the_sales_set': 69,
+            'q_discount':0}
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+
+        purchase_post_data['sales_set'] = '10:90'
+        purchase_post_data['total_amount_of_the_sales_set'] = int(10*800*0.9)
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+
+        # 此時因為還沒付款，應該是找不到對應的data
+        query_history_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'type': 'teacher'}
+        response = \
+            self.client.post(path='/api/account_finance/getLessonSalesHistory/', data=query_history_post_data)
+
+        self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('"data": null', str(response.content, "utf8"), str(response.content, "utf8"))
+
+        # 先來付款第1門課程
+        the_purchase_object = \
+            student_purchase_record.objects.first()
+        the_purchase_object.payment_status = 'paid'
+        the_purchase_object.save()
+
+        query_history_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'type': 'teacher'}
+        response = \
+            self.client.post(path='/api/account_finance/getLessonSalesHistory/', data=query_history_post_data)
+
+        self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertEqual(1, str(response.content, "utf8").count('"total_amount"'))
+
+        # 再付款第2門課程
+        the_purchase_object = \
+            student_purchase_record.objects.get(id=2)
+        the_purchase_object.payment_status = 'paid'
+        the_purchase_object.save()
+
+        query_history_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'type': 'teacher'}
+        response = \
+            self.client.post(path='/api/account_finance/getLessonSalesHistory/', data=query_history_post_data)
+        self.assertEqual(2, str(response.content, "utf8").count('"total_amount"'))
+        # 確認有抓到第二門購買的紀錄
+
+
+    @skip
+    def test_get_lesson_sales_history_when_teacher_exist_and_has_purchased_lesson_and_its_content_is_right(self):
+        '''
+        這裏測試當學生買了課程後，回傳的資訊是否正確。
+        '''
+        purchase_post_data = {
+            'userID':student_profile.objects.first().auth_id,
+            'teacherID':teacher_profile.objects.first().auth_id,
+            'lessonID':lesson_info.objects.first().id,
+            'sales_set': 'trial',
+            'total_amount_of_the_sales_set': 69,
+            'q_discount':0}
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+
+        # 先來付款這個試教課程
+        the_purchase_object = \
+            student_purchase_record.objects.first()
+        the_purchase_object.payment_status = 'paid'
+        the_purchase_object.save()
+
+        query_history_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'type': 'teacher'}
+        response = \
+            self.client.post(path='/api/account_finance/getLessonSalesHistory/', data=query_history_post_data)
+        
+        # 先確認購買紀錄的id是正確的
+        self.assertIn('"purchased_record_id": 1', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('"purchased_lesson_sales_set_status": "on_going"', str(response.content, "utf8"), str(response.content, "utf8"))
+        
+
+
+
+
+
+
+'''
+the_purchase_object = \
+    student_purchase_record.objects.first()
+the_purchase_object.payment_status = 'paid'
+the_purchase_object.save()
+# 理論上現在已經購買、付款完成了，所以 學生1應該有30min的可用時數
+
+booking_post_data = {
+    'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
+    'lessonID': 1,
+    'bookingDateTime': f'{self.available_date_2_t1}:1,2,3,4;{self.available_date_3_t1}:1,3,4,5;'
+}  # 預約 240min  >> 1234 1 345 3門課
+
+self.client.post(
+    path='/api/lesson/bookingLessons/',
+    data=booking_post_data)  # 送出預約，此時學生應該有3則送出的 待確認 預約訊息
+'''
+

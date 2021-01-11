@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 import os
 
 def check_if_all_variables_are_true(*args):
@@ -140,4 +140,23 @@ def turn_date_string_into_date_format(target_string):
     y, m, d = target_string.split('-')
     return date(year=int(y), month=int(m), day=int(d))
 
+
+def turn_current_time_into_time_interval():
+    current_time = datetime.now()
+    # 0 > 00:00 - 00:30
+    # 1 > 00:30 - 01:00
+    # .................
+    # 46: 23:00 - 23:30
+    # 47: 23:30 - 24:00
+    # 00 >> 0, 1; 
+    # 01 >> 2, 3;
+    # 02 >> 4, 5;
+    # 03 >> 6, 7;
+    # ...........
+    # 23 >> 46, 47
+    # current_hour >> (current_hour*2, current_hour*2+1)
+    if current_time.minute > 30:
+        return current_time.hour * 2 + 1
+    else:
+        return current_time.hour * 2
 
