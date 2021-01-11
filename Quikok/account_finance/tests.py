@@ -9,6 +9,7 @@ from django.core import mail
 from unittest import skip
 from django.contrib.auth.models import User
 from account.models import specific_available_time
+from datetime import datetime, timedelta, date as date_function
 #python3 manage.py test account_finance/ --settings=Quikok.settings_for_test
 class test_finance_functions(TestCase):
     def setUp(self):
@@ -814,8 +815,94 @@ class LESSON_SALES_HISTORY_TEST(TestCase):
         self.assertIn('"is_selling"', str(response.content, "utf8"))
 
 
-    def test_get_lesson_sales_history_when_teacher_exist_and_has_booked_lesson_counting_is_right(self):
-        pass
+    def test_get_lesson_sales_history_when_teacher_exist_and_has_purchased_lesson_and_its_lessons_counting_is_right(self):
+        '''
+        這裏測試當學生連續買了兩門課程後，是否data中真的有而且只有兩筆資料。
+        '''
+        # 先讓學生購買2門課程方案
+        purchase_post_data = {
+            'userID':student_profile.objects.first().auth_id,
+            'teacherID':teacher_profile.objects.first().auth_id,
+            'lessonID':lesson_info.objects.first().id,
+            'sales_set': 'trial',
+            'total_amount_of_the_sales_set': 69,
+            'q_discount':0}
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+
+        purchase_post_data['sales_set'] = '10:90'
+        purchase_post_data['total_amount_of_the_sales_set'] = int(10*800*0.9)
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+
+        # 此時因為還沒付款，應該是找不到對應的data
+        query_history_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'type': 'teacher'}
+        response = \
+            self.client.post(path='/api/account_finance/getLessonSalesHistory/', data=query_history_post_data)
+
+        self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('"data": null', str(response.content, "utf8"), str(response.content, "utf8"))
+
+        # 先來付款第1門課程
+        the_purchase_object = \
+            student_purchase_record.objects.first()
+        the_purchase_object.payment_status = 'paid'
+        the_purchase_object.save()
+
+        query_history_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'type': 'teacher'}
+        response = \
+            self.client.post(path='/api/account_finance/getLessonSalesHistory/', data=query_history_post_data)
+
+        self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertEqual(1, str(response.content, "utf8").count('"total_amount"'))
+
+        # 再付款第2門課程
+        the_purchase_object = \
+            student_purchase_record.objects.get(id=2)
+        the_purchase_object.payment_status = 'paid'
+        the_purchase_object.save()
+
+        query_history_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'type': 'teacher'}
+        response = \
+            self.client.post(path='/api/account_finance/getLessonSalesHistory/', data=query_history_post_data)
+        self.assertEqual(2, str(response.content, "utf8").count('"total_amount"'))
+        # 確認有抓到第二門購買的紀錄
+
+
+    @skip
+    def test_get_lesson_sales_history_when_teacher_exist_and_has_purchased_lesson_and_its_content_is_right(self):
+        '''
+        這裏測試當學生買了課程後，回傳的資訊是否正確。
+        '''
+        purchase_post_data = {
+            'userID':student_profile.objects.first().auth_id,
+            'teacherID':teacher_profile.objects.first().auth_id,
+            'lessonID':lesson_info.objects.first().id,
+            'sales_set': 'trial',
+            'total_amount_of_the_sales_set': 69,
+            'q_discount':0}
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+
+        # 先來付款這個試教課程
+        the_purchase_object = \
+            student_purchase_record.objects.first()
+        the_purchase_object.payment_status = 'paid'
+        the_purchase_object.save()
+
+        query_history_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'type': 'teacher'}
+        response = \
+            self.client.post(path='/api/account_finance/getLessonSalesHistory/', data=query_history_post_data)
+        
+        # 先確認購買紀錄的id是正確的
+        self.assertIn('"purchased_record_id": 1', str(response.content, "utf8"), str(response.content, "utf8"))
+        self.assertIn('"purchased_lesson_sales_set_status": "on_going"', str(response.content, "utf8"), str(response.content, "utf8"))
+        
 
 
 
