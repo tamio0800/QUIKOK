@@ -273,7 +273,7 @@ def get_lesson_sales_history(request):
                         # 完成結帳，產生對應tables時的那一天
                         student_auth_id = correspondent_student_remaining_minutes_object.student_auth_id
                         student_nickname = student_profile.objects.get(auth_id=student_auth_id).nickname
-                        lesson_title = 
+                        lesson_title = ''
                         
                         response['data'].append(
                             {
