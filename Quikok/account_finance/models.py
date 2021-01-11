@@ -71,7 +71,7 @@ class teacher_refund(models.Model):
 
 
 class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
-    student_purchase_record_id = models.IntegerField()
+    student_purchase_record_id = models.IntegerField(default=0)
     student_auth_id = models.IntegerField()
     teacher_auth_id = models.IntegerField()  # 開課的老師 auth_id
     lesson_id = models.IntegerField()  # 所對應的課程id
