@@ -2,7 +2,8 @@ from account.models import teacher_profile, favorite_lessons
 from lesson.models import lesson_info, lesson_reviews, lesson_card
 from django.contrib.auth.models import User
 from django.core.files.storage import FileSystemStorage
-from django.db.models import Avg, Sum  
+from django.db.models import Avg, Sum
+import shutil
 # 上面兩個用來對資料庫的資訊做處理，用法如下(有null的話要另外處理)
 # model_name.objects.filter().aggregate(Sum('column_name')) >> {'column_name__sum':?}
 import pandas as pd
