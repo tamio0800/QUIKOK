@@ -123,7 +123,7 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
             # 代表確認付完款了
             # 現在要看看究竟買了多少時數
             the_sales_set = \
-                lesson_sales_sets.objects.get(id=instance.lesson_set_id).sales_set
+                lesson_sales_sets.objects.get(id=instance.lesson_sales_set_id).sales_set
             if the_sales_set == 'trial':
                 times_of_the_sales_set_in_minutes = 30
             elif the_sales_set == 'no_discount':
@@ -138,7 +138,7 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
                 student_auth_id = instance.student_auth_id,
                 teacher_auth_id = instance.teacher_auth_id,
                 lesson_id = instance.lesson_id,
-                lesson_set_id = instance.lesson_set_id,
+                lesson_sales_set_id = instance.lesson_sales_set_id,
                 available_remaining_minutes = times_of_the_sales_set_in_minutes
             ).save()
             # 如果有用q幣,更改學生的q幣額度及預扣額度
@@ -152,7 +152,7 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
                 pass # db不需要更新
             
             # 寄給學生收到款項提醒email
-            lesson_set_name =  lesson_sales_sets.objects.filter(id = previous.lesson_set_id).first().sales_set
+            lesson_set_name =  lesson_sales_sets.objects.filter(id = previous.lesson_sales_set_id).first().sales_set
             send_email_reminder = email_manager()
             send_email_data = {
                 'email_pattern_name':'收到款項提醒',

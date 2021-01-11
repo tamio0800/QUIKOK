@@ -21,14 +21,14 @@ def storage_order(request):
         student_authID = request.POST.get('userID', False)
         teacher_authID = request.POST.get('teacherID', False)
         lesson_id = request.POST.get('lessonID', False)
-        lesson_set = request.POST.get('sales_set', False)
+        lesson_sales_set = request.POST.get('sales_set', False)
         price = request.POST.get('total_amount_of_the_sales_set', False)
         q_discount_amount = request.POST.get('q_discount', False)
 
         teacher_queryset = teacher_profile.objects.filter(auth_id= teacher_authID)
         lesson_queryset = lesson_info.objects.filter(id = lesson_id)
         if check_if_all_variables_are_true(student_authID, teacher_authID,
-                        lesson_id, lesson_set, price,q_discount_amount):
+                        lesson_id, lesson_sales_set, price,q_discount_amount):
             if len(teacher_queryset) and len(lesson_queryset):
                 set_queryset = lesson_sales_sets.objects.filter(lesson_id=lesson_id, sales_set=lesson_set, is_open= True)
                 if len(set_queryset):
@@ -59,10 +59,10 @@ def storage_order(request):
                         teacher_auth_id= teacher_authID,
                         teacher_nickname= teacher_obj.nickname,
                         purchase_date = date_function.today(),
-                        payment_deadline = date_function.today()+timedelta(days=6),
+                        payment_deadline = payment_deadline,
                         lesson_id = lesson_id,
-                        lesson_name = lesson_obj.lesson_title,
-                        lesson_set_id = set_obj.id,
+                        lesson_title = lesson_obj.lesson_title,
+                        lesson_sales_set_id = set_obj.id,
                         price = price,
                         purchased_with_q_points = q_discount_amount,
                         purchased_with_money=real_price
@@ -74,7 +74,7 @@ def storage_order(request):
                         'studentID' :student_authID, 
                         'teacherID':teacher_authID,
                         'lessonID': lesson_id, 
-                        'lesson_set': lesson_set, 
+                        'lesson_set': lesson_sales_set, 
                         'total_lesson_set_price':price,
                         'email_pattern_name':'訂課匯款提醒',
                         'q_discount':q_discount_amount,
@@ -128,7 +128,7 @@ def student_order_history(request):
         if check_if_all_variables_are_true(student_authID, token, user_type):
             data = []
             for record in student_purchase_record.objects.filter(student_auth_id=student_authID):
-                set_name = lesson_sales_sets.objects.filter(id=record.lesson_set_id).first()
+                set_name = lesson_sales_sets.objects.filter(id=record.lesson_sales_set_id).first()
                 #if set_name.sales_set == 'trial':
                 #    record_set_name = '試教'
                 #elif set_name.sales_set == 'no_discount':
@@ -154,7 +154,7 @@ def student_order_history(request):
                 '日期':record.purchase_date,
                 '老師ID':record.teacher_auth_id,
                 '老師暱稱': record.teacher_nickname,
-                '課程名稱': record.lesson_name,
+                '課程名稱': record.lesson_title,
                 'lessonID': record.lesson_id,
                 #record.lesson_set_id,
                 '購買方案': set_name, 
@@ -274,8 +274,18 @@ def get_lesson_sales_history(request):
                         student_auth_id = correspondent_student_remaining_minutes_object.student_auth_id
                         student_nickname = student_profile.objects.get(auth_id=student_auth_id).nickname
                         lesson_title = each_his_related_purchased_record.lesson_title
-                        lesson_id = each_his_related_purchased_record.lesson_title
+                        lesson_id = each_his_related_purchased_record.lesson_id
                         
+                        lesson_sales_set_object = \
+                            lesson_sales_sets.objects.get(id=each_his_related_purchased_record.lesson_sales_set_id)
+                        
+                        lesson_sales_set = lesson_sales_set_object.sales_set
+                        total_amount = each_his_related_purchased_record.price
+                        available_remaining_minutes = correspondent_student_remaining_minutes_object.available_remaining_minutes
+                        unconsumed_minutes = \
+                            available_remaining_minutes + correspondent_student_remaining_minutes_object.withholding_minutes
+                        is_selling = lesson_sales_set_object.is_open
+
                         response['data'].append(
                             {
                                 'purchased_record_id': each_his_related_purchased_record.id,
@@ -283,13 +293,13 @@ def get_lesson_sales_history(request):
                                 'created_date': created_date,
                                 'student_nickname': student_nickname,
                                 'student_auth_id': student_auth_id,
-                                'lesson_title': '',
-                                'lessonID': '',
-                                'lesson_sales_set': '',
-                                'total_amount': '',
-                                'available_remaining_minutes': '',
-                                'unconsumed_minutes': '',
-                                'is_selling': ''
+                                'lesson_title': lesson_title,
+                                'lessonID': lesson_id,
+                                'lesson_sales_set': lesson_sales_set,
+                                'total_amount': total_amount,
+                                'available_remaining_minutes': available_remaining_minutes,
+                                'unconsumed_minutes': unconsumed_minutes,
+                                'is_selling': is_selling
                             }
                         )
 
