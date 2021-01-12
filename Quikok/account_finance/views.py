@@ -130,11 +130,17 @@ def student_order_history(request):
         user_type = request.POST.get('type', False)
         if check_if_all_variables_are_true(student_authID, token, user_type):
             data = []
+            record_history = {}
+            remittance_info = {
+                    'bank_code': '088',
+                    'bank_name': '國泰世華銀行',
+                    'bank_branches': '板橋分行',
+                    'bank_account':'012345-411153',
+                    'bank_account_name': '豆沙科技股份有限公司'}
             for record in student_purchase_record.objects.filter(student_auth_id=student_authID):
                 set_name = lesson_sales_sets.objects.filter(id=record.lesson_sales_set_id).first()
                 
                 # 所有尚未確認時間計算用
-                 
                 if set_name.sales_set == 'trial':
                     total_time = 30
                 # 試教總時數等於半小時
@@ -151,9 +157,17 @@ def student_order_history(request):
                 #        lesson_discount = set_discount.strip('0')
                 #    record_set_name = f'{lesson_time}小時{lesson_discount}折'
                 
-                remain_time_info = student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(student_purchase_record_id=record.id)
-                total_unconfirmed_time = total_time - remain_time_info.confirmed_consumed_minutes
+                # 如果這筆訂單還沒從unpaid改成paid, 剩餘時數的table也就還沒長出來
+                # 所以必須把分付款狀態來處理
+                if record.payment_status in ['paid','refunding','refunded', 'cancel_after_paid']:
+                    remain_time_info = student_remaining_minutes_of_each_purchased_lesson_set.objects.get(student_purchase_record_id=record.id)
+                    total_unconfirmed_time = total_time - remain_time_info.confirmed_consumed_minutes
+                    available_remaining_minutes = remain_time_info.available_remaining_minutes
+                else:
+                    available_remaining_minutes = ''
+                    total_unconfirmed_time = ''
 
+                
                 record_history = {
                 'purchase_recordID':record.id,
                 'payment_status':record.payment_status,
@@ -162,21 +176,15 @@ def student_order_history(request):
                 'teacher_nickname': record.teacher_nickname,
                 'lesson_title': record.lesson_title,
                 'lessonID': record.lesson_id,
-                'lesson_sale_set': set_name, 
+                'lesson_sale_set': set_name.sales_set, 
                 'purchased_with_money':record.purchased_with_money,
-                'available_remaining_minutes': remain_time_info.available_remaining_minutes,
+                'available_remaining_minutes': available_remaining_minutes,
                 'total_unconfirmed_time': total_unconfirmed_time} #全部時數減掉已confirm完課的時數,主要是給老師看的
                 #'付款末五碼': record.part_of_bank_account_code} # 後五碼
 
-                remittance_info = {
-                    'bank_code': '088',
-                    'bank_name': '國泰世華銀行',
-                    'bank_branches': '板橋分行',
-                    'bank_account':'012345-411153',
-                    'bank_account_name': '豆沙科技股份有限公司'}
-
                 record_history['edony_bank_info'] = remittance_info
                 data.append(record_history)
+            #print(data)
 
             response = {'status':'success',
                         'errCode': None,
