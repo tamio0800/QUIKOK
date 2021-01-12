@@ -73,6 +73,24 @@ class teacher_refund(models.Model):
 
 class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
     student_purchase_record_id = models.IntegerField(default=0)
+    lesson_booking_info_ids = models.CharField(default='', max_length=20)
+    # 對應的 lesson_booking_info id 們
+    # 之所以 default = '' ，因為這樣子在我先前寫的測試中(不會用到這個欄位)就不會有一大堆衝突了QQ
+    # 下面 copy 寫在 lesson_booking_info 那邊的註釋
+    # 因為一則購買的方案可以用來做很多預約（多對一），
+    # 反之方案快用完的時候也可能兩三個購買方案才能用來做一次大量預約（一對多），
+    # 所以這裡使用 string 來做儲存，會長得類似： "9,10,11" or "3" 這樣子，
+    # 當要 query 對應的 queryset 時可以這樣做  
+    # student_remaining_minutes_of_each_purchased_lesson_set_ids 先簡寫為 srm_ids
+    #   1. 
+    #         for each_id in lesson_booking_info.objects.filter(id=1).srm_ids.split(','):
+    #            student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(id=each_id)
+    #            ...
+    #  <<<<<>>>>> OR <<<<<>>>>>
+    #   2.
+    #         student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+    #               id__in = lesson_booking_info.objects.filter(id=1).srm_ids.split(',')
+    #         )
     student_auth_id = models.IntegerField()
     teacher_auth_id = models.IntegerField()  # 開課的老師 auth_id
     lesson_id = models.IntegerField()  # 所對應的課程id
