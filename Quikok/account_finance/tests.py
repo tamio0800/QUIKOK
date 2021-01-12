@@ -598,11 +598,15 @@ class test_student_purchase_payment_status(TestCase):
         }
         response = self.client.post(path='/api/account_finance/studentOrderHistory/', data=data)
         self.assertEqual(response.status_code, 200)
-        #print(response.content, {'data'})
-        #print(response.content[0])
-        #test_response ={
-#
-        #}
+        self.assertIn('success', str(response.content))
+        #self.assertJSONEqual(
+        #    str(response.content, encoding='utf8'),
+        #    {
+        #        'status': 'success',
+                #'errCode': None,
+                #'errMsg': None,
+                #'data': 1 # 建立1號訂單
+        #    })
         
 
 
