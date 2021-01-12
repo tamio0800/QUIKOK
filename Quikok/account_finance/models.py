@@ -21,8 +21,8 @@ class student_purchase_record(models.Model):
     part_of_bank_account_code = models.CharField(max_length=30, default='') 
     # 用戶繳費帳號後5碼,對帳用
     payment_status = models.CharField(max_length = 30, default = 'unpaid')
-    # unpaid, reconciliation, paid, refunding, refund, cancel 
-    # 0-待付款/1-對帳中/2-已付款/3-退款中/4-已退款/5-已取消  >>  給前端看的，
+    # unpaid, reconciliation, paid, refunding, refunded, cancel_after_paid , unpaid_cancel
+    # 0-待付款/1-對帳中/2-已付款/3-退款中/4-已退款/5-有付款_取消訂單 6. 未付款_取消訂單 >>  給前端看的，
     # 取消指的是 把購買的課程退掉、轉成Q幣； 退款指的是 把Q幣換成現金轉到帳戶裡
     updated_time = models.DateTimeField(auto_now=True)
     def __str__(self):

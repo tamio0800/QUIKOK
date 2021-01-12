@@ -547,51 +547,66 @@ class test_student_purchase_payment_status(TestCase):
                 path='/api/lesson/createOrEditLesson/',
                 data=lesson_post_data)
         
-        # 建立6筆訂單, 以測試6種狀態
-        #  0-待付款/1-對帳中/2-已付款/3-退款中/4-已退款/5-已取消
+        # 建立7筆訂單, 以測試7種狀態
+        #  0-待付款/1-對帳中/2-已付款/3-退款中/4-已退款/5-有付款_取消訂單 6.未付款_取消訂單
         data = {'userID':2,
         'teacherID':1,
         'lessonID':1,
         'sales_set': 'no_discount',#'trial',,'30:70']
         'total_amount_of_the_sales_set': 300,
         'q_discount': 0}
-        for num in range(0,6):
+        for num in range(0,7):
             response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
-        self.assertEqual(student_purchase_record.objects.all().count() , 6)
+        self.assertEqual(student_purchase_record.objects.all().count() , 7)
         # 訂單1 待付款, 為預設狀態,不用改
         # 訂單2 對帳中
         order = student_purchase_record.objects.get(id=2)
         order.payment_status = 'reconciliation'
         order.save()
-        # 訂單3 已付款
-        order = student_purchase_record.objects.get(id=3)
-        order.payment_status = 'paid'
-        order.save()
-        # 訂單4 退款中
+        # 訂單3單純已付款
+        # 將訂單3,4,5,6 改成已付款,要先改為付款才會長出計算剩餘時間的table
+        paid_order_num = [3,4,5,6]
+        order_query_list = student_purchase_record.objects.filter(id__in =paid_order_num)
+        for order in order_query_list:    
+            order.payment_status = 'paid'
+            order.save()
+        # 訂單4 再改為退款中
         order = student_purchase_record.objects.get(id=4)
         order.payment_status = 'refunding'
         order.save()
-        # 訂單5 已退款
+        # 訂單5 再改為已退款
         order = student_purchase_record.objects.get(id=5)
         order.payment_status = 'refund'
         order.save()
-        # 訂單6 已取消
+        # 訂單6 已付款後已取消
         order = student_purchase_record.objects.get(id=5)
-        order.payment_status = 'cancel'
+        order.payment_status = 'cancel_after_paid'
         order.save()
-    @skip    
+        # 訂單7 未付款就已取消
+        order = student_purchase_record.objects.get(id=5)
+        order.payment_status = 'unpaid_cancel'
+        order.save()
+
+        # 確認已付款過的訂單都有長出剩餘時數
+        self.assertEqual(student_remaining_minutes_of_each_purchased_lesson_set.objects.all().count(),len(paid_order_num))
+
     def test_unpaid_response(self):
         data = {
-            'userID':2,
-            'token':1,
-            'user_type':1
+            'userID':'2',
+            'token':'1',
+            'type':'1'
         }
         response = self.client.post(path='/api/account_finance/studentOrderHistory/', data=data)
         self.assertEqual(response.status_code, 200)
-
-        test_response ={
-
-        }
+        self.assertIn('success', str(response.content))
+        #self.assertJSONEqual(
+        #    str(response.content, encoding='utf8'),
+        #    {
+        #        'status': 'success',
+                #'errCode': None,
+                #'errMsg': None,
+                #'data': 1 # 建立1號訂單
+        #    })
         
 
 
