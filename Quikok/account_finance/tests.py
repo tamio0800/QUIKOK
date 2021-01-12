@@ -590,7 +590,7 @@ class test_student_purchase_payment_status(TestCase):
         # 確認已付款過的訂單都有長出剩餘時數
         self.assertEqual(student_remaining_minutes_of_each_purchased_lesson_set.objects.all().count(),len(paid_order_num))
 
-    def test_unpaid_response(self):
+    def test_oreder_history_response(self):
         data = {
             'userID':'2',
             'token':'1',
@@ -608,7 +608,59 @@ class test_student_purchase_payment_status(TestCase):
                 #'data': 1 # 建立1號訂單
         #    })
         
-
+    def test_student_edit_order_paid(self):
+        '''
+        check update payment_status改成對帳中refunding, 且有存入銀行5碼 
+        '''
+        data = {
+            'userID':'2',
+            'token':'1',
+            'type':'1',
+            'purchase_recordID': '1',
+            'status_update': '0', # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'
+        }
+        response = self.client.post(path='/api/account_finance/studentEditOrder/', data=data)
+        record = student_purchase_record.objects.get(id = 1)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('success', str(response.content))
+        self.assertEqual(record.payment_status , 'refunding')
+        self.assertEqual(record.part_of_bank_account_code, '11111')
+    
+    def test_student_edit_order_apply_refund(self):
+        data = {
+            'userID':'2',
+            'token':'1',
+            'type':'1',
+            'purchase_recordID':1,
+            'status_update':1,
+            'user5_bank_code':11111
+        }
+        response = self.client.post(path='/api/account_finance/studentOrderHistory/', data=data)
+        self.assertEqual(response.status_code, 200)
+    def test_student_edit_order_cancel_before_paid(self):
+        data = {
+            'userID':'2',
+            'token':'1',
+            'type':'1',
+            'purchase_recordID':1,
+            'status_update':2,
+            'user5_bank_code':11111
+        }
+        response = self.client.post(path='/api/account_finance/studentOrderHistory/', data=data)
+        self.assertEqual(response.status_code, 200)
+    def test_student_edit_order_cancel_after_paid(self):
+        data = {
+            'userID':'2',
+            'token':'1',
+            'type':'1',
+            'purchase_recordID':1,
+            'status_update':2,
+            'user5_bank_code':11111
+        }
+        response = self.client.post(path='/api/account_finance/studentOrderHistory/', data=data)
+        self.assertEqual(response.status_code, 200)
 
 class LESSON_SALES_HISTORY_TEST(TestCase):
     

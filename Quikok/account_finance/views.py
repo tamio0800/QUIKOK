@@ -122,7 +122,7 @@ def storage_order(request):
         'data': None}
         return JsonResponse(response)
 
-#回傳訂單紀錄, 我的存摺頁
+#回傳訂單紀錄api, 我的存摺頁
 def student_order_history(request):
     try:
         student_authID = request.POST.get('userID', False)
@@ -202,6 +202,56 @@ def student_order_history(request):
         'errCode': 1,
         'errMsg': '資料庫有問題，請稍後再試',
         'data': None}
+    return JsonResponse(response)
+
+
+# 編輯訂單狀態api, 包含取消訂單
+def student_edit_order(request):
+    try:
+        student_authID = request.POST.get('userID', False)
+        token = request.POST.get('token', False)
+        user_type = request.POST.get('type', False)
+        purchase_recordID = request.POST.get('purchase_recordID', False)
+        status_update = request.POST.get('status_update', False)
+        # 0-付款完成/1-申請退款/2-申請取消
+        user5_bank_code = request.POST.get('part_of_bank_account_code', False)
+
+        if check_if_all_variables_are_true(student_authID, token, user_type,
+                            purchase_recordID, status_update, user5_bank_code):
+            # 首先查詢訂單狀態
+            record = student_purchase_record.objects.filter(id = purchase_recordID).first()
+            # 訂單已付款
+            if record.payment_status in ['paid','refunding','refunded', 'cancel_after_paid']:
+                pass
+            # 訂單尚未付款
+            elif record.payment_status == 'unpaid':
+                if status_update == '0': # 學生已付款,接著我們要對帳
+                    
+                    record.payment_status = 'refunding'
+                    record.save()
+                    record.part_of_bank_account_code = user5_bank_code
+                    record.save()
+            else:
+                pass
+                    
+            response = {'status':'success',
+                        'errCode': None,
+                        'errMsg': None,
+                        'data': None}
+        else:
+            response = {'status':'failed',
+            'errCode': 2,
+            'errMsg': '資料庫有問題，請稍後再試',
+            'data': None}
+
+        
+    except Exception as e:
+        print(f'storage_order Exception {e}')
+        response = {'status':'failed',
+        'errCode': 1,
+        'errMsg': '資料庫有問題，請稍後再試',
+        'data': None}
+    
     return JsonResponse(response)
 
 #def confirm_lesson_order_payment_page(request):
