@@ -1689,6 +1689,7 @@ def get_teacher_s_booking_history(request):
     接收：
     {
         userID (teacher_auth_id)
+        searched_by: string 只能搜尋學生姓名(暱稱)或課程title
         filtered_by: string // 依照什麼做篩選 _狀態
                 字串顯示：
                         /預約成功（confirmed）
@@ -1887,6 +1888,7 @@ def get_student_s_booking_history(request):
     接收：
     {
         userID (student_auth_id)
+        searched_by: string 只能搜尋老師姓名(暱稱)或課程title
         filtered_by: string // 依照什麼做篩選 _狀態
                 字串顯示：
                         /預約成功（confirmed）
@@ -1923,6 +1925,7 @@ def get_student_s_booking_history(request):
     '''
     response = dict()
     student_auth_id = request.POST.get('userID', False)
+    searched_by = request.POST.get('searched_by', False)
     booking_status_filtered_by = request.POST.get('filtered_by', False)
     registered_from_date = \
         date_string_2_dateformat(request.POST.get('registered_from_date', False))
@@ -1930,7 +1933,7 @@ def get_student_s_booking_history(request):
         date_string_2_dateformat(request.POST.get('registered_to_date', False))
 
     if check_if_all_variables_are_true(student_auth_id, booking_status_filtered_by, 
-        registered_from_date, registered_to_date):
+        registered_from_date, registered_to_date, searched_by):
         # 有正確收到資料
         student_object = student_profile.objects.filter(auth_id=student_auth_id).first()
         if student_object is None:
@@ -1945,12 +1948,38 @@ def get_student_s_booking_history(request):
             # 先看看他的 lesson_booking_info，這裡先過濾篩選條件，避免每次都query一堆東西造成效能問題
             if len(booking_status_filtered_by):
                 # 代表 booking_status_filtered_by 有東西，user有輸入搜尋條件
-                student_s_lesson_booking_info_queryset = \
-                    lesson_booking_info.objects.filter(
-                        student_auth_id=student_auth_id, 
-                        booking_status=booking_status_filtered_by,
-                        created_time__gt=registered_from_date,
-                        last_changed_time__lt=registered_to_date).order_by('-last_changed_time')
+
+                # 檢查 user有沒有輸入 searched_by 條件搜尋老師姓名/暱稱 或是 課程名稱
+                if len(searched_by.strip()):
+                    searched_by = searched_by.strip()
+                    # 有輸入 searched_by
+                    correspodent_teacher_auth_ids = \
+                        list(teacher_profile.objects.values_list('auth_id', flat=True).filter(
+                            Q(name__contains=searched_by) | Q(nickname__contains=searched_by)
+                        ))
+                    correspodent_lesson_ids = \
+                        list(lesson_info.objects.values_list('id', flat=True).filter(
+                            lesson_title__contains=searched_by
+                        ))
+                    
+                    student_s_lesson_booking_info_queryset = \
+                        lesson_booking_info.objects.filter(
+                            Q(student_auth_id=student_auth_id) & 
+                            Q(booking_status=booking_status_filtered_by) & 
+                            Q(created_time__gt=registered_from_date) &
+                            Q(last_changed_time__lt=registered_to_date)).filter(
+                                Q(teacher_auth_id__in=correspodent_teacher_auth_ids) |
+                                Q(lesson_id__in=correspodent_lesson_ids)
+                            ).order_by('-last_changed_time')
+
+                else:
+                    # 沒有輸入 searched_by
+                    student_s_lesson_booking_info_queryset = \
+                        lesson_booking_info.objects.filter(
+                            student_auth_id=student_auth_id, 
+                            booking_status=booking_status_filtered_by,
+                            created_time__gt=registered_from_date,
+                            last_changed_time__lt=registered_to_date).order_by('-last_changed_time')
                 
                 if student_s_lesson_booking_info_queryset.count() == 0:
                     # 這個學生什麼預約歷史都沒有
@@ -1982,12 +2011,36 @@ def get_student_s_booking_history(request):
                     response['errMsg'] = None
 
             else:
-                student_s_lesson_booking_info_queryset = \
-                    lesson_booking_info.objects.filter(
-                        student_auth_id=student_auth_id, 
-                        created_time__gt=registered_from_date,
-                        last_changed_time__lt=registered_to_date).order_by('-last_changed_time')
                 # 代表 booking_status_filtered_by 沒東西，user無輸入搜尋條件，傳回所有資訊
+                # 檢查 user有沒有輸入 searched_by 條件搜尋老師姓名/暱稱 或是 課程名稱
+                if len(searched_by.strip()):
+                    searched_by = searched_by.strip()
+                    # 有輸入 searched_by
+                    correspodent_teacher_auth_ids = \
+                        list(teacher_profile.objects.values_list('auth_id', flat=True).filter(
+                            Q(name__contains=searched_by) | Q(nickname__contains=searched_by)
+                        ))
+                    correspodent_lesson_ids = \
+                        list(lesson_info.objects.values_list('id', flat=True).filter(
+                            lesson_title__contains=searched_by
+                        ))
+
+                    student_s_lesson_booking_info_queryset = \
+                        lesson_booking_info.objects.filter(
+                            Q(student_auth_id=student_auth_id) & 
+                            Q(created_time__gt=registered_from_date) &
+                            Q(last_changed_time__lt=registered_to_date)).filter(
+                                Q(teacher_auth_id__in=correspodent_teacher_auth_ids) |
+                                Q(lesson_id__in=correspodent_lesson_ids)
+                            ).order_by('-last_changed_time')
+                else:
+                    # 沒有輸入 searched_by
+                    student_s_lesson_booking_info_queryset = \
+                        lesson_booking_info.objects.filter(
+                            student_auth_id=student_auth_id, 
+                            created_time__gt=registered_from_date,
+                            last_changed_time__lt=registered_to_date).order_by('-last_changed_time')
+                
                 if student_s_lesson_booking_info_queryset.count() == 0:
                     # 這個學生什麼預約歷史都沒有
                     response['status'] = 'success'
