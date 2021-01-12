@@ -2479,7 +2479,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         student_post_data = {
             'regEmail': self.test_student_name1,
             'regPwd': '00000000',
-            'regName': 'test_student_name',
+            'regName': 'test_student_name1',
             'regBirth': '1990-12-25',
             'regGender': 1,
             'regRole': 'oneself',
@@ -2490,10 +2490,12 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
 
         self.test_student_name2 = 'test_student2@a.com'
         student_post_data['regEmail'] = self.test_student_name2
+        student_post_data['regName'] = 'test_student_name2'
         self.client.post(path='/api/account/signupStudent/', data=student_post_data)
 
         self.test_student_name3 = 'test_student3@a.com'
         student_post_data['regEmail'] = self.test_student_name3
+        student_post_data['regName'] = 'test_student_name3'
         self.client.post(path='/api/account/signupStudent/', data=student_post_data)
         # 建了3個學生
         
@@ -2506,7 +2508,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
             'title_color': '#000000',
             'background_picture_code': 1,
             'background_picture_path': '',
-            'lesson_title': 'test',
+            'lesson_title': 'test_lesson_1',
             'price_per_hour': 800,
             'discount_price': '10:90;20:80;30:75;',
             'selling_status': 'selling',
@@ -2522,6 +2524,12 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
             'syllabus': 'test',
             'lesson_attributes': 'test'      
             }
+        self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+
+        # 建立課程2
+        lesson_post_data['lesson_title'] = 'test_lesson_2'
+        lesson_post_data['trial_class_price'] = 169
+        lesson_post_data['price_per_hour'] = 1300
         self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
 
         # 先取得兩個可預約日期，避免hard coded未來出錯
@@ -2561,6 +2569,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         ''' 
         booking_history_post_data = {
             'userID': teacher_profile.objects.first().auth_id,
+            'searched_by': '',
             'filtered_by': 'to_be_confirmed',
             'registered_from_date': '2000-01-01',
             'registered_to_date': '2021-01-31'
@@ -2576,6 +2585,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
     def test_get_teacher_s_booking_history_api_work_when_teacher_has_no_booking_history_at_all(self):
         booking_history_post_data = {
             'userID': teacher_profile.objects.first().auth_id,
+            'searched_by': '',
             'filtered_by': '',
             'registered_from_date': '2000-01-01',
             'registered_to_date': '2050-01-31'
@@ -2592,6 +2602,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
     def test_get_teacher_s_booking_history_api_work_when_teacher_auth_id_not_exist(self):
         booking_history_post_data = {
             'userID': 35,
+            'searched_by': '',
             'filtered_by': '',
             'registered_from_date': '2000-01-01',
             'registered_to_date': '2021-01-31'
@@ -2636,6 +2647,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         
         booking_history_post_data = {
             'userID': teacher_profile.objects.first().auth_id,
+            'searched_by': '',
             'filtered_by': 'to_be_confirmed',
             'registered_from_date': '2020-01-01',
             'registered_to_date': '2050-01-01'
@@ -2654,6 +2666,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
 
         booking_history_post_data = {
             'userID': teacher_profile.objects.first().auth_id,
+            'searched_by': '',
             'filtered_by': '',
             'registered_from_date': '2020-01-01',
             'registered_to_date': '2050-01-01'
@@ -2678,6 +2691,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         
         booking_history_post_data = {
             'userID': teacher_profile.objects.first().auth_id,
+            'searched_by': '',
             'filtered_by': 'to_be_confirmed',
             'registered_from_date': '2020-01-01',
             'registered_to_date': '2050-01-01'
@@ -2692,6 +2706,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
 
         booking_history_post_data = {
             'userID': teacher_profile.objects.first().auth_id,
+            'searched_by': '',
             'filtered_by': 'canceled',
             'registered_from_date': '2020-01-01',
             'registered_to_date': '2050-01-01'
@@ -2712,6 +2727,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=changing_post_data)
         booking_history_post_data = {
             'userID': teacher_profile.objects.first().auth_id,
+            'searched_by': '',
             'filtered_by': 'confirmed',
             'registered_from_date': '2020-01-01',
             'registered_to_date': '2050-01-01'
@@ -2726,6 +2742,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
 
         booking_history_post_data = {
             'userID': teacher_profile.objects.first().auth_id,
+            'searched_by': '',
             'filtered_by': '',
             'registered_from_date': '2010-01-01',
             'registered_to_date': '2011-01-01'
@@ -2740,6 +2757,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
 
         booking_history_post_data = {
             'userID': teacher_profile.objects.first().auth_id,
+            'searched_by': '',
             'filtered_by': '',
             'registered_from_date': '2010-01-01',
             'registered_to_date': '2050-01-01'
@@ -2784,6 +2802,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         
         booking_history_post_data = {
             'userID': teacher_profile.objects.first().auth_id,
+            'searched_by': '',
             'filtered_by': 'to_be_confirmed',
             'registered_from_date': '2010-01-01',
             'registered_to_date': '2050-01-01'
@@ -2796,6 +2815,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
 
         booking_history_post_data = {
             'userID': teacher_profile.objects.first().auth_id,
+            'searched_by': '',
             'filtered_by': '',
             'registered_from_date': '2010-01-01',
             'registered_to_date': '2050-01-01'
@@ -2840,6 +2860,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         booking_history_post_data = {
             'userID': teacher_profile.objects.first().auth_id,
             'filtered_by': 'to_be_confirmed',
+            'searched_by': '',
             'registered_from_date': '2020-01-01',
             'registered_to_date': '2050-01-01'
         }  # 測試有篩選條件
@@ -2890,6 +2911,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         booking_history_post_data = {
             'userID': teacher_profile.objects.first().auth_id,
             'filtered_by': 'to_be_confirmed',
+            'searched_by': '',
             'registered_from_date': '2020-01-01',
             'registered_to_date': '2050-01-01'
         }  # 測試有篩選條件
@@ -2941,6 +2963,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         booking_history_post_data = {
             'userID': teacher_profile.objects.first().auth_id,
             'filtered_by': '',
+            'searched_by': '',
             'registered_from_date': '2020-01-01',
             'registered_to_date': '2050-01-01'
         }  # 測試無篩選條件
@@ -2957,6 +2980,98 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         str(response.content, "utf8")) # 共3筆
         self.assertEquals(3, str(response.content, "utf8").count('"remaining_time": 420'),
         str(response.content, "utf8")) # 共3筆
+
+
+    def test_searched_by_feature(self):
+        # 測試搜尋功能是否運作正確
+        purchase_post_data = {
+            'userID':student_profile.objects.first().auth_id,
+            'teacherID':teacher_profile.objects.first().auth_id,
+            'lessonID':lesson_info.objects.first().id,
+            'sales_set': 'trial',
+            'total_amount_of_the_sales_set': 69,
+            'q_discount':0}
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+
+        the_purchase_object = \
+            student_purchase_record.objects.first()
+        the_purchase_object.payment_status = 'paid'
+        the_purchase_object.save()
+        # 理論上現在已經購買、付款完成了，所以 學生1應該有30min的可用時數
+
+        booking_post_data = {
+            'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_2}:4;'
+        }  # 預約 30min  >> 1門課
+        self.client.post(
+            path='/api/lesson/bookingLessons/',
+            data=booking_post_data)  # 送出預約，此時老師應該有1則 待確認 預約訊息
+
+        # 加入學生 auth_id = 2，讓他購買第二門課
+        purchase_post_data = {
+            'userID':student_profile.objects.get(id=2).auth_id,
+            'teacherID':teacher_profile.objects.first().auth_id,
+            'lessonID':lesson_info.objects.get(lesson_title='test_lesson_2').id,
+            'sales_set': '10:90',
+            'total_amount_of_the_sales_set': int(1300*10*0.9),
+            'q_discount':0}
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+
+        the_purchase_object = \
+            student_purchase_record.objects.get(student_auth_id=student_profile.objects.get(id=2).auth_id)
+        the_purchase_object.payment_status = 'paid'
+        the_purchase_object.save()
+
+        # 讓學生2預約2門課
+        booking_post_data = {
+            'userID': student_profile.objects.get(id=2).auth_id,  # 學生的auth_id
+            'lessonID': lesson_info.objects.get(lesson_title='test_lesson_2').id,
+            'bookingDateTime': f'{self.available_date_1}:1,2,4,5;'
+        }  # 預約 120min  >> 2門課 >> 1,2 4,5
+        self.client.post(
+            path='/api/lesson/bookingLessons/',
+            data=booking_post_data)  # 送出預約，此時老師應該有2+1則 待確認 預約訊息
+
+        # 測試搜尋功能是否正常，只能搜尋學生姓名(暱稱)或課程title
+        booking_history_post_data = {
+            'userID': teacher_profile.objects.first().auth_id,
+            'searched_by': student_profile.objects.get(id=2).nickname,
+            'filtered_by': 'to_be_confirmed',
+            'registered_from_date': '2020-01-01',
+            'registered_to_date': '2050-01-01'
+        }  # 測試有篩選條件
+        response = self.client.post(
+            path='/api/lesson/getTeachersBookingHistory/', data=booking_history_post_data)
+        self.assertEquals(2, str(response.content, "utf8").count('"to_be_confirmed"')) 
+        # 應該有2門 來自學生 2的 to_be_confirmed
+        self.assertEquals(2, str(response.content, "utf8").count(f'"student_nickname": "{student_profile.objects.get(id=2).nickname}"')) 
+        # 共2筆
+        self.assertEquals(2, str(response.content, "utf8").count('"discount_price": "10:90"')) 
+        # 共2筆
+
+        booking_history_post_data['searched_by'] = 'bbaaccd'
+        # 亂打一通
+        response = self.client.post(
+            path='/api/lesson/getTeachersBookingHistory/', data=booking_history_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
+        self.assertIn('"data": null', str(response.content, 'utf8')) 
+
+        booking_history_post_data['searched_by'] = lesson_info.objects.first().lesson_title
+        response = self.client.post(
+            path='/api/lesson/getTeachersBookingHistory/', data=booking_history_post_data)
+        self.assertEquals(1, str(response.content, "utf8").count('"to_be_confirmed"'), str(response.content, "utf8")) 
+        # 應該有1門 來自學生1的 to_be_confirmed
+
+        booking_history_post_data['searched_by'] = lesson_info.objects.get(id=2).lesson_title
+        response = self.client.post(
+            path='/api/lesson/getTeachersBookingHistory/', data=booking_history_post_data)
+        self.assertEquals(2, str(response.content, "utf8").count('"to_be_confirmed"'), str(response.content, "utf8")) 
+        # 應該有2門來自學生2的 to_be_confirmed
+
+
+
+
 
 
 class STUDENT_BOOKING_HISTORY_TESTS(TestCase):

@@ -252,7 +252,7 @@ def get_lesson_sales_history(request):
             his_related_purchased_record_queryset = \
                 student_purchase_record.objects.filter(
                     teacher_auth_id = teacher_auth_id,
-                    payment_status = 'paid'
+                    payment_status__in = ['paid', 'refunding', 'refund', 'cancel']
                 ).order_by('-purchase_date')
             
             if (his_related_purchased_record_queryset.count()):

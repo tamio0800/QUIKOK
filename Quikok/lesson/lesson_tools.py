@@ -329,7 +329,7 @@ class lesson_manager:
                 self.data = None
                 return (self.status, self.errCode, self.errMsg, self.data)    
             try:
-                edited_lesson = lesson_info.objects.filter(teacher__auth_id=teacher_auth_id).filter(id=lesson_id).first()
+                edited_lesson = lesson_info.objects.filter(teacher__auth_id=teacher_auth_id, id=lesson_id).first()
                 if edited_lesson is None:
                     # 代表課程跟老師對應不起來
                     self.status = 'failed'
