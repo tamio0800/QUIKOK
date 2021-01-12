@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from account_finance.models import student_purchase_record, student_remaining_minutes_of_each_purchased_lesson_set
-from account_finance.email_sending import email_manager
+from account_finance.email_sending import email_manager, email_for_edony
 from account.models import teacher_profile, student_profile
 from lesson.models import lesson_info, lesson_sales_sets, lesson_booking_info
 from django.http import JsonResponse
@@ -228,9 +228,11 @@ def student_edit_order(request):
                 if status_update == '0': # 學生已付款,接著我們要對帳
                     
                     record.payment_status = 'refunding'
-                    record.save()
                     record.part_of_bank_account_code = user5_bank_code
                     record.save()
+                    #email_to_edony = email_for_edony()
+                    #email_to_edony.send_email(student_authID=student_authID)
+
             else:
                 pass
                     
