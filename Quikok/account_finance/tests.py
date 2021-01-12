@@ -872,7 +872,6 @@ class LESSON_SALES_HISTORY_TEST(TestCase):
         self.assertEqual(2, str(response.content, "utf8").count('"total_amount"'))
         # 確認有抓到第二門購買的紀錄
 
-
     
     def test_get_lesson_sales_history_when_teacher_exist_and_has_purchased_trial_lesson_and_its_content_is_right(self):
         '''
@@ -1132,7 +1131,76 @@ class LESSON_SALES_HISTORY_TEST(TestCase):
         print(f'test_lesson_and_its_content_is_right_common_3 {str(response.content, "utf8")}')
 
 
+    def test_get_lesson_sales_history_when_teacher_exist_and_multi_students_purchased_lesson_sets(self):
+        '''
+        這裏測試當複數學生買了不同課程後，回傳的資訊是否正確。
+        '''
+        # 先讓學生1購買3門課 >> trial, no_discount, 1:90，並且消耗trial
+        purchase_post_data = {
+            'userID':student_profile.objects.first().auth_id,
+            'teacherID':teacher_profile.objects.first().auth_id,
+            'lessonID':lesson_info.objects.first().id,
+            'sales_set': 'trial',
+            'total_amount_of_the_sales_set': 69,
+            'q_discount':0}
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+        purchase_post_data['sales_set'] = 'no_discount'
+        purchase_post_data['total_amount_of_the_sales_set'] = 800
+        purchase_post_data['q_discount'] = 200  # 試試看200q幣付款
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+        self.assertIn('success', str(response.content, "utf8"))  # 用了Q幣，試試看有沒有成功
+        purchase_post_data['sales_set'] = '10:90'
+        purchase_post_data['total_amount_of_the_sales_set'] = int(10*800*0.9)
+        purchase_post_data['q_discount'] = 0
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+        # 買完三門課程了，接下來來付款
 
+        # 先來付款
+        for each_id in range(1, 4):
+            the_purchase_obj = \
+                student_purchase_record.objects.get(id=each_id)
+            the_purchase_obj.payment_status = 'paid'
+            the_purchase_obj.save()
+        self.assertEqual(3, 
+            student_remaining_minutes_of_each_purchased_lesson_set.objects.count())
+
+        # 接著讓學生2號購買 trial 跟 20:80
+        purchase_post_data = {
+            'userID':student_profile.objects.get(id=2).auth_id,
+            'teacherID':teacher_profile.objects.first().auth_id,
+            'lessonID':lesson_info.objects.first().id,
+            'sales_set': 'trial',
+            'total_amount_of_the_sales_set': 69,
+            'q_discount':0}
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+        purchase_post_data['sales_set'] = '20:80'
+        purchase_post_data['total_amount_of_the_sales_set'] = int(20*800*0.8)
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+        # 付款
+        for each_id in range(4, 6):
+            the_purchase_obj = \
+                student_purchase_record.objects.get(id=each_id)
+            the_purchase_obj.payment_status = 'paid'
+            the_purchase_obj.save()
+        self.assertEqual(5, 
+            student_remaining_minutes_of_each_purchased_lesson_set.objects.count())
+
+        query_history_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'type': 'teacher'}
+        response = \
+            self.client.post(path='/api/account_finance/getLessonSalesHistory/', data=query_history_post_data)
+        # 先確認一下回傳數量是對的
+        self.assertEqual(5, str(response.content, "utf8").count('"total_amount"'))
+        self.assertEqual(2, str(response.content, "utf8").count(f'"student_auth_id": {student_profile.objects.get(id=2).auth_id}'))
+        self.assertEqual(2, str(response.content, "utf8").count(f'"lesson_sales_set": "trial"'))
+        self.assertEqual(1, str(response.content, "utf8").count(f'"lesson_sales_set": "10:90"'))
+        self.assertEqual(1, str(response.content, "utf8").count(f'"lesson_sales_set": "no_discount"'))
+        self.assertEqual(1, str(response.content, "utf8").count(f'"lesson_sales_set": "20:80"'))
+
+
+
+        
 
 
 
