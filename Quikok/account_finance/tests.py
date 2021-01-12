@@ -662,7 +662,7 @@ class LESSON_SALES_HISTORY_TEST(TestCase):
         # 建了3個學生
         
         # 建立課程
-        lesson_post_data = {
+        self.lesson_post_data1 = {
             'userID': teacher_profile.objects.get(id=1).auth_id,   # 這是老師1的auth_id
             'action': 'createLesson',
             'big_title': 'big_title',
@@ -686,9 +686,9 @@ class LESSON_SALES_HISTORY_TEST(TestCase):
             'syllabus': 'test',
             'lesson_attributes': 'test'      
             }
-        self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+        self.client.post(path='/api/lesson/createOrEditLesson/', data=self.lesson_post_data1)
 
-        lesson_post_data = {
+        self.lesson_post_data2 = {
             'userID': teacher_profile.objects.get(id=2).auth_id,   # 這是老師2的auth_id
             'action': 'createLesson',
             'big_title': 'big_title',
@@ -712,7 +712,7 @@ class LESSON_SALES_HISTORY_TEST(TestCase):
             'syllabus': 'test',
             'lesson_attributes': 'test'      
             }
-        self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+        self.client.post(path='/api/lesson/createOrEditLesson/', data=self.lesson_post_data2)
 
         # 先取得兩個可預約日期，避免hard coded未來出錯
         # 時段我都設1,2,3,4,5，所以只要在其中就ok
@@ -873,7 +873,7 @@ class LESSON_SALES_HISTORY_TEST(TestCase):
         # 確認有抓到第二門購買的紀錄
 
 
-    @skip
+    
     def test_get_lesson_sales_history_when_teacher_exist_and_has_purchased_lesson_and_its_content_is_right(self):
         '''
         這裏測試當學生買了課程後，回傳的資訊是否正確。
@@ -899,9 +899,67 @@ class LESSON_SALES_HISTORY_TEST(TestCase):
         response = \
             self.client.post(path='/api/account_finance/getLessonSalesHistory/', data=query_history_post_data)
         
-        # 先確認購買紀錄的id是正確的
-        self.assertIn('"purchased_record_id": 1', str(response.content, "utf8"), str(response.content, "utf8"))
-        self.assertIn('"purchased_lesson_sales_set_status": "on_going"', str(response.content, "utf8"), str(response.content, "utf8"))
+        that_student_remaining_minutes_object = \
+            student_remaining_minutes_of_each_purchased_lesson_set.objects.get(
+                student_purchase_record_id = student_purchase_record.objects.first().id
+            )
+        available_remaining_minutes = that_student_remaining_minutes_object.available_remaining_minutes
+        unconsumed_minutes = that_student_remaining_minutes_object.available_remaining_minutes + \
+            that_student_remaining_minutes_object.confirmed_consumed_minutes
+        
+        # 先確認一下回傳數量是對的
+        self.assertEqual(1, str(response.content, "utf8").count('"total_amount"'))
+        # 再確認購買紀錄的id是正確的
+        self.assertIn('"purchased_record_id": 1', str(response.content, "utf8"))
+        self.assertIn('"purchased_lesson_sales_set_status": "on_going"', str(response.content, "utf8"))
+        self.assertIn(f'"created_date": "{date_function.today()}"', str(response.content, "utf8"))
+        self.assertIn(f'"student_nickname": "{student_profile.objects.first().nickname}"', str(response.content, "utf8"))
+        self.assertIn(f'"student_auth_id": {student_profile.objects.first().auth_id}', str(response.content, "utf8"))
+        self.assertIn(f'"lesson_title": "{lesson_info.objects.first().lesson_title}"', str(response.content, "utf8"))
+        self.assertIn(f'"lessonID": {lesson_info.objects.first().id}', str(response.content, "utf8"))
+        self.assertIn(f'"lesson_sales_set": "{lesson_sales_sets.objects.get(id=the_purchase_object.lesson_sales_set_id).sales_set}"', str(response.content, "utf8"))
+        self.assertIn(f'"total_amount": {lesson_sales_sets.objects.get(id=the_purchase_object.lesson_sales_set_id).total_amount_of_the_sales_set}', str(response.content, "utf8"))
+        self.assertIn(f'"available_remaining_minutes": {available_remaining_minutes}', str(response.content, "utf8"))
+        self.assertIn(f'"unconsumed_minutes": {unconsumed_minutes}', str(response.content, "utf8"))
+        self.assertIn(f'"is_selling": true', str(response.content, "utf8"))
+        print(f'test_lesson_and_its_content_is_right_1 {str(response.content, "utf8")}')
+
+        # 接下來測試一下當 老師不繼續開放 試教課程 購買時，看看 is_selling 會否變成 false
+        self.lesson_post_data1['trial_class_price'] = -999
+        self.lesson_post_data1['action'] = 'editLesson'
+        self.lesson_post_data1['lessonID'] = lesson_info.objects.filter(\
+            teacher=teacher_profile.objects.get(id=1)).first().id
+        
+        response = \
+            self.client.post(path='/api/lesson/createOrEditLesson/', data=self.lesson_post_data1)
+        self.assertIn('success', str(response.content, "utf8"))
+
+        query_history_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'type': 'teacher'}
+        response = \
+            self.client.post(path='/api/account_finance/getLessonSalesHistory/', data=query_history_post_data)
+        self.assertIn(f'"is_selling": false', str(response.content, "utf8"))
+        print(f'test_lesson_and_its_content_is_right_2 {str(response.content, "utf8")}')
+
+        # 接下來測試一下 如果將學生 的 時數都消耗掉，則其 
+        # purchased_lesson_sales_set_status 應該會變成 finished
+        that_student_remaining_minutes_object.confirmed_consumed_minutes += \
+            that_student_remaining_minutes_object.available_remaining_minutes + that_student_remaining_minutes_object.withholding_minutes
+        that_student_remaining_minutes_object.available_remaining_minutes = 0
+        that_student_remaining_minutes_object.withholding_minutes = 0
+        that_student_remaining_minutes_object.save()
+
+        query_history_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'type': 'teacher'}
+        response = \
+            self.client.post(path='/api/account_finance/getLessonSalesHistory/', data=query_history_post_data)
+        self.assertIn('"purchased_lesson_sales_set_status": "finished"', str(response.content, "utf8"))
+        self.assertIn(f'"is_selling": false', str(response.content, "utf8"))
+        print(f'test_lesson_and_its_content_is_right_3 {str(response.content, "utf8")}')
+
+
         
 
 
