@@ -230,8 +230,9 @@ def student_edit_order(request):
                     record.payment_status = 'refunding'
                     record.part_of_bank_account_code = user5_bank_code
                     record.save()
-                    #email_to_edony = email_for_edony()
-                    #email_to_edony.send_email(student_authID=student_authID)
+                    email_to_edony = email_for_edony()
+                    email_to_edony.send_email(student_authID=student_authID,
+                      user5_bank_code =user5_bank_code, total_price = record.purchased_with_money  )
 
             else:
                 pass

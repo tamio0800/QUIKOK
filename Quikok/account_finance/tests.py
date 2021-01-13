@@ -608,10 +608,11 @@ class test_student_purchase_payment_status(TestCase):
                 #'data': 1 # 建立1號訂單
         #    })
         
-    def test_student_edit_order_paid(self):
+    def test_student_edit_order_from_unpaid_to_paid(self):
         '''
-        check update payment_status改成對帳中refunding, 且有存入銀行5碼 
+        check update payment_status改成對帳中refunding, 且有存入銀行5碼,並有寄信給edony
         '''
+        mail.outbox = [] # 清空前幾段test暫存記憶裡的信
         data = {
             'userID':'2',
             'token':'1',
@@ -622,11 +623,14 @@ class test_student_purchase_payment_status(TestCase):
         }
         response = self.client.post(path='/api/account_finance/studentEditOrder/', data=data)
         record = student_purchase_record.objects.get(id = 1)
-        
+
+        self.assertEqual(student_purchase_record.objects.all().count() , 7)
         self.assertEqual(response.status_code, 200)
         self.assertIn('success', str(response.content))
         self.assertEqual(record.payment_status , 'refunding')
         self.assertEqual(record.part_of_bank_account_code, '11111')
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, '學生匯款通知信')
     
     def test_student_edit_order_apply_refund(self):
         data = {
