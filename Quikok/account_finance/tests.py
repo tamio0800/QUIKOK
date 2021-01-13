@@ -752,6 +752,7 @@ class LESSON_SALES_HISTORY_TEST(TestCase):
             shutil.rmtree('user_upload/students/' + self.test_student_name3)
             shutil.rmtree('user_upload/teachers/' + self.test_teacher_name1)
             shutil.rmtree('user_upload/teachers/' + self.test_teacher_name2)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name3)
         except:
             pass
 
@@ -1215,26 +1216,157 @@ class LESSON_SALES_HISTORY_TEST(TestCase):
 
 
 
+class Q_POINTS_WITHDRAWAL_TEST(TestCase):
+    '''
+    用來測試Q幣轉現金到戶頭的機制是否正確運作
+    '''
+    def setUp(self):
+        self.client = Client()        
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+        self.test_teacher_name1 = 'test_teacher1_user@test.com'
+        teacher_post_data = {
+            'regEmail': self.test_teacher_name1,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;'
+        }
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
         
+        self.test_teacher_name2 = 'test_teacher2_user@test.com'
+        teacher_post_data['regEmail'] = self.test_teacher_name2,
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+
+        self.test_teacher_name3 = 'test_teacher3_user@test.com'
+        teacher_post_data['regEmail'] = self.test_teacher_name3,
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        # 建了3個老師
+        
+        self.test_student_name1 = 'test_student1@a.com'
+        student_post_data = {
+            'regEmail': self.test_student_name1,
+            'regPwd': '00000000',
+            'regName': 'test_student_name',
+            'regBirth': '1990-12-25',
+            'regGender': 1,
+            'regRole': 'oneself',
+            'regMobile': '0900-111111',
+            'regNotifiemail': ''
+        }
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        self.test_student_name2 = 'test_student2@a.com'
+        student_post_data['regEmail'] = self.test_student_name2
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        self.test_student_name3 = 'test_student3@a.com'
+        student_post_data['regEmail'] = self.test_student_name3
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        # 建了3個學生
 
 
+    def tearDown(self):
+        # 刪掉(如果有的話)產生的資料夾
+        try:
+            shutil.rmtree('user_upload/students/' + self.test_student_name1)
+            shutil.rmtree('user_upload/students/' + self.test_student_name2)
+            shutil.rmtree('user_upload/students/' + self.test_student_name3)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name1)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name2)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name2)
+        except:
+            pass
 
 
-'''
-the_purchase_object = \
-    student_purchase_record.objects.first()
-the_purchase_object.payment_status = 'paid'
-the_purchase_object.save()
-# 理論上現在已經購買、付款完成了，所以 學生1應該有30min的可用時數
+    def test_withdraw_q_points_exists(self):
+        # 測試該連結/api存在
+        withdrawal_post_data = {
+            'bank_code': '009',
+            'bank_name': '彰化銀行',
+            'bank_account_code': '222540508714',
+            'action': 'only_editting'}
+        response = \
+            self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
+        self.assertEqual(200, response.status_code)
 
-booking_post_data = {
-    'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
-    'lessonID': 1,
-    'bookingDateTime': f'{self.available_date_2_t1}:1,2,3,4;{self.available_date_3_t1}:1,3,4,5;'
-}  # 預約 240min  >> 1234 1 345 3門課
 
-self.client.post(
-    path='/api/lesson/bookingLessons/',
-    data=booking_post_data)  # 送出預約，此時學生應該有3則送出的 待確認 預約訊息
-'''
+    def test_withdraw_q_points_only_editting_teacher_and_student_work(self):
+        # 測試老師能夠成功編輯帳戶
+        withdrawal_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'type': 'teacher',
+            'bank_code': '009',
+            'bank_name': '彰化銀行',
+            'bank_account_code': '222540508714',
+            'action': 'only_editting'}
+        response = \
+            self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        teacher_1 = teacher_profile.objects.get(id=1)
+        self.assertEqual(
+            ('彰化銀行', '009', '222540508714'),
+            (teacher_1.bank_name, teacher_1.bank_code, teacher_1.bank_account_code),
+            teacher_profile.objects.values()
+        )
+
+        withdrawal_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'type': 'teacher',
+            'bank_code': '822',
+            'bank_name': '中國信託商業銀行',
+            'bank_account_code': '123456789101',
+            'action': 'only_editting'}
+        response = \
+            self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        teacher_1 = teacher_profile.objects.get(id=1)
+        self.assertEqual(
+            ('中國信託商業銀行', '822', '123456789101'),
+            (teacher_1.bank_name, teacher_1.bank_code, teacher_1.bank_account_code),
+            teacher_profile.objects.values()
+        )
+
+        # 測試學生3能夠成功編輯帳戶
+        withdrawal_post_data = {
+            'userID': student_profile.objects.get(id=3).auth_id,
+            'type': 'student',
+            'bank_code': '123',
+            'bank_name': 'XXX銀行',
+            'bank_account_code': '4569871235840',
+            'action': 'only_editting'}
+        response = \
+            self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
+        student_1 = student_profile.objects.get(id=3)
+        self.assertEqual(
+            (withdrawal_post_data['bank_name'], withdrawal_post_data['bank_code'], withdrawal_post_data['bank_account_code']),
+            (student_1.bank_name, student_1.bank_code, student_1.bank_account_code),
+            student_profile.objects.values()
+        )
+
+        # 測試type別不同會出錯
+        withdrawal_post_data['type'] = 'teacher',
+        response = \
+            self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
+        self.assertIn('failed', str(response.content, "utf8"))
+
+
 

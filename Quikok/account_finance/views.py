@@ -8,6 +8,7 @@ from chatroom.consumers import ChatConsumer
 from datetime import datetime, timedelta, date as date_function
 from handy_functions import check_if_all_variables_are_true
 from django.views.decorators.http import require_http_methods
+from account_finance.models import student_refund, teacher_refund
 
 
 def view_email_new_order_remind(request):
@@ -339,5 +340,165 @@ def get_lesson_sales_history(request):
     return JsonResponse(response)
 
 
+@require_http_methods(['POST'])
+def withdraw_q_points(request):
+    '''
+    這個api用來收取 老師或是學生 要將 Q幣 轉成新台幣匯出的訊息
+    收取資料: {
+        userID: teacher's auth_id,
+        type: "teacher" or "student"
+        bank_code: 808 (銀行代碼)
+        bank_name: 玉山銀行 (銀行名稱(選填))
+        bank_account_code: 00000000000000  (銀行帳號)
+        action: 純編輯 (only_editting)、編輯後請款 (withdrawal_after_editting)
+        amount: 如果是「編輯後請款」的話，預計轉出的金額
+    }
+    回傳資料: {
+            status: "success" / "failed" 
+            errCode: None 
+            errMsg: None
+            data: None
+    }'''
+    response = dict()
+    user_type = request.POST.get('type', False)
+    
+    bank_code = request.POST.get('bank_code', False)
+    bank_name = request.POST.get('bank_name', False)
+    bank_account_code = request.POST.get('bank_account_code', False)
+    action = request.POST.get('action', False)
+
+    if check_if_all_variables_are_true(user_type, bank_code, bank_name,
+        bank_account_code, action):
+        # 確實有收到除了 userID 以外的資料
+        
+            
+
+        if user_type == 'teacher':
+            # 老師用戶
+            teacher_auth_id = request.POST.get('userID', False)
+            # 先確認該用戶是否存在，以及，如果存在的話，確認他的動作是編輯或是提款
+            teacher_object = teacher_profile.objects.filter(auth_id=teacher_auth_id).first()
+            if teacher_object is None:
+                # 該老師用戶不存在
+                response['status'] = 'failed'
+                response['errCode'] = '1'
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                response['data'] = None
+            else:
+                # 接著確認如果是提款的話，檢查一下Q幣夠不夠
+                if action == 'withdrawal_after_editting':
+                    withdrawal_amount = int(request.POST.get('amount', False))
+                    # 是提款
+                    if teacher_object.balance >= withdrawal_amount:
+                        # Q幣足夠
+                        # 確認一下距離上次提款日期是否為一個月(30d)內，是的話要收手續費，反之不用
+                        if teacher_refund.objects.filter(teacher_auth_id=teacher_auth_id).last() is None:
+                            within_a_month = False
+                        else:
+                            within_a_month = \
+                                (datetime.now() - teacher_refund.objects.filter(teacher_auth_id=teacher_auth_id).last()).days < 31
+                        
+                        the_new_record = teacher_refund.objects.create(
+                            teacher_auth_id = teacher_auth_id,
+                            snapshot_balance = teacher_object.balance,
+                            txn_fee = 30 if within_a_month else 0,
+                            refund_amount = withdrawal_amount,
+                            bank_account_code = bank_account_code,
+                            bank_name = bank_name,
+                            bank_code = bank_code
+                        )
+                        the_new_record.save()
+                        # 然後將user profile 的 balance 移到 withholding_balance
+                        teacher_object.withholding_balance += withdrawal_amount
+                        teacher_object.balance -= withdrawal_amount
+                        teacher_object.save()
+                        response['status'] = 'success'
+                        response['errCode'] = None
+                        response['errMsg'] = None
+                        response['data'] = the_new_record.id
+                    else:
+                        # 老師要提領的Q幣不足
+                        response['status'] = 'failed'
+                        response['errCode'] = '2'
+                        response['errMsg'] = '不好意思，您的Q幣餘額不足以進行這筆交易，如果有任何疑問請隨時向我們反應，謝謝您> <'
+                        response['data'] = None
+                else:
+                    # 是純粹編輯，將銀行資訊寫入個人資訊中
+                    teacher_object.bank_account_code = bank_account_code
+                    teacher_object.bank_name = bank_name
+                    teacher_object.bank_code = bank_code
+                    teacher_object.save()
+                    response['status'] = 'success'
+                    response['errCode'] = None
+                    response['errMsg'] = None
+                    response['data'] = None
+
+        else:
+            # 其他的一律先視為學生，反正找不到該用戶一樣會報錯
+            student_auth_id = request.POST.get('userID', False)
+            # 先確認該用戶是否存在，以及，如果存在的話，確認他的動作是編輯或是提款
+            student_object = student_profile.objects.filter(auth_id=student_auth_id).first()
+            if student_object is None:
+                # 該學生用戶不存在
+                response['status'] = 'failed'
+                response['errCode'] = '2'
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                response['data'] = None
+            else:
+                # 接著確認如果是提款的話，檢查一下Q幣夠不夠
+                if action == 'withdrawal_after_editting':
+                    withdrawal_amount = int(request.POST.get('amount', False))
+                    # 是提款
+                    if student_object.balance >= withdrawal_amount:
+                        # Q幣足夠
+                        # 確認一下距離上次提款日期是否為一個月(30d)內，是的話要收手續費，反之不用
+                        if student_refund.objects.filter(student_auth_id=student_auth_id).last() is None:
+                            within_a_month = False
+                        else:
+                            within_a_month = \
+                                (datetime.now() - student_refund.objects.filter(student_auth_id=student_auth_id).last()).days < 31  
+                        the_new_record = student_refund.objects.create(
+                            student_auth_id = student_auth_id,
+                            snapshot_balance = student_object.balance,
+                            txn_fee = 30 if within_a_month else 0,
+                            refund_amount = withdrawal_amount,
+                            bank_account_code = bank_account_code,
+                            bank_name = bank_name,
+                            bank_code = bank_code
+                        )
+                        the_new_record.save()
+                        # 然後將user profile 的 balance 移到 withholding_balance
+                        student_object.withholding_balance += withdrawal_amount
+                        student_object.balance -= withdrawal_amount
+                        student_object.save()
+                        response['status'] = 'success'
+                        response['errCode'] = None
+                        response['errMsg'] = None
+                        response['data'] = the_new_record.id
+
+                    else:
+                        # 學生要提領的Q幣不足
+                        response['status'] = 'failed'
+                        response['errCode'] = '2'
+                        response['errMsg'] = '不好意思，您的Q幣餘額不足以進行這筆交易，如果有任何疑問請隨時向我們反應，謝謝您> <'
+                        response['data'] = None
+                else:
+                    # 是純粹編輯，將銀行資訊寫入個人資訊中
+                    student_object.bank_account_code = bank_account_code
+                    student_object.bank_name = bank_name
+                    student_object.bank_code = bank_code
+                    student_object.save()
+                    response['status'] = 'success'
+                    response['errCode'] = None
+                    response['errMsg'] = None
+                    response['data'] = None
+    else:
+        # 傳輸有問題
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+    
+    return JsonResponse(response)
 
 

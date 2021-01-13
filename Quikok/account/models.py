@@ -39,6 +39,9 @@ class student_profile(models.Model):
     info_folder = models.TextField(blank=True, null=True)  # 資料夾路徑，存放個人檔案（暫不使用）
     thumbnail_dir = models.TextField(blank=True, null=True)
     update_someone_by_email = models.CharField(max_length = 405, blank=True, null=True)
+    bank_account_code = models.CharField(max_length=30, default='')
+    bank_name = models.CharField(max_length=30, default='')
+    bank_code = models.CharField(max_length=5, default='')
     date_join = models.DateTimeField(auto_now_add=True)
     # 為了使回傳platform名稱而不是object
     def __str__(self):
@@ -83,6 +86,9 @@ class teacher_profile(models.Model):
     #occupation = models.CharField(max_length = 60, blank=True)
     company = models.CharField(max_length = 100, blank=True, null=True) # 公司與職位 原本分兩個但設計時做在一起了所以只留這個
     is_approved = models.BooleanField(default = False)  # 要讓陳先生看過/審核過
+    bank_account_code = models.CharField(max_length=30, default='')
+    bank_name = models.CharField(max_length=30, default='')
+    bank_code = models.CharField(max_length=5, default='')
     date_join = models.DateTimeField(auto_now_add = True)
     special_exp = models.TextField(blank=True, null=True)  # 其他經歷或特殊專長
     all_lesson_score_mean = models.FloatField(default=0.0)  # 全部課程分數平均

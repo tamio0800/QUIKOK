@@ -43,6 +43,7 @@ class student_refund(models.Model):
     # already_paid, unpaid, cancel.....
     update_time = models.DateTimeField(auto_now=True)
     bank_account_code = models.CharField(max_length=30, default='')
+    bank_name = models.CharField(max_length=30, default='')
     bank_code = models.CharField(max_length=5, default='')
     def __str__(self):
         return str(self.id)
@@ -50,6 +51,7 @@ class student_refund(models.Model):
     class Meta:
         verbose_name = '學生退款紀錄'
         verbose_name_plural = '學生退款紀錄'
+
 
 # 老師提款紀錄(預設系統每個月自動轉帳
 class teacher_refund(models.Model):
@@ -62,6 +64,7 @@ class teacher_refund(models.Model):
     # paid, unpaid, cancel.....
     update_time = models.DateTimeField(auto_now=True)
     bank_account_code = models.CharField(max_length=30, default='')
+    bank_name = models.CharField(max_length=30, default='')
     bank_code = models.CharField(max_length=5, default='')
     def __str__(self):
         return str(self.id)
