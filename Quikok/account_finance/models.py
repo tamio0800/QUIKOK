@@ -142,9 +142,10 @@ class student_remaining_minutes_when_request_refund_each_purchased_lesson_set(mo
     預計將來要處理"同一筆訂單分次退款"時也會用到
     '''
     student_purchase_record_id = models.IntegerField(default=0)
-    available_remaining_minutes = models.IntegerField()  # 可動用的剩餘時數
-    withholding_minutes = models.IntegerField(default=0) # 預扣時數
-    available_minutes_turn_into_Qcoin = models.IntegerField(default=0)
+    purchased_lesson_sales_sets_id = models.IntegerField(default=0)  # 對應的 lesson_sales_sets id    
+    snapshot_available_remaining_minutes = models.IntegerField()  # 可動用的剩餘時數
+    snapshot_withholding_minutes = models.IntegerField(default=0) # 預扣時數
+    available_minutes_turn_into_q_points = models.IntegerField(default=0)
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
 

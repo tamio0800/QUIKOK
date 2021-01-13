@@ -1540,6 +1540,9 @@ class Q_POINTS_WITHDRAWAL_TEST(TestCase):
 
 
     def test_withdrawal_history_work(self):
+        '''
+        用來測試 老師/學生 查詢Q幣退款歷史紀錄 運作正常
+        '''
         # 先查詢學生空資料
         query_history_data = {
             'userID': student_profile.objects.get(id=2).auth_id,
