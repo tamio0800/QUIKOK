@@ -220,19 +220,30 @@ def student_edit_order(request):
                             purchase_recordID, status_update, user5_bank_code):
             # 首先查詢訂單狀態
             record = student_purchase_record.objects.filter(id = purchase_recordID).first()
-            # 訂單已付款
-            if record.payment_status in ['paid','refunding','refunded', 'cancel_after_paid']:
-                pass
+            
+            # 訂單已付款,理論上只有'paid'申請退款或取消兩種
+            # 萬一客人先在訂單這邊取消 但還有尚未進行的預約沒取消, 那也該是當他取消預約時,
+            # 由取消預約的程式將payment_status改回paid
+            if record.payment_status == 'paid': #'refunding','refunded', 'cancel_after_paid'
+                if status_update == '1':
+                    pass
             # 訂單尚未付款
             elif record.payment_status == 'unpaid':
                 if status_update == '0': # 學生已付款,接著我們要對帳
-                    
                     record.payment_status = 'refunding'
                     record.part_of_bank_account_code = user5_bank_code
                     record.save()
                     email_to_edony = email_for_edony()
                     email_to_edony.send_email(student_authID=student_authID,
-                      user5_bank_code =user5_bank_code, total_price = record.purchased_with_money  )
+                      user5_bank_code =user5_bank_code, total_price = record.purchased_with_money)
+                elif status_update == '2': #申請取消 我們不用動作
+                    record.payment_status = 'unpaid_cancel'
+                    record.save()
+                else:
+                    response = {'status':'failed',
+                    'errCode': 3,
+                    'errMsg': '您的訂單有問題，敬啟聯絡客服協助您處理，謝謝！',
+                    'data': None}
 
             else:
                 pass

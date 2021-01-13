@@ -34,6 +34,9 @@ class student_purchase_record(models.Model):
 
 # 學生退款紀錄
 class student_refund(models.Model):
+    '''
+    Qcoin轉換成台幣的退款
+    '''
     student_auth_id = models.IntegerField()
     snapshot_balance = models.IntegerField(default=0) # 該次申請時的帳戶餘額
     txn_fee = models.IntegerField(default=0) # 手續費
@@ -129,6 +132,22 @@ class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
         verbose_name = '學生課程方案剩餘時數'
         verbose_name_plural = '學生課程方案剩餘時數'
 
+class student_remaining_minutes_when_request_refund_each_purchased_lesson_set(models.Model):
+    '''
+    時間轉Q幣用。
+    當學生申請訂單退款時,當下剩餘的時間跟換算後的Q幣金額會儲存在這
+    預計將來要處理"同一筆訂單分次退款"時也會用到
+    '''
+    student_purchase_record_id = models.IntegerField(default=0)
+    available_remaining_minutes = models.IntegerField()  # 可動用的剩餘時數
+    withholding_minutes = models.IntegerField(default=0) # 預扣時數
+    available_minutes_turn_into_Qcoin = models.IntegerField(default=0)
+    created_time = models.DateTimeField(auto_now_add=True)
+    last_changed_time = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = '學生訂單退款換算Q幣'
+        verbose_name_plural = '學生訂單退款換算Q幣'
 
 
 
