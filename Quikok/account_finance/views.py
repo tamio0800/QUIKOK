@@ -398,7 +398,7 @@ def withdraw_q_points(request):
     '''
     這個api用來收取 老師或是學生 要將 Q幣 轉成新台幣匯出的訊息
     收取資料: {
-        userID: teacher's auth_id,
+        userID: teacher/student 's auth_id,
         type: "teacher" or "student"
         bank_code: 808 (銀行代碼)
         bank_name: 玉山銀行 (銀行名稱(選填))
@@ -572,3 +572,114 @@ def withdraw_q_points(request):
     return JsonResponse(response)
 
 
+@require_http_methods(['POST'])
+def get_q_points_wtihdrawal_history(request):
+    '''
+    這支API用來取得用戶的提領Q幣歷史資訊
+    收取資料: {
+        token
+        userID: teacher/student 's auth_id,
+        type: "teacher" or "student"
+    }
+    回傳資料: {
+            status: "success" / "failed" 
+            errCode: None 
+            errMsg: None
+            data: {
+                withdrawal_id    請款紀錄ID: 0
+                withdrawal_status   狀態
+                            unpaid    付款作業中 
+                            paid      已付款
+                application_date  申請日期: 2020-01-01
+                bank_code  銀行代碼: 808
+                bank_name  銀行名稱: 玉山銀行
+                bank_account_code  銀行帳號
+                amount  轉出金額: 000
+                txn_fee 手續費
+            }
+    }'''
+    response = dict()
+    user_type = request.POST.get('type', False)
+    if check_if_all_variables_are_true(user_type):
+        if user_type == 'teacher':
+            # 用戶是老師
+            teacher_auth_id = request.POST.get('userID', False)
+            teacher_object = teacher_profile.objects.filter(auth_id=teacher_auth_id).first()
+
+            if teacher_object is None:
+                # 用戶不存在
+                response['status'] = 'failed'
+                response['errCode'] = '1'
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                response['data'] = None
+            else:
+                # 將歷史請款資訊從新到舊返回
+                teacher_refund_queryset = \
+                    teacher_refund.objects.filter(teacher_auth_id=teacher_auth_id).order_by('-created_time')
+                if teacher_refund_queryset.count() == 0:
+                    # 沒有歷史紀錄
+                    response['data'] = None
+                else:
+                    # 有歷史紀錄
+                    response['data'] = list()
+                    for each_teacher_refund_object in teacher_refund_queryset:
+                        response['data'].append(
+                            {
+                                'withdrawal_id': each_teacher_refund_object.id,
+                                'withdrawal_status': each_teacher_refund_object.refund_status,
+                                'application_date': str(each_teacher_refund_object.created_time).split()[0],
+                                'bank_code': each_teacher_refund_object.bank_code,
+                                'bank_name': each_teacher_refund_object.bank_name,
+                                'bank_account_code': each_teacher_refund_object.bank_account_code,
+                                'amount': each_teacher_refund_object.refund_amount,
+                                'txn_fee': each_teacher_refund_object.txn_fee,
+                            }
+                        )
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+        else:
+            # 用戶是學生
+            student_auth_id = request.POST.get('userID', False)
+            student_object = student_profile.objects.filter(auth_id=student_auth_id).first()
+
+            if student_object is None:
+                # 用戶不存在
+                response['status'] = 'failed'
+                response['errCode'] = '2'
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                response['data'] = None
+            else:
+                # 將歷史請款資訊從新到舊返回
+                student_refund_queryset = \
+                    student_refund.objects.filter(student_auth_id=student_auth_id).order_by('-created_time')
+                if student_refund_queryset.count() == 0:
+                    # 沒有歷史紀錄
+                    response['data'] = None
+                else:
+                    # 有歷史紀錄
+                    response['data'] = list()
+                    for each_student_refund_object in student_refund_queryset:
+                        response['data'].append(
+                            {
+                                'withdrawal_id': each_student_refund_object.id,
+                                'withdrawal_status': each_student_refund_object.refund_status,
+                                'application_date': str(each_student_refund_object.created_time).split()[0],
+                                'bank_code': each_student_refund_object.bank_code,
+                                'bank_name': each_student_refund_object.bank_name,
+                                'bank_account_code': each_student_refund_object.bank_account_code,
+                                'amount': each_student_refund_object.refund_amount,
+                                'txn_fee': each_student_refund_object.txn_fee,
+                            }
+                        )
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+    else:
+        # 傳輸有問題
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+
+    return JsonResponse(response)

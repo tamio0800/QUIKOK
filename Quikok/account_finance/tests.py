@@ -1,3 +1,4 @@
+from django.http import response
 from django.test import TestCase, Client, RequestFactory
 from account_finance.models import student_purchase_record
 from account_finance.models import student_remaining_minutes_of_each_purchased_lesson_set
@@ -1537,5 +1538,110 @@ class Q_POINTS_WITHDRAWAL_TEST(TestCase):
             (student_2.balance, student_2.withholding_balance),
             student_profile.objects.values().get(id=2))
 
+
+    def test_withdrawal_history_work(self):
+        # 先查詢學生空資料
+        query_history_data = {
+            'userID': student_profile.objects.get(id=2).auth_id,
+            'type': 'student',
+        }
+        response = \
+            self.client.post(path='/api/account_finance/getQPointsWtihdrawalHistory/', data=query_history_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertIn('"data": null', str(response.content, "utf8"))
+
+        # 學生2 加值一點錢
+        student_2 = student_profile.objects.get(id=2)
+        student_2.balance = 5000
+        student_2.save()
+
+        # 學生2提款 2200
+        withdrawal_post_data = {
+            'userID': student_profile.objects.get(id=2).auth_id,
+            'type': 'student',
+            'bank_code': '009',
+            'amount': 2200,
+            'bank_name': '彰化銀行',
+            'bank_account_code': '222540508714',
+            'action': 'withdrawal_after_editting'}
+        self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
+
+        # 查詢資料
+        response = \
+            self.client.post(path='/api/account_finance/getQPointsWtihdrawalHistory/', data=query_history_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertEqual(1, str(response.content, "utf8").count(f'"amount": 2200'), str(response.content, "utf8"))
+        self.assertEqual(1, str(response.content, "utf8").count(f'"withdrawal_status": "unpaid"'))
+        self.assertEqual(1, str(response.content, "utf8").count(f'"txn_fee": 0'))
+
+        # 學生2 再提款 2500
+        withdrawal_post_data['amount'] = 2500
+        self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
+        # 查詢資料
+        response = \
+            self.client.post(path='/api/account_finance/getQPointsWtihdrawalHistory/', data=query_history_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertEqual(1, str(response.content, "utf8").count(f'"amount": 2200'), str(response.content, "utf8"))
+        self.assertEqual(1, str(response.content, "utf8").count(f'"amount": 2500'), str(response.content, "utf8"))
+        self.assertEqual(2, str(response.content, "utf8").count(f'"withdrawal_status": "unpaid"'))
+        self.assertEqual(1, str(response.content, "utf8").count(f'"txn_fee": 0'))
+        self.assertEqual(1, str(response.content, "utf8").count(f'"txn_fee": 30'))
+
+        # 更改第二筆資料付款狀態
+        student_refund.objects.filter(
+            student_auth_id=student_profile.objects.get(id=2).auth_id, refund_amount=2500).update(refund_status='paid')
+
+        response = \
+            self.client.post(path='/api/account_finance/getQPointsWtihdrawalHistory/', data=query_history_data)
+        self.assertEqual(1, str(response.content, "utf8").count(f'"withdrawal_status": "unpaid"'))
+        self.assertEqual(1, str(response.content, "utf8").count(f'"withdrawal_status": "paid"'))
+
+
+        # 查詢老師空資料
+        query_history_data = {
+            'userID': teacher_profile.objects.get(id=3).auth_id,
+            'type': 'teacher',
+        }
+        response = \
+            self.client.post(path='/api/account_finance/getQPointsWtihdrawalHistory/', data=query_history_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertIn('"data": null', str(response.content, "utf8"))
+
+        # 老師3 加值一點錢
+        teacher_3 = teacher_profile.objects.get(id=3)
+        teacher_3.balance = 15000
+        teacher_3.save()
+
+        # 老師3 提款 8000
+        withdrawal_post_data = {
+            'userID': teacher_profile.objects.get(id=3).auth_id,
+            'type': 'teacher',
+            'bank_code': '109',
+            'amount': 8000,
+            'bank_name': '彰化銀行',
+            'bank_account_code': '222540508714',
+            'action': 'withdrawal_after_editting'}
+        self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
+
+        # 查詢資料
+        response = \
+            self.client.post(path='/api/account_finance/getQPointsWtihdrawalHistory/', data=query_history_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertEqual(1, str(response.content, "utf8").count(f'"amount": 8000'), str(response.content, "utf8"))
+        self.assertEqual(1, str(response.content, "utf8").count(f'"withdrawal_status": "unpaid"'))
+        self.assertEqual(1, str(response.content, "utf8").count(f'"txn_fee": 0'))
+
+        # 老師3 再提款 6000
+        withdrawal_post_data['amount'] = 6000
+        self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
+        # 查詢資料
+        response = \
+            self.client.post(path='/api/account_finance/getQPointsWtihdrawalHistory/', data=query_history_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertEqual(1, str(response.content, "utf8").count(f'"amount": 8000'), str(response.content, "utf8"))
+        self.assertEqual(1, str(response.content, "utf8").count(f'"amount": 6000'), str(response.content, "utf8"))
+        self.assertEqual(2, str(response.content, "utf8").count(f'"withdrawal_status": "unpaid"'))
+        self.assertEqual(1, str(response.content, "utf8").count(f'"txn_fee": 0'))
+        self.assertEqual(1, str(response.content, "utf8").count(f'"txn_fee": 30'))
 
 
