@@ -102,14 +102,17 @@ class email_manager:
             print(f'Exception: {e}')
             return False
 
+class email_for_edony:
 
-# 這是一個最基本的寄信範例
     def send_email(self, **kwargs):
+        student_authID =  kwargs['student_authID']
+        user5_bank_code =  kwargs['user5_bank_code']
+        total_price =  kwargs['total_price']
         email = EmailMessage(
-            subject = '測試信',  # 電子郵件標題
-            body = '測試看看能不能真的發出去的內容',
+            subject = '學生匯款通知信',  # 電子郵件標題
+            body = f'學生ID：{student_authID}已匯款，金額：{total_price}元，銀行帳號末五碼：{user5_bank_code}。請對帳',
             from_email=settings.EMAIL_HOST_USER,  # 寄件者
-            to = ['tamio.chou@gmail.com']  # 收件者
+            to = ['quikok.taiwan@quikok.com']  # 收件者
         )
         email.fail_silently = False
         email.send()
