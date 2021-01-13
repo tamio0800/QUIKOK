@@ -2,6 +2,7 @@ from django.http import response
 from django.test import RequestFactory, TestCase
 from django.test import Client
 from django.contrib.auth.models import Permission, User, Group
+from django.urls.conf import path
 from account.models import student_profile, teacher_profile, user_token, feedback
 from account.models import general_available_time
 from account.models import specific_available_time
@@ -595,10 +596,6 @@ class Student_Test(TestCase):
         )
 
 
-
-
-
-
 class Feedback_Test(TestCase):
     
     def test_feedback_exist(self):
@@ -662,5 +659,151 @@ class Feedback_Test(TestCase):
 
 
 
+class BANKING_INFO_TEST(TestCase):
+    '''
+    用來測試帳戶回傳資訊是否正確
+    '''
+    def setUp(self):
+        self.client = Client()        
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+        self.test_teacher_name1 = 'test_teacher1_user@test.com'
+        teacher_post_data = {
+            'regEmail': self.test_teacher_name1,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;'
+        }
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        
+        self.test_teacher_name2 = 'test_teacher2_user@test.com'
+        teacher_post_data['regEmail'] = self.test_teacher_name2,
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+
+        self.test_teacher_name3 = 'test_teacher3_user@test.com'
+        teacher_post_data['regEmail'] = self.test_teacher_name3,
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        # 建了3個老師
+        
+        self.test_student_name1 = 'test_student1@a.com'
+        student_post_data = {
+            'regEmail': self.test_student_name1,
+            'regPwd': '00000000',
+            'regName': 'test_student_name',
+            'regBirth': '1990-12-25',
+            'regGender': 1,
+            'regRole': 'oneself',
+            'regMobile': '0900-111111',
+            'regNotifiemail': ''
+        }
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        self.test_student_name2 = 'test_student2@a.com'
+        student_post_data['regEmail'] = self.test_student_name2
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        self.test_student_name3 = 'test_student3@a.com'
+        student_post_data['regEmail'] = self.test_student_name3
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        # 建了3個學生
+
+
+    def tearDown(self):
+        # 刪掉(如果有的話)產生的資料夾
+        try:
+            shutil.rmtree('user_upload/students/' + self.test_student_name1)
+            shutil.rmtree('user_upload/students/' + self.test_student_name2)
+            shutil.rmtree('user_upload/students/' + self.test_student_name3)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name1)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name2)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name2)
+        except:
+            pass
+
+
+    def test_get_banking_infomation_work(self):
+        # 先測試老師的資料是否回傳正確
+        query_post_data = {
+            'userID': teacher_profile.objects.get(id=2).auth_id,
+            'type': 'teacher'
+        }
+        response = \
+            self.client.post(path='/api/account/getBankingInfomation/', data=query_post_data)
+        self.assertEqual(200, response.status_code)
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertIn('"bank_name": ""', str(response.content, "utf8"))
+        self.assertEquals(1, str(response.content, "utf8").count('"balance": 0'),
+            str(response.content, "utf8"))
+
+        teacher_2 = teacher_profile.objects.get(id=2)
+        teacher_2.withholding_balance = 300
+        teacher_2.bank_code = '555'
+        teacher_2.save()
+        response = \
+            self.client.post(path='/api/account/getBankingInfomation/', data=query_post_data)
+        self.assertEquals(1, str(response.content, "utf8").count('"balance": 0'),
+            str(response.content, "utf8"))
+        self.assertEquals(1, str(response.content, "utf8").count('"bank_code": "555"'),
+            str(response.content, "utf8"))
+        self.assertEquals(1, str(response.content, "utf8").count('"withholding_balance": 300'),
+            str(response.content, "utf8"))
+
+        query_post_data = {
+            'userID': student_profile.objects.get(id=2).auth_id,
+            'type': 'teacher'
+        }
+        response = \
+            self.client.post(path='/api/account/getBankingInfomation/', data=query_post_data)
+        self.assertIn('failed', str(response.content, "utf8"))
+        self.assertIn('"errCode": "1"', str(response.content, "utf8"))
+
+        query_post_data['type'] = 'student'
+        response = \
+            self.client.post(path='/api/account/getBankingInfomation/', data=query_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertIn('"bank_account_code": ""', str(response.content, "utf8"))
+        self.assertEquals(1, str(response.content, "utf8").count('"withholding_balance": 0'),
+            str(response.content, "utf8"))
+
+        student_2 = student_profile.objects.get(id=2)
+        student_2.balance = 200
+        student_2.withholding_balance = 1300
+        student_2.bank_code = '55'
+        student_2.bank_account_code = '077'
+        student_2.bank_name = 'XXXXswss'
+        student_2.save()
+        response = \
+            self.client.post(path='/api/account/getBankingInfomation/', data=query_post_data)
+        self.assertEquals(1, str(response.content, "utf8").count('"balance": 200'),
+            str(response.content, "utf8"))
+        self.assertEquals(1, str(response.content, "utf8").count('"bank_code": "55"'),
+            str(response.content, "utf8"))
+        self.assertEquals(1, str(response.content, "utf8").count('"withholding_balance": 1300'),
+            str(response.content, "utf8"))
+        self.assertEquals(1, str(response.content, "utf8").count('"bank_code": "55"'),
+            str(response.content, "utf8"))
+        self.assertEquals(1, str(response.content, "utf8").count('"bank_account_code": "077"'),
+            str(response.content, "utf8"))
+        self.assertEquals(1, str(response.content, "utf8").count('"bank_name": "XXXXswss"'),
+            str(response.content, "utf8"))
 
 

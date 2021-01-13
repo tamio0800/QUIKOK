@@ -3071,9 +3071,6 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
 
 
 
-
-
-
 class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
     
     def setUp(self):
