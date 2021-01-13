@@ -1,5 +1,7 @@
 from django.test import TestCase, Client, RequestFactory
-from .models import student_purchase_record, student_remaining_minutes_of_each_purchased_lesson_set
+from account_finance.models import student_purchase_record
+from account_finance.models import student_remaining_minutes_of_each_purchased_lesson_set
+from account_finance.models import teacher_refund, student_refund
 from account.models import student_profile, teacher_profile
 from lesson.models import lesson_info, lesson_sales_sets, lesson_booking_info
 from account_finance.email_sending import email_manager
@@ -1423,6 +1425,117 @@ class Q_POINTS_WITHDRAWAL_TEST(TestCase):
         response = \
             self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
         self.assertIn('failed', str(response.content, "utf8"))
+
+    
+    def test_withdraw_q_points_withdrawal_teacher_and_student_work(self):
+        # 測試老師能夠成功發起匯款訊息
+        withdrawal_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'type': 'teacher',
+            'bank_code': '009',
+            'bank_name': '彰化銀行',
+            'bank_account_code': '222540508714',
+            'action': 'withdrawal_after_editting'}
+        response = \
+            self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
+        self.assertIn('failed', str(response.content, "utf8"))
+        self.assertIn('"errCode": "5"', str(response.content, "utf8"))
+        # 沒填寫匯款金額
+        
+        withdrawal_post_data['amount'] = 1000
+        response = \
+            self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
+        self.assertIn('failed', str(response.content, "utf8"))
+        self.assertIn('"errCode": "3"', str(response.content, "utf8"))
+        # 餘額不足
+
+        teacher_1 = teacher_profile.objects.get(id=1)
+        teacher_1.balance = 1500
+        teacher_1.save()
+        # 加值個1500
+
+        response = \
+            self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertEqual(1, teacher_refund.objects.count())
+
+        # 測試個人資訊是否有改變
+        teacher_1 = teacher_profile.objects.get(id=1)
+        self.assertEqual(
+            (500, 1000),
+            (teacher_1.balance, teacher_1.withholding_balance),
+            teacher_profile.objects.values().get(id=1))
+
+        # 再匯一筆，測試有沒有手續費
+        withdrawal_post_data['amount'] = 500
+        response = \
+            self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
+        self.assertIn('failed', str(response.content, "utf8"))
+        self.assertIn('"errCode": "3"', str(response.content, "utf8"))
+        # 餘額不足
+
+        withdrawal_post_data['amount'] = 470
+        self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
+        teacher_1 = teacher_profile.objects.get(id=1)
+        self.assertEqual(
+            (0, 1500),
+            (teacher_1.balance, teacher_1.withholding_balance),
+            teacher_profile.objects.values().get(id=1))
+
+
+        # 測試學生能夠成功發起匯款訊息
+        withdrawal_post_data = {
+            'userID': student_profile.objects.get(id=2).auth_id,
+            'type': 'student',
+            'bank_code': '009',
+            'bank_name': '彰化銀行',
+            'bank_account_code': '222540508714',
+            'action': 'withdrawal_after_editting'}
+        response = \
+            self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
+        self.assertIn('failed', str(response.content, "utf8"))
+        self.assertIn('"errCode": "6"', str(response.content, "utf8"))
+        # 沒填寫匯款金額
+        
+        withdrawal_post_data['amount'] = 1000
+        response = \
+            self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
+        self.assertIn('failed', str(response.content, "utf8"))
+        self.assertIn('"errCode": "4"', str(response.content, "utf8"))
+        # 餘額不足
+
+        student_2 = student_profile.objects.get(id=2)
+        student_2.balance = 1500
+        student_2.save()
+        # 加值個1500
+
+        response = \
+            self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertEqual(1, student_refund.objects.count())
+
+        # 測試個人資訊是否有改變
+        student_2 = student_profile.objects.get(id=2)
+        self.assertEqual(
+            (500, 1000),
+            (student_2.balance, student_2.withholding_balance),
+            student_profile.objects.values().get(id=2))
+
+        # 再匯一筆，測試有沒有手續費
+        withdrawal_post_data['amount'] = 500
+        response = \
+            self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
+        self.assertIn('failed', str(response.content, "utf8"))
+        self.assertIn('"errCode": "4"', str(response.content, "utf8"))
+        # 餘額不足
+
+        withdrawal_post_data['amount'] = 470
+        self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
+        student_2 = student_profile.objects.get(id=2)
+        self.assertEqual(
+            (0, 1500),
+            (student_2.balance, student_2.withholding_balance),
+            student_profile.objects.values().get(id=2))
 
 
 
