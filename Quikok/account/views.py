@@ -1446,6 +1446,63 @@ def feedback_view_function(request):
     return JsonResponse(response)
 
 
+@require_http_methods(['POST'])
+def get_banking_information(request):
+    response = dict()
+    user_type = request.POST.get('type', False)
+    if check_if_all_variables_are_true(user_type):
+        if user_type == 'teacher':
+            # 用戶是老師
+            teacher_auth_id = request.POST.get('userID', False)
+            teacher_object = teacher_profile.objects.filter(auth_id=teacher_auth_id).first()
+
+            if teacher_object is None:
+                # 用戶不存在
+                response['status'] = 'failed'
+                response['errCode'] = '1'
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                response['data'] = None
+            else:
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = {
+                    'bank_code': teacher_object.bank_code,
+                    'bank_name': teacher_object.bank_name,
+                    'bank_account_code': teacher_object.bank_account_code,
+                    'balance': teacher_object.balance,
+                    'withholding_balance': teacher_object.withholding_balance}
+        else:
+            # 用戶是學生
+            student_auth_id = request.POST.get('userID', False)
+            student_object = student_profile.objects.filter(auth_id=student_auth_id).first()
+
+            if student_object is None:
+                # 用戶不存在
+                response['status'] = 'failed'
+                response['errCode'] = '2'
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                response['data'] = None
+            else:
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = {
+                    'bank_code': student_object.bank_code,
+                    'bank_name': student_object.bank_name,
+                    'bank_account_code': student_object.bank_account_code,
+                    'balance': student_object.balance,
+                    'withholding_balance': student_object.withholding_balance}
+
+    else:
+        # 傳輸有問題
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+
+    return JsonResponse(response)
+
 
 
     

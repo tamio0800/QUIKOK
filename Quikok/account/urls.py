@@ -30,5 +30,5 @@ urlpatterns = [
     path('memberForgotPassword/', views.member_forgot_password),
     path('memberResetPassword/', views.member_reset_password),
     path('feedback/', views.feedback_view_function),
-    #path('getTeacherAvailableTime/', views.get_teacher_available_time),
+    path('getBankingInfomation/', views.get_banking_information),
 ]
