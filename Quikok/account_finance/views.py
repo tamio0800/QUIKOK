@@ -1,5 +1,8 @@
 from django.shortcuts import render
-from account_finance.models import student_purchase_record, student_remaining_minutes_of_each_purchased_lesson_set
+import math
+from account_finance.models import (student_purchase_record, 
+student_remaining_minutes_of_each_purchased_lesson_set, 
+student_remaining_minutes_when_request_refund_each_purchased_lesson_set)
 from account_finance.email_sending import email_manager, email_for_edony
 from account.models import teacher_profile, student_profile
 from lesson.models import lesson_info, lesson_sales_sets, lesson_booking_info
@@ -220,14 +223,126 @@ def student_edit_order(request):
         if check_if_all_variables_are_true(student_authID, token, user_type,
                             purchase_recordID, status_update, user5_bank_code):
             # 首先查詢訂單狀態
-            record = student_purchase_record.objects.filter(id = purchase_recordID).first()
+            record = student_purchase_record.objects.get(id = purchase_recordID)
             
             # 訂單已付款,理論上只有'paid'申請退款或取消兩種
-            # 萬一客人先在訂單這邊取消 但還有尚未進行的預約沒取消, 那也該是當他取消預約時,
-            # 由取消預約的程式將payment_status改回paid
+            # 萬一客人先在訂單這邊取消 但還有尚未進行的預約沒取消, 這種情況暫時無法處理
             if record.payment_status == 'paid': #'refunding','refunded', 'cancel_after_paid'
-                if status_update == '1':
-                    pass
+                if status_update == '1': # 申請退款
+                    record.payment_status = 'cancel_after_paid'
+                    record.save()
+                    lesson_set = lesson_sales_sets.objects.get(id = record.lesson_sales_set_id)
+                    remain_time = student_remaining_minutes_of_each_purchased_lesson_set.objects.get(student_purchase_record_id=record.id)
+                    # 換算q幣,先查詢是哪種方案
+                    if lesson_set.sales_set == 'trial':
+                        if remain_time.available_remaining_minutes > 0:
+                            # 退試課的全額
+                            refund_price =  lesson_set.price_per_hour
+                            # 建立退費紀錄
+                            student_remaining_minutes_when_request_refund_each_purchased_lesson_set.objects.create(
+                                student_purchase_record_id= record.id,
+                                purchased_lesson_sales_sets_id=lesson_set.id,
+                                snapshot_available_remaining_minutes = remain_time.available_remaining_minutes,
+                                snapshot_withholding_minutes=remain_time.withholding_minutes,
+                                available_minutes_turn_into_q_points= refund_price,
+                            ).save()
+                            # 增加q幣餘額
+                            student_obj = student_profile.objects.get(auth_id=student_authID)
+                            student_obj.balance = student_obj.balance + refund_price
+                            student_obj.save()
+                            response = {'status':'success',
+                                'errCode': None,
+                                'errMsg': None,
+                                'data': None}
+                        else:
+                            response = {'status':'failed',
+                            'errCode': 4,
+                            'errMsg': '您的訂單已無剩餘時數可退，如有疑慮請聯絡客服協助您處理，謝謝',
+                            'data': None}
+
+                        # no_discount 單堂課退款
+                    elif lesson_set.sales_set == 'no_discount':    
+                        if remain_time.available_remaining_minutes > 0:
+                            # 假設剩10分鐘,表示已用60-10= 50分鐘
+                            time_had_used = 60 - remain_time.available_remaining_minutes
+                            # 已用時間價值 = 已用分鐘*(假設1小時60元,每分鐘 = 60/60元)
+                            price_had_used = time_had_used * (lesson_set.price_per_hour/60)
+                            price_had_used = math.ceil(price_had_used) # 無條件進位到整數
+                            # 付出總金額 - 已用時間價值
+                            refund_price =  record.purchased_with_money - price_had_used
+                            
+                            if refund_price > 0: # 理論上都會大於0
+                                # 建立退費紀錄
+                                student_remaining_minutes_when_request_refund_each_purchased_lesson_set.objects.create(
+                                    student_purchase_record_id= record.id,
+                                    purchased_lesson_sales_sets_id=lesson_set.id,
+                                    snapshot_available_remaining_minutes = remain_time.available_remaining_minutes,
+                                    snapshot_withholding_minutes=remain_time.withholding_minutes,
+                                    available_minutes_turn_into_q_points= refund_price,
+                                ).save()
+                                # 增加q幣餘額
+                                student_obj = student_profile.objects.get(auth_id=student_authID)
+                                student_obj.balance = student_obj.balance + refund_price
+                                student_obj.save()
+                                response = {'status':'success',
+                                    'errCode': None,
+                                    'errMsg': None,
+                                    'data': None}
+                            else:
+                                response = {'status':'failed',
+                                'errCode': 4,
+                                'errMsg': '您的訂單已無剩餘時數可退，如有疑慮請聯絡客服協助您處理，謝謝',
+                                'data': None}
+                        else:
+                             response = {'status':'failed',
+                                'errCode': 4,
+                                'errMsg': '您的訂單已無剩餘時數可退，如有疑慮請聯絡客服協助您處理，謝謝',
+                                'data': None}
+                        
+
+                    # 多堂優惠要退費的情況
+                    else:
+                        if remain_time.available_remaining_minutes > 0:
+                            total_set_time = int(lesson_set.sales_set.split(':')[0])*60 # 小時轉分鐘
+                            set_dicount = int(lesson_set.sales_set.split(':')[1])/100
+                            # 假設剩10分鐘,表示已用60-10= 50分鐘
+                            time_had_used = total_set_time - remain_time.available_remaining_minutes
+                            # 已用時間價值 = 已用分鐘*每分鐘價值(假設1小時60元,每分鐘 = 60/60元)
+                            price_had_used = time_had_used * (lesson_set.price_per_hour/60)
+                            price_had_used = math.ceil(price_had_used) # 無條件進位到整數
+                            # 付出總金額 - 已用時間價值
+                            refund_price =  record.purchased_with_money - price_had_used
+                            
+                            if refund_price > 0: # 有可能會小於0
+                                # 建立退費紀錄
+                                student_remaining_minutes_when_request_refund_each_purchased_lesson_set.objects.create(
+                                    student_purchase_record_id= record.id,
+                                    purchased_lesson_sales_sets_id=lesson_set.id,
+                                    snapshot_available_remaining_minutes = remain_time.available_remaining_minutes,
+                                    snapshot_withholding_minutes=remain_time.withholding_minutes,
+                                    available_minutes_turn_into_q_points= refund_price,
+                                ).save()
+                                # 增加q幣餘額
+                                student_obj = student_profile.objects.get(auth_id=student_authID)
+                                student_obj.balance = student_obj.balance + refund_price
+                                student_obj.save()
+                                response = {'status':'success',
+                                    'errCode': None,
+                                    'errMsg': None,
+                                    'data': None}
+                            else:
+                                response = {'status':'failed',
+                                'errCode': 5,
+                                'errMsg': '您完課的時數需照單堂課原價計算，沒有多堂課優惠，經計算您所剩的時間若轉換回原價已超過本訂單匯款金額\
+                                ，恕無法退費。如有疑慮請聯絡客服協助您處理，謝謝',
+                                'data': None}
+                        
+                        else:
+                             response = {'status':'failed',
+                                'errCode': 4,
+                                'errMsg': '您的訂單已無剩餘時數可退，如有疑慮請聯絡客服協助您處理，謝謝',
+                                'data': None}
+
             # 訂單尚未付款
             elif record.payment_status == 'unpaid':
                 if status_update == '0': # 學生已付款,接著我們要對帳
@@ -237,28 +352,36 @@ def student_edit_order(request):
                     email_to_edony = email_for_edony()
                     email_to_edony.send_email(student_authID=student_authID,
                       user5_bank_code =user5_bank_code, total_price = record.purchased_with_money)
+                    response = {'status':'success',
+                                'errCode': None,
+                                'errMsg': None,
+                                'data': None}
                 elif status_update == '2': #申請取消 我們不用動作
                     record.payment_status = 'unpaid_cancel'
                     record.save()
+                    response = {'status':'success',
+                                'errCode': None,
+                                'errMsg': None,
+                                'data': None}
                 else:
                     response = {'status':'failed',
                     'errCode': 3,
-                    'errMsg': '您的訂單有問題，敬啟聯絡客服協助您處理，謝謝！',
+                    'errMsg': '您的訂單有問題，請聯絡客服協助您處理，謝謝！',
                     'data': None}
 
             else:
-                pass
+                response = {'status':'failed',
+                'errCode': 6,
+                'errMsg': '您的訂單狀態有問題，請聯絡客服協助您處理，謝謝！',
+                'data': None}
                     
-            response = {'status':'success',
-                        'errCode': None,
-                        'errMsg': None,
-                        'data': None}
+
         else:
             response = {'status':'failed',
             'errCode': 2,
             'errMsg': '資料庫有問題，請稍後再試',
             'data': None}
-
+        return JsonResponse(response)
         
     except Exception as e:
         print(f'storage_order Exception {e}')
@@ -267,7 +390,7 @@ def student_edit_order(request):
         'errMsg': '資料庫有問題，請稍後再試',
         'data': None}
     
-    return JsonResponse(response)
+        return JsonResponse(response)
 
 #def confirm_lesson_order_payment_page(request):
 #    all_unconfirm_users = student_purchase_record.objects.filter(payment_status='unpaid')
