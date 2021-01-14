@@ -1,5 +1,6 @@
 from django.db import models
 from account.models import teacher_profile, student_profile
+from datetime import timedelta, date as date_function
 
 class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的東西填入
     # 每堂課程會有自己的unique id，我們用這個來辨識、串連課程 09/25 討論後認為先用內建的id就好
@@ -196,24 +197,33 @@ class lesson_completed_record(models.Model):
     # 對應的訂單所剩的時數
     teacher_auth_id = models.IntegerField()
     student_auth_id = models.IntegerField()
-    parent_auth_id = models.IntegerField(default=-1)
-    estimated_time = models.IntegerField() # 預估上課時間時數,單位分鐘,是用預約的時間計算的
-    real_teaching_time = models.IntegerField() 
-    # 實際開課時間總時數,可能課程實際時間會比原本預約時有所增減(單位是分鐘)
-    real_start_time = models.DateTimeField(auto_now_add=True)
-    # 實際上課時間,單位是分鐘,10分鐘一跳
-    real_end_time = models.DateTimeField(auto_now_add=True)
-    # 實際下課時數, 單位是分鐘, 10分鐘一跳
-    real_teaching_fee = models.IntegerField()
-    # 實際應付老師金額
-    teaching_status = models.CharField(max_length = 20)  
+    booking_time_in_minutes = models.IntegerField() # 預估上課時間時數,單位分鐘,是用預約的時間計算的
+    teacher_declared_start_time = models.DateTimeField(auto_now_add=True)
+    # 老師號稱的上課時間,單位是分鐘,10分鐘一跳
+    teacher_declared_end_time = models.DateTimeField(auto_now_add=True)
+    # 老師號稱的下課時數, 單位是分鐘, 10分鐘一跳
+    teacher_declared_time_in_minutes = models.IntegerField() 
+    # 老師號稱的開課時間總時數,可能課程實際時間會比原本預約時有所增減(單位是分鐘)
+    teacher_declared_teaching_fee = models.IntegerField()
+    # 老師號稱的應付老師金額  << 這個有需要嗎??  反正只是扣時數而已說
+    # teaching_status = models.CharField(max_length = 20)  
     # 這個欄位好像用不到還沒上課 unprocess, 已完課 over or canceled
-    is_student_confirm_time = models.BooleanField(default= False)
+    is_student_disagree_with_teacher_s_declared_time = models.BooleanField(default= False)
+    # 學生是否反應老師宣稱的時數有問題
+    is_student_confirmed = models.BooleanField(default= False)
     # default=0,當學生確認時數後改為1, 萬一需要協調時數用
+    student_confirmed_deadline = models.DateField()
+    # 這個的作用是，假設學生遲遲不確認，我們還是要在某個時段過後撥錢給老師，
+    # 目前先預設3天? 也就是說，當在老師發送確認訊息後的3天後，假設學生還沒確認也沒申訴，
+    # 則我們將直接撥款給老師
+    confirmed_by_quikok = models.BooleanField(default= False)
+    # 萬一學生遲遲不確認，要由我們自動確認的話，最好也做個註記
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
         return str(self.id)
+
+
 
     class Meta:
         verbose_name = '完課紀錄'
