@@ -112,7 +112,7 @@ class test_finance_functions(TestCase):
         'teacherID':1,
         'lessonID':1,
         'sales_set': 'trial',#,'no_discount','30:70']
-        'total_amount_of_the_sales_set': 300,
+        'total_amount_of_the_sales_set': 69,
         'q_discount': 0}
 
         response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
@@ -135,7 +135,7 @@ class test_finance_functions(TestCase):
         'teacherID':1,
         'lessonID':1,
         'sales_set': 'trial',#,'no_discount','30:70']
-        'total_amount_of_the_sales_set': 300,
+        'total_amount_of_the_sales_set': 69,
         'q_discount':20} # 要用20q幣折抵
 
         response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
@@ -161,7 +161,7 @@ class test_finance_functions(TestCase):
         'teacherID':1,
         'lessonID':1,
         'sales_set': 'trial',#,'no_discount','30:70']
-        'total_amount_of_the_sales_set': 300,
+        'total_amount_of_the_sales_set': 69,
         'q_discount':20} # 要用20q幣折抵
 
         response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
@@ -313,7 +313,7 @@ class test_finance_functions(TestCase):
             'teacherID':1,
             'lessonID':1,
             'sales_set': lesson_set,
-            'total_amount_of_the_sales_set': int(self.lesson_post_data['price_per_hour'] * 10 * 0.9),
+            'total_amount_of_the_sales_set': int(self.lesson_post_data['trial_class_price']),
             'q_discount':0
         }  #測試 trial 看看是否成功
         self.client.post(path='/api/account_finance/storageOrder/', data=post_data)
@@ -358,7 +358,7 @@ class test_finance_functions(TestCase):
             'teacherID':1,
             'lessonID':1,
             'sales_set': lesson_set,
-            'total_amount_of_the_sales_set': int(self.lesson_post_data['price_per_hour'] * 10 * 0.9),
+            'total_amount_of_the_sales_set': int(self.lesson_post_data['price_per_hour']),
             'q_discount':0
         }  #測試 no_discount 看看是否成功
         self.client.post(path='/api/account_finance/storageOrder/', data=post_data)
@@ -555,8 +555,8 @@ class test_student_purchase_payment_status(TestCase):
         data = {'userID':2,
         'teacherID':1,
         'lessonID':1,
-        'sales_set': 'no_discount',#'trial',,'30:70']
-        'total_amount_of_the_sales_set': 300,
+        'sales_set': 'no_discount',#'trial','30:70']
+        'total_amount_of_the_sales_set': 800,
         'q_discount': 0}
         for num in range(0,7):
             response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
@@ -567,7 +567,7 @@ class test_student_purchase_payment_status(TestCase):
         order.payment_status = 'reconciliation'
         order.save()
         # 訂單3單純已付款
-        # 將訂單3,4,5,6 改成已付款,要先改為付款才會長出計算剩餘時間的table
+        # 將訂單3,4,5,6 改成已付款,要先改為付款才會長出計算剩餘時間的table、才能順利再改
         paid_order_num = [3,4,5,6]
         order_query_list = student_purchase_record.objects.filter(id__in =paid_order_num)
         for order in order_query_list:    
@@ -589,9 +589,27 @@ class test_student_purchase_payment_status(TestCase):
         order = student_purchase_record.objects.get(id=5)
         order.payment_status = 'unpaid_cancel'
         order.save()
-
         # 確認已付款過的訂單都有長出剩餘時數
         self.assertEqual(student_remaining_minutes_of_each_purchased_lesson_set.objects.all().count(),len(paid_order_num))
+        self.assertEqual(student_purchase_record.objects.all().count(), 7)
+        # 訂單8 測試'已付款的試教課程,取消付款'用的訂單
+        data1 = {'userID':'2',
+        'teacherID':'1',
+        'lessonID':'1',
+        'sales_set': 'trial',#'no_discount',,'30:70']
+        'total_amount_of_the_sales_set': '69',
+        'q_discount': '0'}
+        set_queryset = lesson_sales_sets.objects.filter(
+            lesson_id=1, sales_set='trial', is_open= True)
+        
+        print(f'長度:{set_queryset}')
+        print(f'金額{set_queryset.first().total_amount_of_the_sales_set}')
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=data1)
+        self.assertEqual(student_purchase_record.objects.all().count(), 8)
+
+        order = student_purchase_record.objects.get(id=8)
+        order.payment_status = 'paid'
+        order.save()
 
     def test_oreder_history_response(self):
         data = {
@@ -627,7 +645,7 @@ class test_student_purchase_payment_status(TestCase):
         response = self.client.post(path='/api/account_finance/studentEditOrder/', data=data)
         record = student_purchase_record.objects.get(id = 1)
 
-        self.assertEqual(student_purchase_record.objects.all().count() , 7)
+        #self.assertEqual(student_purchase_record.objects.all().count() , 8)
         self.assertEqual(response.status_code, 200)
         self.assertIn('success', str(response.content))
         self.assertEqual(record.payment_status , 'refunding')
@@ -635,24 +653,26 @@ class test_student_purchase_payment_status(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, '學生匯款通知信')
     
-    def test_student_edit_order_apply_refund(self):
+    def test_student_edit_order_when_paid_a_trial_request_a_refund(self):
         data = {
             'userID':'2',
             'token':'1',
             'type':'1',
-            'purchase_recordID':1,
-            'status_update':1,
-            'user5_bank_code':11111
+            'purchase_recordID': '1',
+            'status_update':'1',# 0-付款完成/1-申請退款/2-申請取消
+            'user5_bank_code':'11111'
         }
-        response = self.client.post(path='/api/account_finance/studentOrderHistory/', data=data)
+        
+        response = self.client.post(path='/api/account_finance/studentEditOrder/', data=data)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(student_purchase_record.objects.get(id=8).payment_status, 'paid')
     def test_student_edit_order_cancel_before_paid(self):
         data = {
             'userID':'2',
             'token':'1',
             'type':'1',
             'purchase_recordID':1,
-            'status_update':2,
+            'status_update':2,# 0-付款完成/1-申請退款/2-申請取消
             'user5_bank_code':11111
         }
         response = self.client.post(path='/api/account_finance/studentOrderHistory/', data=data)
