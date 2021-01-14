@@ -385,6 +385,7 @@ def student_edit_order(request):
                     
 
         else:
+            print(student_authID, token,user_type,purchase_recordID,status_update, user5_bank_code)
             response = {'status':'failed',
             'errCode': 2,
             'errMsg': '資料庫有問題，請稍後再試',
