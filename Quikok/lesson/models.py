@@ -211,7 +211,7 @@ class lesson_completed_record(models.Model):
     is_student_disagree_with_teacher_s_declared_time = models.BooleanField(default= False)
     # 學生是否反應老師宣稱的時數有問題
     is_student_confirmed = models.BooleanField(default= False)
-    # default=0,當學生確認時數後改為1, 萬一需要協調時數用
+    # default=False,當學生確認時數後改為True, 萬一需要協調時數用
     student_confirmed_deadline = models.DateField()
     # 這個的作用是，假設學生遲遲不確認，我們還是要在某個時段過後撥錢給老師，
     # 目前先預設3天? 也就是說，當在老師發送確認訊息後的3天後，假設學生還沒確認也沒申訴，
