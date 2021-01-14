@@ -2071,6 +2071,7 @@ def get_student_s_booking_history(request):
                     response['errMsg'] = None
 
     else:
+        # 資料傳輸出現問題
         response['status'] = 'failed'
         response['errCode'] = '0'
         response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
@@ -2078,3 +2079,57 @@ def get_student_s_booking_history(request):
     
     return JsonResponse(response)
  
+
+@require_http_methods(['POST'])
+def lesson_completed_notification_from_teacher(request):
+    '''
+    完課後，老師應該主動向學生發起確認課程時數的要求，以便計算時數；
+    這個API會連帶的建立 lesson_completed_record 資料，並且發送通知給學生。
+    接收：{
+        token,
+        userID: 老師的auth_id
+        lesson_booking_info_id: 哪一門預約的ID
+        lesson_date: 上課的日期  如 2021-01-01
+        start_hour: 開始的時
+        start_minute: 開始的分    #每十分鐘一跳
+        end_hour: 結束的時 
+        end_minute: 結束的分    #每十分鐘一跳
+        time_interval_in_minutes: 合計  >> 可以給我 分鐘數嗎? 如2小時>>120
+    }
+    回傳：{
+        status: “success“ / “failed“ 
+        errCode: None 
+        errMsg: None
+        data: None
+    }
+    '''
+    response = dict()
+    teacher_auth_id = request.POST.get('userID', False)
+    lesson_booking_info_id = request.POST.get('lesson_booking_info_id', False)
+    lesson_date = request.POST.get('lesson_date', False)
+    start_hour = request.POST.get('start_hour', False)
+    start_minute = request.POST.get('start_minute', False)
+    end_hour = request.POST.get('end_hour', False)
+    end_minute = request.POST.get('end_minute', False)
+    time_interval_in_minutes = request.POST.get('time_interval_in_minutes', False)
+
+
+    if check_if_all_variables_are_true(teacher_auth_id, lesson_booking_info_id, lesson_date,
+        start_hour, start_minute, end_hour, end_minute, time_interval_in_minutes):
+        # 資料有正確收取
+        # 確認一下 teacher 、 booking_info 、 與對應的 student 存不存在
+        teacher_object = teacher_profile.objects.filter(auth_id=teacher_auth_id)
+
+        response['status'] = 'success'
+        response['errCode'] = None
+        response['errMsg'] = None
+        response['data'] = None
+    else:
+        # 資料傳輸出現問題
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+    
+    return JsonResponse(response)
+
