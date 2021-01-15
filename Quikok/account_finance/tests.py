@@ -507,6 +507,11 @@ class test_student_purchase_payment_status(TestCase):
             'teacher_general_availabale_time': '0:1,2,3,4,5;1:11,13,15,17,19,21,22,25,33;4:1,9,27,28,41;'
         }
         self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        
+        
+        # 先取得兩個可預約日期，避免hard coded未來出錯
+        # 時段我都設1,2,3,4,5，所以只要在其中就ok
+        self.available_date_1 = specific_available_time.objects.filter(id=1).first().date
         # 建立1個學生
         student_post_data = {
                 'regEmail': 'test_student_name',
@@ -667,7 +672,6 @@ class test_student_purchase_payment_status(TestCase):
             'status_update':'1',# 0-付款完成/1-申請退款/2-申請取消
             'part_of_bank_account_code':'11111'}
         response = self.client.post(path='/api/account_finance/studentEditOrder/', data=data)
-        
         self.assertIn('success', str(response.content))
         # 確認訂單狀態有改
         self.assertEqual(student_purchase_record.objects.get(id=8).payment_status, 
@@ -676,7 +680,30 @@ class test_student_purchase_payment_status(TestCase):
         self.assertEqual(student_profile.objects.get(auth_id = data['userID']).balance, 
                         self.lesson_post_data['trial_class_price'])
 
-    
+    def test_if_set_still_can_be_booked_when_the_purchase_order_was_refunded(self):
+        '''測試試教的課程已退款後是否還可以預約'''
+        data = {
+            'userID':'2',
+            'token':'1',
+            'type':'1',
+            'purchase_recordID': '8',
+            'status_update':'1',# 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code':'11111'}
+        # 先製作一個已退款的訂單
+        response = self.client.post(path='/api/account_finance/studentEditOrder/', data=data)
+        self.assertIn('success', str(response.content))
+        record = student_purchase_record.objects.get(id=8)
+        self.assertEqual(record.payment_status, 'refunded')
+        # 嘗試預約
+        data = {
+            'userID':'2',
+            'token':'1',
+            'type':'1',
+            'lessonID': '1',
+            'bookingDateTime':f'{self.available_date_1}:1;'}
+        response = self.client.post(path='/api/lesson/bookingLessons/', data=data)
+        self.assertIn('success', str(response.content))
+
     @skip
     def test_student_edit_order_when_paid_a_trial_request_a_refund_create_refund_table(self):
         ''' 測試「已付款」的「試教」課程，學生申請退款 4.是否有建立退費紀錄、紀錄的金額是否正確 '''
