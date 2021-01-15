@@ -594,10 +594,11 @@ class test_student_purchase_payment_status(TestCase):
         self.assertEqual(student_remaining_minutes_of_each_purchased_lesson_set.objects.all().count(),len(paid_order_num))
         self.assertEqual(student_purchase_record.objects.all().count(), 7)
         # 訂單8 測試'已付款的試教課程,取消付款'用的訂單
+
         data1 = {'userID':'2',
         'teacherID':'1',
         'lessonID':'1',
-        'sales_set': 'trial',#'no_discount',,'30:70']
+        'sales_set': 'trial',#'no_discount','30:70']
         'total_amount_of_the_sales_set': '69',
         'q_discount': '0'}
         set_queryset = lesson_sales_sets.objects.filter(
@@ -653,24 +654,29 @@ class test_student_purchase_payment_status(TestCase):
         self.assertEqual(record.part_of_bank_account_code, '11111')
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, '學生匯款通知信')
-    @skip
+    
     def test_student_edit_order_when_paid_a_trial_request_a_refund_Qpoints_price(self):
         ''' 測試「已付款」的「試教」課程，學生申請退款 
-        1. 計算是否有剩餘時間 2. 比對剩餘時間換算的金額是否正確 2.訂單狀態是否改為已退款 3.Q幣是否有增加 '''
+        1. 計算是否有剩餘時間 2. 比對剩餘時間換算的金額是否正確 3.訂單狀態是否改為cancel_after_paid
+        3.Q幣是否有增加 '''
         data = {
             'userID':'2',
             'token':'1',
             'type':'1',
-            'purchase_recordID': '1',
+            'purchase_recordID': '8',
             'status_update':'1',# 0-付款完成/1-申請退款/2-申請取消
-            'part_of_bank_account_code':'11111'
-        }
-        
+            'part_of_bank_account_code':'11111'}
         response = self.client.post(path='/api/account_finance/studentEditOrder/', data=data)
+        
         self.assertIn('success', str(response.content))
+        # 確認訂單狀態有改
+        self.assertEqual(student_purchase_record.objects.get(id=8).payment_status, 
+                        'refunded')
+        # 檢查學生資料的Q幣金額是否正確
+        self.assertEqual(student_profile.objects.get(auth_id = data['userID']).balance, 
+                        self.lesson_post_data['trial_class_price'])
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(student_purchase_record.objects.get(id=8).payment_status, 'paid')
+    
     @skip
     def test_student_edit_order_when_paid_a_trial_request_a_refund_create_refund_table(self):
         ''' 測試「已付款」的「試教」課程，學生申請退款 4.是否有建立退費紀錄、紀錄的金額是否正確 '''
