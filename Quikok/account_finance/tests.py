@@ -579,10 +579,10 @@ class test_student_purchase_payment_status(TestCase):
         for order in order_query_list:    
             order.payment_status = 'paid'
             order.save()
-        # 訂單4 再改為退款中
-        order = student_purchase_record.objects.get(id=4)
-        order.payment_status = 'refunding'
-        order.save()
+        # 訂單4 再改為退款中 沒必要做這種類別
+        #order = student_purchase_record.objects.get(id=4)
+        #order.payment_status = 'refunding'
+        #order.save()
         # 訂單5 再改為已退款
         order = student_purchase_record.objects.get(id=5)
         order.payment_status = 'refund'
@@ -660,10 +660,10 @@ class test_student_purchase_payment_status(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, '學生匯款通知信')
     
-    def test_student_edit_order_when_paid_a_trial_request_a_refund_Qpoints_price(self):
+    def test_student_edit_order_when_paid_a_trial_request_a_refund(self):
         ''' 測試「已付款」的「試教」課程，學生申請退款 
         1. 計算是否有剩餘時間 2. 比對剩餘時間換算的金額是否正確 3.訂單狀態是否改為cancel_after_paid
-        3.Q幣是否有增加 '''
+        4. student_balance Q幣是否有增加 5. 剩餘時間的is_refunded有改為1 6. 順利長出退款時剩餘時間的紀錄'''
         data = {
             'userID':'2',
             'token':'1',
@@ -673,13 +673,23 @@ class test_student_purchase_payment_status(TestCase):
             'part_of_bank_account_code':'11111'}
         response = self.client.post(path='/api/account_finance/studentEditOrder/', data=data)
         self.assertIn('success', str(response.content))
-        # 確認訂單狀態有改
         self.assertEqual(student_purchase_record.objects.get(id=8).payment_status, 
-                        'refunded')
-        # 檢查學生資料的Q幣金額是否正確
+                        'refunded') # 確認訂單狀態有改
+        # 檢查學生profile的Q幣金額是否正確
         self.assertEqual(student_profile.objects.get(auth_id = data['userID']).balance, 
                         self.lesson_post_data['trial_class_price'])
+        # 檢查剩餘時間的is_refunded有改為1
+        self.assertEqual(student_remaining_minutes_of_each_purchased_lesson_set.objects.get(
+            student_purchase_record_id=8).is_refunded,1)
+        # 確認退款時剩餘時間紀錄有長出來
+        self.assertEqual(student_remaining_minutes_when_request_refund_each_purchased_lesson_set.objects.all().count(),1)
+        info = student_remaining_minutes_when_request_refund_each_purchased_lesson_set.objects.get(id=1)
+        # 確認剩餘時間試30分鐘
+        self.assertEqual(info.snapshot_available_remaining_minutes, 30)
+        # 確認退款紀錄的Q幣 = 試教課程費用,有算對
+        self.assertEqual(info.available_minutes_turn_into_q_points, self.lesson_post_data['trial_class_price'])
 
+    @skip
     def test_if_set_still_can_be_booked_when_the_purchase_order_was_refunded(self):
         '''測試試教的課程已退款後是否還可以預約'''
         data = {
@@ -704,23 +714,37 @@ class test_student_purchase_payment_status(TestCase):
         response = self.client.post(path='/api/lesson/bookingLessons/', data=data)
         self.assertIn('success', str(response.content))
 
-    @skip
-    def test_student_edit_order_when_paid_a_trial_request_a_refund_create_refund_table(self):
-        ''' 測試「已付款」的「試教」課程，學生申請退款 4.是否有建立退費紀錄、紀錄的金額是否正確 '''
+    
+    def test_student_edit_order_when_paid_a_no_discount_request_a_refund_create_refund_table(self):
+        ''' 測試「已付款」買「一堂課」課程時，學生申請退款 
+        1. 計算是否有剩餘時間 2. 比對剩餘時間換算的金額是否正確 3.訂單狀態是否改為cancel_after_paid
+        4. student_balance Q幣是否有增加 5. 剩餘時間的is_refunded有改為1 6. 順利長出退款時剩餘時間的紀錄'''
         data = {
             'userID':'2',
             'token':'1',
             'type':'1',
-            'purchase_recordID': '1',
+            'purchase_recordID': '4', # 已經paid的 no_discount課程
             'status_update':'1',# 0-付款完成/1-申請退款/2-申請取消
-            'part_of_bank_account_code':'11111',
-        }
+            'part_of_bank_account_code':'11111'}
         response = self.client.post(path='/api/account_finance/studentEditOrder/', data=data)
-        
+        self.assertIn('success', str(response.content))
+        self.assertEqual(student_purchase_record.objects.get(id=4).payment_status, 
+                        'refunded') # 確認訂單狀態有改
+        # 檢查學生profile的Q幣金額是否正確
+        self.assertEqual(student_profile.objects.get(auth_id = data['userID']).balance, 
+                        self.lesson_post_data['price_per_hour'])
+        # 檢查剩餘時間的is_refunded有改為1
+        self.assertEqual(student_remaining_minutes_of_each_purchased_lesson_set.objects.get(
+            student_purchase_record_id=4).is_refunded,1)
+        # 確認退款時剩餘時間紀錄有長出來
         self.assertEqual(student_remaining_minutes_when_request_refund_each_purchased_lesson_set.objects.all().count(),1)
         info = student_remaining_minutes_when_request_refund_each_purchased_lesson_set.objects.get(id=1)
-        self.assertEqual(info.available_minutes_turn_into_q_points, self.lesson_post_data['trial_class_price'])
-        self.assertIn('success', str(response.content))
+        # 確認剩餘時間是60分鐘
+        self.assertEqual(info.snapshot_available_remaining_minutes, 60)
+        # 確認退款紀錄的Q幣 = 試教課程費用,有算對
+        self.assertEqual(info.available_minutes_turn_into_q_points, 
+                            self.lesson_post_data['price_per_hour'])
+
 
 
     def test_student_edit_order_cancel_before_paid(self):
