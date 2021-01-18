@@ -22,8 +22,10 @@ class student_purchase_record(models.Model):
     # 用戶繳費帳號後5碼,對帳用
     payment_status = models.CharField(max_length = 30, default = 'unpaid')
     # unpaid, reconciliation, paid, refunding, refunded, cancel_after_paid , unpaid_cancel
-    # 0-待付款/1-對帳中/2-已付款/3-退款中/4-已退款/5-有付款_取消訂單 6. 未付款_取消訂單 >>  給前端看的，
-    # 取消指的是 把購買的課程退掉、轉成Q幣； 退款指的是 把Q幣換成現金轉到帳戶裡
+    # 0-待付款/1-對帳中/2-已付款/3-退款中/4-已退款/5-有付款_取消訂單 6. 未付款_取消訂單 
+    # 1.15 依照設計畫的流程目前不會有3,5,已付款的按退款就會變成Q幣、變成已退款
+    # 5是先留著,以免未來有需要
+    # 取消指的是 把未付款的課程退掉；退款指的是把已經有付款的轉成Q幣
     updated_time = models.DateTimeField(auto_now=True)
     def __str__(self):
         return str(self.id)
@@ -35,7 +37,7 @@ class student_purchase_record(models.Model):
 # 學生退款紀錄
 class student_refund(models.Model):
     '''
-    Qcoin轉換成台幣的退款
+    Qpoint轉換成台幣的退款
     '''
     student_auth_id = models.IntegerField()
     snapshot_balance = models.IntegerField(default=0) # 該次申請時的帳戶餘額
@@ -43,7 +45,7 @@ class student_refund(models.Model):
     refund_amount = models.IntegerField() # 學生要退多少錢
     created_time = models.DateTimeField(auto_now_add=True)
     refund_status = models.CharField(max_length = 30, default = 'unpaid')
-    # already_paid, unpaid, cancel.....
+    # already_paid, unpaid, cancel...
     update_time = models.DateTimeField(auto_now=True)
     bank_account_code = models.CharField(max_length=30, default='')
     bank_name = models.CharField(max_length=30, default='')

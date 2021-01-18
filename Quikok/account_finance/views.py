@@ -237,15 +237,19 @@ def student_edit_order(request):
             # 萬一客人先在訂單這邊取消 但還有尚未進行的預約沒取消, 這種情況暫時無法處理
             if record.payment_status == 'paid': #'refunding','refunded', 'cancel_after_paid'
                 if status_update == '1': # 申請退款
-                    record.payment_status = 'cancel_after_paid'
-                    record.save()
+                    
                     lesson_set = lesson_sales_sets.objects.get(id = record.lesson_sales_set_id)
                     remain_time = student_remaining_minutes_of_each_purchased_lesson_set.objects.get(student_purchase_record_id=record.id)
                     # 換算q幣,先查詢是哪種方案
                     if lesson_set.sales_set == 'trial':
                         if remain_time.available_remaining_minutes > 0:
+                            # 訂單跟剩餘時數都改為已退費
+                            record.payment_status = 'refunded'
+                            record.save()
+                            remain_time.is_refunded = 1
+                            remain_time.save()
                             # 退試課的全額
-                            refund_price =  lesson_set.price_per_hour
+                            refund_price =  lesson_set.total_amount_of_the_sales_set
                             # 建立退費紀錄
                             student_remaining_minutes_when_request_refund_each_purchased_lesson_set.objects.create(
                                 student_purchase_record_id= record.id,
@@ -254,6 +258,7 @@ def student_edit_order(request):
                                 snapshot_withholding_minutes=remain_time.withholding_minutes,
                                 available_minutes_turn_into_q_points= refund_price,
                             ).save()
+                            
                             # 增加q幣餘額
                             student_obj = student_profile.objects.get(auth_id=student_authID)
                             student_obj.balance = student_obj.balance + refund_price
@@ -292,6 +297,13 @@ def student_edit_order(request):
                                 student_obj = student_profile.objects.get(auth_id=student_authID)
                                 student_obj.balance = student_obj.balance + refund_price
                                 student_obj.save()
+                                # 狀態改為已匯款
+                                record.payment_status = 'refunded'
+                                record.save()
+                                # 剩餘時數表格改為已退款
+                                remain_time.is_refunded = 1
+                                remain_time.save()
+
                                 response = {'status':'success',
                                     'errCode': None,
                                     'errMsg': None,
@@ -334,6 +346,13 @@ def student_edit_order(request):
                                 student_obj = student_profile.objects.get(auth_id=student_authID)
                                 student_obj.balance = student_obj.balance + refund_price
                                 student_obj.save()
+                                # 狀態改為已匯款
+                                record.payment_status = 'refunded'
+                                record.save()
+                                # 剩餘時數表格改為已退款
+                                remain_time.is_refunded = 1
+                                remain_time.save()
+                                
                                 response = {'status':'success',
                                     'errCode': None,
                                     'errMsg': None,
@@ -364,6 +383,7 @@ def student_edit_order(request):
                                 'errCode': None,
                                 'errMsg': None,
                                 'data': None}
+                                
                 elif status_update == '2': #申請取消 我們不用動作
                     record.payment_status = 'unpaid_cancel'
                     record.save()
@@ -385,6 +405,7 @@ def student_edit_order(request):
                     
 
         else:
+            print(student_authID, token,user_type,purchase_recordID,status_update, user5_bank_code)
             response = {'status':'failed',
             'errCode': 2,
             'errMsg': '資料庫有問題，請稍後再試',
