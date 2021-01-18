@@ -2222,7 +2222,7 @@ def lesson_completed_notification_from_teacher(request):
         lesson_date, start_time, end_time, time_interval_in_minutes):
         # 資料有正確收取
         # 確認一下 teacher 、 booking_info 、 與對應的 student 存不存在
-        teacher_object = teacher_profile.objects.filter(auth_id=teacher_auth_id)
+        teacher_object = teacher_profile.objects.filter(auth_id=teacher_auth_id).first()
         booking_object = lesson_booking_info.objects.filter(id=lesson_booking_info_id).first()
 
         if booking_object is None or teacher_object is None:

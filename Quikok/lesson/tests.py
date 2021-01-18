@@ -4439,9 +4439,11 @@ class CLASS_FINISHED_TEST(TestCase):
             self.client.post(path='/api/lesson/lessonCompletedNotificationFromTeacher/', data=noti_post_data)
         self.assertEqual(200, response.status_code)
 
-    @skip
+    
     def test_lesson_completed_notification_from_teacher_can_create_lesson_completed_record_and_only_when_has_correspondent_booking_info(self):
-        # 確認當有對應的預約時段時，可以進行完課的動作，若沒有對應的預約時段，則不行
+        '''
+        確認當有對應的預約時段時，可以進行完課的動作，若沒有對應的預約時段，則不行
+        '''
         noti_post_data = {
                 'userID': teacher_profile.objects.get(id=1).auth_id,
                 'lesson_booking_info_id': 1,
@@ -4498,7 +4500,7 @@ class CLASS_FINISHED_TEST(TestCase):
         self.assertIn('success', str(response.content, "utf8"))
         # 預約成功
 
-        # 接著老師確認預約
+        # 接著老師進行完課
         noti_post_data = {
                 'userID': teacher_profile.objects.get(id=1).auth_id,
                 'lesson_booking_info_id': 1,
@@ -4512,6 +4514,29 @@ class CLASS_FINISHED_TEST(TestCase):
         self.assertIn('failed', str(response.content, "utf8"))
         # 因為沒有經雙方確認的預約，因此無法進行完課
         self.assertIn('"errCode": "3"', str(response.content, "utf8"))
+
+        # 讓老師確認學生的預約
+        change_booking_status_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'bookingID': 1,
+            'bookingStatus': 'confirmed'}
+        response = \
+            self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=change_booking_status_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+
+        # 此時應該可以進行完課動作惹
+        # 接著老師進行完課
+        noti_post_data = {
+                'userID': teacher_profile.objects.get(id=1).auth_id,
+                'lesson_booking_info_id': 1,
+                'lesson_date': '2021-01-01',
+                'start_time': '10:20',
+                'end_time': '11:20',
+                'time_interval_in_minutes': 60
+        }  # 測試看看這個 api 能不能產出對應的 record 來
+        response = \
+            self.client.post(path='/api/lesson/lessonCompletedNotificationFromTeacher/', data=noti_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
 
 
 
