@@ -129,21 +129,50 @@ class lesson_card(models.Model):
         return self.lesson_id'''
         
 
-class lesson_reviews(models.Model):
+class lesson_reviews_from_students(models.Model):
+    '''
+    這個是讓學生在課後給評價的 TABLE
+    '''
     corresponding_lesson_id = models.IntegerField()  # 所對應的課程id
-    student_auth_id = models.IntegerField()
-    teacher_auth_id = models.IntegerField()
-    score_given = models.IntegerField() # 評分介於1~5分
-    remark_given = models.TextField(blank=True, null=True)
-    picture_folder = models.TextField # 加上真的有上課的圖以資證明（學蝦皮
+    corresponding_lesson_booking_info_id = models.IntegerField()  # 所對應的課程預約id
+    student_auth_id = models.IntegerField()  # 上課學生的auth_id，也是留下評論的人
+    teacher_auth_id = models.IntegerField()  # 上課老師的auth_id，是此次被評論的對象
+    score_given = models.IntegerField(blank=True, null=True) # 對於本次課程綜合的評分，介於1~5分之間
+    is_teacher_late_for_lesson = models.BooleanField(blank=True, null=True) # 老師是否有遲到
+    is_teacher_being_frivolous_in_lesson = models.BooleanField(blank=True, null=True) # 老師是否不認真教學
+    is_teacher_incapabale = models.BooleanField(blank=True, null=True) # 老師是否不勝任這門課、教太廢
+    remark_given = models.TextField(blank=True, null=True)  # 這個是評語
+    # picture_folder = models.TextField() # 加上真的有上課的圖以資證明（學蝦皮
     created_time = models.DateTimeField(auto_now_add=True)
-    edited_time = models.DateTimeField(auto_now=True)
     def __str__(self):
         return str(self.id)
 
     class Meta:
-        verbose_name = '課程評價'
-        verbose_name_plural = '課程評價'
+        verbose_name = '學生對課程評價'
+        verbose_name_plural = '學生對課程評價'
+
+
+class student_reviews_from_teachers(models.Model):
+    '''
+    這個是讓老師在課後給評價的 TABLE
+    '''
+    corresponding_lesson_id = models.IntegerField()  # 所對應的課程id
+    corresponding_lesson_booking_info_id = models.IntegerField()  # 所對應的課程預約id
+    student_auth_id = models.IntegerField()  # 上課學生的auth_id，是此次被評論的對象
+    teacher_auth_id = models.IntegerField()  # 上課老師的auth_id，是留下評論的人
+    score_given = models.IntegerField(blank=True, null=True) # 對於本次課程的綜合評分，介於1~5分之間
+    is_student_late_for_lesson = models.BooleanField(blank=True, null=True) # 學生是否有遲到
+    is_student_being_frivolous_in_lesson = models.BooleanField(blank=True, null=True) # 學生是否不認真
+    is_student_or_parents_not_friendly = models.BooleanField(blank=True, null=True) # 學生或家長是否不友善
+    remark_given = models.TextField(blank=True, null=True)  # 這個是評語
+    # picture_folder = models.TextField() # 加上真的有上課的圖以資證明（學蝦皮
+    created_time = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return str(self.id)
+
+    class Meta:
+        verbose_name = '老師對學生評價'
+        verbose_name_plural = '老師對學生評價'
 
 
 class lesson_booking_info(models.Model): 

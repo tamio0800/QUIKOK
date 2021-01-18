@@ -3070,6 +3070,59 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         # 應該有2門來自學生2的 to_be_confirmed
 
 
+    def test_get_teacher_s_booking_history_has_new_arguments(self):
+        # 測試搜尋功能是否運作正確
+        purchase_post_data = {
+            'userID':student_profile.objects.first().auth_id,
+            'teacherID':teacher_profile.objects.first().auth_id,
+            'lessonID':lesson_info.objects.first().id,
+            'sales_set': 'trial',
+            'total_amount_of_the_sales_set': 69,
+            'q_discount':0}
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+
+        the_purchase_object = \
+            student_purchase_record.objects.first()
+        the_purchase_object.payment_status = 'paid'
+        the_purchase_object.save()
+        # 理論上現在已經購買、付款完成了，所以 學生1應該有30min的可用時數
+
+        booking_post_data = {
+            'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_2}:4;'
+        }  # 預約 30min  >> 1門課
+
+        self.client.post(
+            path='/api/lesson/bookingLessons/',
+            data=booking_post_data)  # 送出預約，此時老師應該有1則 待確認 預約訊息
+
+        # 測試搜尋功能是否正常，只能搜尋學生姓名(暱稱)或課程title
+        booking_history_post_data = {
+            'userID': teacher_profile.objects.first().auth_id,
+            'searched_by': student_profile.objects.first().nickname,
+            'filtered_by': 'to_be_confirmed',
+            'registered_from_date': '',
+            'registered_to_date': ''
+        }  # 測試看看不要加日期應該也ok  
+        response = self.client.post(
+            path='/api/lesson/getTeachersBookingHistory/', data=booking_history_post_data)
+        # 檢查新參數是否有成功帶進來
+        self.assertEquals(1, str(response.content, "utf8").count(f'"lesson_booking_info_id": {1}')) 
+        self.assertEquals(1, str(response.content, "utf8").count('"discount_price": "trial"')) 
+        self.assertEquals(1, str(response.content, "utf8").count(f'"teacher_decalred_start_time"')) 
+        self.assertEquals(1, str(response.content, "utf8").count(f'"teacher_decalred_end_time"'))
+        self.assertEquals(1, str(response.content, "utf8").count(f'"teacher_declared_time_in_minutes"'))
+        self.assertEquals(1, str(response.content, "utf8").count(f'"student_confirmed_deadline"'))
+        self.assertEquals(1, str(response.content, "utf8").count(f'"remark"'))
+        self.assertEquals(1, str(response.content, "utf8").count(f'"is_teacher_given_feedback"'))
+        self.assertEquals(1, str(response.content, "utf8").count(f'"is_student_given_feedback"'))
+
+
+
+
+
+
 
 class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
     
@@ -3754,7 +3807,7 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
             'teacherID':teacher_profile.objects.get(id=2).auth_id,
             'lessonID':lesson_info.objects.get(teacher__auth_id=teacher_profile.objects.get(id=2).auth_id).id,
             'sales_set': '5:90',
-            'total_amount_of_the_sales_set': int(1200*10*0.9),
+            'total_amount_of_the_sales_set': int(1200*5*0.9),
             'q_discount':0}
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
