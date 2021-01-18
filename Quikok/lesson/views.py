@@ -1773,6 +1773,10 @@ def get_teacher_s_booking_history(request):
             # 先看看他的 lesson_booking_info，這裡先過濾篩選條件，避免每次都query一堆東西造成效能問題
             if len(booking_status_filtered_by):
                 # 代表 booking_status_filtered_by 有東西，user有輸入搜尋條件
+                # 輸入 finished 的話，需要另外抓出
+                #       1. student_not_yet_confirmed
+                #       2. quikok_dealing_for_student_disagreed
+                # 當作一樣是finished項目下的內容
 
                 # 檢查 user有沒有輸入 searched_by 條件搜尋學生姓名/暱稱 或是 課程名稱
                 if len(searched_by.strip()):
@@ -1784,18 +1788,28 @@ def get_teacher_s_booking_history(request):
                         ))
                     correspodent_lesson_ids = \
                         list(lesson_info.objects.values_list('id', flat=True).filter(
-                            lesson_title__contains=searched_by
-                        ))
+                            lesson_title__contains=searched_by))
                     
-                    teacher_s_lesson_booking_info_queryset = \
-                        lesson_booking_info.objects.filter(
-                            Q(teacher_auth_id=teacher_auth_id) & 
-                            Q(booking_status=booking_status_filtered_by) & 
-                            Q(created_time__gt=registered_from_date) &
-                            Q(last_changed_time__lt=registered_to_date)).filter(
-                                Q(student_auth_id__in=correspodent_student_auth_ids) |
-                                Q(lesson_id__in=correspodent_lesson_ids)
-                            ).order_by('-last_changed_time')
+                    if booking_status_filtered_by != 'finished':
+                        teacher_s_lesson_booking_info_queryset = \
+                            lesson_booking_info.objects.filter(
+                                Q(teacher_auth_id=teacher_auth_id) & 
+                                Q(booking_status=booking_status_filtered_by) & 
+                                Q(created_time__gt=registered_from_date) &
+                                Q(last_changed_time__lt=registered_to_date)).filter(
+                                    Q(student_auth_id__in=correspodent_student_auth_ids) |
+                                    Q(lesson_id__in=correspodent_lesson_ids)
+                                ).order_by('-last_changed_time')
+                    else:
+                        teacher_s_lesson_booking_info_queryset = \
+                            lesson_booking_info.objects.filter(
+                                Q(teacher_auth_id=teacher_auth_id) & 
+                                Q(booking_status__in=['finished', 'student_not_yet_confirmed', 'quikok_dealing_for_student_disagreed']) & 
+                                Q(created_time__gt=registered_from_date) &
+                                Q(last_changed_time__lt=registered_to_date)).filter(
+                                    Q(student_auth_id__in=correspodent_student_auth_ids) |
+                                    Q(lesson_id__in=correspodent_lesson_ids)
+                                ).order_by('-last_changed_time')
                 else:
                     # 有輸入 searched_by
                     teacher_s_lesson_booking_info_queryset = \
@@ -2184,11 +2198,9 @@ def lesson_completed_notification_from_teacher(request):
         userID: 老師的auth_id
         lesson_booking_info_id: 哪一門預約的ID
         lesson_date: 上課的日期  如 2021-01-01
-        start_hour: 開始的時
-        start_minute: 開始的分    #每十分鐘一跳
-        end_hour: 結束的時 
-        end_minute: 結束的分    #每十分鐘一跳
-        time_interval_in_minutes: 合計  >> 可以給我 分鐘數嗎? 如2小時>>120
+        start_time: 開始的時間 xx:xx  每十分鐘一跳
+        end_time: 結束的時間 xx:xx  每十分鐘一跳 
+        time_interval_in_minutes: 時段有多少分鐘
     }
     回傳：{
         status: “success“ / “failed“ 
@@ -2201,23 +2213,42 @@ def lesson_completed_notification_from_teacher(request):
     teacher_auth_id = request.POST.get('userID', False)
     lesson_booking_info_id = request.POST.get('lesson_booking_info_id', False)
     lesson_date = request.POST.get('lesson_date', False)
-    start_hour = request.POST.get('start_hour', False)
-    start_minute = request.POST.get('start_minute', False)
-    end_hour = request.POST.get('end_hour', False)
-    end_minute = request.POST.get('end_minute', False)
+    start_time = request.POST.get('start_time', False)
+    end_time = request.POST.get('end_time', False)
     time_interval_in_minutes = request.POST.get('time_interval_in_minutes', False)
 
 
-    if check_if_all_variables_are_true(teacher_auth_id, lesson_booking_info_id, lesson_date,
-        start_hour, start_minute, end_hour, end_minute, time_interval_in_minutes):
+    if check_if_all_variables_are_true(teacher_auth_id, lesson_booking_info_id, 
+        lesson_date, start_time, end_time, time_interval_in_minutes):
         # 資料有正確收取
         # 確認一下 teacher 、 booking_info 、 與對應的 student 存不存在
         teacher_object = teacher_profile.objects.filter(auth_id=teacher_auth_id)
+        booking_object = lesson_booking_info.objects.filter(id=lesson_booking_info_id).first()
 
-        response['status'] = 'success'
-        response['errCode'] = None
-        response['errMsg'] = None
-        response['data'] = None
+        if booking_object is None or teacher_object is None:
+            # 沒有抓到對應的預約或是老師的紀錄
+            response['status'] = 'failed'
+            response['errCode'] = '1'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['data'] = None
+        elif teacher_object.auth_id != booking_object.teacher_auth_id:
+            # 預約的老師 auth_id 跟前端回傳的老師 auth_id 不 match
+            response['status'] = 'failed'
+            response['errCode'] = '2'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['data'] = None
+        elif booking_object.booking_status != 'confirmed':
+            # 該預約狀態不為confirmed，因此老師不能完成授課
+            response['status'] = 'failed'
+            response['errCode'] = '3'
+            response['errMsg'] = '不好意思，只有經過雙方確認的預約課程才可以進行完課動作唷，如果持續遇到這個問題請您告訴我們一聲。'
+            response['data'] = None
+        else:
+            # 有抓到對應的預約以及老師的紀錄
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+            response['data'] = None
     else:
         # 資料傳輸出現問題
         response['status'] = 'failed'

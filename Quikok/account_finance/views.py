@@ -373,7 +373,7 @@ def student_edit_order(request):
             # 訂單尚未付款
             elif record.payment_status == 'unpaid':
                 if status_update == '0': # 學生已付款,接著我們要對帳
-                    record.payment_status = 'refunding'
+                    record.payment_status = 'reconciliation'
                     record.part_of_bank_account_code = user5_bank_code
                     record.save()
                     email_to_edony = email_for_edony()

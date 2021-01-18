@@ -3,6 +3,7 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver,Signal
 from account_finance.email_sending import email_manager
 
+
 # 學生購買紀錄
 class student_purchase_record(models.Model):
     student_auth_id = models.IntegerField()
@@ -33,6 +34,7 @@ class student_purchase_record(models.Model):
     class Meta:
         verbose_name = '學生購買紀錄'
         verbose_name_plural = '學生購買紀錄'
+
 
 # 學生退款紀錄
 class student_refund(models.Model):
@@ -136,6 +138,7 @@ class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
         #ordering= ['-last_changed_time']  # 越新的會被呈現在越上面
         verbose_name = '學生課程方案剩餘時數'
         verbose_name_plural = '學生課程方案剩餘時數'
+
 
 class student_remaining_minutes_when_request_refund_each_purchased_lesson_set(models.Model):
     '''

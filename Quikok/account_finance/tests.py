@@ -660,6 +660,7 @@ class test_student_purchase_payment_status(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, '學生匯款通知信')
     
+    
     def test_student_edit_order_when_paid_a_trial_request_a_refund(self):
         ''' 測試「已付款」的「試教」課程，學生申請退款 
         1. 計算是否有剩餘時間 2. 比對剩餘時間換算的金額是否正確 3.訂單狀態是否改為cancel_after_paid
@@ -758,6 +759,8 @@ class test_student_purchase_payment_status(TestCase):
         }
         response = self.client.post(path='/api/account_finance/studentOrderHistory/', data=data)
         self.assertEqual(response.status_code, 200)
+    
+    
     def test_student_edit_order_cancel_after_paid(self):
         data = {
             'userID':'2',
@@ -769,6 +772,7 @@ class test_student_purchase_payment_status(TestCase):
         }
         response = self.client.post(path='/api/account_finance/studentOrderHistory/', data=data)
         self.assertEqual(response.status_code, 200)
+
 
 class LESSON_SALES_HISTORY_TEST(TestCase):
     

@@ -3071,7 +3071,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
 
 
     def test_get_teacher_s_booking_history_has_new_arguments(self):
-        # 測試搜尋功能是否運作正確
+        # 測試有沒有抓到新的參數
         purchase_post_data = {
             'userID':student_profile.objects.first().auth_id,
             'teacherID':teacher_profile.objects.first().auth_id,
@@ -3119,8 +3119,54 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         self.assertEquals(1, str(response.content, "utf8").count(f'"is_student_given_feedback"'))
 
 
+    @skip  # 等完課api做好後再回來繼續測試
+    def test_get_teacher_s_booking_history_new_arguments_are_right(self):
+        # 測試新的參數
+        purchase_post_data = {
+            'userID':student_profile.objects.first().auth_id,
+            'teacherID':teacher_profile.objects.first().auth_id,
+            'lessonID':lesson_info.objects.first().id,
+            'sales_set': 'trial',
+            'total_amount_of_the_sales_set': 69,
+            'q_discount':0}
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
+        the_purchase_object = \
+            student_purchase_record.objects.first()
+        the_purchase_object.payment_status = 'paid'
+        the_purchase_object.save()
+        # 理論上現在已經購買、付款完成了，所以 學生1應該有30min的可用時數
 
+        booking_post_data = {
+            'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_2}:4;'
+        }  # 預約 30min  >> 1門課
+
+        self.client.post(
+            path='/api/lesson/bookingLessons/',
+            data=booking_post_data)  # 送出預約，此時老師應該有1則 待確認 預約訊息
+
+        # 測試搜尋功能是否正常，只能搜尋學生姓名(暱稱)或課程title
+        booking_history_post_data = {
+            'userID': teacher_profile.objects.first().auth_id,
+            'searched_by': student_profile.objects.first().nickname,
+            'filtered_by': 'to_be_confirmed',
+            'registered_from_date': '',
+            'registered_to_date': ''
+        }  # 測試看看不要加日期應該也ok  
+        response = self.client.post(
+            path='/api/lesson/getTeachersBookingHistory/', data=booking_history_post_data)
+        # 檢查新參數是否有成功帶進來
+        self.assertEquals(1, str(response.content, "utf8").count(f'"lesson_booking_info_id": {1}')) 
+        self.assertEquals(1, str(response.content, "utf8").count('"discount_price": "trial"')) 
+        self.assertEquals(1, str(response.content, "utf8").count(f'"teacher_decalred_start_time"')) 
+        self.assertEquals(1, str(response.content, "utf8").count(f'"teacher_decalred_end_time"'))
+        self.assertEquals(1, str(response.content, "utf8").count(f'"teacher_declared_time_in_minutes"'))
+        self.assertEquals(1, str(response.content, "utf8").count(f'"student_confirmed_deadline"'))
+        self.assertEquals(1, str(response.content, "utf8").count(f'"remark"'))
+        self.assertEquals(1, str(response.content, "utf8").count(f'"is_teacher_given_feedback"'))
+        self.assertEquals(1, str(response.content, "utf8").count(f'"is_student_given_feedback"'))
 
 
 
@@ -4006,40 +4052,89 @@ class CLASS_FINISHED_TEST(TestCase):
                 'userID': teacher_profile.objects.get(id=1).auth_id,
                 'lesson_booking_info_id': 1,
                 'lesson_date': '2021-01-01',
-                'start_hour': 10,
-                'start_minute': 40,
-                'end_hour': 16,
-                'end_minute': 50,
-                'time_interval_in_minutes': 250
+                'start_time': '10:20',
+                'end_time': '11:20',
+                'time_interval_in_minutes': 60
         }
         response = \
             self.client.post(path='/api/lesson/lessonCompletedNotificationFromTeacher/', data=noti_post_data)
         self.assertEqual(200, response.status_code)
 
-        # lesson_booking_info.objects.get(id=1).booking_date_and_time.split()[0]
-
-
     @skip
     def test_lesson_completed_notification_from_teacher_can_create_lesson_completed_record_and_only_when_has_correspondent_booking_info(self):
-        # 確認連結存在
+        # 確認當有對應的預約時段時，可以進行完課的動作，若沒有對應的預約時段，則不行
         noti_post_data = {
                 'userID': teacher_profile.objects.get(id=1).auth_id,
                 'lesson_booking_info_id': 1,
-                'lesson_date': '2000-01-01',
-                'start_hour': 10,
-                'start_minute': 40,
-                'end_hour': 16,
-                'end_minute': 50,
-                'time_interval_in_minutes': 250
+                'lesson_date': '2021-01-01',
+                'start_time': '10:20',
+                'end_time': '11:20',
+                'time_interval_in_minutes': 60
         }  # 測試看看這個 api 能不能產出對應的 record 來
         response = \
             self.client.post(path='/api/lesson/lessonCompletedNotificationFromTeacher/', data=noti_post_data)
+        self.assertIn('failed', str(response.content, "utf8"))
+        # 因為沒有對應的預約紀錄，所以沒辦法完課
+
+        # 接下來來產生對應的預約，先進行購課
+        purchased_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'teacherID': teacher_profile.objects.get(id=1).auth_id,
+            'lessonID': lesson_info.objects.get(id=1).id,
+            'sales_set': '10:90',
+            'total_amount_of_the_sales_set': int(800*10*0.9),
+            'q_discount': 0}
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchased_post_data)
+        self.assertEqual(1, student_purchase_record.objects.count())
+
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(id=1).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+        self.assertEqual('reconciliation',
+            student_purchase_record.objects.get(id=1).payment_status)
+        # 此時，學生通知我們她已經完成付款
+        # student_purchase_record.objects.filter(id=1).update(payment_status='paid')
+        purchase_obj = student_purchase_record.objects.get(id=1)
+        purchase_obj.payment_status = 'paid'
+        purchase_obj.save()
+        # 我們確認她付款了
+        self.assertEqual('paid',
+            student_purchase_record.objects.get(id=1).payment_status)
+
+        print(f"student_purchase_record: {student_purchase_record.objects.values()}")
+        print(f"student_remaining: {student_remaining_minutes_of_each_purchased_lesson_set.objects.values()}")
+
+        # 接著讓學生進行預約
+        booking_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_1_t1}:1,2,3,4;'} 
+        response = \
+            self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)
         self.assertIn('success', str(response.content, "utf8"))
+        # 預約成功
 
-        self.assertEqual(1, lesson_completed_record.objects.count(),
-            lesson_completed_record.objects.values())
+        # 接著老師確認預約
+        noti_post_data = {
+                'userID': teacher_profile.objects.get(id=1).auth_id,
+                'lesson_booking_info_id': 1,
+                'lesson_date': '2021-01-01',
+                'start_time': '10:20',
+                'end_time': '11:20',
+                'time_interval_in_minutes': 60
+        }  # 測試看看這個 api 能不能產出對應的 record 來
+        response = \
+            self.client.post(path='/api/lesson/lessonCompletedNotificationFromTeacher/', data=noti_post_data)
+        self.assertIn('failed', str(response.content, "utf8"))
+        # 因為沒有經雙方確認的預約，因此無法進行完課
+        self.assertIn('"errCode": "3"', str(response.content, "utf8"))
 
-        # lesson_booking_info.objects.get(id=1).booking_date_and_time.split()[0]
+
 
 
 
