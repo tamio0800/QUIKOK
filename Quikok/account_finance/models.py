@@ -166,7 +166,7 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
         pass  # 建立新資料不需要做什麼事情
     else:
         previous = student_purchase_record.objects.get(id=instance.id)
-        if previous.payment_status == 'unpaid' and instance.payment_status == 'paid' :
+        if previous.payment_status == 'reconciliation' and instance.payment_status == 'paid' :
             from lesson.models import lesson_sales_sets
             # 代表確認付完款了
             # 現在要看看究竟買了多少時數

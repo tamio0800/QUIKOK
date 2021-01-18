@@ -2024,6 +2024,25 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         }  #測試 trial 看看是否成功
         self.client.post(path='/api/account_finance/storageOrder/', data=order_post_data)
         # 將它設定為已付款
+
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=1).auth_id,
+                teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
+                lesson_id = lesson_info.objects.get(id=1).id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = '10:90',
+                    is_open = True,
+                    lesson_id = lesson_info.objects.get(id=1).id
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+
         the_student_purchase_record_object = \
             student_purchase_record.objects.get(student_auth_id=student_profile.objects.get(id=1).auth_id)
         the_student_purchase_record_object.payment_status = 'paid'
@@ -2040,6 +2059,25 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         response = self.client.post(path='/api/account_finance/storageOrder/', data=order_post_data)
         # 將它設定為已付款
         self.assertIn('success', str(response.content, 'utf8'), str(response.content, 'utf8'))
+        
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=2).auth_id,
+                teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
+                lesson_id = lesson_info.objects.get(id=1).id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = 'trial',
+                    is_open = True,
+                    lesson_id = lesson_info.objects.get(id=1).id
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+        
         the_student_purchase_record_object = \
             student_purchase_record.objects.get(student_auth_id=student_profile.objects.get(id=2).auth_id)
         the_student_purchase_record_object.payment_status = 'paid'
@@ -2124,6 +2162,24 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         response = self.client.post(path='/api/account_finance/storageOrder/', data=order_post_data)
         # 將它設定為已付款
         self.assertIn('success', str(response.content, 'utf8'), str(response.content, 'utf8'))
+        
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=2).auth_id,
+                teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
+                lesson_id = 1,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = '20:80',
+                    lesson_id = 1
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+        
         the_student_purchase_record_object = \
             student_purchase_record.objects.filter(
                 student_auth_id=student_profile.objects.get(id=2).auth_id,
@@ -2136,11 +2192,11 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
                 student_auth_id=student_profile.objects.get(id=2).auth_id).count(),
             student_purchase_record.objects.values().filter(
                 student_auth_id=student_profile.objects.get(id=2).auth_id))
-        print(f'student_purchase_record.objects.values()XX \
-            {student_purchase_record.objects.values().filter(student_auth_id=student_profile.objects.get(id=2).auth_id)}')
-        print(student_remaining_minutes_of_each_purchased_lesson_set.objects.values().filter(
-            student_auth_id=student_profile.objects.get(id=2).auth_id
-        ))
+        #print(f'student_purchase_record.objects.values()XX \
+        #    {student_purchase_record.objects.values().filter(student_auth_id=student_profile.objects.get(id=2).auth_id)}')
+        #print(student_remaining_minutes_of_each_purchased_lesson_set.objects.values().filter(
+        #    student_auth_id=student_profile.objects.get(id=2).auth_id
+        #))
         
         booking_post_data_3 = {
             'userID': student_profile.objects.get(id=2).auth_id,  # 學生2 的auth_id
@@ -2148,6 +2204,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             'bookingDateTime': f'{self.available_date_3}:1,2;'
         }  # 預約2個時段，合計60分鐘 >> 12  >> 1門課
         response3 = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data_3)
+        
         self.assertIn('success', str(response3.content, 'utf8'), str(response3.content, 'utf8'))
         self.assertEqual(
             'to_be_confirmed',
@@ -2160,7 +2217,6 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
                 booking_date_and_time=f'{self.available_date_3}:1,2;'
             ).first()
         )
-
 
         changing_post_data = {
             'userID': teacher_profile.objects.first().auth_id,
@@ -2231,6 +2287,24 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         self.assertIn('"all_available_remaining_minutes_of_this_lesson": 0', str(response.content, "utf8"), str(response.content, "utf8"))
         self.assertIn('"student_has_unused_trial_lesson_sales_set": false', str(response.content, "utf8"), str(response.content, "utf8"))
 
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=1).auth_id,
+                teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
+                lesson_id = lesson_info.objects.get(id=1).id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = 'trial',
+                    is_open = True,
+                    lesson_id = lesson_info.objects.get(id=1).id
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+
         the_purchase_object = \
             student_purchase_record.objects.first()
         the_purchase_object.payment_status = 'paid'
@@ -2286,6 +2360,24 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         self.assertIn('"all_available_remaining_minutes_of_this_lesson": 30', str(response.content, "utf8"), str(response.content, "utf8"))
         self.assertIn('"student_has_unused_trial_lesson_sales_set": true', str(response.content, "utf8"), str(response.content, "utf8"))
 
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=1).auth_id,
+                teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
+                lesson_id = lesson_info.objects.get(id=1).id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = '20:80',
+                    is_open = True,
+                    lesson_id = lesson_info.objects.get(id=1).id
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+
         # 如果付款成功...
         the_purchase_object = \
             student_purchase_record.objects.order_by('-updated_time').first()
@@ -2331,6 +2423,23 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         # 因為還沒確認付款，故應該會失敗
         self.assertIn('"all_available_remaining_minutes_of_this_lesson": 0', str(response.content, "utf8"), str(response.content, "utf8"))
         self.assertIn('"student_has_unused_trial_lesson_sales_set": false', str(response.content, "utf8"), str(response.content, "utf8"))
+
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=1).auth_id,
+                teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
+                lesson_id = 1,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = '30:75',
+                    lesson_id = 1
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
 
         the_purchase_object = \
             student_purchase_record.objects.first()
@@ -2412,6 +2521,24 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
         # 建立購買資料
         self.assertIn('success', str(response.content, "utf8"), str(response.content, "utf8"))
+
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=1).auth_id,
+                teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
+                lesson_id = lesson_info.objects.get(id=1).id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = '10:90',
+                    is_open = True,
+                    lesson_id = lesson_info.objects.get(id=1).id
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
 
         the_purchase_object = \
             student_purchase_record.objects.first()
@@ -2625,6 +2752,24 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
             'q_discount':0}
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=1).auth_id,
+                teacher_auth_id = teacher_profile.objects.first().auth_id,
+                lesson_id = lesson_info.objects.get(id=1).id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = '10:90',
+                    is_open = True,
+                    lesson_id = lesson_info.objects.get(id=1).id
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+        
         the_purchase_object = \
             student_purchase_record.objects.first()
         the_purchase_object.payment_status = 'paid'
@@ -2784,6 +2929,24 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
             'q_discount':0}
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=2).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=2).auth_id,
+                teacher_auth_id = teacher_profile.objects.first().auth_id,
+                lesson_id = lesson_info.objects.get(id=1).id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = '10:90',
+                    is_open = True,
+                    lesson_id = lesson_info.objects.get(id=1).id
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+
         the_purchase_object = \
             student_purchase_record.objects.get(student_auth_id=student_profile.objects.get(id=2).auth_id)
         the_purchase_object.payment_status = 'paid'
@@ -2837,6 +3000,24 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
             'q_discount':0}
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=1).auth_id,
+                teacher_auth_id = teacher_profile.objects.first().auth_id,
+                lesson_id = lesson_info.objects.get(id=1).id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = 'trial',
+                    is_open = True,
+                    lesson_id = lesson_info.objects.get(id=1).id
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+
         the_purchase_object = \
             student_purchase_record.objects.first()
         the_purchase_object.payment_status = 'paid'
@@ -2885,6 +3066,23 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
             'q_discount':0}
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=1).auth_id,
+                teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
+                lesson_id = lesson_info.objects.get(id=1).id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = 'no_discount',
+                    is_open = True,
+                    lesson_id = 1
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
         
         the_purchase_object = \
             student_purchase_record.objects.get(id=2)
@@ -2936,6 +3134,24 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
             'total_amount_of_the_sales_set': int(800*10*0.9),
             'q_discount':0}
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=2).auth_id,
+                teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
+                lesson_id = lesson_info.objects.get(id=1).id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = '10:90',
+                    is_open = True,
+                    lesson_id = 1
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
 
         the_purchase_object = \
             student_purchase_record.objects.get(id=3)
@@ -2993,6 +3209,24 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
             'q_discount':0}
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.first().auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.first().auth_id,
+                teacher_auth_id = teacher_profile.objects.first().auth_id,
+                lesson_id = lesson_info.objects.get(id=1).id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = 'trial',
+                    is_open = True,
+                    lesson_id = lesson_info.objects.get(id=1).id
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+
         the_purchase_object = \
             student_purchase_record.objects.first()
         the_purchase_object.payment_status = 'paid'
@@ -3017,6 +3251,25 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
             'total_amount_of_the_sales_set': int(1300*10*0.9),
             'q_discount':0}
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+
+        # 學生說付款了
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=2).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=2).auth_id,
+                teacher_auth_id = teacher_profile.objects.first().auth_id,
+                lesson_id = lesson_info.objects.get(lesson_title='test_lesson_2').id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = '10:90',
+                    is_open = True,
+                    lesson_id = lesson_info.objects.get(lesson_title='test_lesson_2').id
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
 
         the_purchase_object = \
             student_purchase_record.objects.get(student_auth_id=student_profile.objects.get(id=2).auth_id)
@@ -3043,6 +3296,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         }  # 測試有篩選條件
         response = self.client.post(
             path='/api/lesson/getTeachersBookingHistory/', data=booking_history_post_data)
+            
         self.assertEquals(2, str(response.content, "utf8").count('"to_be_confirmed"')) 
         # 應該有2門 來自學生 2的 to_be_confirmed
         self.assertEquals(2, str(response.content, "utf8").count(f'"student_nickname": "{student_profile.objects.get(id=2).nickname}"')) 
@@ -3080,6 +3334,24 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
             'total_amount_of_the_sales_set': 69,
             'q_discount':0}
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=1).auth_id,
+                teacher_auth_id = teacher_profile.objects.first().auth_id,
+                lesson_id = lesson_info.objects.get(id=1).id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = 'trial',
+                    is_open = True,
+                    lesson_id = lesson_info.objects.get(id=1).id
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
 
         the_purchase_object = \
             student_purchase_record.objects.first()
@@ -3385,6 +3657,24 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
             'q_discount':0}
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=1).auth_id,
+                teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
+                lesson_id = lesson_info.objects.get(id=1).id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = '10:90',
+                    is_open = True,
+                    lesson_id = lesson_info.objects.get(id=1).id
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+
         the_purchase_object = \
             student_purchase_record.objects.first()
         the_purchase_object.payment_status = 'paid'
@@ -3544,6 +3834,24 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
             'q_discount':0}
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=2).auth_id,
+                teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
+                lesson_id = lesson_info.objects.get(id=1).id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = '10:90',
+                    is_open = True,
+                    lesson_id = lesson_info.objects.get(id=1).id
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+
         the_purchase_object = \
             student_purchase_record.objects.get(student_auth_id=student_profile.objects.get(id=2).auth_id)
         the_purchase_object.payment_status = 'paid'
@@ -3662,6 +3970,24 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
             'q_discount':0}
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=1).auth_id,
+                teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
+                lesson_id = lesson_info.objects.get(id=1).id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = 'trial',
+                    is_open = True,
+                    lesson_id = lesson_info.objects.get(id=1).id
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+
         the_purchase_object = \
             student_purchase_record.objects.first()
         the_purchase_object.payment_status = 'paid'
@@ -3710,6 +4036,23 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
             'q_discount':0}
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=1).auth_id,
+                teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
+                lesson_id = lesson_info.objects.get(id=1).id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = 'no_discount',
+                    is_open = True,
+                    lesson_id = lesson_info.objects.get(id=1).id
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
         
         the_purchase_object = \
             student_purchase_record.objects.get(
@@ -3779,6 +4122,25 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
                     sales_set = '10:90'
                 ).first().id
             )
+
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=2).auth_id,
+                teacher_auth_id = lesson_info.objects.get(id=1).teacher.auth_id,
+                lesson_id = lesson_info.objects.get(id=1).id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = '10:90',
+                    is_open = True,
+                    lesson_id = lesson_info.objects.get(id=1).id
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+
         the_purchase_object.payment_status = 'paid'
         the_purchase_object.save()
         # 理論上現在已經購買、付款完成了，所以 學生2應該有600min的可用時數
@@ -3856,6 +4218,23 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
             'total_amount_of_the_sales_set': int(1200*5*0.9),
             'q_discount':0}
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=1).auth_id,
+                teacher_auth_id = teacher_profile.objects.get(id=2).auth_id,
+                lesson_id = lesson_info.objects.get(teacher__auth_id=teacher_profile.objects.get(id=2).auth_id).id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = '5:90',
+                    lesson_id = lesson_info.objects.get(teacher__auth_id=teacher_profile.objects.get(id=2).auth_id).id
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
 
         the_purchase_object = \
             student_purchase_record.objects.get(teacher_auth_id=teacher_profile.objects.get(id=2).auth_id)
