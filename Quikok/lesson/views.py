@@ -2202,7 +2202,7 @@ def get_student_s_booking_history(request):
 def lesson_completed_notification_from_teacher(request):
     '''
     完課後，老師應該主動向學生發起確認課程時數的要求，以便計算時數；
-    這個API會連帶的建立 lesson_completed_record 資料，並且發送通知給學生。
+    這個API會連帶的建立 lesson_completed_record 資料，並且發送通知給學生(這段還沒做)。
     接收：{
         token,
         userID: 老師的auth_id
@@ -2311,4 +2311,58 @@ def lesson_completed_notification_from_teacher(request):
         response['data'] = None
     
     return JsonResponse(response)
+
+
+
+@require_http_methods(['POST'])
+def lesson_completed_confirmation_from_student(request):
+    '''
+    完課後老師會寄送完課通知給學生，請學生確認；
+    這個API能讓學生進行完課通知的同意或是申訴(時數有爭議)。
+    接收：{
+        token,
+        userID: 學生的auth_id
+        lesson_booking_info_id: 哪一門預約的ID
+        action: "agree" or "disagree"  學生的動作 
+    }
+    回傳：{
+        status: “success“ / “failed“ 
+        errCode: None 
+        errMsg: None
+        data: None
+    }
+    '''
+    response = dict()
+    student_auth_id = request.POST.get('userID', False)
+    lesson_booking_info_id = request.POST.get('lesson_booking_info_id', False)
+    action = request.POST.get('action', False)
+
+    if check_if_all_variables_are_true(student_auth_id, lesson_booking_info_id, action):
+        # 資料有正確收取
+        # 確認一下 student 、 booking_info 存不存在
+        student_object = student_profile.objects.filter(auth_id=student_auth_id).first()
+        booking_object = lesson_booking_info.objects.filter(id=lesson_booking_info_id).first()
+
+        if booking_object is None or student_object is None:
+            # 沒有抓到對應的預約或是學生的紀錄
+            response['status'] = 'failed'
+            response['errCode'] = '1'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['data'] = None
+        elif student_object.auth_id != booking_object.student_auth_id:
+            # 預約的學生 auth_id 跟前端回傳的學生 auth_id 不 match
+            response['status'] = 'failed'
+            response['errCode'] = '2'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['data'] = None
+
+    else:
+        # 資料傳輸出現問題
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+    
+    return JsonResponse(response)
+
 

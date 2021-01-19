@@ -3392,8 +3392,9 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         self.assertEquals(1, str(response.content, "utf8").count(f'"is_student_given_feedback"'))
 
 
-
-    # 等完課api做好後再回來繼續測試
+    
+    # 等學生完課api做好後再回來繼續測試
+    @skip
     def test_get_teacher_s_booking_history_new_arguments_values_are_right(self):
         # 測試新的參數內容正確性
         purchase_post_data = {
@@ -3462,10 +3463,8 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
             str(response.content, "utf8")) 
         self.assertEquals(1, str(response.content, "utf8").count(f'"remark": ""'),
             str(response.content, "utf8")) 
-        self.assertEquals(1, str(response.content, "utf8").count(f'"is_teacher_given_feedback": null'),
-            str(response.content, "utf8")) 
-        self.assertEquals(1, str(response.content, "utf8").count(f'"is_student_given_feedback": null'),
-            str(response.content, "utf8"))
+        self.assertIn(f'"is_teacher_given_feedback": null', str(response.content, "utf8"))
+        self.assertIn(f'"is_student_given_feedback": null', str(response.content, "utf8"))
 
         # 接下來來完課一下，看看值會不會產生變化，記得老師要先確認預約唷
         # 讓老師確認學生的預約
@@ -3501,8 +3500,8 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         self.assertIn(f'"teacher_declared_time_in_minutes": {int((end_time - start_time).seconds / 60)}', str(response.content, "utf8"))
         self.assertIn(f'"student_confirmed_deadline": "{date_function.today() + timedelta(days=3)}"', str(response.content, "utf8"))
         self.assertIn(f'"remark": ""', str(response.content, "utf8"))
-        self.assertIn(f'"is_teacher_given_feedback": null', str(response.content, "utf8"))
-        self.assertIn(f'"is_student_given_feedback": null', str(response.content, "utf8"))
+        self.assertIn(f'"is_teacher_given_feedback": False', str(response.content, "utf8"))  # 此時雙方尚未進行評價
+        self.assertIn(f'"is_student_given_feedback": False', str(response.content, "utf8"))  # 此時雙方尚未進行評價
 
         # 接下來測試一下預約取消
         purchase_post_data = {
@@ -4813,6 +4812,19 @@ class CLASS_FINISHED_TEST(TestCase):
         lesson_completed_record.objects.values())
 
 
+    def test_lesson_completed_confirmation_from_student_exist(self):
+        # 確認學生確認完課通知的連結存在
+        confirmation_post_data = {
+                'userID': student_profile.objects.get(id=1).auth_id,
+                'lesson_booking_info_id': 1,
+                'lesson_date': '2021-01-01',
+                'start_time': '10:20',
+                'end_time': '11:20',
+                'time_interval_in_minutes': 60
+        }
+        response = \
+            self.client.post(path='/api/lesson/lessonCompletedConfirmationFromStudent/', data=confirmation_post_data)
+        self.assertEqual(200, response.status_code)
         
 
 
