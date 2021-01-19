@@ -580,10 +580,7 @@ class test_student_purchase_payment_status(TestCase):
         for order in order_query_list:    
             order.payment_status = 'paid'
             order.save()
-        # 訂單4 再改為退款中 沒必要做這種類別
-        #order = student_purchase_record.objects.get(id=4)
-        #order.payment_status = 'refunding'
-        #order.save()
+        # 訂單4 不改了
         # 訂單5 再改為已退款
         order = student_purchase_record.objects.get(id=5)
         order.payment_status = 'refund'
@@ -633,11 +630,9 @@ class test_student_purchase_payment_status(TestCase):
         order = student_purchase_record.objects.get(id=9)
         order.payment_status = 'paid'
         order.save()
-
         
         #print(f'長度:{set_queryset}')
         #print(f'金額{set_queryset.first().total_amount_of_the_sales_set}')
-        
         self.assertEqual(student_purchase_record.objects.all().count(), 9)
 
 
@@ -716,7 +711,7 @@ class test_student_purchase_payment_status(TestCase):
 
     @skip
     def test_if_set_still_can_be_booked_when_the_purchase_order_was_refunded(self):
-        '''測試試教的課程已退款後是否還可以預約'''
+        '''測試試教的課程已退款後是否還可以預約，理論上要不能預約，不能回success'''
         data = {
             'userID':'2',
             'token':'1',
@@ -739,7 +734,8 @@ class test_student_purchase_payment_status(TestCase):
         response = self.client.post(path='/api/lesson/bookingLessons/', data=data)
         self.assertIn('success', str(response.content))
 
-    
+
+
     def test_student_edit_order_when_paid_a_no_discount_request_a_refund(self):
         ''' 測試「已付款」買「一堂課」課程時，學生申請退款 
         1. 計算是否有剩餘時間 2. 比對剩餘時間換算的金額是否正確 3.訂單狀態是否改為cancel_after_paid
@@ -770,6 +766,32 @@ class test_student_purchase_payment_status(TestCase):
         self.assertEqual(info.available_minutes_turn_into_q_points, 
                             self.lesson_post_data['price_per_hour'])
     
+    @skip
+    def test_if_set_still_can_be_booked_when_the_purchase_order_was_refunded(self):
+        '''測試單堂的課程已退款後是否還可以預約，理論上要不能預約，不能回success'''
+        data = {
+            'userID':'2',
+            'token':'1',
+            'type':'1',
+            'purchase_recordID': '4',
+            'status_update':'1',# 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code':'11111'}
+        # 先製作一個已退款的訂單
+        response = self.client.post(path='/api/account_finance/studentEditOrder/', data=data)
+        self.assertIn('success', str(response.content))
+        record = student_purchase_record.objects.get(id=4)
+        self.assertEqual(record.payment_status, 'refunded')
+        # 嘗試預約
+        data = {
+            'userID':'2',
+            'token':'1',
+            'type':'1',
+            'lessonID': '1',
+            'bookingDateTime':f'{self.available_date_1}:1;'}
+        response = self.client.post(path='/api/lesson/bookingLessons/', data=data)
+        self.assertIn('success', str(response.content))
+   
+   
     def test_student_edit_order_when_paid_set_discount_request_a_refund(self):
         ''' 測試「已付款」買「多堂課」課程時，學生申請退款。此時學生尚未上過課
         1. 計算是否有剩餘時間 2. 比對剩餘時間換算的金額是否正確 3.訂單狀態是否改為cancel_after_paid
@@ -805,6 +827,46 @@ class test_student_purchase_payment_status(TestCase):
         # 確認退款紀錄的Q幣有算對
         self.assertEqual(info.available_minutes_turn_into_q_points, 
                            test_price)
+
+    @skip
+    def test_if_set_still_can_be_booked_when_the_purchase_order_was_refunded(self):
+        '''測試「已付款」買「多堂課」時的課程已退款後是否還可以預約，理論上要不能預約，不能回success'''
+        
+        data1 = {'userID':'2',
+        'teacherID':'1',
+        'lessonID':'1',
+        'sales_set': '10:90', 
+        'total_amount_of_the_sales_set': str(math.ceil(int( 
+                                self.lesson_post_data['price_per_hour'])*10*0.9)),# 取整數才可轉str
+        'q_discount': '0'}
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=data1)
+        
+        
+        order = student_purchase_record.objects.filter(student_auth_id = data1['userID']).order_by('updated_time')
+        order.payment_status = 'paid'
+        order.save()
+        
+        data = {
+            'userID':'2',
+            'token':'1',
+            'type':'1',
+            'purchase_recordID': '9',
+            'status_update':'1',# 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code':'11111'}
+        # 先製作一個已退款的訂單
+        response = self.client.post(path='/api/account_finance/studentEditOrder/', data=data)
+        self.assertIn('success', str(response.content))
+        record = student_purchase_record.objects.get(id=9)
+        self.assertEqual(record.payment_status, 'refunded')
+        # 嘗試預約
+        data = {
+            'userID':'2',
+            'token':'1',
+            'type':'1',
+            'lessonID': '1',
+            'bookingDateTime':f'{self.available_date_1}:1;'}
+        response = self.client.post(path='/api/lesson/bookingLessons/', data=data)
+        self.assertIn('success', str(response.content))
 
 
     def test_student_edit_order_cancel_before_paid(self):

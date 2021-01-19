@@ -62,7 +62,7 @@ def storage_order(request):
 
                         teacher_obj = teacher_queryset.first()
                         lesson_obj = lesson_queryset.first()
-                        purchase_date = date_function.today()
+                        purchase_date = datetime.now()
                         payment_deadline = purchase_date + timedelta(days=6)
 
                         # 建立訂單
