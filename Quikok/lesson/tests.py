@@ -4815,16 +4815,30 @@ class CLASS_FINISHED_TEST(TestCase):
     def test_lesson_completed_confirmation_from_student_exist(self):
         # 確認學生確認完課通知的連結存在
         confirmation_post_data = {
-                'userID': student_profile.objects.get(id=1).auth_id,
-                'lesson_booking_info_id': 1,
-                'lesson_date': '2021-01-01',
-                'start_time': '10:20',
-                'end_time': '11:20',
-                'time_interval_in_minutes': 60
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'lesson_booking_info_id': 1,
+            'action': 'agree'
         }
         response = \
             self.client.post(path='/api/lesson/lessonCompletedConfirmationFromStudent/', data=confirmation_post_data)
         self.assertEqual(200, response.status_code)
+
+    
+    def test_lesson_completed_confirmation_from_student_updates_lesson_completed_record(self):
+        '''
+        確認當學生進行完課確認時，會更新相關的 lesson_completed_record 的紀錄
+        '''
+
+        # 先測試當老師沒有發送完課通知前，這個api不能被啟動
+        confirmation_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'lesson_booking_info_id': 1,
+            'action': 'agree'
+        }
+        response = \
+            self.client.post(path='/api/lesson/lessonCompletedConfirmationFromStudent/', data=confirmation_post_data)
+        self.assertIn('failed', str(response.content, "utf8"))
+
         
 
 

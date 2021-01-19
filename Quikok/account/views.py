@@ -781,7 +781,7 @@ def signin(request):
             # 使用者不存在
             response['status'] = 'failed'
             response['errCode'] = '1'
-            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['errMsg'] = '不好意思，請再次確認您的帳號密碼是否正確，如果持續出現這個問題，請跟我們說一聲，謝謝您~'
             response['data'] = None
             print('使用者不存在')
         else: #使用者存在
