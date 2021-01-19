@@ -2245,10 +2245,54 @@ def lesson_completed_notification_from_teacher(request):
             response['data'] = None
         else:
             # 有抓到對應的預約以及老師的紀錄
-            response['status'] = 'success'
-            response['errCode'] = None
-            response['errMsg'] = None
-            response['data'] = None
+            # 產生對應的 lesson_completed_record 紀錄
+            _year, _month, _day = [int(_) for _ in lesson_date.split('-')]
+            start_hour, start_minute = [int(_) for _ in start_time.split(':')]
+            end_hour, end_minute = [int(_) for _ in end_time.split(':')]
+
+            teacher_declared_start_time = \
+                datetime(_year, _month, _day, start_hour, start_minute)
+            teacher_declared_end_time = \
+                datetime(_year, _month, _day, end_hour, end_minute)
+            
+            if not (start_minute % 10 == 0 and end_minute % 10 == 0 and 
+                teacher_declared_end_time > teacher_declared_start_time):
+                # 不是以每十分鐘為一個單位，或結束時間未大過起始時間
+                response['status'] = 'failed'
+                response['errCode'] = '4'
+                response['errMsg'] = '不好意思，課程確認時間以每十分鐘為一個單位，而且結束時間要大於起始時間，如果持續遇到這個問題請您告訴我們一聲。'
+                response['data'] = None
+            
+            else:
+                # 格式都正確
+                
+                teacher_declared_time_in_minutes = \
+                    int((teacher_declared_end_time - teacher_declared_start_time).seconds / 60)
+
+                new_added_record = lesson_completed_record.objects.create(
+                    lesson_booking_info_id = booking_object.id,
+                    student_remaining_minutes_of_each_purchased_lesson_set_id = \
+                        booking_object.remaining_minutes,  # 對應的訂單所剩的時數
+                    teacher_auth_id = teacher_auth_id,
+                    student_auth_id = booking_object.student_auth_id, 
+                    booking_time_in_minutes = booking_object.get_booking_time_in_minutes(),
+                    # 預估上課時間時數,單位分鐘,是用預約的時間計算的
+                    teacher_declared_start_time = teacher_declared_start_time,
+                    teacher_declared_end_time = teacher_declared_end_time,
+                    teacher_declared_time_in_minutes = teacher_declared_time_in_minutes,
+                    # 老師號稱的開課時間總時數,可能課程實際時間會比原本預約時有所增減(單位是分鐘)
+                    student_confirmed_deadline = \
+                        date_function.today() + timedelta(days=3),
+                    # 這個的作用是，假設學生遲遲不確認，我們還是要在某個時段過後撥錢給老師，
+                    # 目前先預設3天? 也就是說，當在老師發送確認訊息後的3天後，假設學生還沒確認也沒申訴，
+                    # 則我們將直接撥款給老師
+                    # 萬一學生遲遲不確認，要由我們自動確認的話，最好也做個註記
+                )
+                new_added_record.save()
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = new_added_record.id
     else:
         # 資料傳輸出現問題
         response['status'] = 'failed'

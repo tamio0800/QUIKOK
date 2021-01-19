@@ -15,6 +15,7 @@ from django.contrib.auth.models import Permission, User, Group
 from unittest import skip
 from lesson.models import lesson_booking_info
 from account_finance.models import student_purchase_record, student_remaining_minutes_of_each_purchased_lesson_set
+from datetime import datetime, timedelta, timezone, date as date_function
 
 
 # python manage.py test lesson/ --settings=Quikok.settings_for_test
@@ -4440,7 +4441,7 @@ class CLASS_FINISHED_TEST(TestCase):
         self.assertEqual(200, response.status_code)
 
     
-    def test_lesson_completed_notification_from_teacher_can_create_lesson_completed_record_and_only_when_has_correspondent_booking_info(self):
+    def test_lesson_completed_notification_from_teacher_check_if_had_correspondant_booking_info(self):
         '''
         確認當有對應的預約時段時，可以進行完課的動作，若沒有對應的預約時段，則不行
         '''
@@ -4487,8 +4488,8 @@ class CLASS_FINISHED_TEST(TestCase):
         self.assertEqual('paid',
             student_purchase_record.objects.get(id=1).payment_status)
 
-        print(f"student_purchase_record: {student_purchase_record.objects.values()}")
-        print(f"student_remaining: {student_remaining_minutes_of_each_purchased_lesson_set.objects.values()}")
+        #print(f"student_purchase_record: {student_purchase_record.objects.values()}")
+        #print(f"student_remaining: {student_remaining_minutes_of_each_purchased_lesson_set.objects.values()}")
 
         # 接著讓學生進行預約
         booking_post_data = {
@@ -4538,6 +4539,102 @@ class CLASS_FINISHED_TEST(TestCase):
             self.client.post(path='/api/lesson/lessonCompletedNotificationFromTeacher/', data=noti_post_data)
         self.assertIn('success', str(response.content, "utf8"))
 
+
+    def test_lesson_completed_notification_from_teacher_create_record_in_the_table(self):
+        '''
+        確認當老師按完課後，會產生對應的紀錄
+        '''
+        # 先進行購課
+        purchased_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'teacherID': teacher_profile.objects.get(id=1).auth_id,
+            'lessonID': lesson_info.objects.get(id=1).id,
+            'sales_set': '10:90',
+            'total_amount_of_the_sales_set': int(800*10*0.9),
+            'q_discount': 0}
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchased_post_data)
+
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(id=1).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+        # 此時，學生通知我們她已經完成付款
+        # student_purchase_record.objects.filter(id=1).update(payment_status='paid')
+        purchase_obj = student_purchase_record.objects.get(id=1)
+        purchase_obj.payment_status = 'paid'
+        purchase_obj.save()
+        # 我們確認她付款了
+        self.assertEqual('paid',
+            student_purchase_record.objects.get(id=1).payment_status)
+
+        # 接著讓學生進行預約
+        booking_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_1_t1}:1,2,3,4;'} 
+            # 預約了120分鐘
+        response = \
+            self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        # 預約成功
+
+        # 讓老師確認學生的預約
+        change_booking_status_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'bookingID': 1,
+            'bookingStatus': 'confirmed'}
+        response = \
+            self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=change_booking_status_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+
+        # 此時應該可以進行完課動作惹
+        # 接著老師進行完課
+        start_time, end_time = datetime(2021, 1, 19, 20, 50), datetime(2021, 1, 19, 22, 40)
+        noti_post_data = {
+                'userID': teacher_profile.objects.get(id=1).auth_id,
+                'lesson_booking_info_id': 1,
+                'lesson_date': '2021-01-01',
+                'start_time': start_time.strftime("%H:%M"),
+                'end_time': end_time.strftime("%H:%M"),
+                'time_interval_in_minutes': int((end_time - start_time).seconds / 60)
+        }  # 測試看看這個 api 能不能產出對應的 record 來
+        response = \
+            self.client.post(path='/api/lesson/lessonCompletedNotificationFromTeacher/', data=noti_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+
+
+        # 檢查 lesson_completed_record 是否產生對應的紀錄
+        self.assertEqual(1, lesson_completed_record.objects.count())
+        # 測試booking_time計算正確
+        self.assertEqual(
+            int(len(lesson_booking_info.objects.get(id=1).booking_date_and_time[:-1].split(':')[1].split(','))) * 30,
+            lesson_completed_record.objects.get(id=1).booking_time_in_minutes,
+            lesson_completed_record.objects.values())
+
+        # 測試時間計算正不正確
+        self.assertEqual(
+            (
+                120,
+                int((end_time - start_time).seconds / 60),
+                date_function(2021, 1, 19) + timedelta(days=3),
+                start_time.strftime("%H:%M"),
+                end_time.strftime("%H:%M")
+            ),
+            (
+                lesson_completed_record.objects.get(id=1).booking_time_in_minutes,
+                lesson_completed_record.objects.get(id=1).teacher_declared_time_in_minutes,
+                lesson_completed_record.objects.get(id=1).student_confirmed_deadline,
+                (lesson_completed_record.objects.get(id=1).teacher_declared_start_time + timedelta(hours=8)).strftime("%H:%M"),
+                (lesson_completed_record.objects.get(id=1).teacher_declared_end_time + timedelta(hours=8)).strftime("%H:%M")
+            ),
+        lesson_completed_record.objects.values())
+
+
+        
 
 
 
