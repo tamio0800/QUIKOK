@@ -3392,7 +3392,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         self.assertEquals(1, str(response.content, "utf8").count(f'"is_student_given_feedback"'))
 
 
-    @skip  # 等完課api做好後再回來繼續測試
+    # 等完課api做好後再回來繼續測試
     def test_get_teacher_s_booking_history_new_arguments_are_right(self):
         # 測試新的參數
         purchase_post_data = {
@@ -3403,6 +3403,24 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
             'total_amount_of_the_sales_set': 69,
             'q_discount':0}
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=1).auth_id,
+                teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
+                lesson_id = lesson_info.objects.get(id=1).id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = 'trial',
+                    is_open = True,
+                    lesson_id = lesson_info.objects.get(id=1).id
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
 
         the_purchase_object = \
             student_purchase_record.objects.first()
@@ -3431,7 +3449,8 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         response = self.client.post(
             path='/api/lesson/getTeachersBookingHistory/', data=booking_history_post_data)
         # 檢查新參數是否有成功帶進來
-        self.assertEquals(1, str(response.content, "utf8").count(f'"lesson_booking_info_id": {1}')) 
+        self.assertEquals(1, str(response.content, "utf8").count(f'"lesson_booking_info_id": {1}'),
+            str(response.content, "utf8")) 
         self.assertEquals(1, str(response.content, "utf8").count('"discount_price": "trial"')) 
         self.assertEquals(1, str(response.content, "utf8").count(f'"teacher_decalred_start_time"')) 
         self.assertEquals(1, str(response.content, "utf8").count(f'"teacher_decalred_end_time"'))
