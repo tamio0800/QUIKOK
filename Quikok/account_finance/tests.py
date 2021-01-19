@@ -17,7 +17,7 @@ from datetime import datetime, timedelta, date as date_function
 import math
 #python3 manage.py test account_finance/ --settings=Quikok.settings_for_test
 
-@skip
+
 class test_finance_functions(TestCase):
     def setUp(self):
         self.client =  Client()        
@@ -477,7 +477,7 @@ class test_finance_functions(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-@skip
+
 class test_student_purchase_payment_status(TestCase):
     #def query_order_info_status1_unpaid(self):
     def setUp(self):
