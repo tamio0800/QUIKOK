@@ -3599,6 +3599,26 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
             lesson_booking_info.objects.values())
         self.assertIn(f'"is_teacher_given_feedback": null', str(response.content, "utf8"))
         self.assertIn(f'"is_student_given_feedback": null', str(response.content, "utf8"))
+
+        # 接下來換測試學生取消雙方已確認的預約課程
+        change_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'bookingID': lesson_booking_info.objects.get(
+                booking_date_and_time = f'{self.available_date_4}:3,4,5;').id,
+            'bookingStatus': 'canceled'}
+        response = \
+            self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=change_booking_status_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+
+        # 一樣只filter canceled，這時應該會有兩筆資料
+        response = self.client.post(
+            path='/api/lesson/getTeachersBookingHistory/', data=booking_history_post_data)
+        self.assertEquals(2, str(response.content, "utf8").count(f'"remark": "{date_function.today()}'),
+            str(response.content, "utf8"))  # 會看到兩個關於取消的remark
+        self.assertEqual(
+            f'{date_function.today()} 學生取消預定課程',
+            lesson_booking_info.objects.get(booking_date_and_time = f'{self.available_date_4}:3,4,5;').remark,
+            lesson_booking_info.objects.values())
         
 
 
