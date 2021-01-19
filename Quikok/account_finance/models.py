@@ -189,6 +189,7 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
                 lesson_sales_set_id = instance.lesson_sales_set_id,
                 available_remaining_minutes = times_of_the_sales_set_in_minutes
             ).save()
+            
             # 如果有用q幣,更改學生的q幣額度及預扣額度
             if previous.purchased_with_q_points != 0 :
                 update_student_balance = email_manager()

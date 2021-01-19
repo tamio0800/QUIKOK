@@ -3394,7 +3394,6 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
 
     
     # 等學生完課api做好後再回來繼續測試
-    @skip
     def test_get_teacher_s_booking_history_new_arguments_values_are_right(self):
         # 測試新的參數內容正確性
         purchase_post_data = {
@@ -3500,8 +3499,8 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         self.assertIn(f'"teacher_declared_time_in_minutes": {int((end_time - start_time).seconds / 60)}', str(response.content, "utf8"))
         self.assertIn(f'"student_confirmed_deadline": "{date_function.today() + timedelta(days=3)}"', str(response.content, "utf8"))
         self.assertIn(f'"remark": ""', str(response.content, "utf8"))
-        self.assertIn(f'"is_teacher_given_feedback": False', str(response.content, "utf8"))  # 此時雙方尚未進行評價
-        self.assertIn(f'"is_student_given_feedback": False', str(response.content, "utf8"))  # 此時雙方尚未進行評價
+        self.assertIn(f'"is_teacher_given_feedback": false', str(response.content, "utf8"))  # 此時雙方尚未進行評價
+        self.assertIn(f'"is_student_given_feedback": false', str(response.content, "utf8"))  # 此時雙方尚未進行評價
 
         # 接下來測試一下預約取消
         purchase_post_data = {

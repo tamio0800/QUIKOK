@@ -19,6 +19,7 @@ from handy_functions import check_if_all_variables_are_true, date_string_2_datef
 from handy_functions import sort_dictionaries_in_a_list_by_specific_key
 from lesson.models import lesson_booking_info
 from lesson.models import lesson_completed_record
+from lesson.models import lesson_reviews_from_students, student_reviews_from_teachers
 from account_finance.models import student_remaining_minutes_of_each_purchased_lesson_set
 from django.db.models import Sum
 from handy_functions import booking_date_time_to_minutes_and_cleansing
@@ -1856,6 +1857,17 @@ def get_teacher_s_booking_history(request):
                             is_student_given_feedback = None
                         else:
                             # 這門課已完課
+                            # 所以評價狀態應該只有 True 或 False 兩種狀態
+                            lesson_reviews_from_students_object = \
+                                lesson_reviews_from_students.objects.filter(
+                                    corresponding_lesson_booking_info_id=each_booking_info_object.id
+                                    ).first()  # 學生對老師的評論紀錄
+
+                            student_reviews_from_teachers_object = \
+                                student_reviews_from_teachers.objects.filter(
+                                    corresponding_lesson_booking_info_id=each_booking_info_object.id
+                                    ).first()  # 老師對學生的評論紀錄
+
                             teacher_declared_start_time = \
                                 corr_lesson_completed_record_object.teacher_declared_start_time.strftime("%H:%M")
                             teacher_declared_end_time = \
@@ -1864,8 +1876,8 @@ def get_teacher_s_booking_history(request):
                                 corr_lesson_completed_record_object.teacher_declared_time_in_minutes
                             student_confirmed_deadline = \
                                  corr_lesson_completed_record_object.student_confirmed_deadline
-                            is_teacher_given_feedback = None
-                            is_student_given_feedback = None
+                            is_teacher_given_feedback = False if student_reviews_from_teachers_object is None else True
+                            is_student_given_feedback = False if lesson_reviews_from_students_object is None else True
 
                         response['data'].append(
                             {
@@ -1949,8 +1961,20 @@ def get_teacher_s_booking_history(request):
                             student_confirmed_deadline = ''
                             is_teacher_given_feedback = None
                             is_student_given_feedback = None
+                            # 因為沒有完課，所以一定不會有評價
                         else:
                             # 這門課已完課
+                            # 所以評價狀態應該只有 True 或 False 兩種狀態
+                            lesson_reviews_from_students_object = \
+                                lesson_reviews_from_students.objects.filter(
+                                    corresponding_lesson_booking_info_id=each_booking_info_object.id
+                                    ).first()  # 學生對老師的評論紀錄
+
+                            student_reviews_from_teachers_object = \
+                                student_reviews_from_teachers.objects.filter(
+                                    corresponding_lesson_booking_info_id=each_booking_info_object.id
+                                    ).first()  # 老師對學生的評論紀錄
+
                             teacher_declared_start_time = \
                                 corr_lesson_completed_record_object.teacher_declared_start_time.strftime("%H:%M")
                             teacher_declared_end_time = \
@@ -1959,8 +1983,8 @@ def get_teacher_s_booking_history(request):
                                 corr_lesson_completed_record_object.teacher_declared_time_in_minutes
                             student_confirmed_deadline = \
                                  corr_lesson_completed_record_object.student_confirmed_deadline
-                            is_teacher_given_feedback = None
-                            is_student_given_feedback = None
+                            is_teacher_given_feedback = False if student_reviews_from_teachers_object is None else True
+                            is_student_given_feedback = False if lesson_reviews_from_students_object is None else True
 
                         response['data'].append(
                             {
