@@ -1784,7 +1784,7 @@ class Q_POINTS_WITHDRAWAL_TEST(TestCase):
             'type': 'student',
         }
         response = \
-            self.client.post(path='/api/account_finance/getQPointsWtihdrawalHistory/', data=query_history_data)
+            self.client.post(path='/api/account_finance/getQPointsWithdrawalHistory/', data=query_history_data)
         self.assertIn('success', str(response.content, "utf8"))
         self.assertIn('"data": null', str(response.content, "utf8"))
 
@@ -1806,7 +1806,7 @@ class Q_POINTS_WITHDRAWAL_TEST(TestCase):
 
         # 查詢資料
         response = \
-            self.client.post(path='/api/account_finance/getQPointsWtihdrawalHistory/', data=query_history_data)
+            self.client.post(path='/api/account_finance/getQPointsWithdrawalHistory/', data=query_history_data)
         self.assertIn('success', str(response.content, "utf8"))
         self.assertEqual(1, str(response.content, "utf8").count(f'"amount": 2200'), str(response.content, "utf8"))
         self.assertEqual(1, str(response.content, "utf8").count(f'"withdrawal_status": "unpaid"'))
@@ -1817,7 +1817,7 @@ class Q_POINTS_WITHDRAWAL_TEST(TestCase):
         self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
         # 查詢資料
         response = \
-            self.client.post(path='/api/account_finance/getQPointsWtihdrawalHistory/', data=query_history_data)
+            self.client.post(path='/api/account_finance/getQPointsWithdrawalHistory/', data=query_history_data)
         self.assertIn('success', str(response.content, "utf8"))
         self.assertEqual(1, str(response.content, "utf8").count(f'"amount": 2200'), str(response.content, "utf8"))
         self.assertEqual(1, str(response.content, "utf8").count(f'"amount": 2500'), str(response.content, "utf8"))
@@ -1830,7 +1830,7 @@ class Q_POINTS_WITHDRAWAL_TEST(TestCase):
             student_auth_id=student_profile.objects.get(id=2).auth_id, refund_amount=2500).update(refund_status='paid')
 
         response = \
-            self.client.post(path='/api/account_finance/getQPointsWtihdrawalHistory/', data=query_history_data)
+            self.client.post(path='/api/account_finance/getQPointsWithdrawalHistory/', data=query_history_data)
         self.assertEqual(1, str(response.content, "utf8").count(f'"withdrawal_status": "unpaid"'))
         self.assertEqual(1, str(response.content, "utf8").count(f'"withdrawal_status": "paid"'))
 
@@ -1841,7 +1841,7 @@ class Q_POINTS_WITHDRAWAL_TEST(TestCase):
             'type': 'teacher',
         }
         response = \
-            self.client.post(path='/api/account_finance/getQPointsWtihdrawalHistory/', data=query_history_data)
+            self.client.post(path='/api/account_finance/getQPointsWithdrawalHistory/', data=query_history_data)
         self.assertIn('success', str(response.content, "utf8"))
         self.assertIn('"data": null', str(response.content, "utf8"))
 
@@ -1863,7 +1863,7 @@ class Q_POINTS_WITHDRAWAL_TEST(TestCase):
 
         # 查詢資料
         response = \
-            self.client.post(path='/api/account_finance/getQPointsWtihdrawalHistory/', data=query_history_data)
+            self.client.post(path='/api/account_finance/getQPointsWithdrawalHistory/', data=query_history_data)
         self.assertIn('success', str(response.content, "utf8"))
         self.assertEqual(1, str(response.content, "utf8").count(f'"amount": 8000'), str(response.content, "utf8"))
         self.assertEqual(1, str(response.content, "utf8").count(f'"withdrawal_status": "unpaid"'))
@@ -1874,7 +1874,7 @@ class Q_POINTS_WITHDRAWAL_TEST(TestCase):
         self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
         # 查詢資料
         response = \
-            self.client.post(path='/api/account_finance/getQPointsWtihdrawalHistory/', data=query_history_data)
+            self.client.post(path='/api/account_finance/getQPointsWithdrawalHistory/', data=query_history_data)
         self.assertIn('success', str(response.content, "utf8"))
         self.assertEqual(1, str(response.content, "utf8").count(f'"amount": 8000'), str(response.content, "utf8"))
         self.assertEqual(1, str(response.content, "utf8").count(f'"amount": 6000'), str(response.content, "utf8"))

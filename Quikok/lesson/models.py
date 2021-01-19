@@ -1,6 +1,8 @@
 from django.db import models
 from account.models import teacher_profile, student_profile
 from datetime import timedelta, date as date_function
+from django.db.models.signals import pre_save, post_save
+from django.dispatch import receiver
 
 class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的東西填入
     # 每堂課程會有自己的unique id，我們用這個來辨識、串連課程 09/25 討論後認為先用內建的id就好
@@ -204,7 +206,7 @@ class lesson_booking_info(models.Model):
     last_changed_by = models.CharField(max_length = 20)  # teacher or student or parent
     booking_set_id = models.IntegerField()
     # 預約使用的是該課程的哪一個方案（ID），這個之後會另外建立一個「每個課程的方案table」來做串連。
-    remaining_minutes = models.IntegerField()  
+    remaining_minutes = models.IntegerField()
     # 這個指的是假設這門課準時上完，則學生還有多少時數，用意是讓老師知道萬一超時會不會多拿到錢
     booking_date_and_time = models.CharField(max_length=400)  
     # Example: 2020-08-21:1,2,3,4; 之類的
@@ -216,10 +218,20 @@ class lesson_booking_info(models.Model):
     #   下面還包含此兩者狀態
     #       student_not_yet_confirmed >> 也包含在finished，代表學生尚未確認時數
     #       quikok_dealing_for_student_disagreed >> 客服正在處理學生反應時數不正確
+    remark = models.CharField(max_length=40, default='')
+    # 把課程預約的註記擺在這邊好了，直接從這裡call，而不是在搜尋歷史資料時及時產出  
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
         return str(self.id)
+
+    def get_booking_date(self):
+        # 回傳這次的預約日期
+        return date_function([int(_) for _ in self.booking_date_and_time.split(':')[0].split('-')])
+
+    def get_booking_time_in_minutes(self):
+        # 回傳這次的預約總計多少分鐘
+        return int(len(self.booking_date_and_time[:-1].split(':')[1].split(','))) * 30
 
     class Meta:
         verbose_name = '課程預約資訊'
@@ -234,13 +246,13 @@ class lesson_completed_record(models.Model):
     teacher_auth_id = models.IntegerField()
     student_auth_id = models.IntegerField()
     booking_time_in_minutes = models.IntegerField() # 預估上課時間時數,單位分鐘,是用預約的時間計算的
-    teacher_declared_start_time = models.DateTimeField(auto_now_add=True)
+    teacher_declared_start_time = models.DateTimeField()
     # 老師號稱的上課時間,單位是分鐘,10分鐘一跳
-    teacher_declared_end_time = models.DateTimeField(auto_now_add=True)
+    teacher_declared_end_time = models.DateTimeField()
     # 老師號稱的下課時數, 單位是分鐘, 10分鐘一跳
     teacher_declared_time_in_minutes = models.IntegerField() 
     # 老師號稱的開課時間總時數,可能課程實際時間會比原本預約時有所增減(單位是分鐘)
-    teacher_declared_teaching_fee = models.IntegerField()
+    # teacher_declared_teaching_fee = models.IntegerField()
     # 老師號稱的應付老師金額  << 這個有需要嗎??  反正只是扣時數而已說
     # teaching_status = models.CharField(max_length = 20)  
     # 這個欄位好像用不到還沒上課 unprocess, 已完課 over or canceled
@@ -340,3 +352,17 @@ class lesson_info_for_users_not_signed_up(models.Model):
         # 理論上一個老師在這張table只會有一個row的資料，所以這樣寫比較好看
 
 
+
+@receiver(post_save, sender=lesson_completed_record)
+def when_lesson_completed_notification_sent_by_teacher(sender, instance:lesson_completed_record, created, **kwargs):
+    # 代表建立了新資料，此時必須要回去將對應的課程預約狀態 booked_status 改成等待學生確認中
+    if created:
+        # 只有建立新資料才要進行這個動作
+        lesson_booking_object = lesson_booking_info.objects.get(id = instance.lesson_booking_info_id)
+        # print(f"when_lesson_completed_notification_sent_by_teacher1 {lesson_booking_info.objects.values()}")
+
+        lesson_booking_object.booking_status = 'student_not_yet_confirmed'
+        lesson_booking_object.last_changed_by = 'teacher'  # 因為 因老師而改變此則預約的狀態
+        lesson_booking_object.save()
+        # print(f"when_lesson_completed_notification_sent_by_teacher2 {lesson_booking_info.objects.values()}")
+        

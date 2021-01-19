@@ -1383,6 +1383,7 @@ def changing_lesson_booking_status(request):
     user_auth_id = request.POST.get('userID', False)
     lesson_booking_info_id = request.POST.get('bookingID', False)
     lesson_booking_info_status = request.POST.get('bookingStatus', False)
+
     
     if check_if_all_variables_are_true(user_auth_id, lesson_booking_info_id, lesson_booking_info_status):
         # 檢查一下這個 user_auth_id 應該要屬於老師或是學生，兩者其一
@@ -1412,6 +1413,8 @@ def changing_lesson_booking_status(request):
             else:
                 # 有該預約紀錄
                 which_one_changes_it = 'student' if the_teacher is None else 'teacher'
+                character_to_mandarin = lambda x: '老師' if x=='teacher' else '學生'
+                # 為了將上面的英文角色轉成中文
                 if lesson_booking_info_status == 'confirmed':
                     # 要怎麼讓 lesson_sets 那邊 +1 呢 > <
 
@@ -1451,6 +1454,9 @@ def changing_lesson_booking_status(request):
                                 each_booking_info_object.booking_date_and_time[:-1].split(':')[1].split(',')
                             if any(_ in each_booking_info_object_s_time_splited_as_list for _ in the_time_string_splited_as_list):
                                 # 有重疊到，需要拒絕，並返還那些人的預扣時數
+                                # 這裡應該要在remark寫上系統婉拒的而非老師婉拒
+                                each_booking_info_object.remark = \
+                                    f'{date_function.today()} 系統自動取消與預定課程衝突的預約'
                                 each_booking_info_object.last_changed_by = 'teacher'
                                 each_booking_info_object.booking_status = 'canceled'
                                 each_booking_info_object.save()
@@ -1511,7 +1517,6 @@ def changing_lesson_booking_status(request):
                                             each_student_remaining_minutes_non_trial_object.withholding_minutes = 0
                                             each_student_remaining_minutes_non_trial_object.save()
                                 
-
                     response['status'] = 'success'
                     response['errCode'] = None
                     response['errMsg'] = None
@@ -1521,6 +1526,15 @@ def changing_lesson_booking_status(request):
                     # 除了更改狀態以外，也要記得將預扣時數返還
                     # 除此之外，也需要將老師原本已經確認預約的時段取消、變成空閒時段
 
+                    # 這裡要確認一下在 canceled 之前，究竟是雙方都確認預約了 >> 此時是取消預約  
+                    # 或是其中一方發送預約邀請  >>  此時是婉拒預約
+
+                    if that_lesson_booking_info.booking_status == 'confirmed':
+                        that_lesson_booking_info.remark = \
+                            f'{date_function.today()} {character_to_mandarin(which_one_changes_it)}取消預定課程'
+                    elif that_lesson_booking_info.booking_status == 'to_be_confirmed':
+                        that_lesson_booking_info.remark = \
+                            f'{date_function.today()} {character_to_mandarin(which_one_changes_it)}婉拒預約'
                     that_lesson_booking_info.last_changed_by = which_one_changes_it
                     that_lesson_booking_info.booking_status = lesson_booking_info_status
                     that_lesson_booking_info.save()
@@ -1727,8 +1741,8 @@ def get_teacher_s_booking_history(request):
 
                 新增 >>
                 lesson_booking_info_id:  預約的id  DONE
-                teacher_decalred_start_time: xx:xx    老師宣稱的上課起時始間  DONE
-                teacher_decalred_end_time: xx:xx    老師宣稱的上課結束始間  DONE
+                teacher_declared_start_time: xx:xx    老師宣稱的上課起時始間  DONE
+                teacher_declared_end_time: xx:xx    老師宣稱的上課結束始間  DONE
                 teacher_declared_time_in_minutes:  xx 老師宣稱的上課時數(分鐘)
                 student_confirmed_deadline:  學生的確認截止日(當天可) "xxxx-xx-xx"
                 remark: 加上課程被取消的理由或原因，如：【xxxx-xx-xx xx:xx 老師1號取消】，若無取消則為null
@@ -1834,24 +1848,22 @@ def get_teacher_s_booking_history(request):
                         
                         if corr_lesson_completed_record_object is None:
                             # 這門課還沒有完課的紀錄
-                            teacher_decalred_start_time = ''
-                            teacher_decalred_end_time = ''
+                            teacher_declared_start_time = ''
+                            teacher_declared_end_time = ''
                             teacher_declared_time_in_minutes = ''
                             student_confirmed_deadline = ''
-                            remark = ''
                             is_teacher_given_feedback = None
                             is_student_given_feedback = None
                         else:
                             # 這門課已完課
-                            teacher_decalred_start_time = \
+                            teacher_declared_start_time = \
                                 corr_lesson_completed_record_object.teacher_declared_start_time.strftime("%H:%M")
-                            teacher_decalred_end_time = \
-                                corr_lesson_completed_record_object.teacher_decalred_end_time.strftime("%H:%M")
+                            teacher_declared_end_time = \
+                                corr_lesson_completed_record_object.teacher_declared_end_time.strftime("%H:%M")
                             teacher_declared_time_in_minutes = \
                                 corr_lesson_completed_record_object.teacher_declared_time_in_minutes
                             student_confirmed_deadline = \
                                  corr_lesson_completed_record_object.student_confirmed_deadline
-                            remark = ''
                             is_teacher_given_feedback = None
                             is_student_given_feedback = None
 
@@ -1869,11 +1881,11 @@ def get_teacher_s_booking_history(request):
                                     lesson_sales_sets.objects.get(id=each_booking_info_object.booking_set_id).sales_set,
                                 'remaining_time': each_booking_info_object.remaining_minutes,
                                 'lesson_booking_info_id': each_booking_info_object.id,
-                                'teacher_decalred_start_time': teacher_decalred_start_time,
-                                'teacher_decalred_end_time': teacher_decalred_end_time,
+                                'teacher_declared_start_time': teacher_declared_start_time,
+                                'teacher_declared_end_time': teacher_declared_end_time,
                                 'teacher_declared_time_in_minutes': teacher_declared_time_in_minutes,
                                 'student_confirmed_deadline': student_confirmed_deadline,
-                                'remark': remark,  # 這個是要寫課程被取消的理由或原因，如：
+                                'remark': each_booking_info_object.remark,
                                 # 【xxxx-xx-xx xx:xx 老師1號取消】，若無取消則為null，暫時先跳過
                                 'is_teacher_given_feedback': is_teacher_given_feedback,
                                 'is_student_given_feedback': is_student_given_feedback
@@ -1931,24 +1943,22 @@ def get_teacher_s_booking_history(request):
                         
                         if corr_lesson_completed_record_object is None:
                             # 這門課還沒有完課的紀錄
-                            teacher_decalred_start_time = ''
-                            teacher_decalred_end_time = ''
+                            teacher_declared_start_time = ''
+                            teacher_declared_end_time = ''
                             teacher_declared_time_in_minutes = ''
                             student_confirmed_deadline = ''
-                            remark = ''
                             is_teacher_given_feedback = None
                             is_student_given_feedback = None
                         else:
                             # 這門課已完課
-                            teacher_decalred_start_time = \
+                            teacher_declared_start_time = \
                                 corr_lesson_completed_record_object.teacher_declared_start_time.strftime("%H:%M")
-                            teacher_decalred_end_time = \
-                                corr_lesson_completed_record_object.teacher_decalred_end_time.strftime("%H:%M")
+                            teacher_declared_end_time = \
+                                corr_lesson_completed_record_object.teacher_declared_end_time.strftime("%H:%M")
                             teacher_declared_time_in_minutes = \
                                 corr_lesson_completed_record_object.teacher_declared_time_in_minutes
                             student_confirmed_deadline = \
                                  corr_lesson_completed_record_object.student_confirmed_deadline
-                            remark = ''
                             is_teacher_given_feedback = None
                             is_student_given_feedback = None
 
@@ -1966,11 +1976,11 @@ def get_teacher_s_booking_history(request):
                                     lesson_sales_sets.objects.get(id=each_booking_info_object.booking_set_id).sales_set,
                                 'remaining_time': each_booking_info_object.remaining_minutes,
                                 'lesson_booking_info_id': each_booking_info_object.id,
-                                'teacher_decalred_start_time': teacher_decalred_start_time,
-                                'teacher_decalred_end_time': teacher_decalred_end_time,
+                                'teacher_declared_start_time': teacher_declared_start_time,
+                                'teacher_declared_end_time': teacher_declared_end_time,
                                 'teacher_declared_time_in_minutes': teacher_declared_time_in_minutes,
                                 'student_confirmed_deadline': student_confirmed_deadline,
-                                'remark': remark,  # 這個是要寫課程被取消的理由或原因，如：
+                                'remark': each_booking_info_object.remark, 
                                 # 【xxxx-xx-xx xx:xx 老師1號取消】，若無取消則為null，暫時先跳過
                                 'is_teacher_given_feedback': is_teacher_given_feedback,
                                 'is_student_given_feedback': is_student_given_feedback
@@ -2245,10 +2255,54 @@ def lesson_completed_notification_from_teacher(request):
             response['data'] = None
         else:
             # 有抓到對應的預約以及老師的紀錄
-            response['status'] = 'success'
-            response['errCode'] = None
-            response['errMsg'] = None
-            response['data'] = None
+            # 產生對應的 lesson_completed_record 紀錄
+            _year, _month, _day = [int(_) for _ in lesson_date.split('-')]
+            start_hour, start_minute = [int(_) for _ in start_time.split(':')]
+            end_hour, end_minute = [int(_) for _ in end_time.split(':')]
+
+            teacher_declared_start_time = \
+                datetime(_year, _month, _day, start_hour, start_minute)
+            teacher_declared_end_time = \
+                datetime(_year, _month, _day, end_hour, end_minute)
+            
+            if not (start_minute % 10 == 0 and end_minute % 10 == 0 and 
+                teacher_declared_end_time > teacher_declared_start_time):
+                # 不是以每十分鐘為一個單位，或結束時間未大過起始時間
+                response['status'] = 'failed'
+                response['errCode'] = '4'
+                response['errMsg'] = '不好意思，課程確認時間以每十分鐘為一個單位，而且結束時間要大於起始時間，如果持續遇到這個問題請您告訴我們一聲。'
+                response['data'] = None
+            
+            else:
+                # 格式都正確
+                
+                teacher_declared_time_in_minutes = \
+                    int((teacher_declared_end_time - teacher_declared_start_time).seconds / 60)
+
+                new_added_record = lesson_completed_record.objects.create(
+                    lesson_booking_info_id = booking_object.id,
+                    student_remaining_minutes_of_each_purchased_lesson_set_id = \
+                        booking_object.remaining_minutes,  # 對應的訂單所剩的時數
+                    teacher_auth_id = teacher_auth_id,
+                    student_auth_id = booking_object.student_auth_id, 
+                    booking_time_in_minutes = booking_object.get_booking_time_in_minutes(),
+                    # 預估上課時間時數,單位分鐘,是用預約的時間計算的
+                    teacher_declared_start_time = teacher_declared_start_time,
+                    teacher_declared_end_time = teacher_declared_end_time,
+                    teacher_declared_time_in_minutes = teacher_declared_time_in_minutes,
+                    # 老師號稱的開課時間總時數,可能課程實際時間會比原本預約時有所增減(單位是分鐘)
+                    student_confirmed_deadline = \
+                        date_function.today() + timedelta(days=3),
+                    # 這個的作用是，假設學生遲遲不確認，我們還是要在某個時段過後撥錢給老師，
+                    # 目前先預設3天? 也就是說，當在老師發送確認訊息後的3天後，假設學生還沒確認也沒申訴，
+                    # 則我們將直接撥款給老師
+                    # 萬一學生遲遲不確認，要由我們自動確認的話，最好也做個註記
+                )
+                new_added_record.save()
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = new_added_record.id
     else:
         # 資料傳輸出現問題
         response['status'] = 'failed'
