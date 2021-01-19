@@ -2330,8 +2330,7 @@ def lesson_completed_confirmation_from_student(request):
         errCode: None 
         errMsg: None
         data: None
-    }
-    '''
+    }'''
     response = dict()
     student_auth_id = request.POST.get('userID', False)
     lesson_booking_info_id = request.POST.get('lesson_booking_info_id', False)
@@ -2355,6 +2354,40 @@ def lesson_completed_confirmation_from_student(request):
             response['errCode'] = '2'
             response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
             response['data'] = None
+        else:
+            # 看來一切正常，接下來要來更新對應的 預約 & 課程完結 兩張 TABLE 的對應資料了
+            lesson_completed_object = lesson_completed_record.objects.get(
+                lesson_booking_info_id = lesson_booking_info_id
+            )  # 因為一定有資料，所以可以用get
+            
+            if action == 'agree':
+                # 學生確認老師聲稱的時數無誤，先 update 預約 TABLE
+                booking_object.last_changed_by = 'student'  # 因為是學生最後確認的
+                booking_object.booking_status = 'finished'  # 課程完結囉~
+                booking_object.save()
+                # 再來 update 完結 TABLE
+                lesson_completed_object.is_student_confirmed = True
+                lesson_completed_object.save()
+                # 之後還有時數要從remaining那邊扣掉的環節，暫時先不管
+                
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = None
+
+            elif action == 'disagree':
+                # 學生對老師聲稱的時數有意見，先 update 預約 TABLE
+                booking_object.last_changed_by = 'student'  # 因為是學生最後確認的
+                booking_object.booking_status = 'quikok_dealing_for_student_disagreed'  # Quikok介入調查
+                booking_object.save()
+                # 再來 update 完結 TABLE
+                lesson_completed_object.is_student_disagree_with_teacher_s_declared_time = True
+                lesson_completed_object.save()
+
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = None
 
     else:
         # 資料傳輸出現問題

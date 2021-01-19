@@ -4784,7 +4784,6 @@ class CLASS_FINISHED_TEST(TestCase):
             self.client.post(path='/api/lesson/lessonCompletedNotificationFromTeacher/', data=noti_post_data)
         self.assertIn('success', str(response.content, "utf8"))
 
-
         # 檢查 lesson_completed_record 是否產生對應的紀錄
         self.assertEqual(1, lesson_completed_record.objects.count())
         # 測試booking_time計算正確
@@ -4828,7 +4827,6 @@ class CLASS_FINISHED_TEST(TestCase):
         '''
         確認當學生進行完課確認時，會更新相關的 lesson_completed_record 的紀錄
         '''
-
         # 先測試當老師沒有發送完課通知前，這個api不能被啟動
         confirmation_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,
@@ -4838,6 +4836,144 @@ class CLASS_FINISHED_TEST(TestCase):
         response = \
             self.client.post(path='/api/lesson/lessonCompletedConfirmationFromStudent/', data=confirmation_post_data)
         self.assertIn('failed', str(response.content, "utf8"))
+
+        # 接著測試學生確認時數
+        # 先購買課程
+        purchased_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'teacherID': teacher_profile.objects.get(id=1).auth_id,
+            'lessonID': lesson_info.objects.get(id=1).id,
+            'sales_set': '10:90',
+            'total_amount_of_the_sales_set': int(800*10*0.9),
+            'q_discount': 0}
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchased_post_data)
+
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(id=1).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+        # 此時，學生通知我們她已經完成付款
+        purchase_obj = student_purchase_record.objects.get(id=1)
+        purchase_obj.payment_status = 'paid'
+        purchase_obj.save()
+        # 我們確認她付款了
+
+        # 接著讓學生進行預約
+        booking_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_1_t1}:1,2,3,4;'} 
+            # 預約了120分鐘
+        self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)
+
+        # 讓老師確認學生的預約
+        change_booking_status_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'bookingID': 1,
+            'bookingStatus': 'confirmed'}
+        self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=change_booking_status_post_data)
+
+        # 接著老師進行完課
+        start_time, end_time = datetime(2021, 1, 19, 20, 50), datetime(2021, 1, 19, 22, 40)
+        noti_post_data = {
+                'userID': teacher_profile.objects.get(id=1).auth_id,
+                'lesson_booking_info_id': 1,
+                'lesson_date': '2021-01-01',
+                'start_time': start_time.strftime("%H:%M"),
+                'end_time': end_time.strftime("%H:%M"),
+                'time_interval_in_minutes': int((end_time - start_time).seconds / 60)
+        }  # 測試看看這個 api 能不能產出對應的 record 來
+        self.client.post(path='/api/lesson/lessonCompletedNotificationFromTeacher/', data=noti_post_data)
+
+        # 測試一下此時該完課紀錄所對應的預約狀態應該是  student_not_yet_confirmed
+        self.assertEqual('student_not_yet_confirmed', lesson_booking_info.objects.get(id=1).booking_status)
+
+        # 此時，學生應該可以進行確認了
+        confirmation_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'lesson_booking_info_id': 1,
+            'action': 'agree'}
+        response = \
+            self.client.post(path='/api/lesson/lessonCompletedConfirmationFromStudent/', data=confirmation_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        # 確認資料庫也有同步更新
+        self.assertEqual(
+            (
+                'finished',  # 因為學生也確認課程時數無誤，此時對應的狀態為 finished
+                False,  # 學生未反對老師的時數
+                True,  # 學生同意老師的時數
+                False  # 不是由Quikok進行確認的
+            ),
+            (
+                lesson_booking_info.objects.get(id=1).booking_status,
+                lesson_completed_record.objects.get(id=1).is_student_disagree_with_teacher_s_declared_time,
+                lesson_completed_record.objects.get(id=1).is_student_confirmed,
+                lesson_completed_record.objects.get(id=1).confirmed_by_quikok
+            ),
+            f'\nlesson_booking_info:\n{lesson_booking_info.objects.values()}\n\nlesson_completed_record:\n{lesson_completed_record.objects.values()}'
+        )
+
+        # 接下來測試若學生不同意老師宣稱的時數時，相關的狀態會不會更改
+        # 再來重新預約、完課的過程吧
+        # 接著讓學生進行預約
+        booking_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_3_t1}:2,3,4,5;'} 
+            # 預約了120分鐘
+        self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)
+
+        # 讓老師確認學生的預約
+        change_booking_status_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'bookingID': \
+                lesson_booking_info.objects.get(booking_date_and_time=f'{self.available_date_3_t1}:2,3,4,5;').id,
+            'bookingStatus': 'confirmed'}
+        self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=change_booking_status_post_data)
+
+        # 接著老師進行完課
+        start_time, end_time = datetime(2021, 1, 19, 1, 50), datetime(2021, 1, 19, 5, 40)
+        noti_post_data = {
+                'userID': teacher_profile.objects.get(id=1).auth_id,
+                'lesson_booking_info_id': \
+                    lesson_booking_info.objects.get(booking_date_and_time=f'{self.available_date_3_t1}:2,3,4,5;').id,
+                'lesson_date': self.available_date_3_t1,
+                'start_time': start_time.strftime("%H:%M"),
+                'end_time': end_time.strftime("%H:%M"),
+                'time_interval_in_minutes': int((end_time - start_time).seconds / 60)
+        }  # 測試看看這個 api 能不能產出對應的 record 來
+        self.client.post(path='/api/lesson/lessonCompletedNotificationFromTeacher/', data=noti_post_data)
+        current_test_booking_id = \
+            lesson_booking_info.objects.get(booking_date_and_time=f'{self.available_date_3_t1}:2,3,4,5;').id
+        # 此時，學生應該可以進行抗議了
+        confirmation_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'lesson_booking_info_id': current_test_booking_id,
+            'action': 'disagree'}
+        response = \
+            self.client.post(path='/api/lesson/lessonCompletedConfirmationFromStudent/', data=confirmation_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        # 確認資料庫也有同步更新
+        self.assertEqual(
+            (
+                'quikok_dealing_for_student_disagreed',  # 因為課程時數無誤有爭議，此時對應的狀態為 quikok_dealing_for_student_disagreed
+                True,  # 學生反對老師的時數
+                False,  # 學生不同意老師的時數
+                False  # 不是由Quikok進行確認的，因為爭議還在處理中
+            ),
+            (
+                lesson_booking_info.objects.get(id=current_test_booking_id).booking_status,
+                lesson_completed_record.objects.get(id=current_test_booking_id).is_student_disagree_with_teacher_s_declared_time,
+                lesson_completed_record.objects.get(id=current_test_booking_id).is_student_confirmed,
+                lesson_completed_record.objects.get(id=current_test_booking_id).confirmed_by_quikok
+            ),
+            f'\nlesson_booking_info:\n{lesson_booking_info.objects.values()}\n\nlesson_completed_record:\n{lesson_completed_record.objects.values()}'
+        )
+
 
         
 

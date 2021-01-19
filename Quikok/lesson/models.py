@@ -359,10 +359,10 @@ def when_lesson_completed_notification_sent_by_teacher(sender, instance:lesson_c
     if created:
         # 只有建立新資料才要進行這個動作
         lesson_booking_object = lesson_booking_info.objects.get(id = instance.lesson_booking_info_id)
-        # print(f"when_lesson_completed_notification_sent_by_teacher1 {lesson_booking_info.objects.values()}")
 
         lesson_booking_object.booking_status = 'student_not_yet_confirmed'
         lesson_booking_object.last_changed_by = 'teacher'  # 因為 因老師而改變此則預約的狀態
         lesson_booking_object.save()
-        # print(f"when_lesson_completed_notification_sent_by_teacher2 {lesson_booking_info.objects.values()}")
+
+        # 之後可能就在這裡進行對學生的通知吧
         
