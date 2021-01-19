@@ -1712,8 +1712,8 @@ def get_teacher_s_booking_history(request):
                         /待回覆（to_be_confirmed）
                         /已完課（finished）
                         /已取消（canceled）
-        registered_from_date//起始日期2020-01-01  若為空字串，則預設左邊  DONE
-        registered_to_date//結束日期2050-12-31   若為空字串，則預設左邊  DONE
+        registered_from_date//起始日期2020-01-01  若為空字串，則預設左邊 
+        registered_to_date//結束日期2050-12-31   若為空字串，則預設左邊 
     }
     回傳：
     {
@@ -1733,6 +1733,7 @@ def get_teacher_s_booking_history(request):
                                             / 學生反對該時數，客服處理中  quikok_dealing_for_student_disagreed
                                         /已取消（canceled）
                 lesson_title: 預約課程名稱,
+                student_auth_id: 學生的auth_id
                 student_nickname: 學生暱稱,
                 discount_price:  課程方案，
                                     如:'trial'(試課優惠)
@@ -1741,9 +1742,9 @@ def get_teacher_s_booking_history(request):
                 remaining_time：學生購買剩餘時數
 
                 新增 >>
-                lesson_booking_info_id:  預約的id  DONE
-                teacher_declared_start_time: xx:xx    老師宣稱的上課起時始間  DONE
-                teacher_declared_end_time: xx:xx    老師宣稱的上課結束始間  DONE
+                lesson_booking_info_id:  預約的id
+                teacher_declared_start_time: xx:xx    老師宣稱的上課起時始間
+                teacher_declared_end_time: xx:xx    老師宣稱的上課結束始間
                 teacher_declared_time_in_minutes:  xx 老師宣稱的上課時數(分鐘)
                 student_confirmed_deadline:  學生的確認截止日(當天可) "xxxx-xx-xx"
                 remark: 加上課程被取消的理由或原因，如：【xxxx-xx-xx xx:xx 老師1號取消】，若無取消則為null
@@ -1887,6 +1888,8 @@ def get_teacher_s_booking_history(request):
                                 'booked_status': each_booking_info_object.booking_status,
                                 'lesson_title': \
                                     lesson_info.objects.get(id=each_booking_info_object.lesson_id).lesson_title,
+                                'student_auth_id': \
+                                    each_booking_info_object.student_auth_id,
                                 'student_nickname': \
                                     student_profile.objects.get(auth_id=each_booking_info_object.student_auth_id).nickname,
                                 'discount_price': \
@@ -1994,6 +1997,8 @@ def get_teacher_s_booking_history(request):
                                 'booked_status': each_booking_info_object.booking_status,
                                 'lesson_title': \
                                     lesson_info.objects.get(id=each_booking_info_object.lesson_id).lesson_title,
+                                'student_auth_id': \
+                                    each_booking_info_object.student_auth_id,
                                 'student_nickname': \
                                     student_profile.objects.get(auth_id=each_booking_info_object.student_auth_id).nickname,
                                 'discount_price': \
@@ -2037,8 +2042,8 @@ def get_student_s_booking_history(request):
                         /待回覆（to_be_confirmed）
                         /已完課（finished）
                         /已取消（canceled）
-        registered_from_date//起始日期2020-01-01  
-        registered_to_date//結束日期2050-01-01   預設
+        registered_from_date//起始日期2020-01-01  若為空字串，則預設左邊 
+        registered_to_date//結束日期2050-12-31   若為空字串，則預設左邊 
     }
     回傳：
     {
@@ -2053,14 +2058,28 @@ def get_student_s_booking_history(request):
                                         /預約成功（confirmed）
                                         /待回覆（to_be_confirmed）
                                         /已完課（finished）
+                                            加上下面兩個小分類 >>
+                                            / 學生確認時數中  student_not_yet_confirmed
+                                            / 學生反對該時數，客服處理中  quikok_dealing_for_student_disagreed
                                         /已取消（canceled）
                 lesson_title: 預約課程名稱,
+                teacher_auth_id: 老師的auth_id
                 teacher_nickname: 老師暱稱,
                 discount_price:  課程方案，
                                     如:'trial'(試課優惠)
                                         /'no_discount'(單堂原價)
                                         /'HH:XX'(HH小時XX折)
                 remaining_time：學生購買剩餘時數
+
+                新增 >>
+                lesson_booking_info_id:  預約的id
+                teacher_declared_start_time: xx:xx    老師宣稱的上課起時始間
+                teacher_declared_end_time: xx:xx    老師宣稱的上課結束始間
+                teacher_declared_time_in_minutes:  xx 老師宣稱的上課時數(分鐘)
+                student_confirmed_deadline:  學生的確認截止日(當天可) "xxxx-xx-xx"
+                remark: 加上課程被取消的理由或原因，如：【xxxx-xx-xx xx:xx 老師1號取消】，若無取消則為null
+                is_teacher_given_feedback: (布林值: 老師送出時數後，老師是否有針對該課程給出評價；若未送出時數則為null)
+                is_student_given_feedback: (布林值: 老師送出時數後，學生是否有針對該課程給出評價；若未送出時數則為null)
             }
         ]
     }
