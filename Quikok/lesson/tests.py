@@ -3592,9 +3592,14 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         self.assertIn(f'"teacher_declared_end_time": ""', str(response.content, "utf8"))
         self.assertIn(f'"teacher_declared_time_in_minutes": ""', str(response.content, "utf8"))
         self.assertIn(f'"student_confirmed_deadline": ""', str(response.content, "utf8"))
-        self.assertIn(f'"remark": "{date_function.today()} 老師婉拒預約"', str(response.content, "utf8"))
+        self.assertIn(f'"remark": "{date_function.today()}', str(response.content, "utf8"))
+        self.assertEqual(
+            f'{date_function.today()} 老師婉拒預約',
+            lesson_booking_info.objects.get(booking_date_and_time = f'{self.available_date_3}:1,2,3;').remark,
+            lesson_booking_info.objects.values())
         self.assertIn(f'"is_teacher_given_feedback": null', str(response.content, "utf8"))
         self.assertIn(f'"is_student_given_feedback": null', str(response.content, "utf8"))
+        
 
 
 class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
