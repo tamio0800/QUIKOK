@@ -1,5 +1,5 @@
 from account.models import teacher_profile, favorite_lessons
-from lesson.models import lesson_info, lesson_reviews, lesson_card
+from lesson.models import lesson_info, lesson_card, lesson_reviews_from_students
 from django.contrib.auth.models import User
 from django.core.files.storage import FileSystemStorage
 from django.db.models import Avg, Sum
@@ -504,12 +504,12 @@ class lesson_card_manager:
         # 當課程建立或是修改時，同步編修課程小卡資料
         #print("Activate setup_a_lesson_card!!!!")
         from account.models import teacher_profile
-        from lesson.models import lesson_info, lesson_reviews, lesson_card
+        from lesson.models import lesson_info, lesson_reviews_from_students, lesson_card
         
         try:
             teacher_object = teacher_profile.objects.filter(auth_id = kwargs['teacher_auth_id']).first()
             lesson_object = lesson_info.objects.filter(id = kwargs['corresponding_lesson_id']).first()
-            review_objects = lesson_reviews.objects.filter(corresponding_lesson_id = kwargs['corresponding_lesson_id'])
+            review_objects = lesson_reviews_from_students.objects.filter(corresponding_lesson_id = kwargs['corresponding_lesson_id'])
             # 先取得課程本身的資訊
             self.lesson_card_info['corresponding_lesson_id'] =  kwargs['corresponding_lesson_id']
             self.lesson_card_info['big_title'] =  lesson_object.big_title

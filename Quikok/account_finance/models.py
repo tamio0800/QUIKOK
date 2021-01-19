@@ -3,6 +3,7 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver,Signal
 from account_finance.email_sending import email_manager
 
+
 # 學生購買紀錄
 class student_purchase_record(models.Model):
     student_auth_id = models.IntegerField()
@@ -33,6 +34,7 @@ class student_purchase_record(models.Model):
     class Meta:
         verbose_name = '學生購買紀錄'
         verbose_name_plural = '學生購買紀錄'
+
 
 # 學生退款紀錄
 class student_refund(models.Model):
@@ -137,6 +139,7 @@ class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
         verbose_name = '學生課程方案剩餘時數'
         verbose_name_plural = '學生課程方案剩餘時數'
 
+
 class student_remaining_minutes_when_request_refund_each_purchased_lesson_set(models.Model):
     '''
     時間轉Q幣用。
@@ -163,7 +166,7 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
         pass  # 建立新資料不需要做什麼事情
     else:
         previous = student_purchase_record.objects.get(id=instance.id)
-        if previous.payment_status == 'unpaid' and instance.payment_status == 'paid' :
+        if previous.payment_status == 'reconciliation' and instance.payment_status == 'paid' :
             from lesson.models import lesson_sales_sets
             # 代表確認付完款了
             # 現在要看看究竟買了多少時數

@@ -129,21 +129,50 @@ class lesson_card(models.Model):
         return self.lesson_id'''
         
 
-class lesson_reviews(models.Model):
+class lesson_reviews_from_students(models.Model):
+    '''
+    這個是讓學生在課後給評價的 TABLE
+    '''
     corresponding_lesson_id = models.IntegerField()  # 所對應的課程id
-    student_auth_id = models.IntegerField()
-    teacher_auth_id = models.IntegerField()
-    score_given = models.IntegerField() # 評分介於1~5分
-    remark_given = models.TextField(blank=True, null=True)
-    picture_folder = models.TextField # 加上真的有上課的圖以資證明（學蝦皮
+    corresponding_lesson_booking_info_id = models.IntegerField()  # 所對應的課程預約id
+    student_auth_id = models.IntegerField()  # 上課學生的auth_id，也是留下評論的人
+    teacher_auth_id = models.IntegerField()  # 上課老師的auth_id，是此次被評論的對象
+    score_given = models.IntegerField(blank=True, null=True) # 對於本次課程綜合的評分，介於1~5分之間
+    is_teacher_late_for_lesson = models.BooleanField(blank=True, null=True) # 老師是否有遲到
+    is_teacher_being_frivolous_in_lesson = models.BooleanField(blank=True, null=True) # 老師是否不認真教學
+    is_teacher_incapabale = models.BooleanField(blank=True, null=True) # 老師是否不勝任這門課、教太廢
+    remark_given = models.TextField(blank=True, null=True)  # 這個是評語
+    # picture_folder = models.TextField() # 加上真的有上課的圖以資證明（學蝦皮
     created_time = models.DateTimeField(auto_now_add=True)
-    edited_time = models.DateTimeField(auto_now=True)
     def __str__(self):
         return str(self.id)
 
     class Meta:
-        verbose_name = '課程評價'
-        verbose_name_plural = '課程評價'
+        verbose_name = '學生對課程評價'
+        verbose_name_plural = '學生對課程評價'
+
+
+class student_reviews_from_teachers(models.Model):
+    '''
+    這個是讓老師在課後給評價的 TABLE
+    '''
+    corresponding_lesson_id = models.IntegerField()  # 所對應的課程id
+    corresponding_lesson_booking_info_id = models.IntegerField()  # 所對應的課程預約id
+    student_auth_id = models.IntegerField()  # 上課學生的auth_id，是此次被評論的對象
+    teacher_auth_id = models.IntegerField()  # 上課老師的auth_id，是留下評論的人
+    score_given = models.IntegerField(blank=True, null=True) # 對於本次課程的綜合評分，介於1~5分之間
+    is_student_late_for_lesson = models.BooleanField(blank=True, null=True) # 學生是否有遲到
+    is_student_being_frivolous_in_lesson = models.BooleanField(blank=True, null=True) # 學生是否不認真
+    is_student_or_parents_not_friendly = models.BooleanField(blank=True, null=True) # 學生或家長是否不友善
+    remark_given = models.TextField(blank=True, null=True)  # 這個是評語
+    # picture_folder = models.TextField() # 加上真的有上課的圖以資證明（學蝦皮
+    created_time = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return str(self.id)
+
+    class Meta:
+        verbose_name = '老師對學生評價'
+        verbose_name_plural = '老師對學生評價'
 
 
 class lesson_booking_info(models.Model): 
@@ -180,7 +209,13 @@ class lesson_booking_info(models.Model):
     booking_date_and_time = models.CharField(max_length=400)  
     # Example: 2020-08-21:1,2,3,4; 之類的
     booking_status = models.CharField(max_length = 20)  
-    # to_be_confirmed or confirmed or canceled
+    # to_be_confirmed  >>  發送預約，但是還未經對方確認 
+    # confirmed  >>  發送的預約已經被對方確認
+    # canceled  >>  預約被取消（無須對方同意）
+    # finished  >> 課程已經結束，並且雙方都確認時數，是真正的finished
+    #   下面還包含此兩者狀態
+    #       student_not_yet_confirmed >> 也包含在finished，代表學生尚未確認時數
+    #       quikok_dealing_for_student_disagreed >> 客服正在處理學生反應時數不正確
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
@@ -189,6 +224,7 @@ class lesson_booking_info(models.Model):
     class Meta:
         verbose_name = '課程預約資訊'
         verbose_name_plural = '課程預約資訊'
+
 
 # 上課與完課紀錄
 class lesson_completed_record(models.Model):
@@ -222,8 +258,6 @@ class lesson_completed_record(models.Model):
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
         return str(self.id)
-
-
 
     class Meta:
         verbose_name = '完課紀錄'
@@ -264,6 +298,7 @@ class lesson_sales_sets(models.Model):
     class Meta:
         verbose_name = '課程方案資訊'
         verbose_name_plural = '課程方案資訊'
+
 
 class lesson_info_for_users_not_signed_up(models.Model): 
     # 因為有一個先期導入版本，我們利用一個暫存的lesson_info先存放這些資訊，
