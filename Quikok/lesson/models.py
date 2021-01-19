@@ -218,6 +218,8 @@ class lesson_booking_info(models.Model):
     #   下面還包含此兩者狀態
     #       student_not_yet_confirmed >> 也包含在finished，代表學生尚未確認時數
     #       quikok_dealing_for_student_disagreed >> 客服正在處理學生反應時數不正確
+    remark = models.CharField(max_length=40, default='')
+    # 把課程預約的註記擺在這邊好了，直接從這裡call，而不是在搜尋歷史資料時及時產出  
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):

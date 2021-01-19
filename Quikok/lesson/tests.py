@@ -3436,8 +3436,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         }  # 預約 30min  >> 1門課
 
         self.client.post(
-            path='/api/lesson/bookingLessons/',
-            data=booking_post_data)  # 送出預約，此時老師應該有1則 待確認 預約訊息
+            path='/api/lesson/bookingLessons/', data=booking_post_data)  # 送出預約，此時老師應該有1則 待確認 預約訊息
 
         # 測試搜尋功能是否正常，只能搜尋學生姓名(暱稱)或課程title
         booking_history_post_data = {
@@ -3505,8 +3504,97 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         self.assertIn(f'"is_teacher_given_feedback": null', str(response.content, "utf8"))
         self.assertIn(f'"is_student_given_feedback": null', str(response.content, "utf8"))
 
+        # 接下來測試一下預約取消
+        purchase_post_data = {
+            'userID':student_profile.objects.first().auth_id,
+            'teacherID':teacher_profile.objects.first().auth_id,
+            'lessonID':lesson_info.objects.first().id,
+            'sales_set': '10:90',
+            'total_amount_of_the_sales_set': int(800*10*.9),
+            'q_discount':0}
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=1).auth_id,
+                teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
+                lesson_id = lesson_info.objects.get(id=1).id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = '10:90',
+                    is_open = True,
+                    lesson_id = lesson_info.objects.get(id=1).id
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        response = \
+            self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
 
+        the_purchase_object = \
+            student_purchase_record.objects.last()
+        the_purchase_object.payment_status = 'paid'
+        the_purchase_object.save()
+        # 理論上現在已經購買、付款完成了，所以 學生1應該有 600 min的可用時數
+
+        booking_post_data = {
+            'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_3}:1,2,3;{self.available_date_4}:1,3,4,5;'
+        }  # 預約 210 min  >> 3門課 123 1 345
+
+        self.client.post(
+            path='/api/lesson/bookingLessons/', data=booking_post_data)  # 送出預約，此時老師應該有3則 待確認 預約訊息
+        
+        # 接下來老師取消其中的 123 預約
+        change_booking_status_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'bookingID': lesson_booking_info.objects.get(
+                booking_date_and_time = f'{self.available_date_3}:1,2,3;').id,
+            'bookingStatus': 'canceled'}
+        response = \
+            self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=change_booking_status_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        # 並且確認 1 與 345 預約
+        change_booking_status_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'bookingID': lesson_booking_info.objects.get(
+                booking_date_and_time = f'{self.available_date_4}:1;').id,
+            'bookingStatus': 'confirmed'}
+        response = \
+            self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=change_booking_status_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        change_booking_status_post_data['bookingID'] = \
+            lesson_booking_info.objects.get(booking_date_and_time = f'{self.available_date_4}:3,4,5;').id
+        response = \
+            self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=change_booking_status_post_data)
+
+        # 測試課程取消後，能不能show出新參數的值，不搜尋關鍵字
+        booking_history_post_data = {
+            'userID': teacher_profile.objects.first().auth_id,
+            'searched_by': '',
+            'filtered_by': 'canceled',
+            'registered_from_date': '',
+            'registered_to_date': ''
+        }  # 測試看看不要加日期應該也ok  
+        response = self.client.post(
+            path='/api/lesson/getTeachersBookingHistory/', data=booking_history_post_data)
+        # 檢查新參數的值，因為目前沒有完課紀錄，所以完課相關回傳的字串應為空字串，布林值則為None
+        
+        self.assertEquals(1, str(response.content, "utf8").count(f'"success"'),
+            str(response.content, "utf8"))  # 應該只回傳一個 預約訊息
+        self.assertIn(f'"remaining_time": 390', str(response.content, "utf8"))  # 600 - 210 = 390
+        self.assertIn(f'"booked_status": "canceled"', str(response.content, "utf8"))
+        self.assertIn(f'"teacher_declared_start_time": ""', str(response.content, "utf8"))
+        self.assertIn(f'"teacher_declared_end_time": ""', str(response.content, "utf8"))
+        self.assertIn(f'"teacher_declared_time_in_minutes": ""', str(response.content, "utf8"))
+        self.assertIn(f'"student_confirmed_deadline": ""', str(response.content, "utf8"))
+        self.assertIn(f'"remark": "{date_function.today()} 老師婉拒預約"', str(response.content, "utf8"))
+        self.assertIn(f'"is_teacher_given_feedback": null', str(response.content, "utf8"))
+        self.assertIn(f'"is_student_given_feedback": null', str(response.content, "utf8"))
 
 
 class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
