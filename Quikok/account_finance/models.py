@@ -150,7 +150,7 @@ class student_remaining_minutes_when_request_refund_each_purchased_lesson_set(mo
     purchased_lesson_sales_sets_id = models.IntegerField(default=0)  # 對應的 lesson_sales_sets id    
     snapshot_available_remaining_minutes = models.IntegerField()  # 可動用的剩餘時數
     snapshot_withholding_minutes = models.IntegerField(default=0) # 預扣時數
-    available_minutes_turn_into_q_points = models.IntegerField(default=0)
+    available_minutes_turn_into_q_points = models.IntegerField(default=0) #時間轉Q幣的計算結果
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
 

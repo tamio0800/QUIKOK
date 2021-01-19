@@ -41,6 +41,7 @@ def storage_order(request):
                     set_obj = set_queryset.first()
                     if int(price) == set_obj.total_amount_of_the_sales_set:
                     # 學生欲使用Q幣折抵現金
+                        print('金額有一樣唷~')
                         if q_discount_amount != '0':
                             real_price = int(price) - int(q_discount_amount)
                             # 更新學生Q幣預扣餘額
@@ -56,11 +57,12 @@ def storage_order(request):
                                 student_obj.withholding_balance = int(q_discount_amount)
                             student_obj.save()
                         else:
+                            print('沒有用q幣~')
                             real_price = int(price)
 
                         teacher_obj = teacher_queryset.first()
                         lesson_obj = lesson_queryset.first()
-                        purchase_date = date_function.today()
+                        purchase_date = datetime.now()
                         payment_deadline = purchase_date + timedelta(days=6)
 
                         # 建立訂單
@@ -162,7 +164,7 @@ def student_order_history(request):
                 #買單堂課的時數為一個小時((嚴格來說是兩堂課
                 #    record_set_name = '單堂'
                 else:
-                    lesson_time = set_name.sales_set.split[0]
+                    lesson_time = set_name.sales_set.split(':')[0]
                     total_time = int(lesson_time)*60 # 小時轉成分鐘
                 #    lesson_discount = set_name.sales_set.split[1]
                 #    if '0' in lesson_discount: # 70 折-> 7折
@@ -172,14 +174,17 @@ def student_order_history(request):
                 # 如果這筆訂單還沒從unpaid改成paid, 剩餘時數的table也就還沒長出來
                 # 所以必須把分付款狀態來處理
                 if record.payment_status in ['paid','refunding','refunded', 'cancel_after_paid']:
+                    
                     remain_time_info = student_remaining_minutes_of_each_purchased_lesson_set.objects.get(student_purchase_record_id=record.id)
                     total_unconfirmed_time = total_time - remain_time_info.confirmed_consumed_minutes
                     available_remaining_minutes = remain_time_info.available_remaining_minutes
                 else:
+                    
                     available_remaining_minutes = ''
                     total_unconfirmed_time = ''
 
                 
+                print(available_remaining_minutes)
                 record_history = {
                 'purchase_recordID':record.id,
                 'payment_status':record.payment_status,
@@ -324,15 +329,15 @@ def student_edit_order(request):
                     else:
                         if remain_time.available_remaining_minutes > 0:
                             total_set_time = int(lesson_set.sales_set.split(':')[0])*60 # 小時轉分鐘
-                            set_dicount = int(lesson_set.sales_set.split(':')[1])/100
+                            #set_dicount = int(lesson_set.sales_set.split(':')[1])/100 # 折數
                             # 假設剩10分鐘,表示已用60-10= 50分鐘
                             time_had_used = total_set_time - remain_time.available_remaining_minutes
                             # 已用時間價值 = 已用分鐘*每分鐘價值(假設1小時60元,每分鐘 = 60/60元)
                             price_had_used = time_had_used * (lesson_set.price_per_hour/60)
                             price_had_used = math.ceil(price_had_used) # 無條件進位到整數
-                            # 付出總金額 - 已用時間價值
+                            # 退款金額= 付出總金額 - 已用時間價值
                             refund_price =  record.purchased_with_money - price_had_used
-                            
+                             
                             if refund_price > 0: # 有可能會小於0
                                 # 建立退費紀錄
                                 student_remaining_minutes_when_request_refund_each_purchased_lesson_set.objects.create(
