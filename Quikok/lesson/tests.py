@@ -3383,8 +3383,8 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         # 檢查新參數是否有成功帶進來
         self.assertEquals(1, str(response.content, "utf8").count(f'"lesson_booking_info_id": {1}')) 
         self.assertEquals(1, str(response.content, "utf8").count('"discount_price": "trial"')) 
-        self.assertEquals(1, str(response.content, "utf8").count(f'"teacher_decalred_start_time"')) 
-        self.assertEquals(1, str(response.content, "utf8").count(f'"teacher_decalred_end_time"'))
+        self.assertEquals(1, str(response.content, "utf8").count(f'"teacher_declared_start_time"')) 
+        self.assertEquals(1, str(response.content, "utf8").count(f'"teacher_declared_end_time"'))
         self.assertEquals(1, str(response.content, "utf8").count(f'"teacher_declared_time_in_minutes"'))
         self.assertEquals(1, str(response.content, "utf8").count(f'"student_confirmed_deadline"'))
         self.assertEquals(1, str(response.content, "utf8").count(f'"remark"'))
@@ -3392,9 +3392,10 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         self.assertEquals(1, str(response.content, "utf8").count(f'"is_student_given_feedback"'))
 
 
+
     # 等完課api做好後再回來繼續測試
-    def test_get_teacher_s_booking_history_new_arguments_are_right(self):
-        # 測試新的參數
+    def test_get_teacher_s_booking_history_new_arguments_values_are_right(self):
+        # 測試新的參數內容正確性
         purchase_post_data = {
             'userID':student_profile.objects.first().auth_id,
             'teacherID':teacher_profile.objects.first().auth_id,
@@ -3448,17 +3449,63 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         }  # 測試看看不要加日期應該也ok  
         response = self.client.post(
             path='/api/lesson/getTeachersBookingHistory/', data=booking_history_post_data)
-        # 檢查新參數是否有成功帶進來
-        self.assertEquals(1, str(response.content, "utf8").count(f'"lesson_booking_info_id": {1}'),
+        # 檢查新參數的值，因為目前沒有完課紀錄，所以完課相關回傳的字串應為空字串，布林值則為None
+        
+        self.assertEquals(1, str(response.content, "utf8").count(f'"booked_status": "to_be_confirmed"'),
+            str(response.content, "utf8"))
+        self.assertEquals(1, str(response.content, "utf8").count(f'"teacher_declared_start_time": ""'),
             str(response.content, "utf8")) 
-        self.assertEquals(1, str(response.content, "utf8").count('"discount_price": "trial"')) 
-        self.assertEquals(1, str(response.content, "utf8").count(f'"teacher_decalred_start_time"')) 
-        self.assertEquals(1, str(response.content, "utf8").count(f'"teacher_decalred_end_time"'))
-        self.assertEquals(1, str(response.content, "utf8").count(f'"teacher_declared_time_in_minutes"'))
-        self.assertEquals(1, str(response.content, "utf8").count(f'"student_confirmed_deadline"'))
-        self.assertEquals(1, str(response.content, "utf8").count(f'"remark"'))
-        self.assertEquals(1, str(response.content, "utf8").count(f'"is_teacher_given_feedback"'))
-        self.assertEquals(1, str(response.content, "utf8").count(f'"is_student_given_feedback"'))
+        self.assertEquals(1, str(response.content, "utf8").count(f'"teacher_declared_end_time": ""'),
+            str(response.content, "utf8")) 
+        self.assertEquals(1, str(response.content, "utf8").count(f'"teacher_declared_time_in_minutes": ""'),
+            str(response.content, "utf8")) 
+        self.assertEquals(1, str(response.content, "utf8").count(f'"student_confirmed_deadline": ""'),
+            str(response.content, "utf8")) 
+        self.assertEquals(1, str(response.content, "utf8").count(f'"remark": ""'),
+            str(response.content, "utf8")) 
+        self.assertEquals(1, str(response.content, "utf8").count(f'"is_teacher_given_feedback": null'),
+            str(response.content, "utf8")) 
+        self.assertEquals(1, str(response.content, "utf8").count(f'"is_student_given_feedback": null'),
+            str(response.content, "utf8"))
+
+        # 接下來來完課一下，看看值會不會產生變化，記得老師要先確認預約唷
+        # 讓老師確認學生的預約
+        change_booking_status_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'bookingID': 1,
+            'bookingStatus': 'confirmed'}
+        response = \
+            self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=change_booking_status_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+
+        # 接下來來完課
+        start_time, end_time = datetime(2021, 1, 19, 20, 50), datetime(2021, 1, 19, 22, 40)
+        noti_post_data = {
+                'userID': teacher_profile.objects.get(id=1).auth_id,
+                'lesson_booking_info_id': 1,
+                'lesson_date': '2021-01-01',
+                'start_time': start_time.strftime("%H:%M"),
+                'end_time': end_time.strftime("%H:%M"),
+                'time_interval_in_minutes': int((end_time - start_time).seconds / 60)
+        }
+        response = \
+            self.client.post(path='/api/lesson/lessonCompletedNotificationFromTeacher/', data=noti_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+
+        booking_history_post_data['filtered_by'] = '' # 這次不加條件，應該所有紀錄都會出來
+        response = self.client.post(
+            path='/api/lesson/getTeachersBookingHistory/', data=booking_history_post_data)
+        # 檢查新參數的值，因為目前只有老師確認完課，所以完課學生相關回傳的字串應為空字串，布林值則為None，其他都有值
+        self.assertIn(f'"booked_status": "student_not_yet_confirmed"', str(response.content, "utf8"))
+        self.assertIn(f'"teacher_declared_start_time": "12:50"', str(response.content, "utf8"))  # 要減掉 8 hr
+        self.assertIn(f'"teacher_declared_end_time": "14:40"', str(response.content, "utf8"))  # 要減掉 8 hr
+        self.assertIn(f'"teacher_declared_time_in_minutes": {int((end_time - start_time).seconds / 60)}', str(response.content, "utf8"))
+        self.assertIn(f'"student_confirmed_deadline": "{date_function.today() + timedelta(days=3)}"', str(response.content, "utf8"))
+        self.assertIn(f'"remark": ""', str(response.content, "utf8"))
+        self.assertIn(f'"is_teacher_given_feedback": null', str(response.content, "utf8"))
+        self.assertIn(f'"is_student_given_feedback": null', str(response.content, "utf8"))
+
+
 
 
 

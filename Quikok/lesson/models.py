@@ -1,6 +1,8 @@
 from django.db import models
 from account.models import teacher_profile, student_profile
 from datetime import timedelta, date as date_function
+from django.db.models.signals import pre_save, post_save
+from django.dispatch import receiver
 
 class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的東西填入
     # 每堂課程會有自己的unique id，我們用這個來辨識、串連課程 09/25 討論後認為先用內建的id就好
@@ -348,3 +350,17 @@ class lesson_info_for_users_not_signed_up(models.Model):
         # 理論上一個老師在這張table只會有一個row的資料，所以這樣寫比較好看
 
 
+
+@receiver(post_save, sender=lesson_completed_record)
+def when_lesson_completed_notification_sent_by_teacher(sender, instance:lesson_completed_record, created, **kwargs):
+    # 代表建立了新資料，此時必須要回去將對應的課程預約狀態 booked_status 改成等待學生確認中
+    if created:
+        # 只有建立新資料才要進行這個動作
+        lesson_booking_object = lesson_booking_info.objects.get(id = instance.lesson_booking_info_id)
+        # print(f"when_lesson_completed_notification_sent_by_teacher1 {lesson_booking_info.objects.values()}")
+
+        lesson_booking_object.booking_status = 'student_not_yet_confirmed'
+        lesson_booking_object.last_changed_by = 'teacher'  # 因為 因老師而改變此則預約的狀態
+        lesson_booking_object.save()
+        # print(f"when_lesson_completed_notification_sent_by_teacher2 {lesson_booking_info.objects.values()}")
+        

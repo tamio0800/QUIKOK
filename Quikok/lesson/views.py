@@ -1727,8 +1727,8 @@ def get_teacher_s_booking_history(request):
 
                 新增 >>
                 lesson_booking_info_id:  預約的id  DONE
-                teacher_decalred_start_time: xx:xx    老師宣稱的上課起時始間  DONE
-                teacher_decalred_end_time: xx:xx    老師宣稱的上課結束始間  DONE
+                teacher_declared_start_time: xx:xx    老師宣稱的上課起時始間  DONE
+                teacher_declared_end_time: xx:xx    老師宣稱的上課結束始間  DONE
                 teacher_declared_time_in_minutes:  xx 老師宣稱的上課時數(分鐘)
                 student_confirmed_deadline:  學生的確認截止日(當天可) "xxxx-xx-xx"
                 remark: 加上課程被取消的理由或原因，如：【xxxx-xx-xx xx:xx 老師1號取消】，若無取消則為null
@@ -1834,8 +1834,8 @@ def get_teacher_s_booking_history(request):
                         
                         if corr_lesson_completed_record_object is None:
                             # 這門課還沒有完課的紀錄
-                            teacher_decalred_start_time = ''
-                            teacher_decalred_end_time = ''
+                            teacher_declared_start_time = ''
+                            teacher_declared_end_time = ''
                             teacher_declared_time_in_minutes = ''
                             student_confirmed_deadline = ''
                             remark = ''
@@ -1843,10 +1843,10 @@ def get_teacher_s_booking_history(request):
                             is_student_given_feedback = None
                         else:
                             # 這門課已完課
-                            teacher_decalred_start_time = \
+                            teacher_declared_start_time = \
                                 corr_lesson_completed_record_object.teacher_declared_start_time.strftime("%H:%M")
-                            teacher_decalred_end_time = \
-                                corr_lesson_completed_record_object.teacher_decalred_end_time.strftime("%H:%M")
+                            teacher_declared_end_time = \
+                                corr_lesson_completed_record_object.teacher_declared_end_time.strftime("%H:%M")
                             teacher_declared_time_in_minutes = \
                                 corr_lesson_completed_record_object.teacher_declared_time_in_minutes
                             student_confirmed_deadline = \
@@ -1869,8 +1869,8 @@ def get_teacher_s_booking_history(request):
                                     lesson_sales_sets.objects.get(id=each_booking_info_object.booking_set_id).sales_set,
                                 'remaining_time': each_booking_info_object.remaining_minutes,
                                 'lesson_booking_info_id': each_booking_info_object.id,
-                                'teacher_decalred_start_time': teacher_decalred_start_time,
-                                'teacher_decalred_end_time': teacher_decalred_end_time,
+                                'teacher_declared_start_time': teacher_declared_start_time,
+                                'teacher_declared_end_time': teacher_declared_end_time,
                                 'teacher_declared_time_in_minutes': teacher_declared_time_in_minutes,
                                 'student_confirmed_deadline': student_confirmed_deadline,
                                 'remark': remark,  # 這個是要寫課程被取消的理由或原因，如：
@@ -1931,8 +1931,8 @@ def get_teacher_s_booking_history(request):
                         
                         if corr_lesson_completed_record_object is None:
                             # 這門課還沒有完課的紀錄
-                            teacher_decalred_start_time = ''
-                            teacher_decalred_end_time = ''
+                            teacher_declared_start_time = ''
+                            teacher_declared_end_time = ''
                             teacher_declared_time_in_minutes = ''
                             student_confirmed_deadline = ''
                             remark = ''
@@ -1940,10 +1940,10 @@ def get_teacher_s_booking_history(request):
                             is_student_given_feedback = None
                         else:
                             # 這門課已完課
-                            teacher_decalred_start_time = \
+                            teacher_declared_start_time = \
                                 corr_lesson_completed_record_object.teacher_declared_start_time.strftime("%H:%M")
-                            teacher_decalred_end_time = \
-                                corr_lesson_completed_record_object.teacher_decalred_end_time.strftime("%H:%M")
+                            teacher_declared_end_time = \
+                                corr_lesson_completed_record_object.teacher_declared_end_time.strftime("%H:%M")
                             teacher_declared_time_in_minutes = \
                                 corr_lesson_completed_record_object.teacher_declared_time_in_minutes
                             student_confirmed_deadline = \
@@ -1966,8 +1966,8 @@ def get_teacher_s_booking_history(request):
                                     lesson_sales_sets.objects.get(id=each_booking_info_object.booking_set_id).sales_set,
                                 'remaining_time': each_booking_info_object.remaining_minutes,
                                 'lesson_booking_info_id': each_booking_info_object.id,
-                                'teacher_decalred_start_time': teacher_decalred_start_time,
-                                'teacher_decalred_end_time': teacher_decalred_end_time,
+                                'teacher_declared_start_time': teacher_declared_start_time,
+                                'teacher_declared_end_time': teacher_declared_end_time,
                                 'teacher_declared_time_in_minutes': teacher_declared_time_in_minutes,
                                 'student_confirmed_deadline': student_confirmed_deadline,
                                 'remark': remark,  # 這個是要寫課程被取消的理由或原因，如：

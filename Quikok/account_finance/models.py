@@ -1,6 +1,6 @@
 from django.db import models
 from django.db.models.signals import pre_save
-from django.dispatch import receiver,Signal
+from django.dispatch import receiver
 from account_finance.email_sending import email_manager
 
 
