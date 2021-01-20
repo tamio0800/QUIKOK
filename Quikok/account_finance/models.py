@@ -83,7 +83,7 @@ class teacher_refund(models.Model):
 
 class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
     student_purchase_record_id = models.IntegerField(default=0)
-    lesson_booking_info_ids = models.CharField(default='', max_length=20)
+    # lesson_booking_info_ids = models.CharField(default='', max_length=20)
     # 對應的 lesson_booking_info id 們
     # 之所以 default = '' ，因為這樣子在我先前寫的測試中(不會用到這個欄位)就不會有一大堆衝突了QQ
     # 下面 copy 寫在 lesson_booking_info 那邊的註釋

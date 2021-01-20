@@ -182,7 +182,7 @@ class lesson_booking_info(models.Model):
     # student_remaining_minutes_of_each_purchased_lesson_set_id= models.IntegerField()
     # 對應的訂單所剩的時數
     lesson_id = models.IntegerField()  # 對應的課程id
-    student_remaining_minutes_of_each_purchased_lesson_set_ids = models.CharField(default='', max_length=20)
+    # student_remaining_minutes_of_each_purchased_lesson_set_ids = models.CharField(default='', max_length=20)
     # 對應的 student_remaining_minutes_of_each_purchased_lesson_set id 們
     # 之所以 default = '' ，因為這樣子在我先前寫的測試中(不會用到這個欄位)就不會有一大堆衝突了QQ
     # 因為一則購買的方案可以用來做很多預約（多對一），
