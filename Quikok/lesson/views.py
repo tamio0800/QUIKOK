@@ -30,6 +30,24 @@ from handy_functions import turn_current_time_into_time_interval
 from datetime import date as date_function
 
 
+def charge_time(student_auth_id, lesson_id, lesson_booking_id, is_trial, charge_minutes):
+    '''
+    這個函式用來進行確認扣除時數的動作，如學生確認完課或是經由客服確認最終上課時數後，
+    只需要給它上述的參數:
+        student_auth_id:    學生的auth_id           (int)
+        lesson_id:          該課程的id              (int)
+        lesson_booking_id   該預約的id              (int)
+        is_trial            是否為試教課程           (bool)
+        charge_minutes      最終確認的上課分鐘數      (int)
+    就可以自動進行將withholding中的時數，正確轉移到consumed去，並補足不足的時數，或退回多餘的時數。
+
+    因為這個函式不會單獨被執行，一定是鑲嵌在某個API底下，因此可以不用針對object是否存在做確認。
+    '''
+    pass
+
+
+
+
 @login_required
 def lessons_main_page(request):
     title = '開課! Quikok - 課程主頁'
@@ -1272,8 +1290,9 @@ def booking_lessons(request):
                                 student_auth_id=student_auth_id
                             ).exclude(
                                 available_remaining_minutes=0
-                            ).order_by('available_remaining_minutes')
-                        # 按照剩餘時數，由小到大排序，因為比較少的要先用掉
+                            ).order_by('created_time')
+                        # 按照剩餘時數，由小到大排序，因為比較少的要先用掉  >> WRONG 2021.01.21
+                        # 要按照時間排序，先進先出才對
 
                         how_many_does_this_booking_minutes_leave = this_booking_minutes
 
@@ -2530,12 +2549,50 @@ def lesson_completed_confirmation_from_student(request):
                 # 再來 update 完結 TABLE
                 lesson_completed_object.is_student_confirmed = True
                 lesson_completed_object.save()
-                # 之後還有時數要從remaining那邊扣掉的環節，暫時先不管
-                
-                response['status'] = 'success'
-                response['errCode'] = None
-                response['errMsg'] = None
-                response['data'] = None
+                # 之後還有時數要從remaining那邊扣掉的環節，暫時先不管  >>  現在要來處理了!
+
+                # 先依照是不是試教，來進行開發，因為試教比較簡單，不管時數剛好、超過、或過少，都直接扣掉就是了
+                if lesson_sales_sets.objects.get(id=booking_object.booking_set_id).sales_set == 'trial':
+                    # 是試教
+                    student_remaining_object = \
+                        student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                            student_auth_id = student_auth_id,
+                            teacher_auth_id = booking_object.teacher_auth_id,
+                            lesson_sales_set_id = booking_object.booking_set_id).first()
+                    
+                    if not student_remaining_object is None:
+                        # 有找到對應的 student_remaining_object ，理論上不該找不到
+                        student_remaining_object.withholding_minutes -= 30
+                        student_remaining_object.confirmed_consumed_minutes += 30
+                        student_remaining_object.save()
+                        response['status'] = 'success'
+                        response['errCode'] = None
+                        response['errMsg'] = None
+                        response['data'] = None
+                    else:
+                        # 找不到對應的 student_remaining_object ，雖然不知道為甚麼會這樣
+                        response['status'] = 'failed'
+                        response['errCode'] = '3'
+                        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                        response['data'] = None
+
+# 先開發 老師宣稱的時數 == 當初預定的課堂時數
+#if lesson_completed_object.teacher_declared_time_in_minutes == lesson_completed_object.booking_time_in_minutes:
+    # 最簡單的情境，只要把對應的 remaining_object 中 對應的 withholding 移到 consumed 就好了
+    # 所以要找到對應的 remaining_object"s"，與要扣多少
+ #   student_remaining_objects = \
+  #      student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+   #         student_auth_id = student_auth_id,
+    #        teacher_auth_id = booking_object.teacher_auth_id,
+     #       lesson_id = booking_object.lesson_id
+      #  )
+
+                else:
+                    # 不是試教
+                    response['status'] = 'success'
+                    response['errCode'] = None
+                    response['errMsg'] = None
+                    response['data'] = None
 
             elif action == 'disagree':
                 # 學生對老師聲稱的時數有意見，先 update 預約 TABLE
