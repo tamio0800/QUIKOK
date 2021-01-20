@@ -5302,6 +5302,12 @@ class CLASS_FINISHED_TEST(TestCase):
         )
 
 
+    def test_if_withholding_times_updated_after_lesson_completed(self):
+        '''
+        這個用來測試當課程確認結束後，假設時間如預約時間，學生的時數會不會正確被更新。
+        '''
+        pass
+
         
 
 
