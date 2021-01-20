@@ -346,8 +346,7 @@ class test_finance_functions(TestCase):
         self.assertEqual(
             student_purchase_record.objects.get(id=1).payment_status,
             'unpaid',
-            student_purchase_record.objects.values()
-        )  # 目前應該是未付款的狀態
+            student_purchase_record.objects.values())  # 目前應該是未付款的狀態
 
         student_edit_booking_status_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,
@@ -536,7 +535,7 @@ class test_finance_functions(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-@skip
+
 class test_student_purchase_payment_status(TestCase):
     #def query_order_info_status1_unpaid(self):
     def setUp(self):
@@ -728,7 +727,21 @@ class test_student_purchase_payment_status(TestCase):
         check update payment_status改成對帳中reconciliation, 且有存入銀行5碼,並有寄信給edony
         '''
         mail.outbox = [] # 清空前幾段test暫存記憶裡的信
-        data = {
+        obj_amount = student_purchase_record.objects.all().count()
+        # 建立訂單
+        purchase_data = {
+            'userID':2,
+            'teacherID':1, 'lessonID':1,
+            'sales_set': 'trial',#,'30:70''no_discount'
+            'total_amount_of_the_sales_set':self.lesson_post_data['trial_class_price'],
+            'q_discount': 0}
+        response = self.client.post(path= '/api/account_finance/storageOrder/', 
+                                    data= purchase_data)
+        # 確認有新建訂單
+        self.assertEqual(student_purchase_record.objects.all().count(), obj_amount+1)
+        mail.outbox = [] # 清空建立訂單時通知學生要匯款的那封email
+        # 模擬學生填入銀行五碼
+        update_data = {
             'userID':'2',
             'token':'1',
             'type':'1',
@@ -736,7 +749,7 @@ class test_student_purchase_payment_status(TestCase):
             'status_update': '0', # 0-付款完成/1-申請退款/2-申請取消
             'part_of_bank_account_code': '11111'
         }
-        response = self.client.post(path='/api/account_finance/studentEditOrder/', data=data)
+        response = self.client.post(path='/api/account_finance/studentEditOrder/', data=update_data)
         record = student_purchase_record.objects.get(id = 1)
 
         #self.assertEqual(student_purchase_record.objects.all().count() , 8)
