@@ -17,7 +17,7 @@ from datetime import datetime, timedelta, date as date_function
 import math
 #python3 manage.py test account_finance/ --settings=Quikok.settings_for_test
 
-@skip
+
 class test_finance_functions(TestCase):
     def setUp(self):
         self.client =  Client()        
@@ -286,6 +286,24 @@ class test_finance_functions(TestCase):
             student_purchase_record.objects.values()
         )  # 目前應該是未付款的狀態
 
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=1).auth_id,
+                teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
+                lesson_id = lesson_info.objects.get(id=1).id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = lesson_set,
+                    is_open = True,
+                    lesson_id = lesson_info.objects.get(id=1).id
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+
         # 如果我們將它設定為已付款，理論上應該會連動更新學生的 student_remaining_minutes_of_each_purchased_lesson_set
         the_student_purchase_record_object = \
             student_purchase_record.objects.get(id=1)
@@ -330,6 +348,24 @@ class test_finance_functions(TestCase):
             'unpaid',
             student_purchase_record.objects.values()
         )  # 目前應該是未付款的狀態
+
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=1).auth_id,
+                teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
+                lesson_id = lesson_info.objects.get(id=1).id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = lesson_set,
+                    is_open = True,
+                    lesson_id = lesson_info.objects.get(id=1).id
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
 
         # 如果我們將它設定為已付款，理論上應該會連動更新學生的 student_remaining_minutes_of_each_purchased_lesson_set
         the_student_purchase_record_object = \
@@ -376,12 +412,30 @@ class test_finance_functions(TestCase):
             student_purchase_record.objects.values()
         )  # 目前應該是未付款的狀態
 
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(
+                student_auth_id = student_profile.objects.get(id=1).auth_id,
+                teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
+                lesson_id = lesson_info.objects.get(id=1).id,
+                lesson_sales_set_id = lesson_sales_sets.objects.get(
+                    sales_set = lesson_set,
+                    is_open = True,
+                    lesson_id = lesson_info.objects.get(id=1).id
+                ).id
+            ).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+
         # 如果我們將它設定為已付款，理論上應該會連動更新學生的 student_remaining_minutes_of_each_purchased_lesson_set
         the_student_purchase_record_object = \
             student_purchase_record.objects.get(id=1)
         the_student_purchase_record_object.payment_status = 'paid'
         the_student_purchase_record_object.save()
-
+        
         self.assertEqual(
             student_purchase_record.objects.get(id=1).payment_status,
             'paid',
