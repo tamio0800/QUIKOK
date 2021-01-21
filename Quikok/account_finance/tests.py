@@ -130,6 +130,19 @@ class test_finance_functions(TestCase):
                 'data': 1 # 建立1號訂單
             })
     
+    def test_storege_order_check_if_Q_point_is_enough(self):
+        '''如果學生使用q幣抵扣學費,要檢查他確實有該筆q幣'''
+        # 建立一筆訂單,使用超過該學生有的Q幣
+        student_authID = student_profile.objects.get(id=2).auth_id
+        # 用2號訂單才做測試
+        data = {'userID': student_authID,
+        'teacherID':1,
+        'lessonID':1,
+        'sales_set': 'trial',#,'no_discount','30:70']
+        'total_amount_of_the_sales_set': 69,
+        'q_discount':200} # 要用200q幣折抵
+        
+
     def test_storege_order_student_use_Qcoin_with_no_withholding_balance(self):
         '''
         如果學生使用Q幣, 那送出訂單後使用的Q更新到他的profile中的withholding_balance_change.

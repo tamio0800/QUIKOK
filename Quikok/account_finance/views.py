@@ -173,13 +173,19 @@ def student_order_history(request):
                 
                 # 如果這筆訂單還沒從reconciliation改成paid, 剩餘時數的table也就還沒長出來
                 # 所以必須把分付款狀態來處理
-                if record.payment_status in ['paid','refunding','refunded', 'cancel_after_paid']:
+                if record.payment_status in ['paid','refunded', 'cancel_after_paid']:
                     
                     remain_time_info = student_remaining_minutes_of_each_purchased_lesson_set.objects.get(student_purchase_record_id=record.id)
                     total_non_confirmed_minutes = total_time - remain_time_info.confirmed_consumed_minutes
                     available_remaining_minutes = remain_time_info.available_remaining_minutes
+                    # 回傳退款金額
+                    if record.payment_status in ['refunded', 'cancel_after_paid']:
+                        refunded_price = student_remaining_minutes_when_request_refund_each_purchased_lesson_set.objects.get(
+                            student_purchase_record_id=record.id).available_minutes_turn_into_q_points
+                    else:
+                        refunded_price = ''
                 else:
-                    
+                    refunded_price = ''
                     available_remaining_minutes = ''
                     total_non_confirmed_minutes = ''
 
@@ -188,6 +194,7 @@ def student_order_history(request):
                 record_history = {
                 'purchase_recordID':record.id,
                 'payment_status':record.payment_status,
+                'refunded_price':refunded_price,
                 'purchase_date':record.purchase_date,
                 'teacher_authID':record.teacher_auth_id,
                 'teacher_nickname': record.teacher_nickname,
