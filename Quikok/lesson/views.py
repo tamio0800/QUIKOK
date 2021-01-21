@@ -2569,6 +2569,7 @@ def lesson_completed_confirmation_from_student(request):
                         response['errCode'] = None
                         response['errMsg'] = None
                         response['data'] = None
+                    
                     else:
                         # 找不到對應的 student_remaining_object ，雖然不知道為甚麼會這樣
                         response['status'] = 'failed'
@@ -2576,23 +2577,66 @@ def lesson_completed_confirmation_from_student(request):
                         response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
                         response['data'] = None
 
-# 先開發 老師宣稱的時數 == 當初預定的課堂時數
-#if lesson_completed_object.teacher_declared_time_in_minutes == lesson_completed_object.booking_time_in_minutes:
-    # 最簡單的情境，只要把對應的 remaining_object 中 對應的 withholding 移到 consumed 就好了
-    # 所以要找到對應的 remaining_object"s"，與要扣多少
- #   student_remaining_objects = \
-  #      student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
-   #         student_auth_id = student_auth_id,
-    #        teacher_auth_id = booking_object.teacher_auth_id,
-     #       lesson_id = booking_object.lesson_id
-      #  )
-
                 else:
-                    # 不是試教
-                    response['status'] = 'success'
-                    response['errCode'] = None
-                    response['errMsg'] = None
-                    response['data'] = None
+                    # 接下來做 非試教 的部份，因為像 10:90、20:80 這種跟 no_discount 的處理方式是一樣的，
+                    # 所以就傪在一起處理了
+                    # 要排除 試教 購買方案，所以必須要抓出該門課所有的試教 sets 加以排除
+                    # 另外也要排除 available == 0 AND withholding == 0 的購買方案們，
+                    # 因為也沒有辦法從它們身上扣東西
+                    
+                    all_trial_set_ids_of_the_lesson = \
+                        lesson_sales_sets.objects.values_list('id', flat=True).filter(
+                            lesson_id = booking_object.lesson_id,
+                            sales_set = 'trial')
+
+                    student_remaining_objects = \
+                        student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                            student_auth_id = student_auth_id,
+                            lesson_id = booking_object.lesson_id).exclude(
+                                Q(lesson_sales_set_id__in = all_trial_set_ids_of_the_lesson) |  # 排除試教方案
+                                (Q(available_remaining_minutes=0) & Q(withholding_minutes=0))  # 排除兩者皆為0
+                            ).order_by('created_time')  # 依照時間排序，先進先出
+                    
+                    # 先處理 老師宣稱的時數 == 當初預定的課堂時數
+                    if lesson_completed_object.teacher_declared_time_in_minutes == lesson_completed_object.booking_time_in_minutes:
+                        # 最簡單的情境，只要把對應的 remaining_object 中 對應的 withholding 移到 consumed 就好了
+                        # 究竟要扣多少時數 >> lesson_completed_object.teacher_declared_time_in_minutes
+                        how_many_minutes_does_it_left = lesson_completed_object.teacher_declared_time_in_minutes
+                        # 還需要扣多少時間
+                        
+                        for each_student_remaining_object in student_remaining_objects:
+                            if each_student_remaining_object.withholding_minutes >= how_many_minutes_does_it_left:
+                                # 目前這個購買方案的時數>=需要扣掉的時數，所以直接扣掉就好了
+                                each_student_remaining_object.withholding_minutes -= how_many_minutes_does_it_left
+                                each_student_remaining_object.confirmed_consumed_minutes += how_many_minutes_does_it_left
+                                each_student_remaining_object.save()
+                                how_many_minutes_does_it_left = 0
+                                break
+                            else:
+                                # 目前這個購買方案的時數不足以完全扣除需要扣除的時數
+                                how_many_minutes_does_it_left -= each_student_remaining_object.withholding_minutes
+                                # 先扣掉能扣掉的部份
+                                # 移動到 confirmed_consumed_minutes 去
+                                each_student_remaining_object.confirmed_consumed_minutes += each_student_remaining_object.withholding_minutes
+                                each_student_remaining_object.withholding_minutes = 0
+                                each_student_remaining_object.save()
+                                # withholding_minutes歸零
+
+                        # 迴圈跑完就自動大功告成了
+                        response['status'] = 'success'
+                        response['errCode'] = None
+                        response['errMsg'] = None
+                        response['data'] = None
+
+                    else:
+                        # 老師宣稱的時數 != 當初預定的課堂時數
+
+                        response['status'] = 'success'
+                        response['errCode'] = None
+                        response['errMsg'] = None
+                        response['data'] = None
+
+                
 
             elif action == 'disagree':
                 # 學生對老師聲稱的時數有意見，先 update 預約 TABLE
