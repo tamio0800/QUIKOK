@@ -1,3 +1,4 @@
+from django.http import response
 from lesson.views import booking_lessons
 from django.test import RequestFactory, TestCase
 from django.test import Client
@@ -17,6 +18,7 @@ from lesson.models import lesson_booking_info
 from account_finance.models import student_purchase_record, student_remaining_minutes_of_each_purchased_lesson_set
 from datetime import datetime, timedelta, timezone, date as date_function
 from account_finance.models import student_owing_teacher_time
+from lesson.models import lesson_reviews_from_students, student_reviews_from_teachers
 
 
 # python manage.py test lesson/ --settings=Quikok.settings_for_test
@@ -6105,5 +6107,277 @@ class CLASS_FINISHED_TEST(TestCase):
             ),
             student_remaining_minutes_of_each_purchased_lesson_set.objects.values()
         )
+
+
+    def test_if_withholding_times_updated_after_common_lesson_completed_less_than_booking_time(self):
+        '''
+        這個用來測試當 一般 課程確認結束後，假設時間比預約時間來得更短，學生的時數會不會正確被更新。
+        '''
+        # 先購買 老師1 的 10:90
+        purchased_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'teacherID': teacher_profile.objects.get(id=1).auth_id,
+            'lessonID': lesson_info.objects.get(id=1).id,
+            'sales_set': '10:90',
+            'total_amount_of_the_sales_set': int(10*800*.9),
+            'q_discount': 0}
+        response = \
+            self.client.post(path='/api/account_finance/storageOrder/', data=purchased_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(id=1).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+        # 此時，學生通知我們她已經完成付款
+        purchase_obj = student_purchase_record.objects.get(id=1)
+        purchase_obj.payment_status = 'paid'
+        purchase_obj.save()
+        # 我們確認她付款了
+
+        # 接著讓學生進行預約
+        booking_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_1_t1}:0,1,2,3,4,5;'} 
+            # 預約了180分鐘  00:00 - 03:00
+        response = \
+            self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+
+        print(f'inner info {student_remaining_minutes_of_each_purchased_lesson_set.objects.values()}')
+
+        # 讓老師確認學生的預約
+        change_booking_status_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'bookingID': 1,
+            'bookingStatus': 'confirmed'}
+        response = \
+            self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=change_booking_status_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+
+        # 接著老師進行完課，完課時間比預期的少40分鐘，共計 140 分鐘
+        start_time = \
+            datetime(self.available_date_1_t1.year, self.available_date_1_t1.month, self.available_date_1_t1.day, 0, 0)
+        end_time = \
+            datetime(self.available_date_1_t1.year, self.available_date_1_t1.month, self.available_date_1_t1.day, 2, 20)
+
+        noti_post_data = {
+                'userID': teacher_profile.objects.get(id=1).auth_id,
+                'lesson_booking_info_id': 1,
+                'lesson_date': str(self.available_date_1_t1),
+                'start_time': start_time.strftime("%H:%M"),
+                'end_time': end_time.strftime("%H:%M"),
+                'time_interval_in_minutes': int((end_time - start_time).seconds / 60)
+        }  # 測試看看這個 api 能不能產出對應的 record 來
+
+        response = \
+            self.client.post(path='/api/lesson/lessonCompletedNotificationFromTeacher/', data=noti_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        # 測試一下此時該完課紀錄所對應的預約狀態應該是  student_not_yet_confirmed
+        self.assertEqual('student_not_yet_confirmed', lesson_booking_info.objects.get(id=1).booking_status)
+
+        # 此時，學生應該可以進行確認了
+        confirmation_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'lesson_booking_info_id': 1,
+            'action': 'agree'}
+        response = \
+            self.client.post(path='/api/lesson/lessonCompletedConfirmationFromStudent/', data=confirmation_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+
+        # 接下來測試學生的預扣時數是否有正確被扣除
+        self.assertEqual(
+            (
+                10 * 60 - 140,  # 可用時數應該為原先購買的時數減掉 140 分鐘
+                0,  # 預扣時數此時應該為 0 ，因為沒有其他的預約了
+                140  # 已消耗的時數
+            ),
+            (
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.get(
+                    student_auth_id = student_profile.objects.get(id=1).auth_id,
+                    student_purchase_record_id = 1,  # 因為只購買過一次而已
+                    lesson_id = 1
+                ).available_remaining_minutes,
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.get(
+                    student_auth_id = student_profile.objects.get(id=1).auth_id,
+                    student_purchase_record_id = 1,  # 因為只購買過一次而已
+                    lesson_id = 1
+                ).withholding_minutes,
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.get(
+                    student_auth_id = student_profile.objects.get(id=1).auth_id,
+                    student_purchase_record_id = 1,  # 因為只購買過一次而已
+                    lesson_id = 1
+                ).confirmed_consumed_minutes
+            ),
+            student_remaining_minutes_of_each_purchased_lesson_set.objects.values()
+        )
+
+
+class REVIEWS_TESTS(TestCase):
+    '''
+    測試評論功能是否正常運作
+    '''
+    def setUp(self):
+        self.client = Client()        
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+        self.test_teacher_name1 = 'test_teacher1_user@test.com'
+        teacher_post_data = {
+            'regEmail': self.test_teacher_name1,
+            'regPwd': '00000000',
+            'regName': 'test_name_1',
+            'regNickname': 'test_nickname_1',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;'
+        }
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        
+        self.test_teacher_name2 = 'test_teacher2_user@test.com'
+        teacher_post_data['regEmail'] = self.test_teacher_name2,
+        teacher_post_data['regName'] = 'test_name_2~~',
+        teacher_post_data['regNickname'] = 'test_nickname_2~~',
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        # 建了2個老師
+        
+        self.test_student_name1 = 'test_student1@a.com'
+        student_post_data = {
+            'regEmail': self.test_student_name1,
+            'regPwd': '00000000',
+            'regName': 'test_student_name',
+            'regBirth': '1990-12-25',
+            'regGender': 1,
+            'regRole': 'oneself',
+            'regMobile': '0900-111111',
+            'regNotifiemail': ''
+        }
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        self.test_student_name2 = 'test_student2@a.com'
+        student_post_data['regEmail'] = self.test_student_name2
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        self.test_student_name3 = 'test_student3@a.com'
+        student_post_data['regEmail'] = self.test_student_name3
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        # 建了3個學生
+        
+        # 建立課程
+        lesson_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,   # 這是老師1的auth_id
+            'action': 'createLesson',
+            'big_title': 'big_title',
+            'little_title': 'test1111',
+            'title_color': '#000000',
+            'background_picture_code': 1,
+            'background_picture_path': '',
+            'lesson_title': 'test11111',
+            'price_per_hour': 800,
+            'discount_price': '10:90;20:80;30:75;',
+            'selling_status': 'selling',
+            'lesson_has_one_hour_package': True,
+            'trial_class_price': 69,
+            'highlight_1': 'test',
+            'highlight_2': 'test',
+            'highlight_3': 'test',
+            'lesson_intro': 'test',
+            'how_does_lesson_go': 'test',
+            'target_students': 'test',
+            'lesson_remarks': 'test',
+            'syllabus': 'test',
+            'lesson_attributes': 'test'      
+            }
+        self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+
+        lesson_post_data = {
+            'userID': teacher_profile.objects.get(id=2).auth_id,   # 這是老師2的auth_id
+            'action': 'createLesson',
+            'big_title': 'big_title',
+            'little_title': 'test',
+            'title_color': '#000000',
+            'background_picture_code': 1,
+            'background_picture_path': '',
+            'lesson_title': 'test2222',
+            'price_per_hour': 1200,
+            'discount_price': '5:90;20:80;30:70;',
+            'selling_status': 'selling',
+            'lesson_has_one_hour_package': True,
+            'trial_class_price': -999,
+            'highlight_1': 'test',
+            'highlight_2': 'test',
+            'highlight_3': 'test',
+            'lesson_intro': 'test',
+            'how_does_lesson_go': 'test',
+            'target_students': 'test',
+            'lesson_remarks': 'test',
+            'syllabus': 'test',
+            'lesson_attributes': 'test'      
+            }
+        self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+
+        # 先取得兩個可預約日期，避免hard coded未來出錯
+        # 時段我都設1,2,3,4,5，所以只要在其中就ok
+        self.available_date_1_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=1)).first().date
+        self.available_date_2_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=1))[1].date
+        self.available_date_3_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=1))[2].date
+        self.available_date_4_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=1))[3].date
+        self.available_date_5_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=1))[4].date
+
+        self.available_date_11_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=2))[10].date
+        self.available_date_12_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=2))[11].date
+        self.available_date_13_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=2))[12].date
+        self.available_date_4_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=2))[3].date
+        self.available_date_15_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=2))[14].date
+
+
+    def tearDown(self):
+        # 刪掉(如果有的話)產生的資料夾
+        try:
+            shutil.rmtree('user_upload/students/' + self.test_student_name1)
+            shutil.rmtree('user_upload/students/' + self.test_student_name2)
+            shutil.rmtree('user_upload/students/' + self.test_student_name3)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name1)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name2)
+        except:
+            pass
+
+    @skip
+    def test_if_teacher_write_student_reviews_work(self):
+        '''
+        測試老師給學生的評價能否成功送出
+        '''
+        teacher_review_post_data = {
+            'userID': teacher_profile.objects.first().auth_id,
+            'score_given': 4,
+            'remark_given': 'oh yayayayayayya',
+            'is_student_late_for_lesson': False,
+            'is_student_being_frivolous_in_lesson': False,
+            'is_student_or_parents_not_friendly': True
+        }
+        response = \
+            self.client.post(path='/api/lesson/teacherWriteStudentReviews/', data=teacher_review_post_data)
+        
+        self.assertIn('success', str(response.content, "utf8"))
 
 

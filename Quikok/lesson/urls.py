@@ -25,6 +25,7 @@ urlpatterns = [
     path('getTeachersBookingHistory/', views.get_teacher_s_booking_history),
     path('getStudentsBookingHistory/', views.get_student_s_booking_history),
     path('lessonCompletedNotificationFromTeacher/', views.lesson_completed_notification_from_teacher),
-    path('lessonCompletedConfirmationFromStudent/', views.lesson_completed_confirmation_from_student)
-    
+    path('lessonCompletedConfirmationFromStudent/', views.lesson_completed_confirmation_from_student),
+    path('teacherWriteStudentReviews/', views.teacher_write_student_reviews),
+    path('studentWriteTeacherReviews/', views.student_write_teacher_reviews)
 ]
