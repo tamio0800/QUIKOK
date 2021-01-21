@@ -2703,6 +2703,60 @@ def lesson_completed_confirmation_from_student(request):
                         response['errMsg'] = None
                         response['data'] = None
 
+                    elif lesson_completed_object.teacher_declared_time_in_minutes < lesson_completed_object.booking_time_in_minutes:
+                        # 現在來做萬一老師實際上課的時間比預約的時間來得短
+                        # 其實算簡單，只要把 少的時間 ，從 withholding 移回去 available minutes 就好了
+                        how_many_withholding_minutes_does_it_left = lesson_completed_object.teacher_declared_time_in_minutes
+                        #  withholding 的部份要扣多少時間
+                        shortage_minutes = \
+                            lesson_completed_object.booking_time_in_minutes - lesson_completed_object.teacher_declared_time_in_minutes
+                        # 短少的，要補回的時間
+
+                        for each_student_remaining_object in student_remaining_objects:
+                            # 先處理扣除的部份
+                            if each_student_remaining_object.withholding_minutes >= how_many_withholding_minutes_does_it_left:
+                                # 目前這個購買方案的時數>=需要扣掉的時數，所以直接扣掉就好了
+                                each_student_remaining_object.withholding_minutes -= how_many_withholding_minutes_does_it_left
+                                each_student_remaining_object.confirmed_consumed_minutes += how_many_withholding_minutes_does_it_left
+                                each_student_remaining_object.save()
+                                how_many_withholding_minutes_does_it_left = 0
+                                break
+                            else:
+                                # 目前這個購買方案的時數不足以完全扣除需要扣除的時數
+                                how_many_withholding_minutes_does_it_left -= each_student_remaining_object.withholding_minutes
+                                # 先扣掉能扣掉的部份
+                                # 移動到 confirmed_consumed_minutes 去
+                                each_student_remaining_object.confirmed_consumed_minutes += each_student_remaining_object.withholding_minutes
+                                each_student_remaining_object.withholding_minutes = 0
+                                each_student_remaining_object.save()
+                                # withholding_minutes歸零
+
+                        # 接下來處理少上的時數，要補回去學生的 available minutes 部份
+                        # 因為已經有事先預扣了，所以一定要從預扣補回
+                        for each_student_remaining_object in student_remaining_objects:
+                            # 來處理時數補回的部份
+                            if each_student_remaining_object.withholding_minutes >= shortage_minutes:
+                                # 目前這個購買方案的時數>=需要補回的時數，所以直接補回就好了
+                                each_student_remaining_object.withholding_minutes -= shortage_minutes
+                                each_student_remaining_object.available_remaining_minutes += shortage_minutes
+                                each_student_remaining_object.save()
+                                shortage_minutes = 0
+                                break
+                            else:
+                                # 目前這個購買方案的時數不足以完全補回需要補回的時數
+                                shortage_minutes -= each_student_remaining_object.withholding_minutes
+                                # 先補回能補回的部份
+                                # 移動到 available_remaining_minutes 去
+                                each_student_remaining_object.available_remaining_minutes += each_student_remaining_object.withholding_minutes
+                                each_student_remaining_object.withholding_minutes = 0
+                                each_student_remaining_object.save()
+                                # withholding_minutes歸零
+
+                        response['status'] = 'success'
+                        response['errCode'] = None
+                        response['errMsg'] = None
+                        response['data'] = None
+
             elif action == 'disagree':
                 # 學生對老師聲稱的時數有意見，先 update 預約 TABLE
                 booking_object.last_changed_by = 'student'  # 因為是學生最後確認的
