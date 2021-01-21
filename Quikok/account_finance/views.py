@@ -41,7 +41,7 @@ def storage_order(request):
                     set_obj = set_queryset.first()
                     if int(price) == set_obj.total_amount_of_the_sales_set:
                     # 學生欲使用Q幣折抵現金
-                        print('金額有一樣唷~')
+                        #print('金額有一樣唷~')
                         if q_discount_amount != '0':
                             real_price = int(price) - int(q_discount_amount)
                             # 更新學生Q幣預扣餘額
@@ -57,7 +57,7 @@ def storage_order(request):
                                 student_obj.withholding_balance = int(q_discount_amount)
                             student_obj.save()
                         else:
-                            print('沒有用q幣~')
+                            #print('沒有用q幣~')
                             real_price = int(price)
 
                         teacher_obj = teacher_queryset.first()
@@ -171,7 +171,7 @@ def student_order_history(request):
                 #        lesson_discount = set_discount.strip('0')
                 #    record_set_name = f'{lesson_time}小時{lesson_discount}折'
                 
-                # 如果這筆訂單還沒從unpaid改成paid, 剩餘時數的table也就還沒長出來
+                # 如果這筆訂單還沒從reconciliation改成paid, 剩餘時數的table也就還沒長出來
                 # 所以必須把分付款狀態來處理
                 if record.payment_status in ['paid','refunding','refunded', 'cancel_after_paid']:
                     
@@ -382,7 +382,7 @@ def student_edit_order(request):
                     record.part_of_bank_account_code = user5_bank_code
                     record.save()
                     email_to_edony = email_for_edony()
-                    email_to_edony.send_email(student_authID=student_authID,
+                    email_to_edony.send_email_reconciliation_reminder(student_authID=student_authID,
                       user5_bank_code =user5_bank_code, total_price = record.purchased_with_money)
                     response = {'status':'success',
                                 'errCode': None,
