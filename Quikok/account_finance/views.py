@@ -176,12 +176,12 @@ def student_order_history(request):
                 if record.payment_status in ['paid','refunding','refunded', 'cancel_after_paid']:
                     
                     remain_time_info = student_remaining_minutes_of_each_purchased_lesson_set.objects.get(student_purchase_record_id=record.id)
-                    total_unconfirmed_time = total_time - remain_time_info.confirmed_consumed_minutes
+                    total_non_confirmed_minutes = total_time - remain_time_info.confirmed_consumed_minutes
                     available_remaining_minutes = remain_time_info.available_remaining_minutes
                 else:
                     
                     available_remaining_minutes = ''
-                    total_unconfirmed_time = ''
+                    total_non_confirmed_minutes = ''
 
                 
                 print(available_remaining_minutes)
@@ -193,10 +193,10 @@ def student_order_history(request):
                 'teacher_nickname': record.teacher_nickname,
                 'lesson_title': record.lesson_title,
                 'lessonID': record.lesson_id,
-                'lesson_sale_set': set_name.sales_set, 
+                'lesson_sales_set': set_name.sales_set, 
                 'purchased_with_money':record.purchased_with_money,
                 'available_remaining_minutes': available_remaining_minutes,
-                'total_unconfirmed_time': total_unconfirmed_time} #全部時數減掉已confirm完課的時數,主要是給老師看的
+                'total_non_confirmed_minutes': total_non_confirmed_minutes} #全部時數減掉已confirm完課的時數,主要是給老師看的
                 #'付款末五碼': record.part_of_bank_account_code} # 後五碼
 
                 record_history['edony_bank_info'] = remittance_info
