@@ -514,7 +514,7 @@ def get_lesson_sales_history(request):
                         lesson_sales_set = lesson_sales_set_object.sales_set
                         total_amount = each_his_related_purchased_record.price
                         available_remaining_minutes = correspondent_student_remaining_minutes_object.available_remaining_minutes
-                        unconsumed_minutes = \
+                        total_non_confirmed_minutes = \
                             available_remaining_minutes + correspondent_student_remaining_minutes_object.withholding_minutes
                         is_selling = lesson_sales_set_object.is_open
 
@@ -530,7 +530,7 @@ def get_lesson_sales_history(request):
                                 'lesson_sales_set': lesson_sales_set,
                                 'total_amount': total_amount,
                                 'available_remaining_minutes': available_remaining_minutes,
-                                'unconsumed_minutes': unconsumed_minutes,
+                                'total_non_confirmed_minutes': total_non_confirmed_minutes,
                                 'is_selling': is_selling
                             }
                         )

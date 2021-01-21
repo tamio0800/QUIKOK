@@ -2781,3 +2781,53 @@ def lesson_completed_confirmation_from_student(request):
     return JsonResponse(response)
 
 
+@require_http_methods(['POST'])
+def teacher_write_student_reviews(request):
+    '''
+    完課後老師與學生可以互評評價；
+    這個API能讓老師對學生評價。
+    接收：{
+        token,
+        userID: 老師的auth_id
+        score_given: 評分 1 - 5
+        remark_given: 評語
+        is_student_late_for_lesson: 學生是否遲到
+        is_student_being_frivolous_in_lesson: 學生是否不專心
+        is_student_or_parents_not_friendly: 學生是否不友善
+    }
+    回傳：{
+        status: “success“ / “failed“ 
+        errCode: None 
+        errMsg: None
+        data: None
+    }'''
+    response = dict()
+    teacher_auth_id = request.POST.get('userID', False)
+    score_given = request.POST.get('score_given', False)
+    remark_given = request.POST.get('remark_given', False)
+    is_student_late_for_lesson = request.POST.get('is_student_late_for_lesson', False)
+    is_student_being_frivolous_in_lesson = request.POST.get('is_student_being_frivolous_in_lesson', False)
+    is_student_or_parents_not_friendly = request.POST.get('is_student_or_parents_not_friendly', False)
+
+    if check_if_all_variables_are_true(teacher_auth_id, score_given, remark_given,
+        is_student_late_for_lesson, is_student_being_frivolous_in_lesson, is_student_or_parents_not_friendly):
+        # 資料有正確收取
+        response['status'] = 'success'
+        response['errCode'] = None
+        response['errMsg'] = None
+        response['data'] = None
+
+    else:
+        # 資料傳輸出現問題
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+    
+    return JsonResponse(response)
+
+
+@require_http_methods(['POST'])
+def student_write_teacher_reviews(request):
+    pass
+
