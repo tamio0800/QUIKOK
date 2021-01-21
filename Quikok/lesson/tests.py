@@ -5618,8 +5618,136 @@ class CLASS_FINISHED_TEST(TestCase):
             ),
             student_remaining_minutes_of_each_purchased_lesson_set.objects.values()
         )
-        
 
+        # 接下來測試跨方案能不能扣時數成功
+        # 這次購買 老師2 的 30:70 方案
+        purchased_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'teacherID': teacher_profile.objects.get(id=2).auth_id,
+            'lessonID': lesson_info.objects.get(teacher=teacher_profile.objects.get(id=2)).id,
+            'sales_set': '30:70',
+            'total_amount_of_the_sales_set': int(30*1200*0.7),
+            'q_discount': 20000}  # 測試看看其中2萬元是Q幣支付的會怎麼樣
+        response = \
+            self.client.post(path='/api/account_finance/storageOrder/', data=purchased_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(id=3).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+        # 此時，學生通知我們她已經完成付款
+        purchase_obj = student_purchase_record.objects.get(id=3)
+        purchase_obj.payment_status = 'paid'
+        purchase_obj.save()
+        # 我們確認她付款了
+
+        # 接著讓學生進行預約
+        booking_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,  # 學生的auth_id
+            'lessonID': lesson_info.objects.get(teacher=teacher_profile.objects.get(id=2)).id,
+            'bookingDateTime': f'{self.available_date_12_t2}:0,1,2,3,4,5;{self.available_date_4_t2}:3,4,5;'} 
+            # 預約了270分鐘  00:00 - 03:00 // 180    01:30 - 03:00  // 90
+        response = \
+            self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+
+        # 讓老師確認學生的預約 - 1/2
+        change_booking_status_post_data = {
+            'userID': teacher_profile.objects.get(id=2).auth_id,
+            'bookingID': 3,
+            'bookingStatus': 'confirmed'}
+        response = \
+            self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=change_booking_status_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        # 讓老師確認學生的預約 - 2/2
+        change_booking_status_post_data = {
+            'userID': teacher_profile.objects.get(id=2).auth_id,
+            'bookingID': 4,
+            'bookingStatus': 'confirmed'}
+        response = \
+            self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=change_booking_status_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+
+        # =========================== 接著老師進行完課 1/2 ===========================
+        start_time = \
+            datetime(self.available_date_12_t2.year, self.available_date_12_t2.month, self.available_date_12_t2.day, 0, 0)
+        end_time = \
+            datetime(self.available_date_12_t2.year, self.available_date_12_t2.month, self.available_date_12_t2.day, 3, 0)
+
+        noti_post_data = {
+                'userID': teacher_profile.objects.get(id=2).auth_id,
+                'lesson_booking_info_id': 3,
+                'lesson_date': str(self.available_date_12_t2),
+                'start_time': start_time.strftime("%H:%M"),
+                'end_time': end_time.strftime("%H:%M"),
+                'time_interval_in_minutes': int((end_time - start_time).seconds / 60)
+        }  # 測試看看這個 api 能不能產出對應的 record 來
+
+        response = \
+            self.client.post(path='/api/lesson/lessonCompletedNotificationFromTeacher/', data=noti_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        # 測試一下此時該完課紀錄所對應的預約狀態應該是  student_not_yet_confirmed
+        self.assertEqual('student_not_yet_confirmed', lesson_booking_info.objects.get(id=3).booking_status)
+
+        # 此時，學生應該可以進行確認了
+        confirmation_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'lesson_booking_info_id': 3,
+            'action': 'agree'}
+
+        response = \
+            self.client.post(path='/api/lesson/lessonCompletedConfirmationFromStudent/', data=confirmation_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+
+        # 接下來測試學生的預扣時數是否有被扣除
+        self.assertEqual(
+            (
+                0,  # 第二次購買的可用時數現在應該為 0
+                0,  # 第二次購買的預扣時數此時應該也為 0
+                300,  # 第二次購買的已消耗時數此時應該為 300
+                30 * 60 - 120,  # 第三次購買的可用時數現在應該為完整的減掉 120 分鐘的預約
+                90,  # 第三次購買的預扣時數
+                30  # 第三次購買的已消耗時數
+            ),
+            (
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.get(
+                    student_auth_id = student_profile.objects.get(id=1).auth_id,
+                    student_purchase_record_id = 2,  # 購買第二次
+                    lesson_id = lesson_info.objects.get(teacher=teacher_profile.objects.get(id=2)).id
+                ).available_remaining_minutes,
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.get(
+                    student_auth_id = student_profile.objects.get(id=1).auth_id,
+                    student_purchase_record_id = 2,  # 購買第二次
+                    lesson_id = lesson_info.objects.get(teacher=teacher_profile.objects.get(id=2)).id
+                ).withholding_minutes,
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.get(
+                    student_auth_id = student_profile.objects.get(id=1).auth_id,
+                    student_purchase_record_id = 2,  # 購買第二次
+                    lesson_id = lesson_info.objects.get(teacher=teacher_profile.objects.get(id=2)).id
+                ).confirmed_consumed_minutes,
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.get(
+                    student_auth_id = student_profile.objects.get(id=1).auth_id,
+                    student_purchase_record_id = 3,  # 購買第三次
+                    lesson_id = lesson_info.objects.get(teacher=teacher_profile.objects.get(id=2)).id
+                ).available_remaining_minutes,
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.get(
+                    student_auth_id = student_profile.objects.get(id=1).auth_id,
+                    student_purchase_record_id = 3,  # 購買第三次
+                    lesson_id = lesson_info.objects.get(teacher=teacher_profile.objects.get(id=2)).id
+                ).withholding_minutes,
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.get(
+                    student_auth_id = student_profile.objects.get(id=1).auth_id,
+                    student_purchase_record_id = 3,  # 購買第三次
+                    lesson_id = lesson_info.objects.get(teacher=teacher_profile.objects.get(id=2)).id
+                ).confirmed_consumed_minutes
+            ),
+            student_remaining_minutes_of_each_purchased_lesson_set.objects.values()
+        )
 
 
 
