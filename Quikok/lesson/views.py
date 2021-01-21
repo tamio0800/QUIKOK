@@ -28,6 +28,7 @@ from analytics.signals import object_accessed_signal
 from analytics.utils import get_client_ip
 from handy_functions import turn_current_time_into_time_interval
 from datetime import date as date_function
+from account_finance.models import student_owing_teacher_time
 
 
 def charge_time(student_auth_id, lesson_id, lesson_booking_id, is_trial, charge_minutes):
@@ -2628,15 +2629,79 @@ def lesson_completed_confirmation_from_student(request):
                         response['errMsg'] = None
                         response['data'] = None
 
-                    else:
+                    elif lesson_completed_object.teacher_declared_time_in_minutes > lesson_completed_object.booking_time_in_minutes:
                         # 老師宣稱的時數 != 當初預定的課堂時數
+                        # 先來做超時的部份
+                        # 超時的話，先扣除原先 withholding 的部份，然後再趁機從多的 available 扣除
+                        # 若學生沒有多的 available 可以扣，則先儲存在 student_owing_teacher_time TABLE，留待日後處理
+                        how_many_withholding_minutes_does_it_left = lesson_completed_object.booking_time_in_minutes
+                        # withholding 的部份還需要扣多少時間
+                        how_many_extra_minutes_does_it_left = \
+                            lesson_completed_object.teacher_declared_time_in_minutes - lesson_completed_object.booking_time_in_minutes
+                        # 超出的部分還需要扣多少時間
 
+                        for each_student_remaining_object in student_remaining_objects:
+                            # 先處理有預扣的部份，這一塊不受學生有沒有足夠的 available minutes 影響，所以在這裡做
+                            if each_student_remaining_object.withholding_minutes >= how_many_withholding_minutes_does_it_left:
+                                # 目前這個購買方案的時數>=需要扣掉的時數，所以直接扣掉就好了
+                                each_student_remaining_object.withholding_minutes -= how_many_withholding_minutes_does_it_left
+                                each_student_remaining_object.confirmed_consumed_minutes += how_many_withholding_minutes_does_it_left
+                                each_student_remaining_object.save()
+                                how_many_withholding_minutes_does_it_left = 0
+                                break
+                            else:
+                                # 目前這個購買方案的時數不足以完全扣除需要扣除的時數
+                                how_many_withholding_minutes_does_it_left -= each_student_remaining_object.withholding_minutes
+                                # 先扣掉能扣掉的部份
+                                # 移動到 confirmed_consumed_minutes 去
+                                each_student_remaining_object.confirmed_consumed_minutes += each_student_remaining_object.withholding_minutes
+                                each_student_remaining_object.withholding_minutes = 0
+                                each_student_remaining_object.save()
+                                # withholding_minutes歸零
+
+                        # 再來確認該學生有沒有多餘的 available minutes 可供扣除
+                        # all_available_minutes_of_this_lesson = \
+                        #    student_remaining_objects.aggregate(Sum('available_remaining_minutes'))['available_remaining_minutes__sum']
+                        # 好像也不用特別確認，最後有剩下的 how_many_extra_minutes_does_it_left 就代表沒扣光了
+
+                        for each_student_remaining_object in student_remaining_objects:
+                            # 再來處理扣除 available minutes 的部份
+                            if each_student_remaining_object.available_remaining_minutes >= how_many_extra_minutes_does_it_left:
+                                # 目前這個購買方案的時數>=需要扣掉的時數，所以直接扣掉就好了
+                                each_student_remaining_object.available_remaining_minutes -= how_many_extra_minutes_does_it_left
+                                each_student_remaining_object.confirmed_consumed_minutes += how_many_extra_minutes_does_it_left
+                                each_student_remaining_object.save()
+                                how_many_extra_minutes_does_it_left = 0
+                                break
+                            else:
+                                # 目前這個購買方案的時數不足以完全扣除需要扣除的時數
+                                how_many_extra_minutes_does_it_left -= each_student_remaining_object.available_remaining_minutes
+                                # 先扣掉能扣掉的部份
+                                # 移動到 confirmed_consumed_minutes 去
+                                each_student_remaining_object.confirmed_consumed_minutes += each_student_remaining_object.available_remaining_minutes
+                                each_student_remaining_object.available_remaining_minutes = 0
+                                each_student_remaining_object.save()
+                                # available_remaining_minutes
+
+                        if how_many_extra_minutes_does_it_left:
+                            # 學生的 available minutes 不足以支付多出的時數
+                            # 超時的部份沒扣光，要存入 student_owing_teacher_time TABLE
+                            student_owing_teacher_time.objects.create(
+                                student_auth_id = student_auth_id,
+                                teacher_auth_id = booking_object.teacher_auth_id,
+                                lesson_id = booking_object.lesson_id,
+                                lesson_booking_info_id = booking_object.id,
+                                owing_minutes = how_many_extra_minutes_does_it_left
+                            )
+                        else:
+                            # 學生的 available minutes 可以支付多出的時數，已經扣乾淨了
+                            # 不用特別處理
+                            pass
+                            
                         response['status'] = 'success'
                         response['errCode'] = None
                         response['errMsg'] = None
                         response['data'] = None
-
-                
 
             elif action == 'disagree':
                 # 學生對老師聲稱的時數有意見，先 update 預約 TABLE

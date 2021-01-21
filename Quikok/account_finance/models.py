@@ -138,6 +138,31 @@ class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
         #ordering= ['-last_changed_time']  # 越新的會被呈現在越上面
         verbose_name = '學生課程方案剩餘時數'
         verbose_name_plural = '學生課程方案剩餘時數'
+        
+
+
+class student_owing_teacher_time(models.Model):
+    '''
+    這個表用來儲存，當課程超時的話，先扣除原先 withholding 的部份，然後再趁機從學生多的 available 扣除，
+    但若學生沒有多的 available 可以扣，則先儲存在這邊，留待日後處理。
+    '''
+    student_auth_id = models.IntegerField()
+    teacher_auth_id = models.IntegerField()
+    lesson_id = models.IntegerField()  # 所對應的課程id
+    lesson_booking_info_id = models.IntegerField()  # 對應的預約id
+    owing_minutes = models.PositiveIntegerField()  # 積欠的時數
+    created_time = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{str(self.student_auth_id)} owing {str(self.teacher_auth_id)} {str(self.owing_minutes)} minutes.' 
+
+    class Meta:
+        ordering= ['-created_time']  # 越新的會被呈現在越上面
+        verbose_name = '學生積欠時數'
+        verbose_name_plural = '學生積欠時數'
+
+
+
 
 
 class student_remaining_minutes_when_request_refund_each_purchased_lesson_set(models.Model):
