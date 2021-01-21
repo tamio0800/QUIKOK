@@ -141,7 +141,7 @@ class test_finance_functions(TestCase):
         'sales_set': 'trial',#,'no_discount','30:70']
         'total_amount_of_the_sales_set': 69,
         'q_discount':200} # 要用200q幣折抵
-        
+
 
     def test_storege_order_student_use_Qcoin_with_no_withholding_balance(self):
         '''
@@ -548,7 +548,7 @@ class test_finance_functions(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-
+# 測試回傳訂單以及編輯訂單
 class test_student_purchase_payment_status(TestCase):
     #def query_order_info_status1_unpaid(self):
     def setUp(self):
@@ -718,6 +718,19 @@ class test_student_purchase_payment_status(TestCase):
 
 
     def test_oreder_history_response(self):
+        obj_amount = student_purchase_record.objects.all().count()
+        # 建立一個訂單
+        purchase_data = {
+            'userID':2,
+            'teacherID':1, 'lessonID':1,
+            'sales_set': 'trial',#,'30:70''no_discount'
+            'total_amount_of_the_sales_set':self.lesson_post_data['trial_class_price'],
+            'q_discount': 0}
+        response = self.client.post(path= '/api/account_finance/storageOrder/', 
+                                    data= purchase_data)
+        # 確認有新建訂單
+        self.assertEqual(student_purchase_record.objects.all().count(), obj_amount+1)
+
         '''測試回傳指定userID的所有purchase這支api是否work'''
         data = {
             'userID':'2',
@@ -726,6 +739,8 @@ class test_student_purchase_payment_status(TestCase):
         response = self.client.post(path='/api/account_finance/studentOrderHistory/', data=data)
         self.assertEqual(response.status_code, 200)
         self.assertIn('success', str(response.content))
+        # 檢查是否有回傳退款金額資訊
+        self.assertIn('refunded_price', str(response.content))
         #self.assertJSONEqual(
         #    str(response.content, encoding='utf8'),
         #    {
