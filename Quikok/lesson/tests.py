@@ -16,6 +16,7 @@ from unittest import skip
 from lesson.models import lesson_booking_info
 from account_finance.models import student_purchase_record, student_remaining_minutes_of_each_purchased_lesson_set
 from datetime import datetime, timedelta, timezone, date as date_function
+from account_finance.models import student_owing_teacher_time
 
 
 # python manage.py test lesson/ --settings=Quikok.settings_for_test
@@ -5862,5 +5863,96 @@ class CLASS_FINISHED_TEST(TestCase):
             student_remaining_minutes_of_each_purchased_lesson_set.objects.values()
         )
 
+        # 接著再進行一次完課，看超時且學生可用時數(目前還剩360分)不足以扣除時，會不會出現 student_owing_teacher_time 的紀錄
+        # 接著讓學生再次進行預約
+        booking_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_2_t1}:0,1,2,3,4,5;'} 
+            # 一樣預約180分鐘  00:00 - 03:00
+        response = \
+            self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
 
+        # print(f'inner info {student_remaining_minutes_of_each_purchased_lesson_set.objects.values()}')
+
+        # 讓老師確認學生的預約
+        change_booking_status_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'bookingID': 2,
+            'bookingStatus': 'confirmed'}
+        response = \
+            self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=change_booking_status_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+
+        # 接著老師進行完課，完課時間比預期的3小時多出130分鐘，共計 3 * 60 + 130 = 410 分鐘，超出可用時數的360分鐘
+        start_time = \
+            datetime(self.available_date_2_t1.year, self.available_date_2_t1.month, self.available_date_2_t1.day, 0, 0)
+        end_time = \
+            datetime(self.available_date_2_t1.year, self.available_date_2_t1.month, self.available_date_2_t1.day, 6, 50)
+
+        noti_post_data = {
+                'userID': teacher_profile.objects.get(id=1).auth_id,
+                'lesson_booking_info_id': 2,
+                'lesson_date': str(self.available_date_2_t1),
+                'start_time': start_time.strftime("%H:%M"),
+                'end_time': end_time.strftime("%H:%M"),
+                'time_interval_in_minutes': int((end_time - start_time).seconds / 60)
+        }  # 測試看看這個 api 能不能產出對應的 record 來
+
+        response = \
+            self.client.post(path='/api/lesson/lessonCompletedNotificationFromTeacher/', data=noti_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        # 測試一下此時該完課紀錄所對應的預約狀態應該是  student_not_yet_confirmed
+        self.assertEqual('student_not_yet_confirmed', lesson_booking_info.objects.get(id=2).booking_status,
+            lesson_booking_info.objects.values())
+
+        # 此時，學生應該可以進行確認了
+        confirmation_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'lesson_booking_info_id': 2,
+            'action': 'agree'}
+        response = \
+            self.client.post(path='/api/lesson/lessonCompletedConfirmationFromStudent/', data=confirmation_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+
+        # 接下來測試學生的預扣時數是否有正確被扣除
+        self.assertEqual(
+            (
+                0,  # 可用時數應該由剛剛的 360min 變成 0min 了
+                0,  # 預扣時數此時應該為 0
+                600  # 已消耗的時數此時應該為原先的 240 分鐘 變成全部扣完 >> 600 分鐘
+            ),
+            (
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.get(
+                    student_auth_id = student_profile.objects.get(id=1).auth_id,
+                    student_purchase_record_id = 1,  # 因為只購買過一次而已
+                    lesson_id = 1
+                ).available_remaining_minutes,
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.get(
+                    student_auth_id = student_profile.objects.get(id=1).auth_id,
+                    student_purchase_record_id = 1,  # 因為只購買過一次而已
+                    lesson_id = 1
+                ).withholding_minutes,
+                student_remaining_minutes_of_each_purchased_lesson_set.objects.get(
+                    student_auth_id = student_profile.objects.get(id=1).auth_id,
+                    student_purchase_record_id = 1,  # 因為只購買過一次而已
+                    lesson_id = 1
+                ).confirmed_consumed_minutes
+            ),
+            student_remaining_minutes_of_each_purchased_lesson_set.objects.values()
+        )
+
+        # 此時學生1 應該會多出50分鐘的欠時紀錄
+        self.assertEqual(
+            (
+                1, 50
+            ),
+            (
+                student_owing_teacher_time.objects.count(),
+                student_owing_teacher_time.objects.first().owing_minutes
+            ),
+            
+        )
+        # print(f'inner info {student_owing_teacher_time.objects.values()}')
 
