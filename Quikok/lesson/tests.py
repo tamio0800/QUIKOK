@@ -19,6 +19,7 @@ from account_finance.models import student_purchase_record, student_remaining_mi
 from datetime import datetime, timedelta, timezone, date as date_function
 from account_finance.models import student_owing_teacher_time
 from lesson.models import lesson_reviews_from_students, student_reviews_from_teachers
+from account.models import student_review_aggregated_info
 
 
 # python manage.py test lesson/ --settings=Quikok.settings_for_test
@@ -6560,3 +6561,46 @@ class REVIEWS_TESTS(TestCase):
             ),
             student_reviews_from_teachers.objects.values()
         )
+
+        # 測試學生的個人評價整合檔有沒有更新紀錄
+        # 此時student_review_aggregated_info應該有三筆資料(3個學生)
+        self.assertEqual(3, student_review_aggregated_info.objects.count(),
+            student_review_aggregated_info.objects.values())
+            
+        # 學生 1 應該有兩筆評價
+        self.assertEqual(2, 
+            student_review_aggregated_info.objects.get(student_auth_id=student_profile.objects.get(id=1).auth_id).reviewed_times,
+            student_review_aggregated_info.objects.values())
+
+        
+        # 確認學生的指數與上課時長是否正確
+        self.assertEqual(
+            (
+                2.5,  # 平均得分,
+                50.0,  # 準時比率
+                0,  # 目前上課總時長應該是0，因為狀態還沒有變成 "finished"
+            ),
+            (
+                student_review_aggregated_info.objects.get(
+                    student_auth_id=student_profile.objects.get(id=1).auth_id).score_given_to_times_mean(),
+                student_review_aggregated_info.objects.get(
+                    student_auth_id=student_profile.objects.get(id=1).auth_id).get_on_time_index(),
+                student_review_aggregated_info.objects.get(
+                    student_auth_id=student_profile.objects.get(id=1).auth_id).receiving_review_lesson_minutes_sum,
+            ),
+            student_review_aggregated_info.objects.values())
+
+        # 接著讓學生確認第一門課
+        # 此時，學生應該可以進行確認了
+        confirmation_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'lesson_booking_info_id': 1,
+            'action': 'agree'}
+        self.client.post(path='/api/lesson/lessonCompletedConfirmationFromStudent/', data=confirmation_post_data)
+
+        # 確認時數是否變成 180 分鐘
+        self.assertEqual(180, 
+            student_review_aggregated_info.objects.get(
+                    student_auth_id=student_profile.objects.get(id=1).auth_id).receiving_review_lesson_minutes_sum,
+            student_review_aggregated_info.objects.values())
+

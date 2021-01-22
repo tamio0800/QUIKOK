@@ -160,9 +160,10 @@ class student_reviews_from_teachers(models.Model):
     '''
     corresponding_lesson_id = models.IntegerField()  # 所對應的課程id
     corresponding_lesson_booking_info_id = models.IntegerField()  # 所對應的課程預約id
+    corresponding_lesson_completed_record_id = models.IntegerField()  # 所對應的完課紀錄id
     student_auth_id = models.IntegerField()  # 上課學生的auth_id，是此次被評論的對象
     teacher_auth_id = models.IntegerField()  # 上課老師的auth_id，是留下評論的人
-    score_given = models.IntegerField(blank=True, null=True) # 對於本次課程的綜合評分，介於1~5分之間
+    score_given = models.PositiveIntegerField(blank=True, null=True) # 對於本次課程的綜合評分，介於1~5分之間
     is_student_late_for_lesson = models.BooleanField(blank=True, null=True) # 學生是否有遲到
     is_student_being_frivolous_in_lesson = models.BooleanField(blank=True, null=True) # 學生是否不認真
     is_student_or_parents_not_friendly = models.BooleanField(blank=True, null=True) # 學生或家長是否不友善
@@ -365,4 +366,56 @@ def when_lesson_completed_notification_sent_by_teacher(sender, instance:lesson_c
         lesson_booking_object.save()
 
         # 之後可能就在這裡進行對學生的通知吧
+
+
+
+@receiver(post_save, sender=student_reviews_from_teachers)
+def update_student_review_aggregated_info(sender, instance:student_reviews_from_teachers, created, **kwargs):
+    # 當有老師給予學生評價(創建新紀錄)時，必須要連帶的更新該學生的評價儀表板
+    from account.models import student_review_aggregated_info
+    
+    the_lesson_complete_object = \
+        lesson_completed_record.objects.get(id=instance.corresponding_lesson_completed_record_id)
+    # 這邊要確認課程是否有完結(finished)，因為學生/老師會留存上過多長課程的資料，
+    # 若還沒有雙方確認的時數的話，則不進行上課總時數的更新；
+    # 這代表未來要再寫一個機制，當課程狀態從非 finished 變成 finished 時，要更新 student_review_aggregated_info 的上課時數
+    # >> 我決定先不在這邊進行時數更新，免得有兩邊都更新到的疑慮存在，這個欄位統一在 非 finished 變成 finished 更新!
+    if created:
+        # 只有建立新資料才要進行這個動作，其實編輯也需要啦，但是先不管這件事
+        the_student_review_info_object = \
+            student_review_aggregated_info.objects.filter(student_auth_id=instance.student_auth_id).first()
         
+        if the_student_review_info_object is None:
+            # 代表沒有這筆記錄，可能是學生在QUIKOK PILOT時就已經註冊，才會沒有連動建立資料
+            # 所以我們幫他建立一下吧
+            student_review_aggregated_info.objects.create(
+                student_auth_id = instance.auth_id,
+                score_given_sum = 0 if instance.score_given is None else instance.score_given,
+                reviewed_times = 1,
+                receiving_review_lesson_minutes_sum = 0,  # 這個值不在這邊進行更新
+                is_student_late_for_lesson_times = 1 if instance.is_student_late_for_lesson == True else 0,
+                is_student_being_frivolous_in_lesson_times = 1 if instance.is_student_being_frivolous_in_lesson == True else 0,
+                is_student_or_parents_not_friendly_times = 1 if instance.is_student_or_parents_not_friendly == True else 0
+            )
+        else:
+            # 代表已經有這筆紀錄，我們只要協助更新即可
+            the_student_review_info_object.score_given_sum += \
+                0 if instance.score_given is None else instance.score_given
+            the_student_review_info_object.reviewed_times += 1
+            # receiving_review_lesson_minutes_sum 不在這邊進行更新
+            the_student_review_info_object.is_student_late_for_lesson_times += \
+                1 if instance.is_student_late_for_lesson == True else 0
+            the_student_review_info_object.is_student_being_frivolous_in_lesson_times += \
+                1 if instance.is_student_being_frivolous_in_lesson == True else 0
+            the_student_review_info_object.is_student_or_parents_not_friendly_times += \
+                1 if instance.is_student_or_parents_not_friendly == True else 0
+            the_student_review_info_object.save()
+
+    else:
+        # 代表學生的評價被更新，雖然目前沒有這個機制，但有可能是 Quikok 後台改動的
+        # 因此這邊其實也需要做學生的評價更新，但我們先不管它
+        pass
+
+
+
+    
