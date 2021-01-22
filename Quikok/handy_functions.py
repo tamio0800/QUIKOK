@@ -163,3 +163,28 @@ def turn_current_time_into_time_interval():
     else:
         return current_time.hour * 2
 
+
+def bound_number_string(target_number_string, min=1, max=5):
+    '''
+    將超出範圍外的數值限定在不超過範圍的極端值，如果為空字串的話則回傳None.
+    '''
+    if len(target_number_string) == 0:
+        return None
+    elif int(target_number_string) > max:
+        return max
+    elif int(target_number_string) < min:
+        return min
+    else:
+        return int(target_number_string)
+
+
+def return_none_if_the_string_is_empty(target_string):
+    '''
+    若該變數為空字串，則回傳None，反之回傳原來的值
+    '''
+    if len(target_string.strip()) == 0:
+        return None
+    else:
+        return target_string
+
+
