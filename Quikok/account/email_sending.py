@@ -1,10 +1,7 @@
 from django.core.mail import EmailMessage
 from django.conf import settings
-from django.template.loader import render_to_string, get_template
-from account.models import teacher_profile, student_profile
-from lesson.models import lesson_info
-from blog.models import article_info
-from django.template import Context, Template
+from django.template.loader import get_template #render_to_string, 
+#from django.template import Context, Template
 #from django.utils.html import strip_tags
 #from email.mime.image import MIMEImage 夾附件用
 #from account_finance.email_sending import email_manager
@@ -36,7 +33,7 @@ class email_manager:
                     body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
                     from_email= settings.EMAIL_HOST_USER,  # 寄件者
                     to =  ['colorfulday0123@gmail.com']#,'w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
-                ) # teacher_email
+                ) # 正式發布時要改為 to teacher_email
                 email.fail_silently = False
                 email.content_subtype = 'html'
                 email.send()
