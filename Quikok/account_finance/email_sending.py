@@ -102,9 +102,11 @@ class email_manager:
             print(f'Exception: {e}')
             return False
 
-class email_for_edony:
 
-    def send_email(self, **kwargs):
+# 這邊是給我們自己的email,有些情況我們會需要提醒自己
+class email_for_edony:
+    #提醒我們有學生匯款,要對帳
+    def send_email_reconciliation_reminder(self, **kwargs):
         student_authID =  kwargs['student_authID']
         user5_bank_code =  kwargs['user5_bank_code']
         total_price =  kwargs['total_price']

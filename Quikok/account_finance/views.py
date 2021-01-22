@@ -41,7 +41,7 @@ def storage_order(request):
                     set_obj = set_queryset.first()
                     if int(price) == set_obj.total_amount_of_the_sales_set:
                     # 學生欲使用Q幣折抵現金
-                        print('金額有一樣唷~')
+                        #print('金額有一樣唷~')
                         if q_discount_amount != '0':
                             real_price = int(price) - int(q_discount_amount)
                             # 更新學生Q幣預扣餘額
@@ -57,7 +57,7 @@ def storage_order(request):
                                 student_obj.withholding_balance = int(q_discount_amount)
                             student_obj.save()
                         else:
-                            print('沒有用q幣~')
+                            #print('沒有用q幣~')
                             real_price = int(price)
 
                         teacher_obj = teacher_queryset.first()
@@ -171,32 +171,39 @@ def student_order_history(request):
                 #        lesson_discount = set_discount.strip('0')
                 #    record_set_name = f'{lesson_time}小時{lesson_discount}折'
                 
-                # 如果這筆訂單還沒從unpaid改成paid, 剩餘時數的table也就還沒長出來
+                # 如果這筆訂單還沒從reconciliation改成paid, 剩餘時數的table也就還沒長出來
                 # 所以必須把分付款狀態來處理
-                if record.payment_status in ['paid','refunding','refunded', 'cancel_after_paid']:
+                if record.payment_status in ['paid','refunded', 'cancel_after_paid']:
                     
                     remain_time_info = student_remaining_minutes_of_each_purchased_lesson_set.objects.get(student_purchase_record_id=record.id)
-                    total_unconfirmed_time = total_time - remain_time_info.confirmed_consumed_minutes
+                    total_non_confirmed_minutes = total_time - remain_time_info.confirmed_consumed_minutes
                     available_remaining_minutes = remain_time_info.available_remaining_minutes
+                    # 回傳退款金額
+                    if record.payment_status in ['refunded', 'cancel_after_paid']:
+                        refunded_price = student_remaining_minutes_when_request_refund_each_purchased_lesson_set.objects.get(
+                            student_purchase_record_id=record.id).available_minutes_turn_into_q_points
+                    else:
+                        refunded_price = ''
                 else:
-                    
+                    refunded_price = ''
                     available_remaining_minutes = ''
-                    total_unconfirmed_time = ''
+                    total_non_confirmed_minutes = ''
 
                 
                 print(available_remaining_minutes)
                 record_history = {
                 'purchase_recordID':record.id,
                 'payment_status':record.payment_status,
+                'refunded_price':refunded_price,
                 'purchase_date':record.purchase_date,
                 'teacher_authID':record.teacher_auth_id,
                 'teacher_nickname': record.teacher_nickname,
                 'lesson_title': record.lesson_title,
                 'lessonID': record.lesson_id,
-                'lesson_sale_set': set_name.sales_set, 
+                'lesson_sales_set': set_name.sales_set, 
                 'purchased_with_money':record.purchased_with_money,
                 'available_remaining_minutes': available_remaining_minutes,
-                'total_unconfirmed_time': total_unconfirmed_time} #全部時數減掉已confirm完課的時數,主要是給老師看的
+                'total_non_confirmed_minutes': total_non_confirmed_minutes} #全部時數減掉已confirm完課的時數,主要是給老師看的
                 #'付款末五碼': record.part_of_bank_account_code} # 後五碼
 
                 record_history['edony_bank_info'] = remittance_info
@@ -382,7 +389,7 @@ def student_edit_order(request):
                     record.part_of_bank_account_code = user5_bank_code
                     record.save()
                     email_to_edony = email_for_edony()
-                    email_to_edony.send_email(student_authID=student_authID,
+                    email_to_edony.send_email_reconciliation_reminder(student_authID=student_authID,
                       user5_bank_code =user5_bank_code, total_price = record.purchased_with_money)
                     response = {'status':'success',
                                 'errCode': None,
