@@ -112,7 +112,7 @@ class email_for_edony:
         total_price =  kwargs['total_price']
         email = EmailMessage(
             subject = '學生匯款通知信',  # 電子郵件標題
-            body = f'學生ID：{student_authID}已匯款，金額：{total_price}元，銀行帳號末五碼：{user5_bank_code}。請對帳',
+            body = f'學生authID：{student_authID}已匯款，金額：{total_price}元，銀行帳號末五碼：{user5_bank_code}。請對帳',
             from_email=settings.EMAIL_HOST_USER,  # 寄件者
             to = ['quikok.taiwan@quikok.com']  # 收件者
         )
