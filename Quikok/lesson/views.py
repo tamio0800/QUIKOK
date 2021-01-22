@@ -33,24 +33,6 @@ from account_finance.models import student_owing_teacher_time
 from handy_functions import return_none_if_the_string_is_empty, bound_number_string
 
 
-def charge_time(student_auth_id, lesson_id, lesson_booking_id, is_trial, charge_minutes):
-    '''
-    這個函式用來進行確認扣除時數的動作，如學生確認完課或是經由客服確認最終上課時數後，
-    只需要給它上述的參數:
-        student_auth_id:    學生的auth_id           (int)
-        lesson_id:          該課程的id              (int)
-        lesson_booking_id   該預約的id              (int)
-        is_trial            是否為試教課程           (bool)
-        charge_minutes      最終確認的上課分鐘數      (int)
-    就可以自動進行將withholding中的時數，正確轉移到consumed去，並補足不足的時數，或退回多餘的時數。
-
-    因為這個函式不會單獨被執行，一定是鑲嵌在某個API底下，因此可以不用針對object是否存在做確認。
-    '''
-    pass
-
-
-
-
 @login_required
 def lessons_main_page(request):
     title = '開課! Quikok - 課程主頁'
@@ -2839,6 +2821,8 @@ def teacher_write_student_reviews(request):
                         new_added_record = student_reviews_from_teachers.objects.create(
                             corresponding_lesson_id = lesson_booking_object.lesson_id,
                             corresponding_lesson_booking_info_id = lesson_booking_object.id,
+                            corresponding_lesson_completed_record_id = \
+                                lesson_completed_record.objects.get(lesson_booking_info_id=lesson_booking_object.id).id,
                             student_auth_id = student_object.auth_id,
                             teacher_auth_id = teacher_auth_id,
                             score_given = bound_number_string(score_given),

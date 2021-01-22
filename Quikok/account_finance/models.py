@@ -184,7 +184,6 @@ class student_remaining_minutes_when_request_refund_each_purchased_lesson_set(mo
         verbose_name_plural = '學生訂單退款換算Q幣'
 
 
-
 @receiver(pre_save, sender=student_purchase_record)
 def on_change(sender, instance:student_purchase_record, **kwargs):
     if instance.id is None:

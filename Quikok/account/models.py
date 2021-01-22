@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import pre_save, post_save
+from django.dispatch import receiver
 
 
 
@@ -57,27 +59,29 @@ class student_review_aggregated_info(models.Model):
     '''
     用來存放、呈現學生的個人評價資訊
     '''
-    student_auth_id = models.IntegerField(primary_key=True),  # 把這個設為 key
-    score_given_sum = models.PositiveIntegerField(default=0),  # 得到的評分加總總計
-    reviewed_times = models.PositiveIntegerField(default=0),  # 得到的評分次數累計
-    receiving_review_lesson_minutes_sum = models.PositiveIntegerField(default=0),  # 得到評分的那些課程的分鐘數總計
-    is_student_late_for_lesson_times = models.PositiveIntegerField(default=0),  # 學生遲到次數
-    is_student_being_frivolous_in_lesson_times = models.PositiveIntegerField(default=0),  # 學生不認真次數
-    is_student_or_parents_not_friendly_times = models.PositiveIntegerField(default=0),  # 學生或家長不友善次數
+    student_auth_id = models.IntegerField(default=-1)  # -1 的話代表還沒有設定
+    score_given_sum = models.PositiveIntegerField(default=0)  # 得到的評分加總總計
+    reviewed_times = models.PositiveIntegerField(default=0)  # 得到的評分次數累計
+    receiving_review_lesson_minutes_sum = models.PositiveIntegerField(default=0)  # 得到評分的那些課程的分鐘數總計
+    is_student_late_for_lesson_times = models.PositiveIntegerField(default=0)  # 學生遲到次數
+    is_student_being_frivolous_in_lesson_times = models.PositiveIntegerField(default=0)  # 學生不認真次數
+    is_student_or_parents_not_friendly_times = models.PositiveIntegerField(default=0)  # 學生或家長不友善次數
     last_updated_time = models.DateTimeField(auto_now=True)
-    
+
     def __str__(self):
-        return f'{str(self.student_auth_id)}'
+        return str(self.student_auth_id)  # -- {str(self.score_given_to_times_mean)}
+
+    # 下面是一些計算的數值
 
     def score_given_to_times_mean(self):
-        # 得到的平均評分  (總分/被評分次數)，回傳到小數點後第一個數字
+    # 得到的平均評分  (總分/被評分次數)，回傳到小數點後第一個數字
         if self.reviewed_times == 0:
             return -1  # -1代表目前沒有可用的值
         else:
             return round(
-                self.score_given_sum / self.reviewed_times * 100, 0)
+                self.score_given_sum / self.reviewed_times, 1)
 
-    def on_time_index(self):
+    def get_on_time_index(self):
         '''準時到課指數，正常來說介於 0 - 100 之間'''
         if self.reviewed_times == 0:
             return -1  # -1代表目前沒有可用的值
@@ -85,7 +89,7 @@ class student_review_aggregated_info(models.Model):
             return round(
                 self.is_student_late_for_lesson_times / self.reviewed_times * 100, 0)
 
-    def studious_index(self):
+    def get_studious_index(self):
         '''認真學習指數，正常來說介於 0 - 100 之間'''
         if self.reviewed_times == 0:
             return -1  # -1代表目前沒有可用的值
@@ -93,7 +97,7 @@ class student_review_aggregated_info(models.Model):
             return round(
                 self.is_student_being_frivolous_in_lesson_times / self.reviewed_times * 100, 0)
 
-    def friendly_index(self):
+    def get_friendly_index(self):
         '''友善指數，正常來說介於 0 - 100 之間'''
         if self.reviewed_times == 0:
             return -1  # -1代表目前沒有可用的值
@@ -101,12 +105,10 @@ class student_review_aggregated_info(models.Model):
             return round(
                 self.is_student_or_parents_not_friendly_times / self.reviewed_times * 100, 0)
 
-
-
-
-
-
-
+    class Meta:
+        ordering= ['-last_updated_time']  # 越新的會被呈現在越上面
+        verbose_name = '學生評價儀表板'
+        verbose_name_plural = '學生評價儀表板'
 
 class teacher_profile(models.Model):
     # 這是for存放老師的額外資訊
@@ -259,3 +261,13 @@ class feedback(models.Model):
         return str(self.id)
 
     
+@receiver(post_save, sender=student_profile)
+def when_lesson_completed_notification_sent_by_teacher(sender, instance:student_profile, created, **kwargs):
+    # 代表student_profile建立了新學生資料，這時候我們一起幫他建立對應的評價儀表板
+    if created:
+        # 代表是新建立
+        student_review_aggregated_info.objects.create(
+            student_auth_id = instance.auth_id,
+        ).save()
+
+        
