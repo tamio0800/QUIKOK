@@ -472,7 +472,7 @@ class test_finance_functions(TestCase):
         
 
     def test_email_sending_new_order(self):
-        #mail.outbox = [] # 清空暫存記憶裡的信, def結束會自動empty,有需要再用
+        mail.outbox = [] # 清空暫存記憶裡的信, def結束會自動empty,有需要再用
         data_test = {'studentID':2, 'teacherID':1,'lessonID':1,
                     'lesson_set':'30:70' ,'total_lesson_set_price':100,
                     'email_pattern_name':'訂課匯款提醒',
@@ -723,7 +723,7 @@ class test_student_purchase_payment_status(TestCase):
         '''
 
 
-    def test_oreder_history_response(self):
+    def test_order_history_response(self):
         obj_amount = student_purchase_record.objects.all().count()
         # 建立一個訂單
         purchase_data = {
