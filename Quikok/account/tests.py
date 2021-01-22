@@ -1,16 +1,16 @@
 from django.http import response
-from django.test import RequestFactory, TestCase
-from django.test import Client
+from django.test import RequestFactory, TestCase,Client
 from django.contrib.auth.models import Permission, User, Group
 from django.urls.conf import path
-from account.models import student_profile, teacher_profile, user_token, feedback
-from account.models import general_available_time
-from account.models import specific_available_time
+from account.models import (student_profile, teacher_profile, user_token, feedback,
+                                general_available_time,specific_available_time)
 from account.auth_tools import auth_check_manager
 from datetime import datetime, timedelta, date as date_function
 from lesson.models import lesson_card
 import os, shutil
 from unittest import skip
+from account.email_sending import email_manager
+from django.core import mail
 
 # python manage.py test account/ --settings=Quikok.settings_for_test
 class Auth_Related_Functions_Test(TestCase):
@@ -73,6 +73,42 @@ class Teacher_Profile_Test(TestCase):
             print(f'Error:  {e}')
 
     
+    def test_send_welcom_email_when_create_teacher(self):
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+        client = Client()
+        test_username = 'test201218_teacher_user@test.com'
+        data = {
+            'regEmail': test_username,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;'
+        }
+        response = client.post(path='/api/account/signupTeacher/', data=data)
+        # 建立會員有成功
+        self.assertIn('success', str(response.content))
+        # 確認有寄出通知信
+        self.assertEqual(mail.outbox[0].subject, 'Quikok!開課 註冊成功通知')
+
     def test_teacher_available_and_specific_time_created_after_signing_up(self):
         
         Group.objects.bulk_create(
@@ -543,6 +579,25 @@ class Student_Test(TestCase):
             os.path.isdir(f'user_upload/students/{self.test_username}')
         )
     
+    def test_send_welcom_email_when_create_teacher(self):
+        client = Client()
+        test_username = 'test_student@test.com'
+        data = {
+            'regEmail': test_username,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'regRole': 'test',
+            'regMobile': '0912-345678',
+            'regNotifiemail': ''
+       }
+        response = client.post(path='/api/account/signupStudent/', data=data)
+        # 建立會員有成功
+        self.assertIn('success', str(response.content))
+        # 確認有寄出通知信
+        self.assertEqual(mail.outbox[0].subject, 'Quikok!開課 註冊成功通知')
 
     def test_if_student_editted_properly(self):
 

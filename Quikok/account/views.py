@@ -35,7 +35,7 @@ from handy_functions import clean_files
 from analytics.signals import object_accessed_signal
 from analytics.utils import get_client_ip
 from blog.models import article_info
-
+from account.email_sending import email_manager
 ## 0916改成api的版本,之前的另存成views_old, 之後依據該檔把已設計好的功能寫過來
 ##### 學生區 #####
 @require_http_methods(['POST'])
@@ -144,7 +144,12 @@ def create_a_student_user(request):
                 update_someone_by_email = update_someone_by_email
             )
             new_student.save()
-            # print('student_profile建立')
+            # 寄發email通知學生註冊成功
+            welcome_email = email_manager()
+            welcome_email.send_welcome_email_new_signup_student(
+                student_authID = user_created_object.id,
+                student_nickname = nickname, 
+                student_email = username)
 
             object_accessed_signal.send(
                 sender='create_a_student_user',
@@ -273,7 +278,6 @@ def edit_student_profile(request):
 def edit_teacher_profile(request):
 
     response = dict()
-    
     auth_id = request.POST.get('userID', False)
     nickname = request.POST.get('nickname', False)
     intro = request.POST.get('intro', False)
@@ -648,6 +652,12 @@ def create_a_teacher_user(request):
             )
             teacher_created_object.save()
             print('成功建立 teacher_profile')
+            # 寄發email通知老師註冊成功
+            welcome_email = email_manager()
+            welcome_email.send_welcome_email_new_signup_teacher(
+                teacher_authID = user_created_object.id,
+                teacher_nickname = nickname, 
+                teacher_email = username)
 
             object_accessed_signal.send(
                 sender='create_a_teacher_user',
