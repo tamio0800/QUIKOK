@@ -6482,7 +6482,23 @@ class REVIEWS_TESTS(TestCase):
             ),
             student_reviews_from_teachers.objects.values()
         )
-        # print(f'inner info: {student_reviews_from_teachers.objects.values()}')
+        
+        # 確認學生的指數與上課時長是否正確
+        self.assertEqual(
+            (
+                5,  # 平均得分,
+                100.0,  # 認真比率
+                0,  # 目前上課總時長應該是 0，因為狀態不是 "finished"
+            ),
+            (
+                student_review_aggregated_info.objects.get(
+                    student_auth_id=student_profile.objects.get(id=1).auth_id).score_given_to_times_mean(),
+                student_review_aggregated_info.objects.get(
+                    student_auth_id=student_profile.objects.get(id=1).auth_id).get_studious_index(),
+                student_review_aggregated_info.objects.get(
+                    student_auth_id=student_profile.objects.get(id=1).auth_id).receiving_review_lesson_minutes_sum,
+            ),
+            student_review_aggregated_info.objects.values())
 
         # 預約並完課第二門
         # 接著讓學生進行預約
@@ -6578,7 +6594,7 @@ class REVIEWS_TESTS(TestCase):
             (
                 2.5,  # 平均得分,
                 50.0,  # 準時比率
-                0,  # 目前上課總時長應該是0，因為狀態還沒有變成 "finished"
+                60,  # 目前上課總時長應該是60，因為狀態已經變成 "finished"
             ),
             (
                 student_review_aggregated_info.objects.get(
@@ -6597,10 +6613,11 @@ class REVIEWS_TESTS(TestCase):
             'lesson_booking_info_id': 1,
             'action': 'agree'}
         self.client.post(path='/api/lesson/lessonCompletedConfirmationFromStudent/', data=confirmation_post_data)
-
-        # 確認時數是否變成 180 分鐘
-        #self.assertEqual(180, 
-        #    student_review_aggregated_info.objects.get(
-        #            student_auth_id=student_profile.objects.get(id=1).auth_id).receiving_review_lesson_minutes_sum,
-        #    student_review_aggregated_info.objects.values())
+        s_a_id = student_profile.objects.get(id=1).auth_id
+        # 確認時數是否變成 240 分鐘
+        self.assertEqual(240, 
+            student_review_aggregated_info.objects.get(
+                    student_auth_id=student_profile.objects.get(id=1).auth_id).receiving_review_lesson_minutes_sum,
+            f'{student_review_aggregated_info.objects.values().filter(student_auth_id=s_a_id)} \n\
+                 {lesson_booking_info.objects.values().filter(student_auth_id=s_a_id)}')
 

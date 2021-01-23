@@ -162,9 +162,6 @@ class student_owing_teacher_time(models.Model):
         verbose_name_plural = '學生積欠時數'
 
 
-
-
-
 class student_remaining_minutes_when_request_refund_each_purchased_lesson_set(models.Model):
     '''
     時間轉Q幣用。

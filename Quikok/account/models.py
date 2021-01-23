@@ -86,7 +86,7 @@ class student_review_aggregated_info(models.Model):
         if self.reviewed_times == 0:
             return -1  # -1代表目前沒有可用的值
         else:
-            return round(
+            return 100.0 - round(
                 self.is_student_late_for_lesson_times / self.reviewed_times * 100, 0)
 
     def get_studious_index(self):
@@ -94,7 +94,7 @@ class student_review_aggregated_info(models.Model):
         if self.reviewed_times == 0:
             return -1  # -1代表目前沒有可用的值
         else:
-            return round(
+            return 100.0 - round(
                 self.is_student_being_frivolous_in_lesson_times / self.reviewed_times * 100, 0)
 
     def get_friendly_index(self):
@@ -102,7 +102,7 @@ class student_review_aggregated_info(models.Model):
         if self.reviewed_times == 0:
             return -1  # -1代表目前沒有可用的值
         else:
-            return round(
+            return 100.0 - round(
                 self.is_student_or_parents_not_friendly_times / self.reviewed_times * 100, 0)
 
     class Meta:
