@@ -2,7 +2,7 @@ from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from account_finance.email_sending import email_manager
-
+from account_finance.email_machine import email_tools
 
 # 學生購買紀錄
 class student_purchase_record(models.Model):
@@ -235,3 +235,14 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
             }
             send_email_reminder.system_email_new_order_and_payment_remind(**send_email_data)
 
+            # 寄信告訴老師有學生買他的課程
+            send_email = email_tools()
+            send_email.send_teacher_when_student_buy_his_lesson(
+            teacher_authID= 'TEST',
+            teacher_nickname='TEST',
+            teacher_email='TEST',
+            lesson_title='TEST',
+            student_nickname='TEST',
+            lesson_set='TEST',
+            price = 'test'
+            )
