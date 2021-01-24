@@ -73,7 +73,7 @@ class student_review_aggregated_info(models.Model):
 
     # 下面是一些計算的數值
 
-    def score_given_to_times_mean(self):
+    def get_score_given_to_times_mean(self):
     # 得到的平均評分  (總分/被評分次數)，回傳到小數點後第一個數字
         if self.reviewed_times == 0:
             return -1  # -1代表目前沒有可用的值

@@ -6492,7 +6492,7 @@ class REVIEWS_TESTS(TestCase):
             ),
             (
                 student_review_aggregated_info.objects.get(
-                    student_auth_id=student_profile.objects.get(id=1).auth_id).score_given_to_times_mean(),
+                    student_auth_id=student_profile.objects.get(id=1).auth_id).get_score_given_to_times_mean(),
                 student_review_aggregated_info.objects.get(
                     student_auth_id=student_profile.objects.get(id=1).auth_id).get_studious_index(),
                 student_review_aggregated_info.objects.get(
@@ -6574,7 +6574,7 @@ class REVIEWS_TESTS(TestCase):
                 student_reviews_from_teachers.objects.get(id=2).is_student_late_for_lesson,
                 student_reviews_from_teachers.objects.get(id=2).is_student_being_frivolous_in_lesson,
                 student_reviews_from_teachers.objects.get(id=2).is_student_or_parents_not_friendly
-            ),
+            ),          
             student_reviews_from_teachers.objects.values()
         )
 
@@ -6598,7 +6598,7 @@ class REVIEWS_TESTS(TestCase):
             ),
             (
                 student_review_aggregated_info.objects.get(
-                    student_auth_id=student_profile.objects.get(id=1).auth_id).score_given_to_times_mean(),
+                    student_auth_id=student_profile.objects.get(id=1).auth_id).get_score_given_to_times_mean(),
                 student_review_aggregated_info.objects.get(
                     student_auth_id=student_profile.objects.get(id=1).auth_id).get_on_time_index(),
                 student_review_aggregated_info.objects.get(
@@ -6620,4 +6620,22 @@ class REVIEWS_TESTS(TestCase):
                     student_auth_id=student_profile.objects.get(id=1).auth_id).receiving_review_lesson_minutes_sum,
             f'{student_review_aggregated_info.objects.values().filter(student_auth_id=s_a_id)} \n\
                  {lesson_booking_info.objects.values().filter(student_auth_id=s_a_id)}')
+
+
+        student_public_reviews_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id}
+        response = \
+            self.client.get(path='/api/account/getStudentPublicReview/', data=student_public_reviews_post_data)
+        self.assertEqual(200, response.status_code)
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertIn('"score_given_to_times_mean": 2.5', str(response.content, "utf8"))
+        self.assertIn('"on_time_index": 50.0', str(response.content, "utf8"))
+        self.assertIn('"studious_index": 100.0', str(response.content, "utf8"))
+        self.assertIn('"friendly_index": 50.0', str(response.content, "utf8"))
+        self.assertIn('"reviewed_times": 2', str(response.content, "utf8"))
+        self.assertIn('"receiving_review_lesson_minutes_sum": 240', str(response.content, "utf8"))
+        # self.fail(str(response.content, "utf8"))
+        
+
+        
 

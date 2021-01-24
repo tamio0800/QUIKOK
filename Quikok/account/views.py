@@ -4,7 +4,7 @@ from django.contrib import auth
 from django.contrib.auth.hashers import make_password, check_password  # 這一行用來加密密碼的
 from .model_tools import user_db_manager, teacher_manager, student_manager, auth_manager_for_password
 from django.contrib.auth.models import User
-from account.models import user_token, student_profile, teacher_profile, specific_available_time, general_available_time, feedback
+from account.models import student_review_aggregated_info, user_token, student_profile, teacher_profile, specific_available_time, general_available_time, feedback
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.core.files.storage import FileSystemStorage
 from lesson.models import lesson_info_for_users_not_signed_up, lesson_info
@@ -1512,6 +1512,64 @@ def get_banking_information(request):
         response['data'] = None
 
     return JsonResponse(response)
+
+
+@require_http_methods(['GET'])
+def get_student_public_review(request):
+    '''
+    傳送學生的公開評價資訊
+    '''
+    response = dict()
+    student_auth_id = request.GET.get('userID', False)
+    if check_if_all_variables_are_true(student_auth_id):
+        student_object = student_profile.objects.filter(auth_id=student_auth_id).first()
+        if student_object is not None:
+            # 用戶存在，回傳其評價資訊
+            aggregated_review_object = \
+                student_review_aggregated_info.objects.filter(student_auth_id=student_auth_id).first()
+            
+            if aggregated_review_object is None:
+                # 找不到學生的評價資訊，雖然很不應該發生這種情況，但還是預做準備
+                response['status'] = 'failed'
+                response['errCode'] = '2'
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                response['data'] = None
+            
+            else:
+                # 有找到學生的評價資料
+                response['data'] = {
+                    'score_given_to_times_mean': aggregated_review_object.get_score_given_to_times_mean(),
+                    'reviewed_times': aggregated_review_object.reviewed_times,
+                    'receiving_review_lesson_minutes_sum': aggregated_review_object.receiving_review_lesson_minutes_sum,
+                    'on_time_index': aggregated_review_object.get_on_time_index(),
+                    'studious_index': aggregated_review_object.get_studious_index(),
+                    'friendly_index': aggregated_review_object.get_friendly_index(),
+                    'is_student_remark': ''
+                }
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+        else: 
+            # 用戶不存在
+            response['status'] = 'failed'
+            response['errCode'] = '1'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['data'] = None
+    
+    else:
+        # 傳輸有問題
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+
+    return JsonResponse(response)
+
+        
+
+
+
+
 
 
 
