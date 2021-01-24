@@ -142,7 +142,7 @@ class lesson_reviews_from_students(models.Model):
     score_given = models.IntegerField(blank=True, null=True) # 對於本次課程綜合的評分，介於1~5分之間
     is_teacher_late_for_lesson = models.BooleanField(blank=True, null=True) # 老師是否有遲到
     is_teacher_being_frivolous_in_lesson = models.BooleanField(blank=True, null=True) # 老師是否不認真教學
-    is_teacher_incapabale = models.BooleanField(blank=True, null=True) # 老師是否不勝任這門課、教太廢
+    is_teacher_incapable = models.BooleanField(blank=True, null=True) # 老師是否不勝任這門課、教太廢
     remark_given = models.TextField(blank=True, null=True)  # 這個是評語
     # picture_folder = models.TextField() # 加上真的有上課的圖以資證明（學蝦皮
     created_time = models.DateTimeField(auto_now_add=True)
