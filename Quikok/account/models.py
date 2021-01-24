@@ -11,6 +11,8 @@ class user_token(models.Model):
     logout_time = models.CharField(max_length=60) # 登入的時間+14天
     def __str__(self):
         return str(self.id)
+
+        
 class auth_check(models.Model):
     url_auth_type = models.CharField(max_length = 30) 
     # teacher, student, member_only, public 

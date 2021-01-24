@@ -1566,6 +1566,41 @@ def get_student_public_review(request):
     return JsonResponse(response)
 
         
+@require_http_methods(['GET'])
+def return_student_profile_for_public_viewing(request):
+    '''
+    傳送學生的公開資訊
+    '''
+    response = dict()
+    student_auth_id = request.GET.get('userID', False)
+    if check_if_all_variables_are_true(student_auth_id):
+        student_object = student_profile.objects.filter(auth_id=student_auth_id).first()
+        if student_object is not None:
+            # 用戶存在，回傳其基本資訊： 暱稱、性別(是否為男生)、大頭照路徑
+            response['data'] = {
+                'nickname': student_object.nickname,
+                'is_male': student_object.is_male,
+                'upload_snapshot': student_object.thumbnail_dir
+            }
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+            
+        else: 
+            # 用戶不存在
+            response['status'] = 'failed'
+            response['errCode'] = '1'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['data'] = None
+    
+    else:
+        # 傳輸有問題
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+
+    return JsonResponse(response)
 
 
 

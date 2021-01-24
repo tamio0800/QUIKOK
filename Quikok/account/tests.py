@@ -535,6 +535,7 @@ class Student_Test(TestCase):
 
     def setUp(self):
         self.test_username = 'test_student_username@test.com'
+        self.test_username2 = 'test_student_username2@test.com'
         self.client = Client()
         Group.objects.bulk_create([
                 Group(name='test_student'),
@@ -549,6 +550,7 @@ class Student_Test(TestCase):
         # 刪掉(如果有的話)產生的資料夾
         try:
             shutil.rmtree('user_upload/students/' + self.test_username)
+            shutil.rmtree('user_upload/students/' + self.test_username2)
         except:
             pass
 
@@ -649,6 +651,59 @@ class Student_Test(TestCase):
         self.assertTrue(
             os.path.isfile(student_profile.objects.first().thumbnail_dir[1:])
         )
+
+
+    def test_return_student_profile_for_public_viewing_work(self):
+        student_post_data = {
+            'regEmail': self.test_username,
+            'regPwd': '00000000',
+            'regName': 'test_student_name',
+            'regNickname': 'test_student_nickname',
+            'regBirth': '1990-12-25',
+            'regGender': 1,
+            'regRole': 'oneself',
+            'regMobile': '0900-111111',
+            'regNotifiemail': ''
+        }
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        get_student_info_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id
+        }
+        response = \
+            self.client.get(path='/api/account/returnStudentProfileForPublicViewing/', data=get_student_info_post_data)
+
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertIn('"nickname": "test_student_nickname"', str(response.content, "utf8"))
+        self.assertIn('"is_male": true', str(response.content, "utf8"))
+        self.assertIn(f'"upload_snapshot": {student_profile.objects.get(id=1).thumbnail_dir}', str(response.content, "utf8"))
+
+        # 註冊第二個學生，增加snapshot
+        the_pic = open('user_upload/articles/default_main_picture.png', 'rb')
+        student_post_data = {
+            'regEmail': self.test_username2,
+            'regPwd': '00000000',
+            'regName': 'test_student_nam2e',
+            'regNickname': '',
+            'regBirth': '1990-12-25',
+            'regGender': 0,
+            'regRole': 'oneself',
+            'regMobile': '0900-111111',
+            'regNotifiemail': '',
+            'upload_snapshot': the_pic
+        }
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        get_student_info_post_data = {
+            'userID': student_profile.objects.get(id=2).auth_id
+        }
+        response = \
+            self.client.get(path='/api/account/returnStudentProfileForPublicViewing/', data=get_student_info_post_data)
+
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertIn('"nickname": "test_student_nam2e"', str(response.content, "utf8"))  # 因為沒輸入，所以是名字
+        self.assertIn('"is_male": false', str(response.content, "utf8"))
+        self.assertIn(f'"upload_snapshot": "{student_profile.objects.get(id=2).thumbnail_dir}"', str(response.content, "utf8"))
 
 
 class Feedback_Test(TestCase):
