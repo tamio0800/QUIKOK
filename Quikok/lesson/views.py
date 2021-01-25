@@ -3003,3 +3003,53 @@ def student_write_teacher_reviews(request):
     
     return JsonResponse(response)
 
+
+@require_http_methods(['POST'])
+def read_reviews_of_certain_lessons(request):
+    '''
+    讓師/生雙方可以看見彼此在某堂課上對彼此的評價
+    接收：{
+        lesson_booking_info_id: 哪一門預約的ID
+        userID: 用戶的auth_id,  // 用來確認這個user是不是有權力看這個評論
+        type: "student" or "teacher"
+    }
+    回傳：{
+        status: “success“ / “failed“ 
+        errCode: None 
+        errMsg: None
+        data: {
+            // 學生對老師
+            score_given_to_teacher: from 1 to 5
+            remark_given_to_teacher: 評語
+            is_teacher_late_for_lesson: Boolean,
+            is_teacher_frivolous_in_lesson: Boolean,
+            is_teacher_incapabale: Boolean,
+            // 老師對學生
+            score_given_to_student: from 1 to 5
+            remark_given_to_student: 評語
+            is_student_late_for_lesson: Boolean,
+            is_student_frivolous_in_lesson: Boolean,
+            is_student_or_parents_not_friendly: Boolean,
+        }
+    }'''
+    response = dict()
+    user_auth_id = request.POST.get('userID', False)
+    lesson_booking_info_id = request.POST.get('lesson_booking_info_id', False)
+    user_type = request.POST.get('type', False)
+
+    if check_if_all_variables_are_true(user_auth_id, lesson_booking_info_id, user_type):
+        # 資料有正確收取
+    
+        response['status'] = 'success'
+        response['errCode'] = None
+        response['errMsg'] = None
+        response['data'] = None
+                   
+    else:
+        # 資料傳輸出現問題
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+    
+    return JsonResponse(response)

@@ -6938,3 +6938,16 @@ class REVIEWS_TESTS(TestCase):
         self.assertIn('"all_teacher_remarks": []', str(response.content, "utf8"))
         # self.fail(str(response.content, "utf8"))
 
+
+    def test_read_reviews_of_certain_lessons_exist(self):
+        '''
+        用來檢測「師生互看對方給予的評價」是否運作正常。
+        '''
+        read_reviews_post_data = {
+            'lesson_booking_info_id': 1,
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'type': 'student'
+        }
+        response = \
+            self.client.post(path='/api/lesson/readReviewsOfCertainLessons/', data=read_reviews_post_data)
+        self.assertEqual(200, response.status_code)
