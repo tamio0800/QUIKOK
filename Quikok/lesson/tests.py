@@ -6634,6 +6634,7 @@ class REVIEWS_TESTS(TestCase):
         self.assertIn('"friendly_index": 50.0', str(response.content, "utf8"))
         self.assertIn('"reviewed_times": 2', str(response.content, "utf8"))
         self.assertIn('"receiving_review_lesson_minutes_sum": 240', str(response.content, "utf8"))
+        self.assertIn('"all_student_remarks": []', str(response.content, "utf8"))
         # self.fail(str(response.content, "utf8"))
         
 
@@ -6820,7 +6821,7 @@ class REVIEWS_TESTS(TestCase):
         }  # 測試看看這個 api 能不能產出對應的 record 來
         self.client.post(path='/api/lesson/lessonCompletedNotificationFromTeacher/', data=noti_post_data)
 
-        # 這裡先讓學生確認一下
+        # 這裡先讓學生確認一下第二門課
         confirmation_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,
             'lesson_booking_info_id': 2,
@@ -6883,7 +6884,7 @@ class REVIEWS_TESTS(TestCase):
                 50.0,  # 準時指數
                 50.0,  # 認真指數
                 100.0,  # 適任指數
-                60,  # 目前上課總時長應該是 0，因為狀態不是 "finished"
+                60,  # 目前上課總時長應該是 60，因為第一門狀態不是 "finished"
             ),
             (
                 teacher_review_aggregated_info.objects.get(
@@ -6899,13 +6900,16 @@ class REVIEWS_TESTS(TestCase):
             ),
             teacher_review_aggregated_info.objects.values())
 
-        # 接著讓學生確認第二門課
+        # 接著讓學生確認第一門課
         # 此時，學生應該可以進行確認了
         confirmation_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,
-            'lesson_booking_info_id': 2,
+            'lesson_booking_info_id': 1,
             'action': 'agree'}
-        self.client.post(path='/api/lesson/lessonCompletedConfirmationFromStudent/', data=confirmation_post_data)
+        response =\
+            self.client.post(path='/api/lesson/lessonCompletedConfirmationFromStudent/', data=confirmation_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        
         t_a_id = teacher_profile.objects.get(id=1).auth_id
         # 確認時數是否變成 240 分鐘
         self.assertEqual(240, 
@@ -6915,7 +6919,7 @@ class REVIEWS_TESTS(TestCase):
                  {lesson_booking_info.objects.values().filter(teacher_auth_id=t_a_id)}')
 
 
-        '''teacher_public_reviews_post_data = {
+        teacher_public_reviews_post_data = {
             'userID': teacher_profile.objects.get(id=1).auth_id}
         response = \
             self.client.get(path='/api/account/getTeacherPublicReview/', data=teacher_public_reviews_post_data)
@@ -6927,5 +6931,6 @@ class REVIEWS_TESTS(TestCase):
         self.assertIn('"competent_index": 100.0', str(response.content, "utf8"))
         self.assertIn('"reviewed_times": 2', str(response.content, "utf8"))
         self.assertIn('"receiving_review_lesson_minutes_sum": 240', str(response.content, "utf8"))
-        # self.fail(str(response.content, "utf8"))'''
+        self.assertIn('"all_teacher_remarks": []', str(response.content, "utf8"))
+        # self.fail(str(response.content, "utf8"))
 

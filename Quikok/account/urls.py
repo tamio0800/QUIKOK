@@ -33,4 +33,5 @@ urlpatterns = [
     path('feedback/', views.feedback_view_function),
     path('getBankingInfomation/', views.get_banking_information),
     path('getStudentPublicReview/', views.get_student_public_review),
+    path('getTeacherPublicReview/', views.get_teacher_public_review),
 ]

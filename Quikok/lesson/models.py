@@ -373,26 +373,31 @@ def when_lesson_completed_notification_sent_by_teacher(sender, instance:lesson_c
 def update_receiving_review_lesson_minutes(sender, instance:lesson_booking_info, **kwargs):
     # 這裡要做的是，當狀態從 non-finished 變成 finished 時，要更新學生與老師的總上課時數
     # 但因為需要學生進行確認，所以 不可能有一開始就是 finished 的狀況
-    # 先做學生
+    
     if instance.id is None:
         pass  # 只有改動的時候才需要注意
     else:
         previous = lesson_booking_info.objects.get(id=instance.id)
         if previous.booking_status != 'finished' and instance.booking_status == 'finished' :
             from account.models import student_review_aggregated_info
+            from account.models import teacher_review_aggregated_info
             # 代表經過這次更改後才變成完課狀態，此時可以將課程的時數更新至學生的評價紀錄裏了
             
             the_student_review_info_object = \
                 student_review_aggregated_info.objects.filter(student_auth_id=instance.student_auth_id).first()
 
+            the_teacher_review_info_object = \
+                teacher_review_aggregated_info.objects.filter(teacher_auth_id=instance.teacher_auth_id).first()
+
             lesson_completed_object = \
                 lesson_completed_record.objects.get(lesson_booking_info_id=instance.id)
             
+            # 先做學生的部份
             if the_student_review_info_object is None:
                 # 代表沒有這筆記錄，可能是學生在QUIKOK PILOT時就已經註冊，才會沒有連動建立資料
                 # 所以我們幫他建立一下吧
                 student_review_aggregated_info.objects.create(
-                    student_auth_id = instance.auth_id,
+                    student_auth_id = instance.student_auth_id,
                     receiving_review_lesson_minutes_sum = \
                         lesson_completed_object.teacher_declared_time_in_minutes, 
                 )
@@ -401,6 +406,21 @@ def update_receiving_review_lesson_minutes(sender, instance:lesson_booking_info,
                 the_student_review_info_object.receiving_review_lesson_minutes_sum += \
                     lesson_completed_object.teacher_declared_time_in_minutes
                 the_student_review_info_object.save()
+
+            # 開始更新老師的部份
+            if the_teacher_review_info_object is None:
+                # 代表沒有這筆記錄，可能是老師在QUIKOK PILOT時就已經註冊，才會沒有連動建立資料
+                # 所以我們幫他建立一下吧
+                teacher_review_aggregated_info.objects.create(
+                    teacher_auth_id = instance.teacher_auth_id,
+                    receiving_review_lesson_minutes_sum = \
+                        lesson_completed_object.teacher_declared_time_in_minutes, 
+                )
+            else:
+                # 已經有這筆資料了，更新就好
+                the_teacher_review_info_object.receiving_review_lesson_minutes_sum += \
+                    lesson_completed_object.teacher_declared_time_in_minutes
+                the_teacher_review_info_object.save()
 
 
 
