@@ -6763,21 +6763,23 @@ class REVIEWS_TESTS(TestCase):
             teacher_review_aggregated_info.objects.values())
 
         # 確認老師的指數與上課時長是否正確
-        '''self.assertEqual(
+        self.assertEqual(
             (
                 5,  # 平均得分,
-                100.0,  # 認真比率
+                100.0,  # 準時指數
+                0,  # 認真指數
+                100.0,  # 適任指數
                 0,  # 目前上課總時長應該是 0，因為狀態不是 "finished"
             ),
             (
                 teacher_review_aggregated_info.objects.get(
                     teacher_auth_id=teacher_profile.objects.get(id=1).auth_id).get_score_given_to_times_mean(),
                 teacher_review_aggregated_info.objects.get(
-                    teacher_auth_id=teacher_profile.objects.get(id=1).auth_id).get_diligent_index(),
+                    teacher_auth_id=teacher_profile.objects.get(id=1).auth_id).get_on_time_index(),
                 teacher_review_aggregated_info.objects.get(
                     teacher_auth_id=teacher_profile.objects.get(id=1).auth_id).get_diligent_index(),
                 teacher_review_aggregated_info.objects.get(
-                    teacher_auth_id=teacher_profile.objects.get(id=1).auth_id).get_diligent_index(),
+                    teacher_auth_id=teacher_profile.objects.get(id=1).auth_id).get_competent_index(),
                 teacher_review_aggregated_info.objects.get(
                     teacher_auth_id=teacher_profile.objects.get(id=1).auth_id).receiving_review_lesson_minutes_sum,
             ),
@@ -6785,7 +6787,7 @@ class REVIEWS_TESTS(TestCase):
 
         # 預約並完課第二門
         # 接著讓學生進行預約
-        booking_post_data = {
+        '''booking_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,  # 學生的auth_id
             'lessonID': 1,
             'bookingDateTime': f'{self.available_date_2_t1}:4,5;'} 
