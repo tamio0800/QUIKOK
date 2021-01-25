@@ -57,6 +57,63 @@ class student_profile(models.Model):
         verbose_name_plural = '學生個人資料'
 
 
+class teacher_review_aggregated_info(models.Model):
+    '''
+    用來存放、呈現教師的個人評價資訊
+    '''
+    teacher_auth_id = models.IntegerField(default=-1)  # -1 的話代表還沒有設定
+    score_given_sum = models.PositiveIntegerField(default=0)  # 得到的評分加總總計
+    reviewed_times = models.PositiveIntegerField(default=0)  # 得到的評分次數累計
+    receiving_review_lesson_minutes_sum = models.PositiveIntegerField(default=0)  # 得到評分的那些課程的分鐘數總計
+    is_teacher_late_for_lesson_times = models.PositiveIntegerField(default=0)  # 老師遲到次數
+    is_teacher_frivolous_in_lesson_times = models.PositiveIntegerField(default=0)  # 老師不認真次數
+    is_teacher_incapable_times = models.PositiveIntegerField(default=0)  # 老師教課太廢次數
+    last_updated_time = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return str(self.teacher_auth_id)  # -- {str(self.score_given_to_times_mean)}
+
+    # 下面是一些計算的數值
+
+    def get_score_given_to_times_mean(self):
+    # 得到的平均評分  (總分/被評分次數)，回傳到小數點後第一個數字
+        if self.reviewed_times == 0:
+            return -1  # -1代表目前沒有可用的值
+        else:
+            return round(
+                self.score_given_sum / self.reviewed_times, 1)
+
+    def get_on_time_index(self):
+        '''準時到課指數，正常來說介於 0 - 100 之間'''
+        if self.reviewed_times == 0:
+            return -1  # -1代表目前沒有可用的值
+        else:
+            return 100.0 - round(
+                self.is_teacher_late_for_lesson_times / self.reviewed_times * 100, 0)
+
+    def get_diligent_index(self):
+        '''認真授課指數，正常來說介於 0 - 100 之間'''
+        if self.reviewed_times == 0:
+            return -1  # -1代表目前沒有可用的值
+        else:
+            return 100.0 - round(
+                self.is_teacher_frivolous_in_lesson_times / self.reviewed_times * 100, 0)
+
+    def get_competent_index(self):
+        '''教師適任指數，正常來說介於 0 - 100 之間'''
+        if self.reviewed_times == 0:
+            return -1  # -1代表目前沒有可用的值
+        else:
+            return 100.0 - round(
+                self.is_teacher_incapable_times / self.reviewed_times * 100, 0)
+
+    class Meta:
+        ordering= ['-last_updated_time']  # 越新的會被呈現在越上面
+        verbose_name = '老師評價儀表板'
+        verbose_name_plural = '老師評價儀表板'
+
+
+
 class student_review_aggregated_info(models.Model):
     '''
     用來存放、呈現學生的個人評價資訊

@@ -6764,14 +6764,14 @@ class REVIEWS_TESTS(TestCase):
                 0,  # 目前上課總時長應該是 0，因為狀態不是 "finished"
             ),
             (
-                student_review_aggregated_info.objects.get(
-                    student_auth_id=student_profile.objects.get(id=1).auth_id).get_score_given_to_times_mean(),
-                student_review_aggregated_info.objects.get(
-                    student_auth_id=student_profile.objects.get(id=1).auth_id).get_studious_index(),
-                student_review_aggregated_info.objects.get(
-                    student_auth_id=student_profile.objects.get(id=1).auth_id).receiving_review_lesson_minutes_sum,
+                teacher_review_aggregated_info.objects.get(
+                    teacher_auth_id=teacher_profile.objects.get(id=1).auth_id).get_score_given_to_times_mean(),
+                teacher_review_aggregated_info.objects.get(
+                    teacher_auth_id=teacher_profile.objects.get(id=1).auth_id).get_studious_index(),
+                teacher_review_aggregated_info.objects.get(
+                    teacher_auth_id=teacher_profile.objects.get(id=1).auth_id).receiving_review_lesson_minutes_sum,
             ),
-            student_review_aggregated_info.objects.values())
+            teacher_review_aggregated_info.objects.values())
 
         # 預約並完課第二門
         # 接著讓學生進行預約

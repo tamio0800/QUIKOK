@@ -133,7 +133,7 @@ class lesson_card(models.Model):
 
 class lesson_reviews_from_students(models.Model):
     '''
-    這個是讓學生在課後給評價的 TABLE
+    這個是讓學生在課後給老師/課程評價的 TABLE
     '''
     corresponding_lesson_id = models.IntegerField()  # 所對應的課程id
     corresponding_lesson_booking_info_id = models.IntegerField()  # 所對應的課程預約id
@@ -151,8 +151,8 @@ class lesson_reviews_from_students(models.Model):
         return str(self.id)
 
     class Meta:
-        verbose_name = '學生對課程評價'
-        verbose_name_plural = '學生對課程評價'
+        verbose_name = '學生對老師/課程評價'
+        verbose_name_plural = '學生對老師/課程評價'
 
 
 class student_reviews_from_teachers(models.Model):
