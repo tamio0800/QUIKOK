@@ -2776,7 +2776,7 @@ def teacher_write_student_reviews(request):
         score_given: 評分 1 - 5
         remark_given: 評語
         is_student_late_for_lesson: 學生是否遲到
-        is_student_being_frivolous_in_lesson: 學生是否不專心
+        is_student_frivolous_in_lesson: 學生是否不專心
         is_student_or_parents_not_friendly: 學生是否不友善
     }
     回傳：{
@@ -2791,11 +2791,11 @@ def teacher_write_student_reviews(request):
     lesson_booking_info_id = request.POST.get('lesson_booking_info_id', False)
     remark_given = request.POST.get('remark_given', False)
     is_student_late_for_lesson = request.POST.get('is_student_late_for_lesson', False)
-    is_student_being_frivolous_in_lesson = request.POST.get('is_student_being_frivolous_in_lesson', False)
+    is_student_frivolous_in_lesson = request.POST.get('is_student_frivolous_in_lesson', False)
     is_student_or_parents_not_friendly = request.POST.get('is_student_or_parents_not_friendly', False)
 
     if False not in (teacher_auth_id, score_given, remark_given, lesson_booking_info_id,
-        is_student_late_for_lesson, is_student_being_frivolous_in_lesson, is_student_or_parents_not_friendly):
+        is_student_late_for_lesson, is_student_frivolous_in_lesson, is_student_or_parents_not_friendly):
         # 資料有正確收取
 
         lesson_booking_object = lesson_booking_info.objects.filter(id=lesson_booking_info_id).first()
@@ -2813,7 +2813,7 @@ def teacher_write_student_reviews(request):
                         # 預約課程狀態符合老師送出時段後的條件
                         # 將數值轉成符合我們的規範
                         is_student_late_for_lesson = return_none_if_the_string_is_empty(is_student_late_for_lesson)
-                        is_student_being_frivolous_in_lesson = return_none_if_the_string_is_empty(is_student_being_frivolous_in_lesson)
+                        is_student_frivolous_in_lesson = return_none_if_the_string_is_empty(is_student_frivolous_in_lesson)
                         is_student_or_parents_not_friendly = return_none_if_the_string_is_empty(is_student_or_parents_not_friendly)
                         remark_given = return_none_if_the_string_is_empty(remark_given)
 
@@ -2828,8 +2828,8 @@ def teacher_write_student_reviews(request):
                             score_given = bound_number_string(score_given),
                             is_student_late_for_lesson = \
                                 is_student_late_for_lesson == 'true' if is_student_late_for_lesson is not None else None,
-                            is_student_being_frivolous_in_lesson = \
-                                is_student_being_frivolous_in_lesson == 'true' if is_student_being_frivolous_in_lesson is not None else None,
+                            is_student_frivolous_in_lesson = \
+                                is_student_frivolous_in_lesson == 'true' if is_student_frivolous_in_lesson is not None else None,
                             is_student_or_parents_not_friendly = \
                                 is_student_or_parents_not_friendly == 'true' if is_student_or_parents_not_friendly is not None else None,
                             remark_given = remark_given
@@ -2869,7 +2869,7 @@ def teacher_write_student_reviews(request):
 
     else:
         # 資料傳輸出現問題
-        # print(f'is_student_late_for_lesson {is_student_late_for_lesson} is_student_being_frivolous_in_lesson {is_student_being_frivolous_in_lesson} is_student_or_parents_not_friendly {is_student_or_parents_not_friendly}')
+        # print(f'is_student_late_for_lesson {is_student_late_for_lesson} is_student_frivolous_in_lesson {is_student_frivolous_in_lesson} is_student_or_parents_not_friendly {is_student_or_parents_not_friendly}')
         response['status'] = 'failed'
         response['errCode'] = '0'
         response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
@@ -2889,7 +2889,7 @@ def student_write_teacher_reviews(request):
         score_given: 評分 1 - 5
         remark_given: 評語
         is_teacher_late_for_lesson: 老師是否遲到
-        is_teacher_being_frivolous_in_lesson: 老師是否不專心
+        is_teacher_frivolous_in_lesson: 老師是否不專心
         is_teacher_incapable: 老師是否不勝任這門課、教太廢
     }
     回傳：{
@@ -2899,16 +2899,16 @@ def student_write_teacher_reviews(request):
         data: None
     }'''
     response = dict()
-    teacher_auth_id = request.POST.get('userID', False)
+    student_auth_id = request.POST.get('userID', False)
     score_given = request.POST.get('score_given', False)
     lesson_booking_info_id = request.POST.get('lesson_booking_info_id', False)
     remark_given = request.POST.get('remark_given', False)
-    is_student_late_for_lesson = request.POST.get('is_student_late_for_lesson', False)
-    is_student_being_frivolous_in_lesson = request.POST.get('is_student_being_frivolous_in_lesson', False)
-    is_student_or_parents_not_friendly = request.POST.get('is_student_or_parents_not_friendly', False)
+    is_teacher_late_for_lesson = request.POST.get('is_teacher_late_for_lesson', False)
+    is_student_frivolous_in_lesson = request.POST.get('is_student_frivolous_in_lesson', False)
+    is_teacher_incapable = request.POST.get('is_teacher_incapable', False)
 
     if False not in (teacher_auth_id, score_given, remark_given, lesson_booking_info_id,
-        is_student_late_for_lesson, is_student_being_frivolous_in_lesson, is_student_or_parents_not_friendly):
+        is_student_late_for_lesson, is_student_frivolous_in_lesson, is_student_or_parents_not_friendly):
         # 資料有正確收取
 
         lesson_booking_object = lesson_booking_info.objects.filter(id=lesson_booking_info_id).first()
@@ -2926,7 +2926,7 @@ def student_write_teacher_reviews(request):
                         # 預約課程狀態符合老師送出時段後的條件
                         # 將數值轉成符合我們的規範
                         is_student_late_for_lesson = return_none_if_the_string_is_empty(is_student_late_for_lesson)
-                        is_student_being_frivolous_in_lesson = return_none_if_the_string_is_empty(is_student_being_frivolous_in_lesson)
+                        is_student_frivolous_in_lesson = return_none_if_the_string_is_empty(is_student_frivolous_in_lesson)
                         is_student_or_parents_not_friendly = return_none_if_the_string_is_empty(is_student_or_parents_not_friendly)
                         remark_given = return_none_if_the_string_is_empty(remark_given)
 
@@ -2941,8 +2941,8 @@ def student_write_teacher_reviews(request):
                             score_given = bound_number_string(score_given),
                             is_student_late_for_lesson = \
                                 is_student_late_for_lesson == 'true' if is_student_late_for_lesson is not None else None,
-                            is_student_being_frivolous_in_lesson = \
-                                is_student_being_frivolous_in_lesson == 'true' if is_student_being_frivolous_in_lesson is not None else None,
+                            is_student_frivolous_in_lesson = \
+                                is_student_frivolous_in_lesson == 'true' if is_student_frivolous_in_lesson is not None else None,
                             is_student_or_parents_not_friendly = \
                                 is_student_or_parents_not_friendly == 'true' if is_student_or_parents_not_friendly is not None else None,
                             remark_given = remark_given
@@ -2982,7 +2982,7 @@ def student_write_teacher_reviews(request):
 
     else:
         # 資料傳輸出現問題
-        # print(f'is_student_late_for_lesson {is_student_late_for_lesson} is_student_being_frivolous_in_lesson {is_student_being_frivolous_in_lesson} is_student_or_parents_not_friendly {is_student_or_parents_not_friendly}')
+        # print(f'is_student_late_for_lesson {is_student_late_for_lesson} is_student_frivolous_in_lesson {is_student_frivolous_in_lesson} is_student_or_parents_not_friendly {is_student_or_parents_not_friendly}')
         response['status'] = 'failed'
         response['errCode'] = '0'
         response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'

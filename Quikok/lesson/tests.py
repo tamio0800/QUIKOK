@@ -5635,7 +5635,7 @@ class CLASS_FINISHED_TEST(TestCase):
             'lessonID': lesson_info.objects.get(teacher=teacher_profile.objects.get(id=2)).id,
             'sales_set': '30:70',
             'total_amount_of_the_sales_set': int(30*1200*0.7),
-            'q_discount': 20000}  # 測試看看其中2萬元是Q幣支付的會怎麼樣
+            'q_discount': 0}  # 測試看看其中2萬元是Q幣支付的會怎麼樣
         response = \
             self.client.post(path='/api/account_finance/storageOrder/', data=purchased_post_data)
         # self.assertIn('success', str(response.content, "utf8"))
@@ -6374,7 +6374,7 @@ class REVIEWS_TESTS(TestCase):
             'score_given': 4,
             'remark_given': 'oh yayayayayayya',
             'is_student_late_for_lesson': 'false',
-            'is_student_being_frivolous_in_lesson': 'false',
+            'is_student_frivolous_in_lesson': 'false',
             'is_student_or_parents_not_friendly': 'true'
         }
         response = \
@@ -6454,7 +6454,7 @@ class REVIEWS_TESTS(TestCase):
             'score_given': 7,
             'remark_given': remark_given,
             'is_student_late_for_lesson': '',
-            'is_student_being_frivolous_in_lesson': 'false',
+            'is_student_frivolous_in_lesson': 'false',
             'is_student_or_parents_not_friendly': 'true'
         }
         response = \
@@ -6477,7 +6477,7 @@ class REVIEWS_TESTS(TestCase):
                 student_reviews_from_teachers.objects.get(id=1).score_given,
                 student_reviews_from_teachers.objects.get(id=1).remark_given,
                 student_reviews_from_teachers.objects.get(id=1).is_student_late_for_lesson,
-                student_reviews_from_teachers.objects.get(id=1).is_student_being_frivolous_in_lesson,
+                student_reviews_from_teachers.objects.get(id=1).is_student_frivolous_in_lesson,
                 student_reviews_from_teachers.objects.get(id=1).is_student_or_parents_not_friendly
             ),
             student_reviews_from_teachers.objects.values()
@@ -6549,7 +6549,7 @@ class REVIEWS_TESTS(TestCase):
             'score_given': '',
             'remark_given': '',
             'is_student_late_for_lesson': 'true',
-            'is_student_being_frivolous_in_lesson': '',
+            'is_student_frivolous_in_lesson': '',
             'is_student_or_parents_not_friendly': ''
         }
         response = \
@@ -6572,7 +6572,7 @@ class REVIEWS_TESTS(TestCase):
                 student_reviews_from_teachers.objects.get(id=2).score_given,
                 student_reviews_from_teachers.objects.get(id=2).remark_given,
                 student_reviews_from_teachers.objects.get(id=2).is_student_late_for_lesson,
-                student_reviews_from_teachers.objects.get(id=2).is_student_being_frivolous_in_lesson,
+                student_reviews_from_teachers.objects.get(id=2).is_student_frivolous_in_lesson,
                 student_reviews_from_teachers.objects.get(id=2).is_student_or_parents_not_friendly
             ),          
             student_reviews_from_teachers.objects.values()

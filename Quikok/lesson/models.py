@@ -165,7 +165,7 @@ class student_reviews_from_teachers(models.Model):
     teacher_auth_id = models.IntegerField()  # 上課老師的auth_id，是留下評論的人
     score_given = models.PositiveIntegerField(blank=True, null=True) # 對於本次課程的綜合評分，介於1~5分之間
     is_student_late_for_lesson = models.BooleanField(blank=True, null=True) # 學生是否有遲到
-    is_student_being_frivolous_in_lesson = models.BooleanField(blank=True, null=True) # 學生是否不認真
+    is_student_frivolous_in_lesson = models.BooleanField(blank=True, null=True) # 學生是否不認真
     is_student_or_parents_not_friendly = models.BooleanField(blank=True, null=True) # 學生或家長是否不友善
     remark_given = models.TextField(blank=True, null=True)  # 這個是評語
     # picture_folder = models.TextField() # 加上真的有上課的圖以資證明（學蝦皮
@@ -425,7 +425,7 @@ def update_student_review_aggregated_info(sender, instance:student_reviews_from_
                 reviewed_times = 1,
                 receiving_review_lesson_minutes_sum = 0,  # 這個值不在這邊進行更新
                 is_student_late_for_lesson_times = 1 if instance.is_student_late_for_lesson == True else 0,
-                is_student_being_frivolous_in_lesson_times = 1 if instance.is_student_being_frivolous_in_lesson == True else 0,
+                is_student_frivolous_in_lesson_times = 1 if instance.is_student_frivolous_in_lesson == True else 0,
                 is_student_or_parents_not_friendly_times = 1 if instance.is_student_or_parents_not_friendly == True else 0
             )
         else:
@@ -436,8 +436,8 @@ def update_student_review_aggregated_info(sender, instance:student_reviews_from_
             # receiving_review_lesson_minutes_sum 不在這邊進行更新
             the_student_review_info_object.is_student_late_for_lesson_times += \
                 1 if instance.is_student_late_for_lesson == True else 0
-            the_student_review_info_object.is_student_being_frivolous_in_lesson_times += \
-                1 if instance.is_student_being_frivolous_in_lesson == True else 0
+            the_student_review_info_object.is_student_frivolous_in_lesson_times += \
+                1 if instance.is_student_frivolous_in_lesson == True else 0
             the_student_review_info_object.is_student_or_parents_not_friendly_times += \
                 1 if instance.is_student_or_parents_not_friendly == True else 0
             the_student_review_info_object.save()

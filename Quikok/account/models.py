@@ -12,7 +12,7 @@ class user_token(models.Model):
     def __str__(self):
         return str(self.id)
 
-        
+
 class auth_check(models.Model):
     url_auth_type = models.CharField(max_length = 30) 
     # teacher, student, member_only, public 
@@ -66,7 +66,7 @@ class student_review_aggregated_info(models.Model):
     reviewed_times = models.PositiveIntegerField(default=0)  # 得到的評分次數累計
     receiving_review_lesson_minutes_sum = models.PositiveIntegerField(default=0)  # 得到評分的那些課程的分鐘數總計
     is_student_late_for_lesson_times = models.PositiveIntegerField(default=0)  # 學生遲到次數
-    is_student_being_frivolous_in_lesson_times = models.PositiveIntegerField(default=0)  # 學生不認真次數
+    is_student_frivolous_in_lesson_times = models.PositiveIntegerField(default=0)  # 學生不認真次數
     is_student_or_parents_not_friendly_times = models.PositiveIntegerField(default=0)  # 學生或家長不友善次數
     last_updated_time = models.DateTimeField(auto_now=True)
 
@@ -97,7 +97,7 @@ class student_review_aggregated_info(models.Model):
             return -1  # -1代表目前沒有可用的值
         else:
             return 100.0 - round(
-                self.is_student_being_frivolous_in_lesson_times / self.reviewed_times * 100, 0)
+                self.is_student_frivolous_in_lesson_times / self.reviewed_times * 100, 0)
 
     def get_friendly_index(self):
         '''友善指數，正常來說介於 0 - 100 之間'''
