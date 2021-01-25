@@ -17,7 +17,7 @@ from datetime import datetime, timedelta, date as date_function
 import math
 #python3 manage.py test account_finance/ --settings=Quikok.settings_for_test
 
-
+@skip
 class test_finance_functions(TestCase):
     def setUp(self):
         self.client =  Client()        
@@ -553,7 +553,7 @@ class test_finance_functions(TestCase):
         response = self.client.post(path='/api/account_finance/create_lesson_order_minute/')
         self.assertEqual(response.status_code, 200)
 
-
+@skip
 # 測試回傳訂單以及編輯訂單
 class test_student_purchase_payment_status(TestCase):
     #def query_order_info_status1_unpaid(self):
@@ -946,7 +946,7 @@ class test_student_purchase_payment_status(TestCase):
         response = self.client.post(path='/api/lesson/bookingLessons/', data=data)
         self.assertIn('success', str(response.content))
    
-   
+    @skip
     def test_student_edit_order_when_paid_set_discount_request_a_refund(self):
         ''' 測試「已付款」買「多堂課」課程時，學生申請退款。此時學生尚未上過課
         1. 計算是否有剩餘時間 2. 比對剩餘時間換算的金額是否正確 3.訂單狀態是否改為cancel_after_paid

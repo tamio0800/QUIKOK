@@ -246,7 +246,7 @@ def student_order_history(request):
                 'purchase_date':record.purchase_date,
                 'teacher_authID':record.teacher_auth_id,
                 'teacher_nickname': record.teacher_nickname,
-                'lesson_title': record.lesson_title,
+                'lesson_name': record.lesson_title,
                 'lessonID': record.lesson_id,
                 'lesson_sales_set': set_name.sales_set, 
                 'purchased_with_money':record.purchased_with_money,
