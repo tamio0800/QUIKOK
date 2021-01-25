@@ -6701,7 +6701,7 @@ class REVIEWS_TESTS(TestCase):
             self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=change_booking_status_post_data)
         self.assertIn('success', str(response.content, "utf8"))
 
-        '''# 接著老師進行完課
+        # 接著老師進行完課
         start_time = \
             datetime(self.available_date_1_t1.year, self.available_date_1_t1.month, self.available_date_1_t1.day, 0, 0)
         end_time = \
@@ -6725,7 +6725,7 @@ class REVIEWS_TESTS(TestCase):
             'userID': student_profile.objects.first().auth_id,
             'lesson_booking_info_id': 1,
             'score_given': 6,
-            'remark_given': 'oh yayayayayayya',
+            'remark_given': remark_given,
             'is_teacher_late_for_lesson': 'false',
             'is_teacher_frivolous_in_lesson': 'true',
             'is_teacher_incapable': 'false'
@@ -6735,8 +6735,8 @@ class REVIEWS_TESTS(TestCase):
         self.assertIn('success', str(response.content, "utf8"))  # 即使分數超過5分，也會變成5分
 
         # 測試有沒有產生一筆新紀錄
-        self.assertEqual(1, student_reviews_from_teachers.objects.count(),
-            student_reviews_from_teachers.objects.values())
+        self.assertEqual(1, lesson_reviews_from_students.objects.count(),
+            lesson_reviews_from_students.objects.values())
 
         self.assertEqual(
             (
@@ -6751,13 +6751,13 @@ class REVIEWS_TESTS(TestCase):
                 lesson_reviews_from_students.objects.get(id=1).remark_given,
                 lesson_reviews_from_students.objects.get(id=1).is_teacher_late_for_lesson,
                 lesson_reviews_from_students.objects.get(id=1).is_teacher_frivolous_in_lesson,
-                lesson_reviews_from_students.objects.get(id=1).is_teacher_or_parents_not_friendly
+                lesson_reviews_from_students.objects.get(id=1).is_teacher_incapable
             ),
             lesson_reviews_from_students.objects.values()
         )
         
         # 確認學生的指數與上課時長是否正確
-        self.assertEqual(
+        '''self.assertEqual(
             (
                 5,  # 平均得分,
                 100.0,  # 認真比率
