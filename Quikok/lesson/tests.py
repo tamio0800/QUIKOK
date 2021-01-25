@@ -6787,7 +6787,7 @@ class REVIEWS_TESTS(TestCase):
 
         # 預約並完課第二門
         # 接著讓學生進行預約
-        '''booking_post_data = {
+        booking_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,  # 學生的auth_id
             'lessonID': 1,
             'bookingDateTime': f'{self.available_date_2_t1}:4,5;'} 
@@ -6828,95 +6828,103 @@ class REVIEWS_TESTS(TestCase):
         self.client.post(path='/api/lesson/lessonCompletedConfirmationFromStudent/', data=confirmation_post_data)
         
         # 進行評價
-        teacher_review_post_data = {
-            'userID': teacher_profile.objects.first().auth_id,
+        student_review_post_data = {
+            'userID': student_profile.objects.first().auth_id,
             'lesson_booking_info_id': 2,
-            'score_given': '',
-            'remark_given': '',
-            'is_student_late_for_lesson': 'true',
-            'is_student_frivolous_in_lesson': '',
-            'is_student_or_parents_not_friendly': ''
+            'score_given': 2,
+            'remark_given': 'this is a new remark.',
+            'is_teacher_late_for_lesson': 'true',
+            'is_teacher_frivolous_in_lesson': 'false',
+            'is_teacher_incapable': 'false'
         }
         response = \
-            self.client.post(path='/api/lesson/teacherWriteStudentReviews/', data=teacher_review_post_data)
-        self.assertIn('success', str(response.content, "utf8")) 
+            self.client.post(path='/api/lesson/studentWriteTeacherReviews/', data=student_review_post_data)
+        self.assertIn('success', str(response.content, "utf8"))  
+
+
 
         # 測試有沒有產生一筆新紀錄，總計2筆
-        self.assertEqual(2, student_reviews_from_teachers.objects.count(),
-            student_reviews_from_teachers.objects.values())
+        self.assertEqual(2, lesson_reviews_from_students.objects.count(),
+            lesson_reviews_from_students.objects.values())
 
         self.assertEqual(
             (
-                None,
-                None,
+                2,
+                'this is a new remark.',
                 True,
-                None,
-                None
+                False,
+                False
             ),
             (
-                student_reviews_from_teachers.objects.get(id=2).score_given,
-                student_reviews_from_teachers.objects.get(id=2).remark_given,
-                student_reviews_from_teachers.objects.get(id=2).is_student_late_for_lesson,
-                student_reviews_from_teachers.objects.get(id=2).is_student_frivolous_in_lesson,
-                student_reviews_from_teachers.objects.get(id=2).is_student_or_parents_not_friendly
+                lesson_reviews_from_students.objects.get(id=2).score_given,
+                lesson_reviews_from_students.objects.get(id=2).remark_given,
+                lesson_reviews_from_students.objects.get(id=2).is_teacher_late_for_lesson,
+                lesson_reviews_from_students.objects.get(id=2).is_teacher_frivolous_in_lesson,
+                lesson_reviews_from_students.objects.get(id=2).is_teacher_incapable
             ),          
-            student_reviews_from_teachers.objects.values()
+            lesson_reviews_from_students.objects.values()
         )
 
-        # 測試學生的個人評價整合檔有沒有更新紀錄
-        # 此時student_review_aggregated_info應該有三筆資料(3個學生)
-        self.assertEqual(3, student_review_aggregated_info.objects.count(),
-            student_review_aggregated_info.objects.values())
+        # 測試老師的個人評價整合檔有沒有更新紀錄
+        # 此時teacher_review_aggregated_info應該有2筆資料(2個老師)
+        self.assertEqual(2, teacher_review_aggregated_info.objects.count(),
+            teacher_review_aggregated_info.objects.values())
             
-        # 學生 1 應該有兩筆評價
+        # 老師 1 應該有兩筆評價
         self.assertEqual(2, 
-            student_review_aggregated_info.objects.get(student_auth_id=student_profile.objects.get(id=1).auth_id).reviewed_times,
-            student_review_aggregated_info.objects.values())
+            teacher_review_aggregated_info.objects.get(teacher_auth_id=teacher_profile.objects.get(id=1).auth_id).reviewed_times,
+            teacher_review_aggregated_info.objects.values())
 
         
-        # 確認學生的指數與上課時長是否正確
+        # 確認老師的指數與上課時長是否正確
         self.assertEqual(
             (
-                2.5,  # 平均得分,
-                50.0,  # 準時比率
-                60,  # 目前上課總時長應該是60，因為狀態已經變成 "finished"
+                3.5,  # 平均得分,
+                50.0,  # 準時指數
+                50.0,  # 認真指數
+                100.0,  # 適任指數
+                60,  # 目前上課總時長應該是 0，因為狀態不是 "finished"
             ),
             (
-                student_review_aggregated_info.objects.get(
-                    student_auth_id=student_profile.objects.get(id=1).auth_id).get_score_given_to_times_mean(),
-                student_review_aggregated_info.objects.get(
-                    student_auth_id=student_profile.objects.get(id=1).auth_id).get_on_time_index(),
-                student_review_aggregated_info.objects.get(
-                    student_auth_id=student_profile.objects.get(id=1).auth_id).receiving_review_lesson_minutes_sum,
+                teacher_review_aggregated_info.objects.get(
+                    teacher_auth_id=teacher_profile.objects.get(id=1).auth_id).get_score_given_to_times_mean(),
+                teacher_review_aggregated_info.objects.get(
+                    teacher_auth_id=teacher_profile.objects.get(id=1).auth_id).get_on_time_index(),
+                teacher_review_aggregated_info.objects.get(
+                    teacher_auth_id=teacher_profile.objects.get(id=1).auth_id).get_diligent_index(),
+                teacher_review_aggregated_info.objects.get(
+                    teacher_auth_id=teacher_profile.objects.get(id=1).auth_id).get_competent_index(),
+                teacher_review_aggregated_info.objects.get(
+                    teacher_auth_id=teacher_profile.objects.get(id=1).auth_id).receiving_review_lesson_minutes_sum,
             ),
-            student_review_aggregated_info.objects.values())
+            teacher_review_aggregated_info.objects.values())
 
-        # 接著讓學生確認第一門課
+        # 接著讓學生確認第二門課
         # 此時，學生應該可以進行確認了
         confirmation_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,
-            'lesson_booking_info_id': 1,
+            'lesson_booking_info_id': 2,
             'action': 'agree'}
         self.client.post(path='/api/lesson/lessonCompletedConfirmationFromStudent/', data=confirmation_post_data)
-        s_a_id = student_profile.objects.get(id=1).auth_id
+        t_a_id = teacher_profile.objects.get(id=1).auth_id
         # 確認時數是否變成 240 分鐘
         self.assertEqual(240, 
-            student_review_aggregated_info.objects.get(
-                    student_auth_id=student_profile.objects.get(id=1).auth_id).receiving_review_lesson_minutes_sum,
-            f'{student_review_aggregated_info.objects.values().filter(student_auth_id=s_a_id)} \n\
-                 {lesson_booking_info.objects.values().filter(student_auth_id=s_a_id)}')
+            teacher_review_aggregated_info.objects.get(
+                    teacher_auth_id=teacher_profile.objects.get(id=1).auth_id).receiving_review_lesson_minutes_sum,
+            f'{teacher_review_aggregated_info.objects.values().filter(teacher_auth_id=t_a_id)} \n\
+                 {lesson_booking_info.objects.values().filter(teacher_auth_id=t_a_id)}')
 
 
-        student_public_reviews_post_data = {
-            'userID': student_profile.objects.get(id=1).auth_id}
+        '''teacher_public_reviews_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id}
         response = \
-            self.client.get(path='/api/account/getStudentPublicReview/', data=student_public_reviews_post_data)
+            self.client.get(path='/api/account/getTeacherPublicReview/', data=teacher_public_reviews_post_data)
         self.assertEqual(200, response.status_code)
         self.assertIn('success', str(response.content, "utf8"))
-        self.assertIn('"score_given_to_times_mean": 2.5', str(response.content, "utf8"))
+        self.assertIn('"score_given_to_times_mean": 3.5', str(response.content, "utf8"))
         self.assertIn('"on_time_index": 50.0', str(response.content, "utf8"))
-        self.assertIn('"studious_index": 100.0', str(response.content, "utf8"))
-        self.assertIn('"friendly_index": 50.0', str(response.content, "utf8"))
+        self.assertIn('"diligent_index": 50.0', str(response.content, "utf8"))
+        self.assertIn('"competent_index": 100.0', str(response.content, "utf8"))
         self.assertIn('"reviewed_times": 2', str(response.content, "utf8"))
         self.assertIn('"receiving_review_lesson_minutes_sum": 240', str(response.content, "utf8"))
         # self.fail(str(response.content, "utf8"))'''
