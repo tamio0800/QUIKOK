@@ -133,15 +133,16 @@ class lesson_card(models.Model):
 
 class lesson_reviews_from_students(models.Model):
     '''
-    這個是讓學生在課後給評價的 TABLE
+    這個是讓學生在課後給老師/課程評價的 TABLE
     '''
     corresponding_lesson_id = models.IntegerField()  # 所對應的課程id
     corresponding_lesson_booking_info_id = models.IntegerField()  # 所對應的課程預約id
+    corresponding_lesson_completed_record_id = models.IntegerField()  # 所對應的完課紀錄id
     student_auth_id = models.IntegerField()  # 上課學生的auth_id，也是留下評論的人
     teacher_auth_id = models.IntegerField()  # 上課老師的auth_id，是此次被評論的對象
     score_given = models.IntegerField(blank=True, null=True) # 對於本次課程綜合的評分，介於1~5分之間
     is_teacher_late_for_lesson = models.BooleanField(blank=True, null=True) # 老師是否有遲到
-    is_teacher_being_frivolous_in_lesson = models.BooleanField(blank=True, null=True) # 老師是否不認真教學
+    is_teacher_frivolous_in_lesson = models.BooleanField(blank=True, null=True) # 老師是否不認真教學
     is_teacher_incapable = models.BooleanField(blank=True, null=True) # 老師是否不勝任這門課、教太廢
     remark_given = models.TextField(blank=True, null=True)  # 這個是評語
     # picture_folder = models.TextField() # 加上真的有上課的圖以資證明（學蝦皮
@@ -150,8 +151,8 @@ class lesson_reviews_from_students(models.Model):
         return str(self.id)
 
     class Meta:
-        verbose_name = '學生對課程評價'
-        verbose_name_plural = '學生對課程評價'
+        verbose_name = '學生對老師/課程評價'
+        verbose_name_plural = '學生對老師/課程評價'
 
 
 class student_reviews_from_teachers(models.Model):
@@ -165,7 +166,7 @@ class student_reviews_from_teachers(models.Model):
     teacher_auth_id = models.IntegerField()  # 上課老師的auth_id，是留下評論的人
     score_given = models.PositiveIntegerField(blank=True, null=True) # 對於本次課程的綜合評分，介於1~5分之間
     is_student_late_for_lesson = models.BooleanField(blank=True, null=True) # 學生是否有遲到
-    is_student_being_frivolous_in_lesson = models.BooleanField(blank=True, null=True) # 學生是否不認真
+    is_student_frivolous_in_lesson = models.BooleanField(blank=True, null=True) # 學生是否不認真
     is_student_or_parents_not_friendly = models.BooleanField(blank=True, null=True) # 學生或家長是否不友善
     remark_given = models.TextField(blank=True, null=True)  # 這個是評語
     # picture_folder = models.TextField() # 加上真的有上課的圖以資證明（學蝦皮
@@ -425,7 +426,7 @@ def update_student_review_aggregated_info(sender, instance:student_reviews_from_
                 reviewed_times = 1,
                 receiving_review_lesson_minutes_sum = 0,  # 這個值不在這邊進行更新
                 is_student_late_for_lesson_times = 1 if instance.is_student_late_for_lesson == True else 0,
-                is_student_being_frivolous_in_lesson_times = 1 if instance.is_student_being_frivolous_in_lesson == True else 0,
+                is_student_frivolous_in_lesson_times = 1 if instance.is_student_frivolous_in_lesson == True else 0,
                 is_student_or_parents_not_friendly_times = 1 if instance.is_student_or_parents_not_friendly == True else 0
             )
         else:
@@ -436,8 +437,8 @@ def update_student_review_aggregated_info(sender, instance:student_reviews_from_
             # receiving_review_lesson_minutes_sum 不在這邊進行更新
             the_student_review_info_object.is_student_late_for_lesson_times += \
                 1 if instance.is_student_late_for_lesson == True else 0
-            the_student_review_info_object.is_student_being_frivolous_in_lesson_times += \
-                1 if instance.is_student_being_frivolous_in_lesson == True else 0
+            the_student_review_info_object.is_student_frivolous_in_lesson_times += \
+                1 if instance.is_student_frivolous_in_lesson == True else 0
             the_student_review_info_object.is_student_or_parents_not_friendly_times += \
                 1 if instance.is_student_or_parents_not_friendly == True else 0
             the_student_review_info_object.save()
@@ -445,6 +446,51 @@ def update_student_review_aggregated_info(sender, instance:student_reviews_from_
     else:
         # 代表學生的評價被更新，雖然目前沒有這個機制，但有可能是 Quikok 後台改動的
         # 因此這邊其實也需要做學生的評價更新，但我們先不管它
+        pass
+
+
+@receiver(post_save, sender=lesson_reviews_from_students)
+def update_teacher_review_aggregated_info(sender, instance:lesson_reviews_from_students, created, **kwargs):
+    # 當有學生給予老師評價(創建新紀錄)時，必須要連帶的更新該老師的評價儀表板
+    from account.models import teacher_review_aggregated_info
+    # 這邊要確認課程是否有完結(finished)，因為學生/老師會留存上過多長課程的資料，
+    # 若還沒有雙方確認的時數的話，則不進行上課總時數的更新；
+    # 這代表未來要再寫一個機制，當課程狀態從非 finished 變成 finished 時，要更新 student_review_aggregated_info 的上課時數
+    # >> 我決定先不在這邊進行時數更新，免得有兩邊都更新到的疑慮存在，這個欄位統一在 非 finished 變成 finished 更新!
+    if created:
+        # 只有建立新資料才要進行這個動作，其實編輯也需要啦，但是先不管這件事
+        the_teacher_review_info_object = \
+            teacher_review_aggregated_info.objects.filter(teacher_auth_id=instance.teacher_auth_id).first()
+        
+        if the_teacher_review_info_object is None:
+            # 代表沒有這筆記錄，可能是學生在QUIKOK PILOT時就已經註冊，才會沒有連動建立資料
+            # 所以我們幫他建立一下吧
+            the_teacher_review_info_object.objects.create(
+                teacher_auth_id = instance.teacher_auth_id,
+                score_given_sum = 0 if instance.score_given is None else instance.score_given,
+                reviewed_times = 1,
+                receiving_review_lesson_minutes_sum = 0,  # 這個值不在這邊進行更新
+                is_teacher_late_for_lesson = 1 if instance.is_teacher_late_for_lesson == True else 0,
+                is_teacher_frivolous_in_lesson = 1 if instance.is_teacher_frivolous_in_lesson == True else 0,
+                is_teacher_incapable = 1 if instance.is_teacher_incapable == True else 0
+            )
+        else:
+            # 代表已經有這筆紀錄，我們只要協助更新即可
+            the_teacher_review_info_object.score_given_sum += \
+                0 if instance.score_given is None else instance.score_given
+            the_teacher_review_info_object.reviewed_times += 1
+            # receiving_review_lesson_minutes_sum 不在這邊進行更新
+            the_teacher_review_info_object.is_teacher_late_for_lesson_times += \
+                1 if instance.is_teacher_late_for_lesson == True else 0
+            the_teacher_review_info_object.is_teacher_frivolous_in_lesson_times += \
+                1 if instance.is_teacher_frivolous_in_lesson == True else 0
+            the_teacher_review_info_object.is_teacher_incapable_times += \
+                1 if instance.is_teacher_incapable == True else 0
+            the_teacher_review_info_object.save()
+
+    else:
+        # 代表老師的評價被更新，雖然目前沒有這個機制，但有可能是 Quikok 後台改動的
+        # 因此這邊其實也需要做老師的評價更新，但我們先不管它
         pass
 
 
