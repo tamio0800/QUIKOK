@@ -321,7 +321,7 @@ class feedback(models.Model):
 
     
 @receiver(post_save, sender=student_profile)
-def when_lesson_completed_notification_sent_by_teacher(sender, instance:student_profile, created, **kwargs):
+def student_aggregated_review_record_created_after_signing_up(sender, instance:student_profile, created, **kwargs):
     # 代表student_profile建立了新學生資料，這時候我們一起幫他建立對應的評價儀表板
     if created:
         # 代表是新建立
@@ -329,4 +329,13 @@ def when_lesson_completed_notification_sent_by_teacher(sender, instance:student_
             student_auth_id = instance.auth_id,
         ).save()
 
+
+@receiver(post_save, sender=teacher_profile)
+def teacher_aggregated_review_record_created_after_signing_up(sender, instance:teacher_profile, created, **kwargs):
+    # 代表teacher_profile建立了新老師資料，這時候我們一起幫他建立對應的評價儀表板
+    if created:
+        # 代表是新建立
+        teacher_review_aggregated_info.objects.create(
+            teacher_auth_id = instance.auth_id,
+        ).save()
         

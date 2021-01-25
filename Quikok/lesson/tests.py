@@ -19,7 +19,7 @@ from account_finance.models import student_purchase_record, student_remaining_mi
 from datetime import datetime, timedelta, timezone, date as date_function
 from account_finance.models import student_owing_teacher_time
 from lesson.models import lesson_reviews_from_students, student_reviews_from_teachers
-from account.models import student_review_aggregated_info
+from account.models import student_review_aggregated_info, teacher_review_aggregated_info
 
 
 # python manage.py test lesson/ --settings=Quikok.settings_for_test
@@ -6755,7 +6755,13 @@ class REVIEWS_TESTS(TestCase):
             ),
             lesson_reviews_from_students.objects.values()
         )
-        
+
+        # teacher_review_aggregated_info 應該已經有老師對應的資料了
+        self.assertEqual(1, teacher_review_aggregated_info.objects.filter(
+            teacher_auth_id = teacher_profile.objects.get(id=1).auth_id
+        ).count(),
+            teacher_review_aggregated_info.objects.values())
+
         # 確認老師的指數與上課時長是否正確
         '''self.assertEqual(
             (
@@ -6767,7 +6773,11 @@ class REVIEWS_TESTS(TestCase):
                 teacher_review_aggregated_info.objects.get(
                     teacher_auth_id=teacher_profile.objects.get(id=1).auth_id).get_score_given_to_times_mean(),
                 teacher_review_aggregated_info.objects.get(
-                    teacher_auth_id=teacher_profile.objects.get(id=1).auth_id).get_studious_index(),
+                    teacher_auth_id=teacher_profile.objects.get(id=1).auth_id).get_diligent_index(),
+                teacher_review_aggregated_info.objects.get(
+                    teacher_auth_id=teacher_profile.objects.get(id=1).auth_id).get_diligent_index(),
+                teacher_review_aggregated_info.objects.get(
+                    teacher_auth_id=teacher_profile.objects.get(id=1).auth_id).get_diligent_index(),
                 teacher_review_aggregated_info.objects.get(
                     teacher_auth_id=teacher_profile.objects.get(id=1).auth_id).receiving_review_lesson_minutes_sum,
             ),

@@ -187,9 +187,10 @@ def storage_order(request):
 def student_order_history(request):
     try:
         student_authID = request.POST.get('userID', False)
-        token = request.POST.get('token', False)
+        # token = request.POST.get('token', False)
+        # tata： 沒有用到就不要收，會造成不必要的錯誤。
         user_type = request.POST.get('type', False)
-        if check_if_all_variables_are_true(student_authID, token, user_type):
+        if check_if_all_variables_are_true(student_authID, user_type):
             data = []
             record_history = {}
             remittance_info = {

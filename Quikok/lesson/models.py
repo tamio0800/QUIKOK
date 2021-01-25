@@ -449,5 +449,50 @@ def update_student_review_aggregated_info(sender, instance:student_reviews_from_
         pass
 
 
+@receiver(post_save, sender=lesson_reviews_from_students)
+def update_teacher_review_aggregated_info(sender, instance:lesson_reviews_from_students, created, **kwargs):
+    # 當有學生給予老師評價(創建新紀錄)時，必須要連帶的更新該老師的評價儀表板
+    from account.models import teacher_review_aggregated_info
+    # 這邊要確認課程是否有完結(finished)，因為學生/老師會留存上過多長課程的資料，
+    # 若還沒有雙方確認的時數的話，則不進行上課總時數的更新；
+    # 這代表未來要再寫一個機制，當課程狀態從非 finished 變成 finished 時，要更新 student_review_aggregated_info 的上課時數
+    # >> 我決定先不在這邊進行時數更新，免得有兩邊都更新到的疑慮存在，這個欄位統一在 非 finished 變成 finished 更新!
+    if created:
+        # 只有建立新資料才要進行這個動作，其實編輯也需要啦，但是先不管這件事
+        the_teacher_review_info_object = \
+            teacher_review_aggregated_info.objects.filter(teacher_auth_id=instance.teacher_auth_id).first()
+        
+        if the_teacher_review_info_object is None:
+            # 代表沒有這筆記錄，可能是學生在QUIKOK PILOT時就已經註冊，才會沒有連動建立資料
+            # 所以我們幫他建立一下吧
+            the_teacher_review_info_object.objects.create(
+                teacher_auth_id = instance.teacher_auth_id,
+                score_given_sum = 0 if instance.score_given is None else instance.score_given,
+                reviewed_times = 1,
+                receiving_review_lesson_minutes_sum = 0,  # 這個值不在這邊進行更新
+                is_teacher_late_for_lesson = 1 if instance.is_teacher_late_for_lesson == True else 0,
+                is_teacher_frivolous_in_lesson = 1 if instance.is_teacher_frivolous_in_lesson == True else 0,
+                is_teacher_incapable = 1 if instance.is_teacher_incapable == True else 0
+            )
+        else:
+            # 代表已經有這筆紀錄，我們只要協助更新即可
+            the_teacher_review_info_object.score_given_sum += \
+                0 if instance.score_given is None else instance.score_given
+            the_teacher_review_info_object.reviewed_times += 1
+            # receiving_review_lesson_minutes_sum 不在這邊進行更新
+            the_teacher_review_info_object.is_teacher_late_for_lesson_times += \
+                1 if instance.is_teacher_late_for_lesson == True else 0
+            the_teacher_review_info_object.is_teacher_frivolous_in_lesson_times += \
+                1 if instance.is_teacher_frivolous_in_lesson == True else 0
+            the_teacher_review_info_object.is_teacher_incapable_times += \
+                1 if instance.is_teacher_incapable == True else 0
+            the_teacher_review_info_object.save()
+
+    else:
+        # 代表老師的評價被更新，雖然目前沒有這個機制，但有可能是 Quikok 後台改動的
+        # 因此這邊其實也需要做老師的評價更新，但我們先不管它
+        pass
+
+
 
     
