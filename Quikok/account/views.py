@@ -4,7 +4,11 @@ from django.contrib import auth
 from django.contrib.auth.hashers import make_password, check_password  # 這一行用來加密密碼的
 from .model_tools import user_db_manager, teacher_manager, student_manager, auth_manager_for_password
 from django.contrib.auth.models import User
-from account.models import student_review_aggregated_info, user_token, student_profile, teacher_profile, specific_available_time, general_available_time, feedback
+from account.models import student_review_aggregated_info
+from account.models import teacher_review_aggregated_info
+from account.models import user_token
+from account.models import student_profile, teacher_profile
+from account.models import specific_available_time, general_available_time, feedback
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.core.files.storage import FileSystemStorage
 from lesson.models import lesson_info_for_users_not_signed_up, lesson_info
@@ -36,6 +40,9 @@ from analytics.signals import object_accessed_signal
 from analytics.utils import get_client_ip
 from blog.models import article_info
 from account.email_sending import email_manager
+
+
+
 ## 0916改成api的版本,之前的另存成views_old, 之後依據該檔把已設計好的功能寫過來
 ##### 學生區 #####
 @require_http_methods(['POST'])
@@ -1544,7 +1551,7 @@ def get_student_public_review(request):
                     'on_time_index': aggregated_review_object.get_on_time_index(),
                     'studious_index': aggregated_review_object.get_studious_index(),
                     'friendly_index': aggregated_review_object.get_friendly_index(),
-                    'is_student_remark': ''
+                    'all_student_remarks': list()
                 }
                 response['status'] = 'success'
                 response['errCode'] = None
@@ -1565,11 +1572,64 @@ def get_student_public_review(request):
 
     return JsonResponse(response)
 
+
+@require_http_methods(['GET'])
+def get_teacher_public_review(request):
+    '''
+    傳送教師的公開評價資訊
+    '''
+    response = dict()
+    teacher_auth_id = request.GET.get('userID', False)
+    if check_if_all_variables_are_true(teacher_auth_id):
+        teacher_object = teacher_profile.objects.filter(auth_id=teacher_auth_id).first()
+        if teacher_object is not None:
+            # 用戶存在，回傳其評價資訊
+            aggregated_review_object = \
+                teacher_review_aggregated_info.objects.filter(teacher_auth_id=teacher_auth_id).first()
+            
+            if aggregated_review_object is None:
+                # 找不到教師的評價資訊，雖然很不應該發生這種情況，但還是預做準備
+                response['status'] = 'failed'
+                response['errCode'] = '2'
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                response['data'] = None
+            
+            else:
+                # 有找到教師的評價資料
+                response['data'] = {
+                    'score_given_to_times_mean': aggregated_review_object.get_score_given_to_times_mean(),
+                    'reviewed_times': aggregated_review_object.reviewed_times,
+                    'receiving_review_lesson_minutes_sum': aggregated_review_object.receiving_review_lesson_minutes_sum,
+                    'on_time_index': aggregated_review_object.get_on_time_index(),
+                    'diligent_index': aggregated_review_object.get_diligent_index(),
+                    'competent_index': aggregated_review_object.get_competent_index(),
+                    'all_teacher_remarks': list()
+                }
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+        else: 
+            # 用戶不存在
+            response['status'] = 'failed'
+            response['errCode'] = '1'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['data'] = None
+    
+    else:
+        # 傳輸有問題
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+
+    return JsonResponse(response)
+
+
         
 @require_http_methods(['GET'])
 def return_student_profile_for_public_viewing(request):
     '''
-    傳送學生的公開資訊
+    傳送學生的公開評價資訊
     '''
     response = dict()
     student_auth_id = request.GET.get('userID', False)
@@ -1601,10 +1661,6 @@ def return_student_profile_for_public_viewing(request):
         response['data'] = None
 
     return JsonResponse(response)
-
-
-
-
 
 
 
