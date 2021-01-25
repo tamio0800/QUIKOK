@@ -821,7 +821,7 @@ class test_student_purchase_payment_status(TestCase):
         
         data = {
             'userID':'2',
-            'token':'1',
+            #'token':'1',
             'type':'1',
             'purchase_recordID': new_record_id,
             'status_update':'1',# 0-付款完成/1-申請退款/2-申請取消

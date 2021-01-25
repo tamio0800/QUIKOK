@@ -97,7 +97,7 @@ class chat_room_manager:
                     message = '於'+ datetime.now().strftime('%H:%M') +'創立聊天室',
                     message_type = 1 ,# 0:一般文字, 1:系統訊息, 2:預約方塊
                     who_is_sender = 'system' ,   # teacher/student/parent/system
-                    sender_auth_id = 404,
+                    sender_auth_id = 1,
                     is_read = 0)
 
                 print('create new chatroom')

@@ -187,8 +187,11 @@ def storage_order(request):
 def student_order_history(request):
     try:
         student_authID = request.POST.get('userID', False)
-        # token = request.POST.get('token', False)
-        # tata： 沒有用到就不要收，會造成不必要的錯誤。
+        token_from_user_raw = request.headers.get('Authorization', False)
+        if token_from_user_raw is not False:
+            token = token_from_user_raw.split(' ')[1]
+        else:
+            token = ''
         user_type = request.POST.get('type', False)
         if check_if_all_variables_are_true(student_authID, user_type):
             data = []
@@ -284,14 +287,18 @@ def student_order_history(request):
 def student_edit_order(request):
     try:
         student_authID = request.POST.get('userID', False)
-        token = request.POST.get('token', False)
+        token_from_user_raw = request.headers.get('Authorization', False)
+        if token_from_user_raw is not False:
+            token = token_from_user_raw.split(' ')[1]
+        else:
+            token = ''
         user_type = request.POST.get('type', False)
         purchase_recordID = request.POST.get('purchase_recordID', False)
         status_update = request.POST.get('status_update', False)
         # 0-付款完成/1-申請退款/2-申請取消
         user5_bank_code = request.POST.get('part_of_bank_account_code', False)
 
-        if check_if_all_variables_are_true(student_authID, token, user_type,
+        if check_if_all_variables_are_true(student_authID, user_type,
                             purchase_recordID, status_update, user5_bank_code):
             # 首先查詢訂單狀態
             record = student_purchase_record.objects.get(id = purchase_recordID)
