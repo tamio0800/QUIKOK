@@ -8,8 +8,9 @@ import pytest
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.layers import get_channel_layer
 import datetime
+from unittest import skip
 #python3 manage.py test chatroom/ --settings=Quikok.settings_for_test
-
+@skip
 class test_consumer(TestCase):
     def setUp(self):
         chatroom_info_user2user.objects.create(

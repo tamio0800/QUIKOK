@@ -116,8 +116,8 @@ class email_manager:
         price = kwargs['price'] # 該課程總額
 
         #e.send_send_teacher_when_student_buy_his_lesson(teacher_authID = 1,teacher_nickname = 'test', teacher_email =  'test')
-        if False not in [teacher_authID,teacher_nickname,teacher_email,
-                            lesson_title,student_nickname,lesson_set]:
+        if False not in [teacher_authID, student_authID, price,
+                            lesson_title, lesson_set]:
             try:
                 pattern_html = self.email_pattern['通知老師有學生購買他的課']
                 suit_pattern = get_template(pattern_html)
@@ -142,9 +142,9 @@ class email_manager:
 
 
                 email_context = {
-                    'teacher_nickname': teacher_nickname,
+                    'teacher_nickname': '', #teacher_nickname,
                     'lesson_title':lesson_title,
-                    'student_nickname':student_nickname,
+                    'student_nickname':'', #student_nickname,
                     'lesson_set':lesson_set_name,
                     'price':price
                 }

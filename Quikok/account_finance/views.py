@@ -236,14 +236,17 @@ def student_order_history(request):
                     refunded_price = ''
                     available_remaining_minutes = ''
                     total_non_confirmed_minutes = ''
-
                 
-                print(available_remaining_minutes)
+                # 將日期轉換為給前端的格式
+                purchase_date = record.purchase_date
+                date_format_change = purchase_date.strftime('%Y-%m-%d')
+                
+                #print(available_remaining_minutes)
                 record_history = {
                 'purchase_recordID':record.id,
-                'payment_status':record.payment_status,
+                'purchase_status':record.payment_status,
                 'refunded_price':refunded_price,
-                'purchase_date':record.purchase_date,
+                'purchase_date':date_format_change,
                 'teacher_authID':record.teacher_auth_id,
                 'teacher_nickname': record.teacher_nickname,
                 'lesson_name': record.lesson_title,
@@ -266,14 +269,14 @@ def student_order_history(request):
             response = {'status':'failed',
             'errCode': 0,
             'errMsg': '系統沒有收到資料，請重新整理，如狀況持續可連絡客服',
-            'data': None}
+            'data': []}
 
     except Exception as e:
         print(f'storage_order Exception {e}')
         response = {'status':'failed',
         'errCode': 1,
         'errMsg': '資料庫有問題，請稍後再試',
-        'data': None}
+        'data': []}
     return JsonResponse(response)
 
 
