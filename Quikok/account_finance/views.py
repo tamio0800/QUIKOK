@@ -236,15 +236,17 @@ def student_order_history(request):
                     refunded_price = ''
                     available_remaining_minutes = ''
                     total_non_confirmed_minutes = ''
-                purchase_date = record.purchase_date
-                date_format_change = purchase_date.strftime("%y-%m-%d")
                 
-                print(available_remaining_minutes)
+                # 將日期轉換為給前端的格式
+                purchase_date = record.purchase_date
+                date_format_change = purchase_date.strftime('%Y-%m-%d')
+                
+                #print(available_remaining_minutes)
                 record_history = {
                 'purchase_recordID':record.id,
                 'purchase_status':record.payment_status,
                 'refunded_price':refunded_price,
-                'purchase_date':record.purchase_date,
+                'purchase_date':date_format_change,
                 'teacher_authID':record.teacher_auth_id,
                 'teacher_nickname': record.teacher_nickname,
                 'lesson_name': record.lesson_title,
