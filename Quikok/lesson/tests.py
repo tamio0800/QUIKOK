@@ -6941,7 +6941,7 @@ class REVIEWS_TESTS(TestCase):
 
     def test_read_reviews_of_certain_lessons_exist(self):
         '''
-        用來檢測「師生互看對方給予的評價」是否運作正常。
+        用來檢測「師生互看對方給予的評價」是否連線正常。
         '''
         read_reviews_post_data = {
             'lesson_booking_info_id': 1,
@@ -6951,3 +6951,155 @@ class REVIEWS_TESTS(TestCase):
         response = \
             self.client.post(path='/api/lesson/readReviewsOfCertainLessons/', data=read_reviews_post_data)
         self.assertEqual(200, response.status_code)
+
+
+    def test_read_reviews_of_certain_lessons_work(self):
+        '''
+        用來檢測「師生互看對方給予的評價」是否運作正常。
+        '''
+        read_reviews_post_data = {
+            'lesson_booking_info_id': 1,
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'type': 'student'
+        }
+        response = \
+            self.client.post(path='/api/lesson/readReviewsOfCertainLessons/', data=read_reviews_post_data)
+        self.assertIn('failed', str(response.content, "utf8"))
+        self.assertIn('"errCode": "1"', str(response.content, "utf8"))
+        # 因為並不存在此門預約課程
+
+
+        # 學生1 先購買 老師1 的 10:90
+        purchased_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'teacherID': teacher_profile.objects.get(id=1).auth_id,
+            'lessonID': lesson_info.objects.get(id=1).id,
+            'sales_set': '10:90',
+            'total_amount_of_the_sales_set': int(10*800*.9),
+            'q_discount': 0}
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchased_post_data)
+
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(id=1).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+        # 此時，學生通知我們她已經完成付款
+        purchase_obj = student_purchase_record.objects.get(id=1)
+        purchase_obj.payment_status = 'paid'
+        purchase_obj.save()
+        # 我們確認她付款了
+
+        # 接著讓學生進行預約
+        booking_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_1_t1}:0,1,2,3,4,5;'} 
+            # 預約了180分鐘  00:00 - 03:00
+        self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)
+
+        # 讓老師確認學生的預約
+        change_booking_status_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'bookingID': 1,
+            'bookingStatus': 'confirmed'}
+        response = \
+            self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=change_booking_status_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+
+        # 接著老師進行完課
+        start_time = \
+            datetime(self.available_date_1_t1.year, self.available_date_1_t1.month, self.available_date_1_t1.day, 0, 0)
+        end_time = \
+            datetime(self.available_date_1_t1.year, self.available_date_1_t1.month, self.available_date_1_t1.day, 3, 0)
+
+        noti_post_data = {
+                'userID': teacher_profile.objects.get(id=1).auth_id,
+                'lesson_booking_info_id': 1,
+                'lesson_date': str(self.available_date_1_t1),
+                'start_time': start_time.strftime("%H:%M"),
+                'end_time': end_time.strftime("%H:%M"),
+                'time_interval_in_minutes': int((end_time - start_time).seconds / 60)
+        }  # 測試看看這個 api 能不能產出對應的 record 來
+        self.client.post(path='/api/lesson/lessonCompletedNotificationFromTeacher/', data=noti_post_data)
+        # 這時候應該可以進行評價了，先查詢看看學生看評價
+        student_read_reviews_post_data = {
+            'lesson_booking_info_id': 1,
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'type': 'student'
+        }
+        response = \
+            self.client.post(path='/api/lesson/readReviewsOfCertainLessons/', data=student_read_reviews_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertIn('"data": ""', str(response.content, "utf8"))
+        
+        # 嘗試老師評價學生
+        remark_1 = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book."
+        teacher_review_post_data = {
+            'userID': teacher_profile.objects.first().auth_id,
+            'lesson_booking_info_id': 1,
+            'score_given': 4,
+            'remark_given': remark_1,
+            'is_student_late_for_lesson': 'false',
+            'is_student_frivolous_in_lesson': 'false',
+            'is_student_or_parents_not_friendly': 'true'
+        }
+        self.client.post(path='/api/lesson/teacherWriteStudentReviews/', data=teacher_review_post_data)
+
+        # 測試看看學生能不能看到老師留的評價
+        student_read_reviews_post_data = {
+            'lesson_booking_info_id': 1,
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'type': 'student'
+        }
+        response = \
+            self.client.post(path='/api/lesson/readReviewsOfCertainLessons/', data=student_read_reviews_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertIn('"score_given_to_student": 4', str(response.content, "utf8"))
+        self.assertIn(f'"remark_given_to_student": "{remark_1}"', str(response.content, "utf8"))
+        self.assertIn('"is_student_late_for_lesson": false', str(response.content, "utf8"))
+        self.assertIn('"is_student_frivolous_in_lesson": false', str(response.content, "utf8"))
+        self.assertIn('"is_student_or_parents_not_friendly": true', str(response.content, "utf8"))
+        
+        # 先查詢看看老師此時看評價，應該看不到東西
+        teacher_read_reviews_post_data = {
+            'lesson_booking_info_id': 1,
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'type': 'teacher'
+        }
+        response = \
+            self.client.post(path='/api/lesson/readReviewsOfCertainLessons/', data=teacher_read_reviews_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertIn('"data": ""', str(response.content, "utf8"))
+
+        # 學生評價老師
+        # 進行評價
+        student_review_post_data = {
+            'userID': student_profile.objects.first().auth_id,
+            'lesson_booking_info_id': 1,
+            'score_given': 3,
+            'remark_given': 'this is a remark left by student.',
+            'is_teacher_late_for_lesson': 'true',
+            'is_teacher_frivolous_in_lesson': 'false',
+            'is_teacher_incapable': 'false'
+        }
+        self.client.post(path='/api/lesson/studentWriteTeacherReviews/', data=student_review_post_data)
+
+        # 老師再看一次
+        teacher_read_reviews_post_data = {
+            'lesson_booking_info_id': 1,
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'type': 'teacher'
+        }
+        response = \
+            self.client.post(path='/api/lesson/readReviewsOfCertainLessons/', data=teacher_read_reviews_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertIn('"score_given_to_teacher": 3', str(response.content, "utf8"))
+        self.assertIn(f'"remark_given_to_teacher": "this is a remark left by student."', str(response.content, "utf8"))
+        self.assertIn('"is_teacher_late_for_lesson": true', str(response.content, "utf8"))
+        self.assertIn('"is_teacher_frivolous_in_lesson": false', str(response.content, "utf8"))
+        self.assertIn('"is_teacher_incapable": false', str(response.content, "utf8"))
+
