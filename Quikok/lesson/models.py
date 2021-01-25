@@ -137,6 +137,7 @@ class lesson_reviews_from_students(models.Model):
     '''
     corresponding_lesson_id = models.IntegerField()  # 所對應的課程id
     corresponding_lesson_booking_info_id = models.IntegerField()  # 所對應的課程預約id
+    corresponding_lesson_completed_record_id = models.IntegerField()  # 所對應的完課紀錄id
     student_auth_id = models.IntegerField()  # 上課學生的auth_id，也是留下評論的人
     teacher_auth_id = models.IntegerField()  # 上課老師的auth_id，是此次被評論的對象
     score_given = models.IntegerField(blank=True, null=True) # 對於本次課程綜合的評分，介於1~5分之間
