@@ -1737,7 +1737,8 @@ def get_teacher_s_booking_history(request):
                                             / 學生反對該時數，客服處理中  quikok_dealing_for_student_disagreed
                                         /已取消（canceled）
                 lesson_title: 預約課程名稱,
-                student_auth_id: 學生的auth_id
+                student_auth_id: 學生的auth_id,
+                student_thumbnail_path: 學生的大頭貼路徑,
                 student_nickname: 學生暱稱,
                 discount_price:  課程方案，
                                     如:'trial'(試課優惠)
@@ -1883,6 +1884,9 @@ def get_teacher_s_booking_history(request):
                                  corr_lesson_completed_record_object.student_confirmed_deadline
                             is_teacher_given_feedback = False if student_reviews_from_teachers_object is None else True
                             is_student_given_feedback = False if lesson_reviews_from_students_object is None else True
+                        
+                        student_object = \
+                            student_profile.objects.get(auth_id=each_booking_info_object.student_auth_id)
 
                         response['data'].append(
                             {
@@ -1894,8 +1898,8 @@ def get_teacher_s_booking_history(request):
                                     lesson_info.objects.get(id=each_booking_info_object.lesson_id).lesson_title,
                                 'student_auth_id': \
                                     each_booking_info_object.student_auth_id,
-                                'student_nickname': \
-                                    student_profile.objects.get(auth_id=each_booking_info_object.student_auth_id).nickname,
+                                'student_nickname': student_object.nickname,
+                                'student_thumbnail_path': student_object.thumbnail_dir,
                                 'discount_price': \
                                     lesson_sales_sets.objects.get(id=each_booking_info_object.booking_set_id).sales_set,
                                 'remaining_time': each_booking_info_object.remaining_minutes,
@@ -1993,6 +1997,9 @@ def get_teacher_s_booking_history(request):
                             is_teacher_given_feedback = False if student_reviews_from_teachers_object is None else True
                             is_student_given_feedback = False if lesson_reviews_from_students_object is None else True
 
+                        student_object = \
+                            student_profile.objects.get(auth_id=each_booking_info_object.student_auth_id)
+                        
                         response['data'].append(
                             {
                                 'booked_date': each_booking_info_object.booking_date_and_time.split(':')[0],
@@ -2003,8 +2010,8 @@ def get_teacher_s_booking_history(request):
                                     lesson_info.objects.get(id=each_booking_info_object.lesson_id).lesson_title,
                                 'student_auth_id': \
                                     each_booking_info_object.student_auth_id,
-                                'student_nickname': \
-                                    student_profile.objects.get(auth_id=each_booking_info_object.student_auth_id).nickname,
+                                'student_nickname': student_object.nickname,
+                                'student_thumbnail_path': student_object.thumbnail_dir,
                                 'discount_price': \
                                     lesson_sales_sets.objects.get(id=each_booking_info_object.booking_set_id).sales_set,
                                 'remaining_time': each_booking_info_object.remaining_minutes,
@@ -2069,6 +2076,7 @@ def get_student_s_booking_history(request):
                 lesson_title: 預約課程名稱,
                 teacher_auth_id: 老師的auth_id
                 teacher_nickname: 老師暱稱,
+                teacher_thumbnail_path: 老師大頭貼路徑,
                 discount_price:  課程方案，
                                     如:'trial'(試課優惠)
                                         /'no_discount'(單堂原價)
@@ -2216,6 +2224,9 @@ def get_student_s_booking_history(request):
                                  corr_lesson_completed_record_object.student_confirmed_deadline
                             is_teacher_given_feedback = False if student_reviews_from_teachers_object is None else True
                             is_student_given_feedback = False if lesson_reviews_from_students_object is None else True
+                        
+                        teacher_object = \
+                            teacher_profile.objects.get(auth_id=each_booking_info_object.teacher_auth_id)
 
                         response['data'].append(
                             {
@@ -2227,8 +2238,8 @@ def get_student_s_booking_history(request):
                                     lesson_info.objects.get(id=each_booking_info_object.lesson_id).lesson_title,
                                 'teacher_auth_id': \
                                     each_booking_info_object.teacher_auth_id,
-                                'teacher_nickname': \
-                                    teacher_profile.objects.get(auth_id=each_booking_info_object.teacher_auth_id).nickname,
+                                'teacher_nickname': teacher_object.nickname,
+                                'teacher_thumbnail_path': teacher_object.thumbnail_dir,
                                 'discount_price': \
                                     lesson_sales_sets.objects.get(id=each_booking_info_object.booking_set_id).sales_set,
                                 'remaining_time': each_booking_info_object.remaining_minutes,
@@ -2324,6 +2335,9 @@ def get_student_s_booking_history(request):
                             is_teacher_given_feedback = False if student_reviews_from_teachers_object is None else True
                             is_student_given_feedback = False if lesson_reviews_from_students_object is None else True
 
+                        teacher_object = \
+                            teacher_profile.objects.get(auth_id=each_booking_info_object.teacher_auth_id)
+                        
                         response['data'].append(
                             {
                                 'booked_date': each_booking_info_object.booking_date_and_time.split(':')[0],
@@ -2334,8 +2348,8 @@ def get_student_s_booking_history(request):
                                     lesson_info.objects.get(id=each_booking_info_object.lesson_id).lesson_title,
                                 'teacher_auth_id': \
                                     each_booking_info_object.teacher_auth_id,
-                                'teacher_nickname': \
-                                    teacher_profile.objects.get(auth_id=each_booking_info_object.teacher_auth_id).nickname,
+                                'teacher_nickname': teacher_object.nickname,
+                                'teacher_thumbnail_path': teacher_object.thumbnail_dir,
                                 'discount_price': \
                                     lesson_sales_sets.objects.get(id=each_booking_info_object.booking_set_id).sales_set,
                                 'remaining_time': each_booking_info_object.remaining_minutes,

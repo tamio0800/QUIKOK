@@ -2923,6 +2923,8 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         str(response.content, "utf8")) # 應該只有2門 to_be_confirmed
         self.assertEquals(5, str(response.content, "utf8").count('remaining_time'),
         str(response.content, "utf8")) # 並且總共有5筆資料
+        self.assertEquals(5, str(response.content, "utf8").count('student_thumbnail_path'),
+        str(response.content, "utf8")) # 並且總共有5筆資料
 
         # 此時帶入學生2號
         purchase_post_data = {
@@ -4002,6 +4004,8 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         self.assertEquals(2, str(response.content, "utf8").count('"to_be_confirmed"'),
         str(response.content, "utf8")) # 應該只有2門 to_be_confirmed
         self.assertEquals(5, str(response.content, "utf8").count('remaining_time'),
+        str(response.content, "utf8")) # 並且總共有5筆資料
+        self.assertEquals(5, str(response.content, "utf8").count('student_thumbnail_path'),
         str(response.content, "utf8")) # 並且總共有5筆資料
 
         # 此時帶入學生2號
