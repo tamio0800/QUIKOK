@@ -1844,7 +1844,7 @@ def get_teacher_s_booking_history(request):
                     response['status'] = 'success'
                     response['errCode'] = None
                     response['errMsg'] = None
-                    response['data'] = None
+                    response['data'] = list()
                 else:
                     # 這個老師 非 什麼預約歷史都沒有
                     response['data'] = list()
@@ -1952,7 +1952,7 @@ def get_teacher_s_booking_history(request):
                     response['status'] = 'success'
                     response['errCode'] = None
                     response['errMsg'] = None
-                    response['data'] = None
+                    response['data'] = list()
                 else:
                     # 這個老師 非 什麼預約歷史都沒有
                     response['data'] = list()
@@ -2176,7 +2176,7 @@ def get_student_s_booking_history(request):
                     response['status'] = 'success'
                     response['errCode'] = None
                     response['errMsg'] = None
-                    response['data'] = None
+                    response['data'] = list()
                 else:
                     # 這個學生 非 什麼預約歷史都沒有
                     response['data'] = list()
@@ -2283,7 +2283,7 @@ def get_student_s_booking_history(request):
                     response['status'] = 'success'
                     response['errCode'] = None
                     response['errMsg'] = None
-                    response['data'] = None
+                    response['data'] = list()
                 else:
                     # 這個學生 非 什麼預約歷史都沒有
                     response['data'] = list()

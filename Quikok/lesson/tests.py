@@ -2728,7 +2728,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
             data=booking_history_post_data)
         
         self.assertIn('success', str(response.content, "utf8"))
-        self.assertIn('"data": null', str(response.content, "utf8"))
+        self.assertIn('"data": []', str(response.content, "utf8"))
 
     
     def test_get_teacher_s_booking_history_api_work_when_teacher_auth_id_not_exist(self):
@@ -3314,7 +3314,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         response = self.client.post(
             path='/api/lesson/getTeachersBookingHistory/', data=booking_history_post_data)
         self.assertIn('success', str(response.content, 'utf8'))
-        self.assertIn('"data": null', str(response.content, 'utf8')) 
+        self.assertIn('"data": []', str(response.content, 'utf8')) 
 
         booking_history_post_data['searched_by'] = lesson_info.objects.first().lesson_title
         response = self.client.post(
@@ -3808,7 +3808,7 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
             data=booking_history_post_data)
         
         self.assertIn('success', str(response.content, "utf8"))
-        self.assertIn('"data": null', str(response.content, "utf8"))
+        self.assertIn('"data": []', str(response.content, "utf8"))
 
 
     def test_get_student_s_booking_history_api_work_when_student_auth_id_not_exist(self):
@@ -4490,7 +4490,7 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         response = self.client.post(
             path='/api/lesson/getStudentsBookingHistory/', data=booking_history_post_data)
         self.assertIn('success', str(response.content, 'utf8'))
-        self.assertIn('"data": null', str(response.content, 'utf8')) 
+        self.assertIn('"data": []', str(response.content, 'utf8')) 
 
     
     def test_get_student_s_booking_history_has_new_arguments(self):
