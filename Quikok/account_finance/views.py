@@ -680,7 +680,7 @@ def withdraw_q_points(request):
                             within_a_month = False
                         else:
                             within_a_month = \
-                                (datetime.now(timezone.utc) - teacher_refund.objects.filter(teacher_auth_id=teacher_auth_id).last().created_time).days < 31
+                                (datetime.now() - teacher_refund.objects.filter(teacher_auth_id=teacher_auth_id).last().created_time).days < 31
                         txn_fee = 30 if within_a_month else 0
                         # 帳戶餘額必須 >= 手續費加上要提領的金額
                         if teacher_object.balance >= withdrawal_amount + txn_fee:
@@ -748,7 +748,7 @@ def withdraw_q_points(request):
                             within_a_month = False
                         else:
                             within_a_month = \
-                                (datetime.now(timezone.utc) - student_refund.objects.filter(student_auth_id=student_auth_id).last().created_time).days < 31  
+                                (datetime.now() - student_refund.objects.filter(student_auth_id=student_auth_id).last().created_time).days < 31  
                         txn_fee = 30 if within_a_month else 0
                         if student_object.balance >= (withdrawal_amount + txn_fee):
                             # Q幣足夠

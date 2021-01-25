@@ -3497,8 +3497,8 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
             path='/api/lesson/getTeachersBookingHistory/', data=booking_history_post_data)
         # 檢查新參數的值，因為目前只有老師確認完課，所以完課學生相關回傳的字串應為空字串，布林值則為None，其他都有值
         self.assertIn(f'"booked_status": "student_not_yet_confirmed"', str(response.content, "utf8"))
-        self.assertIn(f'"teacher_declared_start_time": "12:50"', str(response.content, "utf8"))  # 要減掉 8 hr
-        self.assertIn(f'"teacher_declared_end_time": "14:40"', str(response.content, "utf8"))  # 要減掉 8 hr
+        self.assertIn(f'"teacher_declared_start_time": "20:50"', str(response.content, "utf8")) 
+        self.assertIn(f'"teacher_declared_end_time": "22:40"', str(response.content, "utf8")) 
         self.assertIn(f'"teacher_declared_time_in_minutes": {int((end_time - start_time).seconds / 60)}', str(response.content, "utf8"))
         self.assertIn(f'"student_confirmed_deadline": "{date_function.today() + timedelta(days=3)}"', str(response.content, "utf8"))
         self.assertIn(f'"remark": ""', str(response.content, "utf8"))
@@ -4667,8 +4667,8 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
             path='/api/lesson/getStudentsBookingHistory/', data=booking_history_post_data)
         # 檢查新參數的值，因為目前只有老師確認完課，所以完課學生相關回傳的字串應為空字串，布林值則為None，其他都有值
         self.assertIn(f'"booked_status": "student_not_yet_confirmed"', str(response.content, "utf8"))
-        self.assertIn(f'"teacher_declared_start_time": "12:50"', str(response.content, "utf8"))  # 要減掉 8 hr
-        self.assertIn(f'"teacher_declared_end_time": "14:40"', str(response.content, "utf8"))  # 要減掉 8 hr
+        self.assertIn(f'"teacher_declared_start_time": "20:50"', str(response.content, "utf8")) 
+        self.assertIn(f'"teacher_declared_end_time": "22:40"', str(response.content, "utf8")) 
         self.assertIn(f'"teacher_declared_time_in_minutes": {int((end_time - start_time).seconds / 60)}', str(response.content, "utf8"))
         self.assertIn(f'"student_confirmed_deadline": "{date_function.today() + timedelta(days=3)}"', str(response.content, "utf8"))
         self.assertIn(f'"remark": ""', str(response.content, "utf8"))
@@ -5136,8 +5136,8 @@ class CLASS_FINISHED_TEST(TestCase):
                 lesson_completed_record.objects.get(id=1).booking_time_in_minutes,
                 lesson_completed_record.objects.get(id=1).teacher_declared_time_in_minutes,
                 lesson_completed_record.objects.get(id=1).student_confirmed_deadline,
-                (lesson_completed_record.objects.get(id=1).teacher_declared_start_time + timedelta(hours=8)).strftime("%H:%M"),
-                (lesson_completed_record.objects.get(id=1).teacher_declared_end_time + timedelta(hours=8)).strftime("%H:%M")
+                lesson_completed_record.objects.get(id=1).teacher_declared_start_time.strftime('%H:%M'),
+                lesson_completed_record.objects.get(id=1).teacher_declared_end_time.strftime('%H:%M')
             ),
         lesson_completed_record.objects.values())
 

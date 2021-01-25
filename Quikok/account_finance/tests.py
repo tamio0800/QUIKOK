@@ -1952,7 +1952,7 @@ class Q_POINTS_WITHDRAWAL_TEST(TestCase):
         response = \
             self.client.post(path='/api/account_finance/getQPointsWithdrawalHistory/', data=query_history_data)
         self.assertIn('success', str(response.content, "utf8"))
-        self.assertIn('"data": null', str(response.content, "utf8"))
+        self.assertIn('"data": []', str(response.content, "utf8"))
 
         # 學生2 加值一點錢
         student_2 = student_profile.objects.get(id=2)
@@ -2009,7 +2009,7 @@ class Q_POINTS_WITHDRAWAL_TEST(TestCase):
         response = \
             self.client.post(path='/api/account_finance/getQPointsWithdrawalHistory/', data=query_history_data)
         self.assertIn('success', str(response.content, "utf8"))
-        self.assertIn('"data": null', str(response.content, "utf8"))
+        self.assertIn('"data": []', str(response.content, "utf8"))
 
         # 老師3 加值一點錢
         teacher_3 = teacher_profile.objects.get(id=3)
