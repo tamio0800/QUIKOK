@@ -6756,7 +6756,7 @@ class REVIEWS_TESTS(TestCase):
             lesson_reviews_from_students.objects.values()
         )
         
-        # 確認學生的指數與上課時長是否正確
+        # 確認老師的指數與上課時長是否正確
         '''self.assertEqual(
             (
                 5,  # 平均得分,
