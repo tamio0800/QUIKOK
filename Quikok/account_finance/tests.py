@@ -110,13 +110,13 @@ class test_finance_functions(TestCase):
                 data=lesson_post_data)
 
     def test_storege_order(self):
-        # 測試前端傳來三種不同情況的方案時,是否能順利寫入
+        # 測試前端trial方案時,是否能順利寫入
         # 要建立課程才能測試
         data = {'userID':2,
         'teacherID':1,
         'lessonID':1,
         'sales_set': 'trial',#,'no_discount','30:70']
-        'total_amount_of_the_sales_set': 69,
+        'total_amount_of_the_sales_set': self.lesson_post_data['trial_class_price'],
         'q_discount': 0}
 
         response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
@@ -809,6 +809,7 @@ class test_student_purchase_payment_status(TestCase):
             'q_discount': 0}
         response = self.client.post(path= '/api/account_finance/storageOrder/', 
                                     data= purchase_data)
+        self.assertIn('success', str(response.content))
         # 確認有新建訂單
         self.assertEqual(student_purchase_record.objects.all().count(), obj_amount+1)
         new_record_id = student_purchase_record.objects.all().order_by('-id').first().id
