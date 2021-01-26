@@ -111,7 +111,6 @@ DATABASES = {
 '''
 將schema從A倒到B的方法:
     mysqldump  (--no-data) -u user -p database >database-schema.sql
-    
     use schema2;
     source database-schema.sql;
 

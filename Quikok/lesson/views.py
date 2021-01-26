@@ -3045,75 +3045,79 @@ def read_reviews_of_certain_lessons(request):
             # 此門預約確實存在
             # 接著確認此用戶是否存在於該預約的師生雙方中
             if int(user_auth_id) in (lesson_booking_object.student_auth_id, lesson_booking_object.teacher_auth_id):
-                if user_type == 'teacher':
-                    # 先做用戶是老師的處理
-                    teacher_object = teacher_profile.objects.filter(auth_id=user_auth_id).first()
-                    if teacher_object is not None:
-                        # 用戶存在
-                        # 確認該門課已經進入至少其中的階段之一
-                        if lesson_booking_object.booking_status in ('finished', 'student_not_yet_confirmed', 'quikok_dealing_for_student_disagreed'):
-                            review_left_by_student = \
-                                lesson_reviews_from_students.objects.filter(
-                                    corresponding_lesson_booking_info_id=lesson_booking_object.id).first()
-                            if review_left_by_student is None:
-                                # 學生尚未留下任何評論
-                                response['status'] = 'success'
-                                response['errCode'] = None
-                                response['errMsg'] = None
-                                response['data'] = ''
-                            else:
-                                # 學生有留下評論
-                                response['data'] = {
+                # 因為一次要回傳雙方的評價資訊，故不需要特別區分老師或是學生來做處理
+                # 確認該門課已經進入至少其中的階段之一
+                if lesson_booking_object.booking_status in ('finished', 'student_not_yet_confirmed', 'quikok_dealing_for_student_disagreed'):
+                    # 拿學生留的評價
+                    review_left_by_student = \
+                        lesson_reviews_from_students.objects.filter(
+                            corresponding_lesson_booking_info_id=lesson_booking_object.id).first()
+
+                    # 拿老師留的評價
+                    review_left_by_teacher = \
+                        student_reviews_from_teachers.objects.filter(
+                            corresponding_lesson_booking_info_id=lesson_booking_object.id).first()
+
+                    if review_left_by_student is None and review_left_by_teacher is None:
+                        # 學生與老師都沒有留下評論
+                        response['data'] = {
+                                    'score_given_to_teacher': -1,
+                                    'remark_given_to_teacher': '',
+                                    'is_teacher_late_for_lesson': None,
+                                    'is_teacher_frivolous_in_lesson': None,
+                                    'is_teacher_incapable': None,
+                                    'score_given_to_student': -1,
+                                    'remark_given_to_student': '',
+                                    'is_student_late_for_lesson': None,
+                                    'is_student_frivolous_in_lesson': None,
+                                    'is_student_or_parents_not_friendly': None
+                                }
+                    elif review_left_by_student is not None and review_left_by_teacher is None:
+                        # 學生有留評論，老師沒有
+                        response['data'] = {
                                     'score_given_to_teacher': review_left_by_student.score_given,
                                     'remark_given_to_teacher': review_left_by_student.remark_given,
                                     'is_teacher_late_for_lesson': review_left_by_student.is_teacher_late_for_lesson,
                                     'is_teacher_frivolous_in_lesson': review_left_by_student.is_teacher_frivolous_in_lesson,
-                                    'is_teacher_incapable': review_left_by_student.is_teacher_incapable
+                                    'is_teacher_incapable': review_left_by_student.is_teacher_incapable,
+                                    'score_given_to_student': -1,
+                                    'remark_given_to_student': '',
+                                    'is_student_late_for_lesson': None,
+                                    'is_student_frivolous_in_lesson': None,
+                                    'is_student_or_parents_not_friendly': None
                                 }
-                                response['status'] = 'success'
-                                response['errCode'] = None
-                                response['errMsg'] = None
-                    else:
-                        # 老師用戶不存在
-                        response['status'] = 'failed'
-                        response['errCode'] = '4'
-                        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
-                        response['data'] = None
-                    
-                else:
-                    # 用戶是學生
-                    student_object = student_profile.objects.filter(auth_id=user_auth_id).first()
-                    if student_object is not None:
-                        # 用戶存在
-                        # 確認該門課已經進入至少其中的階段之一
-                        if lesson_booking_object.booking_status in ('finished', 'student_not_yet_confirmed', 'quikok_dealing_for_student_disagreed'):
-                            review_left_by_teacher = \
-                                student_reviews_from_teachers.objects.filter(
-                                    corresponding_lesson_booking_info_id=lesson_booking_object.id).first()
-                            if review_left_by_teacher is None:
-                                # 老師尚未留下任何評論
-                                response['status'] = 'success'
-                                response['errCode'] = None
-                                response['errMsg'] = None
-                                response['data'] = ''
-                            else:
-                                # 老師有留下評論
-                                response['data'] = {
+                    elif review_left_by_student is None and review_left_by_teacher is not None:
+                        # 老師有留評論，學生沒有
+                        response['data'] = {
+                                    'score_given_to_teacher': -1,
+                                    'remark_given_to_teacher': '',
+                                    'is_teacher_late_for_lesson': None,
+                                    'is_teacher_frivolous_in_lesson': None,
+                                    'is_teacher_incapable': None,
                                     'score_given_to_student': review_left_by_teacher.score_given,
                                     'remark_given_to_student': review_left_by_teacher.remark_given,
                                     'is_student_late_for_lesson': review_left_by_teacher.is_student_late_for_lesson,
                                     'is_student_frivolous_in_lesson': review_left_by_teacher.is_student_frivolous_in_lesson,
                                     'is_student_or_parents_not_friendly': review_left_by_teacher.is_student_or_parents_not_friendly
                                 }
-                                response['status'] = 'success'
-                                response['errCode'] = None
-                                response['errMsg'] = None
                     else:
-                        # 用戶不存在
-                        response['status'] = 'failed'
-                        response['errCode'] = '3'
-                        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
-                        response['data'] = None
+                        # 雙方都有留下評論
+                        response['data'] = {
+                                    'score_given_to_teacher': review_left_by_student.score_given,
+                                    'remark_given_to_teacher': review_left_by_student.remark_given,
+                                    'is_teacher_late_for_lesson': review_left_by_student.is_teacher_late_for_lesson,
+                                    'is_teacher_frivolous_in_lesson': review_left_by_student.is_teacher_frivolous_in_lesson,
+                                    'is_teacher_incapable': review_left_by_student.is_teacher_incapable,
+                                    'score_given_to_student': review_left_by_teacher.score_given,
+                                    'remark_given_to_student': review_left_by_teacher.remark_given,
+                                    'is_student_late_for_lesson': review_left_by_teacher.is_student_late_for_lesson,
+                                    'is_student_frivolous_in_lesson': review_left_by_teacher.is_student_frivolous_in_lesson,
+                                    'is_student_or_parents_not_friendly': review_left_by_teacher.is_student_or_parents_not_friendly
+                                }
+                    response['status'] = 'success'
+                    response['errCode'] = None
+                    response['errMsg'] = None
+
             else:
                 # 此用戶並不是授課雙方之一
                 response['status'] = 'failed'
@@ -3135,3 +3139,77 @@ def read_reviews_of_certain_lessons(request):
         response['data'] = None
     
     return JsonResponse(response)
+
+
+
+'''
+if user_type == 'teacher':
+# 先做用戶是老師的處理
+teacher_object = teacher_profile.objects.filter(auth_id=user_auth_id).first()
+if teacher_object is not None:
+    # 用戶存在
+    # 確認該門課已經進入至少其中的階段之一
+    if lesson_booking_object.booking_status in ('finished', 'student_not_yet_confirmed', 'quikok_dealing_for_student_disagreed'):
+        review_left_by_student = \
+            lesson_reviews_from_students.objects.filter(
+                corresponding_lesson_booking_info_id=lesson_booking_object.id).first()
+        if review_left_by_student is None:
+            # 學生尚未留下任何評論
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+            response['data'] = ''
+        else:
+            # 學生有留下評論
+            response['data'] = {
+                'score_given_to_teacher': review_left_by_student.score_given,
+                'remark_given_to_teacher': review_left_by_student.remark_given,
+                'is_teacher_late_for_lesson': review_left_by_student.is_teacher_late_for_lesson,
+                'is_teacher_frivolous_in_lesson': review_left_by_student.is_teacher_frivolous_in_lesson,
+                'is_teacher_incapable': review_left_by_student.is_teacher_incapable
+            }
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+else:
+    # 老師用戶不存在
+    response['status'] = 'failed'
+    response['errCode'] = '4'
+    response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+    response['data'] = None
+
+else:
+# 用戶是學生
+student_object = student_profile.objects.filter(auth_id=user_auth_id).first()
+if student_object is not None:
+    # 用戶存在
+    # 確認該門課已經進入至少其中的階段之一
+    if lesson_booking_object.booking_status in ('finished', 'student_not_yet_confirmed', 'quikok_dealing_for_student_disagreed'):
+        review_left_by_teacher = \
+            student_reviews_from_teachers.objects.filter(
+                corresponding_lesson_booking_info_id=lesson_booking_object.id).first()
+        if review_left_by_teacher is None:
+            # 老師尚未留下任何評論
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+            response['data'] = ''
+        else:
+            # 老師有留下評論
+            response['data'] = {
+                'score_given_to_student': review_left_by_teacher.score_given,
+                'remark_given_to_student': review_left_by_teacher.remark_given,
+                'is_student_late_for_lesson': review_left_by_teacher.is_student_late_for_lesson,
+                'is_student_frivolous_in_lesson': review_left_by_teacher.is_student_frivolous_in_lesson,
+                'is_student_or_parents_not_friendly': review_left_by_teacher.is_student_or_parents_not_friendly
+            }
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+else:
+    # 用戶不存在
+    response['status'] = 'failed'
+    response['errCode'] = '3'
+    response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+    response['data'] = None
+'''

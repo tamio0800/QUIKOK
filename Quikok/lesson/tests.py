@@ -7034,7 +7034,7 @@ class REVIEWS_TESTS(TestCase):
         response = \
             self.client.post(path='/api/lesson/readReviewsOfCertainLessons/', data=student_read_reviews_post_data)
         self.assertIn('success', str(response.content, "utf8"))
-        self.assertIn('"data": ""', str(response.content, "utf8"))
+        self.assertIn('"score_given_to_teacher": -1', str(response.content, "utf8"))
         
         # 嘗試老師評價學生
         remark_1 = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book."
@@ -7064,7 +7064,7 @@ class REVIEWS_TESTS(TestCase):
         self.assertIn('"is_student_frivolous_in_lesson": false', str(response.content, "utf8"))
         self.assertIn('"is_student_or_parents_not_friendly": true', str(response.content, "utf8"))
         
-        # 先查詢看看老師此時看評價，應該看不到東西
+        # 先查詢看看老師此時看評價，應該看不到學生給它的評價
         teacher_read_reviews_post_data = {
             'lesson_booking_info_id': 1,
             'userID': teacher_profile.objects.get(id=1).auth_id,
@@ -7073,7 +7073,17 @@ class REVIEWS_TESTS(TestCase):
         response = \
             self.client.post(path='/api/lesson/readReviewsOfCertainLessons/', data=teacher_read_reviews_post_data)
         self.assertIn('success', str(response.content, "utf8"))
-        self.assertIn('"data": ""', str(response.content, "utf8"))
+        self.assertIn('"score_given_to_student": 4', str(response.content, "utf8"))
+        self.assertIn(f'"remark_given_to_student": "{remark_1}"', str(response.content, "utf8"))
+        self.assertIn('"is_student_late_for_lesson": false', str(response.content, "utf8"))
+        self.assertIn('"is_student_frivolous_in_lesson": false', str(response.content, "utf8"))
+        self.assertIn('"is_student_or_parents_not_friendly": true', str(response.content, "utf8"))
+        self.assertIn('"score_given_to_teacher": -1', str(response.content, "utf8"))
+        self.assertIn(f'"remark_given_to_teacher": ""', str(response.content, "utf8"))
+        self.assertIn('"is_teacher_late_for_lesson": null', str(response.content, "utf8"))
+        self.assertIn('"is_teacher_frivolous_in_lesson": null', str(response.content, "utf8"))
+        self.assertIn('"is_teacher_incapable": null', str(response.content, "utf8"))
+
 
         # 學生評價老師
         # 進行評價
@@ -7097,6 +7107,11 @@ class REVIEWS_TESTS(TestCase):
         response = \
             self.client.post(path='/api/lesson/readReviewsOfCertainLessons/', data=teacher_read_reviews_post_data)
         self.assertIn('success', str(response.content, "utf8"))
+        self.assertIn('"score_given_to_student": 4', str(response.content, "utf8"))
+        self.assertIn(f'"remark_given_to_student": "{remark_1}"', str(response.content, "utf8"))
+        self.assertIn('"is_student_late_for_lesson": false', str(response.content, "utf8"))
+        self.assertIn('"is_student_frivolous_in_lesson": false', str(response.content, "utf8"))
+        self.assertIn('"is_student_or_parents_not_friendly": true', str(response.content, "utf8"))
         self.assertIn('"score_given_to_teacher": 3', str(response.content, "utf8"))
         self.assertIn(f'"remark_given_to_teacher": "this is a remark left by student."', str(response.content, "utf8"))
         self.assertIn('"is_teacher_late_for_lesson": true', str(response.content, "utf8"))
