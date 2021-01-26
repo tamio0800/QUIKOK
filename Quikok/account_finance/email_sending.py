@@ -137,19 +137,19 @@ class email_manager:
                         set_discount = set_discount[0]+'.'+set_discount[1]
                     lesson_set_name = f'總時數：{set_amount_hour}小時，優惠：{set_discount}折'
 
-
-
-
-
+                teacher_obj = teacher_profile.objects.get(auth_id=teacher_authID)
+                teacher_nickname = teacher_obj.nickname
+                student_nickname = student_profile.objects.get(auth_id=student_authID).nickname
+                teacher_email = teacher_obj.username
+                
                 email_context = {
-                    'teacher_nickname': '', #teacher_nickname,
+                    'teacher_nickname': teacher_nickname, 
                     'lesson_title':lesson_title,
-                    'student_nickname':'', #student_nickname,
+                    'student_nickname':student_nickname,
                     'lesson_set':lesson_set_name,
                     'price':price
                 }
                 email_body = suit_pattern.render(email_context)
-
                 email = EmailMessage(
                     subject = 'Quikok!開課通知：有學生購買您開設的課程',  # 電子郵件標題
                     body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
