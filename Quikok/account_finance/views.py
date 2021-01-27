@@ -49,10 +49,64 @@ def storage_order(request):
                                 # 如果要買試教課程,先檢查是否已經買過了、尚未結帳
                                 if lesson_set == 'trial':
                                     check_trial_query_exist = student_purchase_record.objects.filter(
-                                                                lesson_id=lesson_id, lesson_sales_set_id=set_obj.id, student_auth_id=student_authID)
+                                                                lesson_sales_set_id=set_obj.id, student_auth_id=student_authID).order_by('-id')
                                     # >0 表示已買過
                                     if len(check_trial_query_exist)> 0:
-                                        response = {'status':'failed',
+                                        # 如果買過但又取消、依然可以買
+                                        last_record_payment_status = check_trial_query_exist.first().payment_status
+                                        if last_record_payment_status == 'unpaid_cancel':
+                                            real_price = int(price) - int(q_discount_amount)
+                                            # 更新學生Q幣預扣餘額
+                                            student_obj = student_profile.objects.get(auth_id=student_authID)
+                                            # 預扣額度更新,不能直接覆蓋,要加上去
+                                            student_obj.withholding_balance += int(q_discount_amount)
+                                            student_obj.save()
+
+                                            teacher_obj = teacher_queryset.first()
+                                            lesson_obj = lesson_queryset.first()
+                                            purchase_date = datetime.now()
+                                            payment_deadline = purchase_date + timedelta(days=6)
+
+                                            # 建立訂單
+                                            new_record = student_purchase_record.objects.create(
+                                                student_auth_id= student_authID,
+                                                teacher_auth_id= teacher_authID,
+                                                teacher_nickname= teacher_obj.nickname,
+                                                purchase_date = date_function.today(),
+                                                payment_deadline = payment_deadline,
+                                                lesson_id = lesson_id,
+                                                lesson_title = lesson_obj.lesson_title,
+                                                lesson_sales_set_id = set_obj.id,
+                                                price = price,
+                                                purchased_with_q_points = q_discount_amount,
+                                                purchased_with_money=real_price
+                                                )
+                                            new_record.save()
+
+                                            # 寄通知
+                                            notification = {
+                                                'studentID' :student_authID, 
+                                                'teacherID':teacher_authID,
+                                                'lessonID': lesson_id, 
+                                                'lesson_set': lesson_set, 
+                                                'total_lesson_set_price':price,
+                                                'email_pattern_name':'訂課匯款提醒',
+                                                'q_discount':q_discount_amount,
+                                                'purchasing_price':real_price
+                                                }
+
+                                            # chatroom傳送通知
+                                            #chatroom_notification = ChatConsumer()
+                                            #chatroom_notification.system_msg_new_order_payment_remind(**notification)
+                                            # email傳送通知
+                                            email_notification = email_manager()
+                                            email_notification.system_email_new_order_and_payment_remind(**notification)
+                                            response = {'status':'success',
+                                            'errCode': None,
+                                            'errMsg': None,
+                                            'data': new_record.id}
+                                        else:
+                                            response = {'status':'failed',
                                                         'errCode': 6,
                                                         'errMsg': '您已選購此堂課程的試教方案，請前往帳務中心查看或選擇其他方案',
                                                         'data': None}
@@ -170,11 +224,60 @@ def storage_order(request):
                             # 如果要買試教課程,先檢查是否已經買過了、尚未結帳
                             if lesson_set == 'trial':
                                 check_trial_query_exist = student_purchase_record.objects.filter(
-                                                            lesson_id = lesson_id, lesson_sales_set_id = set_obj.id, 
-                                                            student_auth_id = student_authID)
+                                                            lesson_sales_set_id = set_obj.id, 
+                                                            student_auth_id = student_authID).order_by('-id')
                                 # >0 表示已買過
                                 if len(check_trial_query_exist)> 0:
-                                    response = {'status':'failed',
+                                    last_record_payment_status = check_trial_query_exist.first().payment_status
+                                    # 但如果買過又取消,還是可以買
+                                    if last_record_payment_status == 'unpaid_cancel':
+                                        real_price = int(price)
+                                        teacher_obj = teacher_queryset.first()
+                                        lesson_obj = lesson_queryset.first()
+                                        purchase_date = datetime.now()
+                                        payment_deadline = purchase_date + timedelta(days=6)
+                                        # 建立訂單
+                                        new_record = student_purchase_record.objects.create(
+                                            student_auth_id= student_authID,
+                                            teacher_auth_id= teacher_authID,
+                                            teacher_nickname= teacher_obj.nickname,
+                                            purchase_date = date_function.today(),
+                                            payment_deadline = payment_deadline,
+                                            lesson_id = lesson_id,
+                                            lesson_title = lesson_obj.lesson_title,
+                                            lesson_sales_set_id = set_obj.id,
+                                            price = price,
+                                            purchased_with_q_points = q_discount_amount,
+                                            purchased_with_money=real_price
+                                            )
+                                        new_record.save()
+
+                                        # 寄通知
+                                        notification = {
+                                            'studentID' :student_authID, 
+                                            'teacherID':teacher_authID,
+                                            'lessonID': lesson_id, 
+                                            'lesson_set': lesson_set, 
+                                            'total_lesson_set_price':price,
+                                            'email_pattern_name':'訂課匯款提醒',
+                                            'q_discount':q_discount_amount,
+                                            'purchasing_price':real_price
+                                            }
+
+                                        # chatroom傳送通知
+                                        #chatroom_notification = ChatConsumer()
+                                        #chatroom_notification.system_msg_new_order_payment_remind(**notification)
+                                        # email傳送通知
+                                        email_notification = email_manager()
+                                        email_notification.system_email_new_order_and_payment_remind(
+                                                                                            **notification)
+
+                                        response = {'status':'success',
+                                        'errCode': None,
+                                        'errMsg': None,
+                                        'data': new_record.id}
+                                    else: #有買過或正在買的試教課程
+                                        response = {'status':'failed',
                                                     'errCode': 6,
                                                     'errMsg': '您已選購此堂課程的試教方案，請前往帳務中心查看或選擇其他方案',
                                                     'data': None}

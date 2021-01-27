@@ -129,7 +129,108 @@ class test_finance_functions(TestCase):
                 'errMsg': None,
                 'data': 1 # 建立1號訂單
             })
-    
+    def test_storege_order_student_select_a_trial_mutiple_times(self):
+        '''因為每堂課每個學生只能上一次試教課，所以當學生把某一堂課的試教放進購物車之後，
+        他將不可以再把該堂課的試教方案放進購物車，
+        他只能去帳務中心填入匯款資訊或取消該筆訂單。
+        '''
+        data = {'userID':2,
+        'teacherID':1,
+        'lessonID':1,
+        'sales_set': 'trial',#,'no_discount','30:70']
+        'total_amount_of_the_sales_set': self.lesson_post_data['trial_class_price'],
+        'q_discount': 0}
+
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
+        # 先買一次,確認有成功
+        self.assertIn('success', str(response.content))
+        # 對同一堂課再做一次購買,這時要回傳failed
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
+        self.assertIn('failed', str(response.content))
+
+    def test_storege_order_student_cancel_trial_but_buy_it_again(self):
+        '''因為每堂課每個學生只能上一次試教課，所以當學生把某一堂課的試教放進購物車之後，
+        他將不可以再把該堂課的試教方案放進購物車，
+        他只能去帳務中心填入匯款資訊或取消該筆訂單。
+        而假如第一次買的那筆試教他去取消了,那他第二次又想買的時候,要給他買
+        '''
+        buy_data = {'userID':2,
+        'teacherID':1,
+        'lessonID':1,
+        'sales_set': 'trial',#,'no_discount','30:70']
+        'total_amount_of_the_sales_set': self.lesson_post_data['trial_class_price'],
+        'q_discount': 0}
+
+        response1 = self.client.post(path='/api/account_finance/storageOrder/', data=buy_data)
+        # 先買一次,確認有成功
+        self.assertIn('success', str(response1.content))
+        # 取得剛剛買的這堂課的id的id
+        new_record_id = student_purchase_record.objects.all().order_by('-id').first().id
+        # 接著,取消這筆訂單
+        cancel_data = {
+            'userID':'2',
+            #'token':'1',
+            'type':'1',
+            'purchase_recordID':new_record_id,
+            'status_update':2,# 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code':''
+        }
+        response2 = self.client.post(
+            path='/api/account_finance/studentEditOrder/', data=cancel_data)
+        self.assertIn('success', str(response2.content))
+        # 確認取消成功
+        lesson_payment_status = student_purchase_record.objects.get(id = new_record_id).payment_status
+        self.assertEqual(lesson_payment_status, 'unpaid_cancel',lesson_payment_status)
+        # 對同一堂課再做一次購買,這時要回傳success
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=buy_data)
+        self.assertIn('success', str(response.content))
+
+    def test_storege_order_student_select_a_no_discount_lesson_mutiple_times(self):
+        '''除了試教課程以外，在同一個lesson的情況下，
+        單堂或多堂的購買都沒有一次不能把多堂課放進購物車的限制，因此當一次買多堂課時，
+        要回傳success
+        '''
+        data = {'userID':2,
+        'teacherID':1,
+        'lessonID':1,
+        'sales_set': 'no_discount',#,'30:70']
+        'total_amount_of_the_sales_set': self.lesson_post_data['price_per_hour'],
+        'q_discount': 0}
+
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
+        # 先買一次,確認有成功
+        self.assertIn('success', str(response.content))
+        # 對同一堂課再做一次購買,這時要回傳success
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
+        self.assertIn('success', str(response.content))
+
+    def test_storege_order_student_select_a_no_discount_and_a_trial_same_time(self):
+        '''除了試教課程以外，在同一個lesson的情況下，
+        單堂或多堂的購買都沒有一次不能把多堂課放進購物車的限制，因此如果有買單堂又買了試教,
+        當一次買多堂課時，要回傳success
+        '''
+        # 先買一堂課
+        data1 = {'userID':2,
+        'teacherID':1,
+        'lessonID':1,
+        'sales_set': 'no_discount',#,'30:70']
+        'total_amount_of_the_sales_set': self.lesson_post_data['price_per_hour'],
+        'q_discount': 0}
+
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=data1)
+        # 先買一次,確認有成功
+        self.assertIn('success', str(response.content))
+
+        data2 = {'userID':2,
+        'teacherID':1,
+        'lessonID':1,
+        'sales_set': 'trial',#,'no_discount','30:70']
+        'total_amount_of_the_sales_set': self.lesson_post_data['trial_class_price'],
+        'q_discount': 0}
+        # 對同一堂課再購買一堂試教,這時要回傳success
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=data2)
+        self.assertIn('success', str(response.content))
+
     def test_storege_order_check_if_Q_point_is_enough(self):
         '''如果學生使用q幣抵扣學費,要檢查他確實有該筆q幣'''
         # 建立一筆訂單,使用超過該學生有的Q幣
@@ -321,7 +422,8 @@ class test_finance_functions(TestCase):
             ).id,
             'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
             'part_of_bank_account_code': '11111'}  # 學生跟Quikok確認付款
-        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+        self.client.post(path='/api/account_finance/studentEditOrder/', 
+                            data=student_edit_booking_status_post_data)
 
         # 如果我們將它設定為已付款，理論上應該會連動更新學生的 student_remaining_minutes_of_each_purchased_lesson_set
         the_student_purchase_record_object = \
@@ -1070,29 +1172,37 @@ class test_student_purchase_payment_status(TestCase):
 
 
     def test_student_edit_order_cancel_before_paid(self):
-        data = {
+        '''在付款前就取消訂單'''
+        buy_data = {'userID':2,
+            'teacherID':1,
+            'lessonID':1,
+            'sales_set': 'trial',#,'no_discount','30:70']
+            'total_amount_of_the_sales_set': self.lesson_post_data['trial_class_price'],
+            'q_discount': 0}
+
+        response1 = self.client.post(path='/api/account_finance/storageOrder/', data=buy_data)
+        # 先買一次,確認有成功
+        self.assertIn('success', str(response1.content))
+        # 取得剛剛買的這堂課的id的id
+        new_record_id = student_purchase_record.objects.all().order_by('-id').first().id
+        # 接著,取消這筆訂單
+        cancel_data = {
             'userID':'2',
-            'token':'1',
+            #'token':'1',
             'type':'1',
-            'purchase_recordID':1,
+            'purchase_recordID':new_record_id,
             'status_update':2,# 0-付款完成/1-申請退款/2-申請取消
-            'user5_bank_code':11111
+            'part_of_bank_account_code':''
         }
-        response = self.client.post(path='/api/account_finance/studentOrderHistory/', data=data)
-        self.assertEqual(response.status_code, 200)
+        response2 = self.client.post(
+            path='/api/account_finance/studentEditOrder/', data=cancel_data)
+        self.assertIn('success', str(response2.content))
+        # 確認取消成功
+        lesson_payment_status = student_purchase_record.objects.get(id = new_record_id).payment_status
+        self.assertEqual(lesson_payment_status, 'unpaid_cancel',lesson_payment_status)
+
     
-    
-    def test_student_edit_order_cancel_after_paid(self):
-        data = {
-            'userID':'2',
-            'token':'1',
-            'type':'1',
-            'purchase_recordID':1,
-            'status_update':2,
-            'user5_bank_code':11111
-        }
-        response = self.client.post(path='/api/account_finance/studentOrderHistory/', data=data)
-        self.assertEqual(response.status_code, 200)
+
 
 
 @skip
