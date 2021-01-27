@@ -10,28 +10,26 @@ from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.core.files.storage import FileSystemStorage
 import pandas as pd
 from account.models import teacher_profile, favorite_lessons
-from lesson.models import lesson_info, lesson_card, lesson_info_for_users_not_signed_up
-from lesson.models import lesson_sales_sets
 from lesson.lesson_tools import *
 from django.contrib.auth.decorators import login_required
 from account.model_tools import *
 from django.db.models import Q
-from handy_functions import check_if_all_variables_are_true, date_string_2_dateformat
-from handy_functions import sort_dictionaries_in_a_list_by_specific_key
-from lesson.models import lesson_booking_info
-from lesson.models import lesson_completed_record
-from lesson.models import lesson_reviews_from_students, student_reviews_from_teachers
-from account_finance.models import student_remaining_minutes_of_each_purchased_lesson_set
+from handy_functions import (check_if_all_variables_are_true, date_string_2_dateformat,
+                            sort_dictionaries_in_a_list_by_specific_key, 
+                            booking_date_time_to_minutes_and_cleansing,
+                            turn_date_string_into_date_format, 
+                            turn_current_time_into_time_interval,
+                            return_none_if_the_string_is_empty, bound_number_string)
+from lesson.models import (lesson_info, lesson_card, lesson_info_for_users_not_signed_up,
+                            lesson_sales_sets,lesson_booking_info, lesson_completed_record,
+                            lesson_reviews_from_students, student_reviews_from_teachers)
+from account_finance.models import (student_remaining_minutes_of_each_purchased_lesson_set,
+                                    student_owing_teacher_time)
 from django.db.models import Sum
-from handy_functions import booking_date_time_to_minutes_and_cleansing
-from handy_functions import turn_date_string_into_date_format
 from analytics.signals import object_accessed_signal
 from analytics.utils import get_client_ip
-from handy_functions import turn_current_time_into_time_interval
 from datetime import date as date_function
-from account_finance.models import student_owing_teacher_time
-from handy_functions import return_none_if_the_string_is_empty, bound_number_string
-
+from account_finance.email_sending import email_manager, email_for_edony
 
 @login_required
 def lessons_main_page(request):
@@ -1371,6 +1369,13 @@ def booking_lessons(request):
                         )
                         new_booking_info.save()
                         
+                        # 寄出一封通知信給老師,提醒老師要來確認時間
+                        email_notification = email_manager()
+                        email_notification.send_teacher_when_student_booking_his_lesson(
+                            teacher_authID = the_target_student_set_of_available_remaining_minutes_of_each_purchased_lesson_set.teacher_auth_id,
+                            student_authID = student_auth_id,
+                            lesson_id = lesson_id)
+
                         response['status'] = 'success'
                         response['errCode'] = None
                         response['errMsg'] = None

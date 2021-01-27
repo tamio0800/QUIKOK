@@ -175,10 +175,8 @@ class email_manager:
         teacher_authID = kwargs['teacher_authID']
         student_authID = kwargs['student_authID']
         lesson_id = kwargs['lesson_id']
-        booking_date_and_time = kwargs['booking_date_and_time']
 
-        if False not in [teacher_authID, student_authID, lesson_id,
-                            booking_date_and_time]:
+        if False not in [teacher_authID, student_authID, lesson_id]:
             try:
                 pattern_html = self.email_pattern['通知老師有學生預約']
                 suit_pattern = get_template(pattern_html)

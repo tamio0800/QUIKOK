@@ -1,17 +1,15 @@
 from django.http import response
 from lesson.views import booking_lessons
-from django.test import RequestFactory, TestCase
-from django.test import Client
+from django.test import RequestFactory, TestCase,Client
+from django.core import mail
 import pandas as pd
 import os
 import shutil
 from lesson import lesson_tools
-from lesson.models import lesson_completed_record, lesson_info_for_users_not_signed_up 
-from lesson.models import lesson_info
-from lesson.models import lesson_card
-from lesson.models import lesson_sales_sets
-from account.models import general_available_time, student_profile, teacher_profile
-from account.models import specific_available_time
+from lesson.models import (lesson_completed_record, lesson_info_for_users_not_signed_up, 
+                            lesson_info, lesson_card, lesson_sales_sets)
+from account.models import (general_available_time, student_profile, teacher_profile,
+                            specific_available_time)
 from django.contrib.auth.models import Permission, User, Group
 from unittest import skip
 from lesson.models import lesson_booking_info
@@ -22,7 +20,7 @@ from lesson.models import lesson_reviews_from_students, student_reviews_from_tea
 from account.models import student_review_aggregated_info, teacher_review_aggregated_info
 
 
-# python manage.py test lesson/ --settings=Quikok.settings_for_test
+# python3 manage.py test lesson/ --settings=Quikok.settings_for_test
 class Lesson_Info_Related_Functions_Test(TestCase):
  
     def test_before_signing_up_create_or_edit_a_lesson_exist(self):
@@ -1344,6 +1342,29 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         )
 
 
+    def test_when_student_booking_lessons_send_email_to_teacher(self):
+        '''當學生發出預約的時候，系統要寄email提醒老師確認時間。
+        檢查系統是否有發出這封信'''
+        mail.outbox = [] # 清空暫存記憶裡的信
+        student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
+            student_purchase_record_id = 1,
+            student_auth_id = student_profile.objects.first().auth_id,
+            teacher_auth_id = teacher_profile.objects.first().auth_id,
+            lesson_id = 1,
+            lesson_sales_set_id = lesson_sales_sets.objects.filter(sales_set='trial').filter(is_open=True).first().id,
+            available_remaining_minutes = 60  
+        ).save()  # 建立一個訂單
+        booking_post_data = {
+            'userID': student_profile.objects.first().auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_1}:3;'
+        }  
+        response = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
+        # 檢查是否有寄出提醒信
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, 'Quikok!開課通知：有學生預約上課！')
+    
     def test_if_booking_trial_lessons_modified_remaining_minutes_after_booking_successfully(self):
         '''
         這個測試用在檢查：當試教預約成功後，是否有從學生那邊扣除剩餘時數，並進行對應的資料庫更新。
