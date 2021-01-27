@@ -374,6 +374,7 @@ def storage_order(request):
                                 'errCode': None,
                                 'errMsg': None,
                                 'data': new_record.id}
+                                return JsonResponse(response)
                     else:# 正常情況下前端傳來的金額要與資料庫一致
                         response = {'status':'failed',
                         'errCode': 4,

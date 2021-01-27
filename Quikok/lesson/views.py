@@ -1318,6 +1318,14 @@ def booking_lessons(request):
                                     ))
                         lesson_booking_info.objects.bulk_create(new_booking_info_list)
                         
+                        # 寄出一封通知信給老師,提醒老師要來確認時間
+                        email_notification = email_manager()
+                        email_notification.send_teacher_when_student_booking_his_lesson(
+                            teacher_authID = student_availbale_purchased_lesson_sets.first().teacher_auth_id,
+                            student_authID = student_auth_id,
+                            lesson_id = lesson_id)
+
+
                         response['status'] = 'success'
                         response['errCode'] = None
                         response['errMsg'] = None
