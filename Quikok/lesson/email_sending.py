@@ -15,7 +15,8 @@ class email_manager:
     # 管理email標題以及要渲染的html
     def __init__(self):
         self.email_pattern = {
-            '通知學生要確認上課時數':'./student_send_complete_course.html'
+            '通知學生要確認上課時數': './student_send_complete_course.html',
+            '提醒老師要評價學生': './teacher_send_complete_course.html'
         }
     def send_student_confirm_time_when_teacher_completed_lesson(self, **kwargs):
         # 信件主題:通知學生要確認上課時數
@@ -40,6 +41,41 @@ class email_manager:
                     from_email= settings.EMAIL_HOST_USER,  # 寄件者
                     to =  ['quikok.taiwan@quikok.com']#,'colorfulday0123@gmail.com','w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
                 ) # 正式發布時要改為 to student_email
+                email.fail_silently = False
+                email.content_subtype = 'html'
+                email.send()
+                return True
+
+            except Exception as e:
+                print(f'Exception: {e}')
+                return False
+        else:
+            print('缺少參數')
+            return False
+    
+    def send_teacher_rate_student_when_teacher_completed_lesson(self, **kwargs):
+        # 信件主題:通知學生要確認上課時數
+        # 當有老師送出完課、填寫時數後要提醒學生確認時間
+        
+        teacher_authID = kwargs['teacher_authID']
+        if teacher_authID :
+            try:
+                pattern_html = self.email_pattern['提醒老師要評價學生']
+                suit_pattern = get_template(pattern_html)
+                teacher_obj = teacher_profile.objects.get(auth_id=teacher_authID)
+                teacher_nickname = teacher_obj.nickname
+                teacher_email = teacher_obj.username
+                
+                email_context = {
+                    'teacher_nickname':teacher_nickname
+                }
+                email_body = suit_pattern.render(email_context)
+                email = EmailMessage(
+                    subject = 'Quikok!開課通知：給學生的評價填了嗎~',  # 電子郵件標題
+                    body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
+                    from_email= settings.EMAIL_HOST_USER,  # 寄件者
+                    to =  ['quikok.taiwan@quikok.com']#,'colorfulday0123@gmail.com','w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
+                ) # 正式發布時要改為 to teacher_email
                 email.fail_silently = False
                 email.content_subtype = 'html'
                 email.send()

@@ -5167,9 +5167,9 @@ class CLASS_FINISHED_TEST(TestCase):
         lesson_completed_record.objects.values())
 
 
-    def test_send_email_to_student_when_lesson_completed(self):
+    def test_send_email_to_student_and_teacher_when_lesson_completed(self):
         '''
-        確認當老師按完課後，學生會收到通知信來確認這個時數是否正確
+        確認當老師按完課後，學生會收到通知信來確認這個時數是否正確、老師會收到信叫他寫評價
         '''
         # 先進行購課
         purchased_post_data = {
@@ -5237,6 +5237,7 @@ class CLASS_FINISHED_TEST(TestCase):
         self.assertEqual(1, lesson_completed_record.objects.count())
         # 檢查是否收到通知信
         self.assertEqual(mail.outbox[0].subject, 'Quikok!開課通知：老師請你確認上課時數囉!')
+        self.assertEqual(mail.outbox[1].subject, 'Quikok!開課通知：給學生的評價填了嗎~')
 
     def test_lesson_completed_confirmation_from_student_exist(self):
         # 確認學生確認完課通知的連結存在
