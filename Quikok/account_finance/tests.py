@@ -17,7 +17,6 @@ from datetime import datetime, timedelta, date as date_function
 import math
 #python3 manage.py test account_finance/ --settings=Quikok.settings_for_test
 
-
 class test_finance_functions(TestCase):
     def setUp(self):
         self.client =  Client()        

@@ -18,7 +18,7 @@ from datetime import datetime, timedelta, timezone, date as date_function
 from account_finance.models import student_owing_teacher_time
 from lesson.models import lesson_reviews_from_students, student_reviews_from_teachers
 from account.models import student_review_aggregated_info, teacher_review_aggregated_info
-
+from django.core import mail
 
 # python3 manage.py test lesson/ --settings=Quikok.settings_for_test
 class Lesson_Info_Related_Functions_Test(TestCase):
@@ -5166,6 +5166,77 @@ class CLASS_FINISHED_TEST(TestCase):
             ),
         lesson_completed_record.objects.values())
 
+
+    def test_send_email_to_student_when_lesson_completed(self):
+        '''
+        確認當老師按完課後，學生會收到通知信來確認這個時數是否正確
+        '''
+        # 先進行購課
+        purchased_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'teacherID': teacher_profile.objects.get(id=1).auth_id,
+            'lessonID': lesson_info.objects.get(id=1).id,
+            'sales_set': '10:90',
+            'total_amount_of_the_sales_set': int(800*10*0.9),
+            'q_discount': 0}
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchased_post_data)
+
+        student_edit_booking_status_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'token':'',
+            'type':'',
+            'purchase_recordID': student_purchase_record.objects.get(id=1).id,
+            'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
+            'part_of_bank_account_code': '11111'}
+        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+        # 此時，學生通知我們她已經完成付款
+        # student_purchase_record.objects.filter(id=1).update(payment_status='paid')
+        purchase_obj = student_purchase_record.objects.get(id=1)
+        purchase_obj.payment_status = 'paid'
+        purchase_obj.save()
+        # 我們確認她付款了
+        self.assertEqual('paid',
+            student_purchase_record.objects.get(id=1).payment_status)
+
+        # 接著讓學生進行預約
+        booking_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,  # 學生的auth_id
+            'lessonID': 1,
+            'bookingDateTime': f'{self.available_date_1_t1}:1,2,3,4;'} 
+            # 預約了120分鐘
+        response = \
+            self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        # 預約成功
+
+        # 讓老師確認學生的預約
+        change_booking_status_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'bookingID': 1,
+            'bookingStatus': 'confirmed'}
+        response = \
+            self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=change_booking_status_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        mail.outbox = []
+        # 此時應該可以進行完課動作惹
+        # 接著老師進行完課
+        start_time, end_time = datetime(2021, 1, 19, 20, 50), datetime(2021, 1, 19, 22, 40)
+        noti_post_data = {
+                'userID': teacher_profile.objects.get(id=1).auth_id,
+                'lesson_booking_info_id': 1,
+                'lesson_date': '2021-01-01',
+                'start_time': start_time.strftime("%H:%M"),
+                'end_time': end_time.strftime("%H:%M"),
+                'time_interval_in_minutes': int((end_time - start_time).seconds / 60)
+        }  # 測試看看這個 api 能不能產出對應的 record 來
+        response = \
+            self.client.post(path='/api/lesson/lessonCompletedNotificationFromTeacher/', data=noti_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+
+        # 檢查 lesson_completed_record 是否產生對應的紀錄
+        self.assertEqual(1, lesson_completed_record.objects.count())
+        # 檢查是否收到通知信
+        self.assertEqual(mail.outbox[0].subject, 'Quikok!開課通知：老師請你確認上課時數囉!')
 
     def test_lesson_completed_confirmation_from_student_exist(self):
         # 確認學生確認完課通知的連結存在

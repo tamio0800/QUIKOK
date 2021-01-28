@@ -367,7 +367,11 @@ def when_lesson_completed_notification_sent_by_teacher(sender, instance:lesson_c
         lesson_booking_object.save()
 
         # 之後可能就在這裡進行對學生的通知吧
-
+        from .email_sending import email_manager
+        send_email = email_manager()
+        send_email.send_student_confirm_time_when_teacher_completed_lesson(
+            student_authID = instance.student_auth_id
+        )
 
 @receiver(pre_save, sender=lesson_booking_info)
 def update_receiving_review_lesson_minutes(sender, instance:lesson_booking_info, **kwargs):

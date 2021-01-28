@@ -2,7 +2,7 @@ from django.core.mail import EmailMessage
 from django.conf import settings
 from django.template.loader import render_to_string, get_template
 from account.models import teacher_profile, student_profile
-from lesson.models import lesson_info
+from lesson.models import lesson_info, lesson_sales_sets
 from blog.models import article_info
 from django.template import Context, Template
 import asyncio
@@ -29,16 +29,13 @@ class email_manager:
         student_info_obj.balance = student_info_obj.balance - q_discount
         student_info_obj.save()
 
-    # 收到訂單與匯款提醒用
+    # 寄給學生:收到訂單與收到匯款
     def system_email_new_order_and_payment_remind(self, **kwargs):
     #data_test = {'q_discount':20,'studentID':7, 'teacherID':1,'lessonID':1,'lesson_set':'30:70' ,'total_lesson_set_price':100,'email_pattern_name':'訂課匯款提醒'}
         try:
             email_pattern_name = kwargs['email_pattern_name']
-            for name in self.email_pattern.keys():
-                if name == email_pattern_name:
-                    pattern_html = self.email_pattern[name]      
             try:
-                len(pattern_html) - 3
+                pattern_html = self.email_pattern[email_pattern_name]
             except:
                 return False
 
@@ -47,6 +44,8 @@ class email_manager:
             teacher_authID = kwargs['teacherID']
             lesson_id = kwargs['lessonID']
             lesson_set = kwargs['lesson_set']
+            #print('lesson_set_id')
+            #print(lesson_set_id)
             q_discount = kwargs['q_discount']
 
             student_info = student_profile.objects.filter(auth_id = student_authID).first()
@@ -54,12 +53,14 @@ class email_manager:
             teacher_info = teacher_profile.objects.filter(auth_id = teacher_authID).first() 
             teacher_name = teacher_info.nickname
             lesson_title = lesson_info.objects.filter(id = lesson_id).first().lesson_title
+            #lesson_set = lesson_sales_sets.objects.get(id = lesson_set_id).sales_set
+            #print(lesson_set)
             # 選擇方案的文字
             if lesson_set == 'trial':
                 lesson_set_name = '試教課程'
             elif lesson_set == 'no_discount':
                 lesson_set_name = '單堂課程'
-            else:
+            else:               
                 set_info = lesson_set.split(':')
                 set_amount_hour = set_info[0]
                 set_discount = set_info[1]
@@ -102,7 +103,7 @@ class email_manager:
 
             return True
         except Exception as e:
-            print(f'Exception: {e}')
+            print(f'Exception is: {e}')
             return False
 
     def send_teacher_when_student_buy_his_lesson(self, **kwargs):
@@ -124,7 +125,8 @@ class email_manager:
             try:
                 pattern_html = self.email_pattern['通知老師有學生購買他的課']
                 suit_pattern = get_template(pattern_html)
-
+                #lesson_set = lesson_sales_sets.objects.get(id = lesson_set_id).sales_set
+            
                 # 選擇方案的文字
                 if lesson_set == 'trial':
                     lesson_set_name = '試教課程'
