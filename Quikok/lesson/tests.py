@@ -2833,6 +2833,8 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         self.assertIn(f'"booked_date": "{self.available_date_1}"', str(response.content, "utf8"))
         self.assertIn(f'"booked_date": "{self.available_date_2}"', str(response.content, "utf8"))
         self.assertIn(f'"booked_date": "{self.available_date_4}"', str(response.content, "utf8"))
+        self.assertIn(f'"booked_time": ["3", "4"]', str(response.content, "utf8"))
+        # self.fail(str(response.content, "utf8"))
         self.assertIn(f'"booked_status": "to_be_confirmed"', str(response.content, "utf8"))
 
         booking_history_post_data = {

@@ -164,6 +164,24 @@ def turn_current_time_into_time_interval():
         return current_time.hour * 2
 
 
+def turn_first_time_interval_into_time_format(time_interval_string):
+    '''
+    這是為了將如:
+         "0,1,2" 轉換成 >> 00:00，
+         "3,4" >> 01:30，
+         "2" >> 01:00
+    的函式。
+    '''
+    first_element = int(time_interval_string.replace(';', '').split(',')[0])
+    the_quotient = first_element % 2
+    if the_quotient == 0:
+        return (the_quotient, 0)
+    else:
+        return (int(the_quotient), 30)
+        
+
+
+
 def bound_number_string(target_number_string, min=1, max=5):
     '''
     將超出範圍外的數值限定在不超過範圍的極端值，如果為空字串的話則回傳None.

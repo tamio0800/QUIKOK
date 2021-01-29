@@ -18,7 +18,7 @@ from handy_functions import (check_if_all_variables_are_true, date_string_2_date
                             sort_dictionaries_in_a_list_by_specific_key, 
                             booking_date_time_to_minutes_and_cleansing,
                             turn_date_string_into_date_format, 
-                            turn_current_time_into_time_interval,
+                            turn_first_time_interval_into_time_format,
                             return_none_if_the_string_is_empty, bound_number_string)
 from lesson.models import (lesson_info, lesson_card, lesson_info_for_users_not_signed_up,
                             lesson_sales_sets,lesson_booking_info, lesson_completed_record,
@@ -1312,6 +1312,7 @@ def booking_lessons(request):
                                         booking_set_id = student_availbale_purchased_lesson_sets.first().lesson_sales_set_id,
                                         remaining_minutes = (available_remaining_minutes - this_booking_minutes),
                                         booking_date_and_time = f'{each_date}:{each_continuous_time};',
+                                        #booking_start_datetime = ,
                                         booking_status = 'to_be_confirmed'
                                     ))
                         lesson_booking_info.objects.bulk_create(new_booking_info_list)
@@ -1904,7 +1905,7 @@ def get_teacher_s_booking_history(request):
                         response['data'].append(
                             {
                                 'booked_date': each_booking_info_object.booking_date_and_time.split(':')[0],
-                                'booked_time': each_booking_info_object.booking_date_and_time.split(':')[1][:-1],
+                                'booked_time': each_booking_info_object.booking_date_and_time.split(':')[1][:-1].split(','),
                                 # [:-1]是為了去掉最後的 ';'
                                 'booked_status': each_booking_info_object.booking_status,
                                 'lesson_title': \
@@ -2016,7 +2017,7 @@ def get_teacher_s_booking_history(request):
                         response['data'].append(
                             {
                                 'booked_date': each_booking_info_object.booking_date_and_time.split(':')[0],
-                                'booked_time': each_booking_info_object.booking_date_and_time.split(':')[1][:-1],
+                                'booked_time': each_booking_info_object.booking_date_and_time.split(':')[1][:-1].split(','),
                                 # 去掉最後的 ';'
                                 'booked_status': each_booking_info_object.booking_status,
                                 'lesson_title': \
@@ -2244,7 +2245,7 @@ def get_student_s_booking_history(request):
                         response['data'].append(
                             {
                                 'booked_date': each_booking_info_object.booking_date_and_time.split(':')[0],
-                                'booked_time': each_booking_info_object.booking_date_and_time.split(':')[1][:-1],
+                                'booked_time': each_booking_info_object.booking_date_and_time.split(':')[1][:-1].split(','),
                                 # [:-1]是為了去掉最後的 ';'
                                 'booked_status': each_booking_info_object.booking_status,
                                 'lesson_title': \
@@ -2354,7 +2355,7 @@ def get_student_s_booking_history(request):
                         response['data'].append(
                             {
                                 'booked_date': each_booking_info_object.booking_date_and_time.split(':')[0],
-                                'booked_time': each_booking_info_object.booking_date_and_time.split(':')[1][:-1],
+                                'booked_time': each_booking_info_object.booking_date_and_time.split(':')[1][:-1].split(','),
                                 # 去掉最後的 ';'
                                 'booked_status': each_booking_info_object.booking_status,
                                 'lesson_title': \
