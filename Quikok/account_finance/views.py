@@ -12,14 +12,19 @@ from datetime import datetime, timedelta, timezone, date as date_function
 from handy_functions import check_if_all_variables_are_true
 from django.views.decorators.http import require_http_methods
 from account_finance.models import student_refund, teacher_refund
+from time import time
+from threading import Thread
 
 
 def view_email_new_order_remind(request):
     return render(request, 'send_new_order_remind.html')
 
 
+email_notification = email_manager()
+
 def storage_order(request):
     # 訂單(方案)結帳
+    st = time()
     response = dict()
     try:
         student_authID = request.POST.get('userID', False)
@@ -29,43 +34,60 @@ def storage_order(request):
         price = request.POST.get('total_amount_of_the_sales_set', False)
         q_discount_amount = request.POST.get('q_discount', False)
 
-        teacher_queryset = teacher_profile.objects.filter(auth_id= teacher_authID)
-        lesson_queryset = lesson_info.objects.filter(id = lesson_id)
+        # 這兩個寫在這裡可能導致失敗(參數沒抓到)，而且檢查 None 的速度比 len() 快很多
+        #teacher_queryset = teacher_profile.objects.filter(auth_id= teacher_authID)
+        #lesson_queryset = lesson_info.objects.filter(id = lesson_id)
+        
         if check_if_all_variables_are_true(student_authID, teacher_authID,
-                        lesson_id, lesson_set, price,q_discount_amount):
-            if len(teacher_queryset) and len(lesson_queryset):
-                set_queryset = lesson_sales_sets.objects.filter(
-                                    lesson_id=lesson_id, sales_set=lesson_set, is_open= True)
-                if len(set_queryset):
+            lesson_id, lesson_set, price, q_discount_amount):
+
+            teacher_obj = teacher_profile.objects.filter(auth_id=teacher_authID).first()
+            lesson_obj = lesson_info.objects.filter(id=lesson_id).first()
+            # 先把這個query出來，下面就不用再一直複製
+            # 程式有一條原則叫做DRY，Don't Repeat Yourself
+
+            student_obj = student_profile.objects.get(auth_id=student_authID)
+
+            if None not in (teacher_obj, lesson_obj):
+                set_obj = lesson_sales_sets.objects.filter(
+                                lesson_id=lesson_id, sales_set=lesson_set, is_open= True).first()
+                # 改這個的道理亦同
+                if set_obj is not None:
                     # 確認前端傳來的總金額等於資料庫裡的總金額
-                    set_obj = set_queryset.first()
                     if int(price) == set_obj.total_amount_of_the_sales_set:
+
                     # 學生欲使用Q幣折抵現金
                         #print('金額有一樣唷~')
                         if q_discount_amount != '0':
                             # 確認學生有的q幣是否有大於等於要使用的Q幣的餘額
-                            student_balance = student_profile.objects.get(auth_id=student_authID).balance
+                            student_balance = student_obj.balance
+
                             if student_balance >= int(q_discount_amount):
                                 # 如果要買試教課程,先檢查是否已經買過了、尚未結帳
                                 if lesson_set == 'trial':
-                                    check_trial_query_exist = student_purchase_record.objects.filter(
-                                                                lesson_sales_set_id=set_obj.id, student_auth_id=student_authID).order_by('-id')
+                                    student_purchase_object = \
+                                        student_purchase_record.objects.filter(
+                                            lesson_sales_set_id = set_obj.id, 
+                                            student_auth_id = student_authID
+                                        ).order_by('id').first()
+                                    # 另外道理一樣，None會比較快，而且直接first()的話下面就不用再跑一次
+
                                     # >0 表示已買過
-                                    if len(check_trial_query_exist)> 0:
+                                    if student_purchase_object is not None:
                                         # 如果買過但又取消、依然可以買
-                                        last_record_payment_status = check_trial_query_exist.first().payment_status
+                                        last_record_payment_status = student_purchase_object.payment_status
                                         if last_record_payment_status == 'unpaid_cancel':
                                             real_price = int(price) - int(q_discount_amount)
                                             # 更新學生Q幣預扣餘額
-                                            student_obj = student_profile.objects.get(auth_id=student_authID)
+                                            # student_obj = student_profile.objects.get(auth_id=student_authID)
                                             # 預扣額度更新,不能直接覆蓋,要加上去
                                             student_obj.withholding_balance += int(q_discount_amount)
                                             student_obj.save()
 
-                                            teacher_obj = teacher_queryset.first()
-                                            lesson_obj = lesson_queryset.first()
-                                            purchase_date = datetime.now()
-                                            payment_deadline = purchase_date + timedelta(days=6)
+                                            # teacher_obj = teacher_queryset.first()
+                                            # lesson_obj = lesson_queryset.first()
+                                            # purchase_date = datetime.now()
+                                            payment_deadline = datetime.now() + timedelta(days=6)
 
                                             # 建立訂單
                                             new_record = student_purchase_record.objects.create(
@@ -99,29 +121,38 @@ def storage_order(request):
                                             #chatroom_notification = ChatConsumer()
                                             #chatroom_notification.system_msg_new_order_payment_remind(**notification)
                                             # email傳送通知
-                                            email_notification = email_manager()
-                                            email_notification.system_email_new_order_and_payment_remind(**notification)
+                                            # email_notification = email_manager()
+                                            # email_notification.system_email_new_order_and_payment_remind(**notification)
+                                            
                                             response = {'status':'success',
                                             'errCode': None,
                                             'errMsg': None,
                                             'data': new_record.id}
+
+                                            the_thread = Thread(
+                                                target=email_notification.system_email_new_order_and_payment_remind,
+                                                kwargs=notification)
+                                            the_thread.start()
+                                            print(f"consumed time test: {time()-st}")
+
                                         else:
                                             response = {'status':'failed',
                                                         'errCode': 6,
                                                         'errMsg': '您已選購此堂課程的試教方案，請前往帳務中心查看或選擇其他方案',
                                                         'data': None}
+
                                     else: # 還沒買過, 可以買
                                         real_price = int(price) - int(q_discount_amount)
                                         # 更新學生Q幣預扣餘額
-                                        student_obj = student_profile.objects.get(auth_id=student_authID)
+                                        # student_obj = student_profile.objects.get(auth_id=student_authID)
                                         # 預扣額度更新,不能直接覆蓋,要加上去
                                         student_obj.withholding_balance += int(q_discount_amount)
                                         student_obj.save()
 
-                                        teacher_obj = teacher_queryset.first()
-                                        lesson_obj = lesson_queryset.first()
-                                        purchase_date = datetime.now()
-                                        payment_deadline = purchase_date + timedelta(days=6)
+                                        # teacher_obj = teacher_queryset.first()
+                                        # lesson_obj = lesson_queryset.first()
+                                        # purchase_date = datetime.now()
+                                        payment_deadline = datetime.now() + timedelta(days=6)
 
                                         # 建立訂單
                                         new_record = student_purchase_record.objects.create(
@@ -155,25 +186,32 @@ def storage_order(request):
                                         #chatroom_notification = ChatConsumer()
                                         #chatroom_notification.system_msg_new_order_payment_remind(**notification)
                                         # email傳送通知
-                                        email_notification = email_manager()
-                                        email_notification.system_email_new_order_and_payment_remind(**notification)
+                                        # email_notification = email_manager()
+                                        # email_notification.system_email_new_order_and_payment_remind(**notification)
                                         response = {'status':'success',
                                         'errCode': None,
                                         'errMsg': None,
                                         'data': new_record.id}
 
+                                        the_thread = Thread(
+                                            target=email_notification.system_email_new_order_and_payment_remind,
+                                            kwargs=notification)
+                                        the_thread.start()
+                                        print(f"consumed time test: {time()-st}")
+                                        
+
                                 else: # 不是選試上課就不檢查有沒有買過了,使用者愛一次買幾個都可以
                                     real_price = int(price) - int(q_discount_amount)
                                     # 更新學生Q幣預扣餘額
-                                    student_obj = student_profile.objects.get(auth_id=student_authID)
+                                    # student_obj = student_profile.objects.get(auth_id=student_authID)
                                     # 預扣額度更新,不能直接覆蓋,要加上去
                                     student_obj.withholding_balance += int(q_discount_amount)
                                     student_obj.save()
 
-                                    teacher_obj = teacher_queryset.first()
-                                    lesson_obj = lesson_queryset.first()
-                                    purchase_date = datetime.now()
-                                    payment_deadline = purchase_date + timedelta(days=6)
+                                    # teacher_obj = teacher_queryset.first()
+                                    # lesson_obj = lesson_queryset.first()
+                                   #  purchase_date = datetime.now()
+                                    payment_deadline = datetime.now() + timedelta(days=6)
 
                                     # 建立訂單
                                     new_record = student_purchase_record.objects.create(
@@ -207,12 +245,18 @@ def storage_order(request):
                                     #chatroom_notification = ChatConsumer()
                                     #chatroom_notification.system_msg_new_order_payment_remind(**notification)
                                     # email傳送通知
-                                    email_notification = email_manager()
-                                    email_notification.system_email_new_order_and_payment_remind(**notification)
+                                    #email_notification = email_manager()
+                                    #email_notification.system_email_new_order_and_payment_remind(**notification)
                                     response = {'status':'success',
                                     'errCode': None,
                                     'errMsg': None,
                                     'data': new_record.id}
+
+                                    the_thread = Thread(
+                                        target=email_notification.system_email_new_order_and_payment_remind,
+                                        kwargs=notification)
+                                    the_thread.start()
+                                    print(f"consumed time test: {time()-st}")
 
                             else:
                                 response = {'status':'failed',
@@ -223,19 +267,27 @@ def storage_order(request):
                         else: # 沒有使用q幣
                             # 如果要買試教課程,先檢查是否已經買過了、尚未結帳
                             if lesson_set == 'trial':
-                                check_trial_query_exist = student_purchase_record.objects.filter(
-                                                            lesson_sales_set_id = set_obj.id, 
-                                                            student_auth_id = student_authID).order_by('-id')
+                                #check_trial_query_exist = student_purchase_record.objects.filter(
+                                #                            lesson_sales_set_id = set_obj.id, 
+                                #                            student_auth_id = student_authID).order_by('-id')
+
+                                student_purchase_record_obj = \
+                                    student_purchase_record.objects.filter(
+                                        lesson_sales_set_id = set_obj.id, 
+                                        student_auth_id = student_authID
+                                    ).order_by('id').last()
+
                                 # >0 表示已買過
-                                if len(check_trial_query_exist)> 0:
-                                    last_record_payment_status = check_trial_query_exist.first().payment_status
+                                # 一樣，len很耗運算資源，既然query默認是用id排序，則可以使用
+                                if student_purchase_record_obj is not None:
+                                    last_record_payment_status = student_purchase_record_obj.payment_status
                                     # 但如果買過又取消,還是可以買
                                     if last_record_payment_status == 'unpaid_cancel':
                                         real_price = int(price)
-                                        teacher_obj = teacher_queryset.first()
-                                        lesson_obj = lesson_queryset.first()
-                                        purchase_date = datetime.now()
-                                        payment_deadline = purchase_date + timedelta(days=6)
+                                        # teacher_obj = teacher_queryset.first()
+                                        # lesson_obj = lesson_queryset.first()
+                                        # purchase_date = datetime.now()
+                                        payment_deadline = datetime.now() + timedelta(days=6)
                                         # 建立訂單
                                         new_record = student_purchase_record.objects.create(
                                             student_auth_id= student_authID,
@@ -268,25 +320,36 @@ def storage_order(request):
                                         #chatroom_notification = ChatConsumer()
                                         #chatroom_notification.system_msg_new_order_payment_remind(**notification)
                                         # email傳送通知
-                                        email_notification = email_manager()
-                                        email_notification.system_email_new_order_and_payment_remind(
-                                                                                            **notification)
+                                        #email_notification = email_manager()
+                                        #email_notification.system_email_new_order_and_payment_remind(
+                                        #                                                    **notification)
+                                        #email_notification_with_thread = EMAIL_MANAGER_WITH_THREAD(**notification)
+                                        #email_notification_with_thread.start()
+                                        #print(f"consumed time: {time()-st}")
 
                                         response = {'status':'success',
                                         'errCode': None,
                                         'errMsg': None,
                                         'data': new_record.id}
+
+                                        the_thread = Thread(
+                                            target=email_notification.system_email_new_order_and_payment_remind,
+                                            kwargs=notification)
+                                        the_thread.start()
+                                        print(f"consumed time test: {time()-st}")
+
                                     else: #有買過或正在買的試教課程
                                         response = {'status':'failed',
                                                     'errCode': 6,
                                                     'errMsg': '您已選購此堂課程的試教方案，請前往帳務中心查看或選擇其他方案',
                                                     'data': None}
+
                                 else: # 沒買過,可以買試教
                                     real_price = int(price)
-                                    teacher_obj = teacher_queryset.first()
-                                    lesson_obj = lesson_queryset.first()
-                                    purchase_date = datetime.now()
-                                    payment_deadline = purchase_date + timedelta(days=6)
+                                    # teacher_obj = teacher_queryset.first()
+                                    # lesson_obj = lesson_queryset.first()
+                                    # purchase_date = datetime.now()
+                                    payment_deadline = datetime.now() + timedelta(days=6)
 
                                     # 建立訂單
                                     new_record = student_purchase_record.objects.create(
@@ -320,20 +383,29 @@ def storage_order(request):
                                     #chatroom_notification = ChatConsumer()
                                     #chatroom_notification.system_msg_new_order_payment_remind(**notification)
                                     # email傳送通知
-                                    email_notification = email_manager()
-                                    email_notification.system_email_new_order_and_payment_remind(**notification)
+                                    #email_notification_with_thread = EMAIL_MANAGER_WITH_THREAD(**notification)
+                                    #email_notification_with_thread.start()
+                                    #print(f"consumed time: {time()-st}")
+                                    #email_notification = email_manager()
+                                    #email_notification.system_email_new_order_and_payment_remind(**notification)
 
                                     response = {'status':'success',
                                     'errCode': None,
                                     'errMsg': None,
                                     'data': new_record.id}
+
+                                    the_thread = Thread(
+                                        target=email_notification.system_email_new_order_and_payment_remind,
+                                        kwargs=notification)
+                                    the_thread.start()
+                                    print(f"consumed time test: {time()-st}")
+
                             else: #不是選試上課就不檢查有沒有買過了,使用者愛一次買幾個都可以
                                 real_price = int(price)
-
-                                teacher_obj = teacher_queryset.first()
-                                lesson_obj = lesson_queryset.first()
-                                purchase_date = datetime.now()
-                                payment_deadline = purchase_date + timedelta(days=6)
+                                # eacher_obj = teacher_queryset.first()
+                                # lesson_obj = lesson_queryset.first()
+                                # purchase_date = datetime.now()
+                                payment_deadline = datetime.now() + timedelta(days=6)
 
                                 # 建立訂單
                                 new_record = student_purchase_record.objects.create(
@@ -367,13 +439,20 @@ def storage_order(request):
                                 #chatroom_notification = ChatConsumer()
                                 #chatroom_notification.system_msg_new_order_payment_remind(**notification)
                                 # email傳送通知
-                                email_notification = email_manager()
-                                email_notification.system_email_new_order_and_payment_remind(**notification)
-
+                                
+                                #email_notification.system_email_new_order_and_payment_remind(**notification)
+                    
                                 response = {'status':'success',
                                 'errCode': None,
                                 'errMsg': None,
                                 'data': new_record.id}
+
+                                the_thread = Thread(
+                                    target=email_notification.system_email_new_order_and_payment_remind,
+                                    kwargs=notification)
+                                the_thread.start()
+                                print(f"consumed time test: {time()-st}")
+
                                 return JsonResponse(response)
                     else:# 正常情況下前端傳來的金額要與資料庫一致
                         response = {'status':'failed',

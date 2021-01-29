@@ -20,7 +20,6 @@ import os
 from .auth_tools import auth_check_manager
 # FOR API
 from django.views.decorators.http import require_http_methods
-from django.core import serializers
 from django.http import JsonResponse
 import json
 from django.middleware.csrf import get_token
@@ -38,8 +37,9 @@ from handy_functions import date_string_2_dateformat
 from handy_functions import clean_files
 from analytics.signals import object_accessed_signal
 from analytics.utils import get_client_ip
-from blog.models import article_info
 from account.email_sending import email_manager
+from django.core.signals import request_finished
+from django.dispatch import receiver
 
 
 
@@ -1418,13 +1418,7 @@ def create_batch_teacher_users():
                         week = every_week,
                         time = temp_time
                                     ).save()
-            print('老師成功建立 一般時間')
-
-def test_connect_time(request):
-    from time import time
-    s_time = time()
-    _ = teacher_profile.objects.all().count()
-    return HttpResponse(str(time() - s_time) + ' seconds,   for' + str(_) + ' teachers.')'''
+            print('老師成功建立 一般時間')'''
 
 
 @require_http_methods(['POST'])
@@ -1662,6 +1656,21 @@ def return_student_profile_for_public_viewing(request):
 
     return JsonResponse(response)
 
+
+
+def test_connect_time(request):
+    return HttpResponse("THIS IS A DUMMY TEST FUNCTION.")
+
+
+'''# @receiver(request_finished, sender=test_connect_time)
+def my_callback(sender, **kwargs):
+    print("Request finished!")
+    print(f"xxxxx {kwargs.items()}")
+    print(f"kwargs['signal'] {kwargs['signal'].}")
+    print(f"sender {sender}")
+
+
+request_finished.connect(my_callback, dispatch_uid="my_unique_identifier")'''
 
 
     

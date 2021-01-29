@@ -3,9 +3,11 @@ from django.conf import settings
 from django.template.loader import render_to_string, get_template
 from account.models import teacher_profile, student_profile
 from lesson.models import lesson_info, lesson_sales_sets
-from blog.models import article_info
-from django.template import Context, Template
-import asyncio
+# from blog.models import article_info
+# from django.template import Context, Template
+# import threading
+
+# import asyncio
 from lesson.models import lesson_info
 #from django.utils.html import strip_tags
 #from email.mime.image import MIMEImage 夾附件用
@@ -95,7 +97,7 @@ class email_manager:
                 subject = email_pattern_name,  # 電子郵件標題
                 body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
                 from_email= settings.EMAIL_HOST_USER,  # 寄件者
-                to =  ['colorfulday0123@gmail.com']#,'w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
+                to =  ['tamio.chou@gmail.com']#,'w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
             )
             email.fail_silently = False
             email.content_subtype = 'html'
@@ -225,3 +227,20 @@ class email_for_edony:
         )
         email.fail_silently = False
         email.send()
+
+
+
+#class EMAIL_MANAGER_WITH_THREAD(threading.Thread):
+    '''
+    利用多執行緒的方式來寄送Email，避免用戶等待 G-Mail 初始化過久。
+    '''
+#    def __init__(self, **kwargs):
+#        print(f"kwargs in THREAD {kwargs}")
+#        super().__init__()  # 繼承 Thread 類別的所有 init 元素
+#        # self.notifications = kwargs['notifications']  # 下訂單時會用到
+#        self.notifications = kwargs
+#
+#    def run(self):
+#        mail_notification = email_manager()
+#        mail_notification.system_email_new_order_and_payment_remind(self.notifications)
+
