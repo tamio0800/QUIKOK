@@ -12,14 +12,19 @@ from datetime import datetime, timedelta, timezone, date as date_function
 from handy_functions import check_if_all_variables_are_true
 from django.views.decorators.http import require_http_methods
 from account_finance.models import student_refund, teacher_refund
+from time import time
+from threading import Thread
 
 
 def view_email_new_order_remind(request):
     return render(request, 'send_new_order_remind.html')
 
 
+email_notification = email_manager()
+
 def storage_order(request):
     # 訂單(方案)結帳
+    st = time()
     response = dict()
     try:
         student_authID = request.POST.get('userID', False)
@@ -99,17 +104,26 @@ def storage_order(request):
                                             #chatroom_notification = ChatConsumer()
                                             #chatroom_notification.system_msg_new_order_payment_remind(**notification)
                                             # email傳送通知
-                                            email_notification = email_manager()
-                                            email_notification.system_email_new_order_and_payment_remind(**notification)
+                                            # email_notification = email_manager()
+                                            # email_notification.system_email_new_order_and_payment_remind(**notification)
+                                            
                                             response = {'status':'success',
                                             'errCode': None,
                                             'errMsg': None,
                                             'data': new_record.id}
+
+                                            the_thread = Thread(
+                                                target=email_notification.system_email_new_order_and_payment_remind,
+                                                kwargs=notification)
+                                            the_thread.start()
+                                            print(f"consumed time test: {time()-st}")
+
                                         else:
                                             response = {'status':'failed',
                                                         'errCode': 6,
                                                         'errMsg': '您已選購此堂課程的試教方案，請前往帳務中心查看或選擇其他方案',
                                                         'data': None}
+
                                     else: # 還沒買過, 可以買
                                         real_price = int(price) - int(q_discount_amount)
                                         # 更新學生Q幣預扣餘額
@@ -155,12 +169,19 @@ def storage_order(request):
                                         #chatroom_notification = ChatConsumer()
                                         #chatroom_notification.system_msg_new_order_payment_remind(**notification)
                                         # email傳送通知
-                                        email_notification = email_manager()
-                                        email_notification.system_email_new_order_and_payment_remind(**notification)
+                                        # email_notification = email_manager()
+                                        # email_notification.system_email_new_order_and_payment_remind(**notification)
                                         response = {'status':'success',
                                         'errCode': None,
                                         'errMsg': None,
                                         'data': new_record.id}
+
+                                        the_thread = Thread(
+                                            target=email_notification.system_email_new_order_and_payment_remind,
+                                            kwargs=notification)
+                                        the_thread.start()
+                                        print(f"consumed time test: {time()-st}")
+                                        
 
                                 else: # 不是選試上課就不檢查有沒有買過了,使用者愛一次買幾個都可以
                                     real_price = int(price) - int(q_discount_amount)
@@ -207,12 +228,18 @@ def storage_order(request):
                                     #chatroom_notification = ChatConsumer()
                                     #chatroom_notification.system_msg_new_order_payment_remind(**notification)
                                     # email傳送通知
-                                    email_notification = email_manager()
-                                    email_notification.system_email_new_order_and_payment_remind(**notification)
+                                    #email_notification = email_manager()
+                                    #email_notification.system_email_new_order_and_payment_remind(**notification)
                                     response = {'status':'success',
                                     'errCode': None,
                                     'errMsg': None,
                                     'data': new_record.id}
+
+                                    the_thread = Thread(
+                                        target=email_notification.system_email_new_order_and_payment_remind,
+                                        kwargs=notification)
+                                    the_thread.start()
+                                    print(f"consumed time test: {time()-st}")
 
                             else:
                                 response = {'status':'failed',
@@ -268,19 +295,30 @@ def storage_order(request):
                                         #chatroom_notification = ChatConsumer()
                                         #chatroom_notification.system_msg_new_order_payment_remind(**notification)
                                         # email傳送通知
-                                        email_notification = email_manager()
-                                        email_notification.system_email_new_order_and_payment_remind(
-                                                                                            **notification)
+                                        #email_notification = email_manager()
+                                        #email_notification.system_email_new_order_and_payment_remind(
+                                        #                                                    **notification)
+                                        #email_notification_with_thread = EMAIL_MANAGER_WITH_THREAD(**notification)
+                                        #email_notification_with_thread.start()
+                                        #print(f"consumed time: {time()-st}")
 
                                         response = {'status':'success',
                                         'errCode': None,
                                         'errMsg': None,
                                         'data': new_record.id}
+
+                                        the_thread = Thread(
+                                            target=email_notification.system_email_new_order_and_payment_remind,
+                                            kwargs=notification)
+                                        the_thread.start()
+                                        print(f"consumed time test: {time()-st}")
+
                                     else: #有買過或正在買的試教課程
                                         response = {'status':'failed',
                                                     'errCode': 6,
                                                     'errMsg': '您已選購此堂課程的試教方案，請前往帳務中心查看或選擇其他方案',
                                                     'data': None}
+
                                 else: # 沒買過,可以買試教
                                     real_price = int(price)
                                     teacher_obj = teacher_queryset.first()
@@ -320,13 +358,23 @@ def storage_order(request):
                                     #chatroom_notification = ChatConsumer()
                                     #chatroom_notification.system_msg_new_order_payment_remind(**notification)
                                     # email傳送通知
-                                    email_notification = email_manager()
-                                    email_notification.system_email_new_order_and_payment_remind(**notification)
+                                    #email_notification_with_thread = EMAIL_MANAGER_WITH_THREAD(**notification)
+                                    #email_notification_with_thread.start()
+                                    #print(f"consumed time: {time()-st}")
+                                    #email_notification = email_manager()
+                                    #email_notification.system_email_new_order_and_payment_remind(**notification)
 
                                     response = {'status':'success',
                                     'errCode': None,
                                     'errMsg': None,
                                     'data': new_record.id}
+
+                                    the_thread = Thread(
+                                        target=email_notification.system_email_new_order_and_payment_remind,
+                                        kwargs=notification)
+                                    the_thread.start()
+                                    print(f"consumed time test: {time()-st}")
+
                             else: #不是選試上課就不檢查有沒有買過了,使用者愛一次買幾個都可以
                                 real_price = int(price)
 
@@ -367,13 +415,20 @@ def storage_order(request):
                                 #chatroom_notification = ChatConsumer()
                                 #chatroom_notification.system_msg_new_order_payment_remind(**notification)
                                 # email傳送通知
-                                email_notification = email_manager()
-                                email_notification.system_email_new_order_and_payment_remind(**notification)
-
+                                
+                                #email_notification.system_email_new_order_and_payment_remind(**notification)
+                    
                                 response = {'status':'success',
                                 'errCode': None,
                                 'errMsg': None,
                                 'data': new_record.id}
+
+                                the_thread = Thread(
+                                    target=email_notification.system_email_new_order_and_payment_remind,
+                                    kwargs=notification)
+                                the_thread.start()
+                                print(f"consumed time test: {time()-st}")
+
                                 return JsonResponse(response)
                     else:# 正常情況下前端傳來的金額要與資料庫一致
                         response = {'status':'failed',
