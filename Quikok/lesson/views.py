@@ -21,15 +21,22 @@ from handy_functions import (check_if_all_variables_are_true, date_string_2_date
                             turn_current_time_into_time_interval,
                             return_none_if_the_string_is_empty, bound_number_string)
 from lesson.models import (lesson_info, lesson_card, lesson_info_for_users_not_signed_up,
-                            lesson_sales_sets,lesson_booking_info, lesson_completed_record,
+                            lesson_sales_sets, lesson_booking_info, lesson_completed_record,
                             lesson_reviews_from_students, student_reviews_from_teachers)
 from account_finance.models import (student_remaining_minutes_of_each_purchased_lesson_set,
                                     student_owing_teacher_time)
 from django.db.models import Sum
 from analytics.signals import object_accessed_signal
 from analytics.utils import get_client_ip
-from datetime import date as date_function
+from datetime import datetime, timedelta, date as date_function
 from account_finance.email_sending import email_manager, email_for_edony
+
+##排程功能分隔線##
+# 上課前一天提醒上課時間：在每天早上11:00檢查是否有隔天要上課的人、寄發通知email
+#baseline_time = datetime.now()+timedelta(day=1) # 製作出明天的日期
+#booking_lesson_queryset = lesson_booking_info.objects.filter(booking_status='confirmed')
+
+##排程功能分隔線##
 
 @login_required
 def lessons_main_page(request):
