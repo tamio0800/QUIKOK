@@ -33,8 +33,11 @@ from account_finance.email_sending import email_manager, email_for_edony
 
 ##排程功能分隔線##
 # 上課前一天提醒上課時間：在每天早上11:00檢查是否有隔天要上課的人、寄發通知email
-#baseline_time = datetime.now()+timedelta(day=1) # 製作出明天的日期
-#booking_lesson_queryset = lesson_booking_info.objects.filter(booking_status='confirmed')
+baseline_time = datetime.now()+timedelta(days=1) # 製作出明天的日期
+booking_lesson_queryset = lesson_booking_info.objects.filter( 
+    booking_status='confirmed', 
+    created_time__date = baseline_time)
+
 
 ##排程功能分隔線##
 
