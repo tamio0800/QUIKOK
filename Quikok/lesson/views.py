@@ -1846,13 +1846,21 @@ def get_teacher_s_booking_history(request):
                                     Q(lesson_id__in=correspodent_lesson_ids)
                                 ).order_by('-last_changed_time')
                 else:
-                    # 有輸入 searched_by
-                    teacher_s_lesson_booking_info_queryset = \
-                        lesson_booking_info.objects.filter(
-                            teacher_auth_id=teacher_auth_id, 
-                            booking_status=booking_status_filtered_by,
-                            created_time__gt=registered_from_date,
-                            last_changed_time__lt=registered_to_date).order_by('-last_changed_time')
+                    # 沒有輸入 searched_by
+                    if booking_status_filtered_by != 'finished':
+                        teacher_s_lesson_booking_info_queryset = \
+                            lesson_booking_info.objects.filter(
+                                Q(teacher_auth_id=teacher_auth_id) & 
+                                Q(booking_status=booking_status_filtered_by) & 
+                                Q(created_time__gt=registered_from_date) &
+                                Q(last_changed_time__lt=registered_to_date)).order_by('-last_changed_time')
+                    else:
+                        teacher_s_lesson_booking_info_queryset = \
+                            lesson_booking_info.objects.filter(
+                                Q(teacher_auth_id=teacher_auth_id) & 
+                                Q(booking_status__in=['finished', 'student_not_yet_confirmed', 'quikok_dealing_for_student_disagreed']) & 
+                                Q(created_time__gt=registered_from_date) &
+                                Q(last_changed_time__lt=registered_to_date)).order_by('-last_changed_time')
                 
                 if teacher_s_lesson_booking_info_queryset.count() == 0:
                     # 這個老師什麼預約歷史都沒有

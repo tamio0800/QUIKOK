@@ -63,6 +63,7 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     class Meta:
         verbose_name = '課程詳細資訊'
         verbose_name_plural = '課程詳細資訊'
+        ordering = ['-created_time']
 
 
 class lesson_card(models.Model):
@@ -153,6 +154,7 @@ class lesson_reviews_from_students(models.Model):
     class Meta:
         verbose_name = '學生對老師/課程評價'
         verbose_name_plural = '學生對老師/課程評價'
+        ordering = ['-created_time']
 
 
 class student_reviews_from_teachers(models.Model):
@@ -177,6 +179,7 @@ class student_reviews_from_teachers(models.Model):
     class Meta:
         verbose_name = '老師對學生評價'
         verbose_name_plural = '老師對學生評價'
+        ordering = ['-created_time']
 
 
 class lesson_booking_info(models.Model): 
@@ -239,6 +242,7 @@ class lesson_booking_info(models.Model):
     class Meta:
         verbose_name = '課程預約資訊'
         verbose_name_plural = '課程預約資訊'
+        ordering = ['-created_time']
 
 
 # 上課與完課紀錄
@@ -327,6 +331,7 @@ class lesson_sales_sets(models.Model):
     class Meta:
         verbose_name = '課程方案資訊'
         verbose_name_plural = '課程方案資訊'
+        ordering = ['-created_time']
 
 
 class lesson_info_for_users_not_signed_up(models.Model): 
