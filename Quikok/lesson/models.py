@@ -269,10 +269,23 @@ class lesson_completed_record(models.Model):
     # 則我們將直接撥款給老師
     confirmed_by_quikok = models.BooleanField(default= False)
     # 萬一學生遲遲不確認，要由我們自動確認的話，最好也做個註記
+    quikok_remarks = models.TextField(default="", blank=True, null=True)
+    # 萬一未來需要協調時，這個欄位可以讓我們做一些協調紀錄/處理經過
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
-        return str(self.id)
+        # return str(self.id)
+        if self.is_student_confirmed == True:
+            # 學生已經確認
+            return f"預約({str(self.lesson_booking_info_id)})已被老師({str(self.teacher_auth_id)})通報完課，學生({str(self.student_auth_id)})已確認。"
+        elif self.is_student_confirmed == False and self.is_student_disagree_with_teacher_s_declared_time == True:
+            # 學生反對且Quikok尚未處理完成
+            return f"預約({str(self.lesson_booking_info_id)})已被老師({str(self.teacher_auth_id)})通報完課，學生({str(self.student_auth_id)})不同意，Quikok處理中..."
+        elif self.is_student_confirmed == True and self.is_student_disagree_with_teacher_s_declared_time == True:
+            # 學生反對且Quikok處理完畢
+            return f"預約({str(self.lesson_booking_info_id)})已被老師({str(self.teacher_auth_id)})通報完課，學生({str(self.student_auth_id)})一開始不同意，最後由Quikok協調完畢。"
+        elif self.confirmed_by_quikok == True:
+            return f"預約({str(self.lesson_booking_info_id)})已被老師({str(self.teacher_auth_id)})通報完課，學生({str(self.student_auth_id)})未確認，超過期限後自動同意。"
 
     class Meta:
         verbose_name = '完課紀錄'
