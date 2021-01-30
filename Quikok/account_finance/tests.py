@@ -1205,7 +1205,6 @@ class test_student_purchase_payment_status(TestCase):
 
 
 
-@skip
 class LESSON_SALES_HISTORY_TEST(TestCase):
     
     
@@ -1760,7 +1759,11 @@ class LESSON_SALES_HISTORY_TEST(TestCase):
         purchase_post_data['total_amount_of_the_sales_set'] = 800
         purchase_post_data['q_discount'] = 200  # 試試看200q幣付款
         response = self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
-        self.assertIn('success', str(response.content, "utf8"))  # 用了Q幣，試試看有沒有成功
+        self.assertIn('failed', str(response.content, "utf8"))  # 用了Q幣，試試看有沒有成功，因為沒有所以要失敗
+        purchase_post_data['q_discount'] = 0
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+        self.assertIn('success', str(response.content, "utf8")) 
+
         purchase_post_data['sales_set'] = '10:90'
         purchase_post_data['total_amount_of_the_sales_set'] = int(10*800*0.9)
         purchase_post_data['q_discount'] = 0
