@@ -53,7 +53,7 @@ class student_refund(models.Model):
     bank_name = models.CharField(max_length=30, default='')
     bank_code = models.CharField(max_length=5, default='')
     def __str__(self):
-        return str(self.id)
+        return f"學生 {str(self.id)} 退款 {str(self.refund_amount)} 元，手續費 {str(self.txn_fee)}。 狀態: {self.refund_status}"
     
     class Meta:
         verbose_name = '學生退款紀錄'
