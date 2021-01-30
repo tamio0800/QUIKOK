@@ -29,7 +29,7 @@ class student_purchase_record(models.Model):
     # 取消指的是 把未付款的課程退掉；退款指的是把已經有付款的轉成Q幣
     updated_time = models.DateTimeField(auto_now=True)
     def __str__(self):
-        return f"學生{str(self.id)} 購買 {self.teacher_nickname} 總價 {str(self.price)} 的方案。 狀態: {self.payment_status}"
+        return f"學生{str(self.student_auth_id)} 購買 {self.teacher_nickname} 總價 {str(self.price)} 的方案。 狀態: {self.payment_status}"
 
     class Meta:
         verbose_name = '學生購買紀錄'
@@ -53,7 +53,7 @@ class student_refund(models.Model):
     bank_name = models.CharField(max_length=30, default='')
     bank_code = models.CharField(max_length=5, default='')
     def __str__(self):
-        return f"學生 {str(self.id)} 退款 {str(self.refund_amount)} 元，手續費 {str(self.txn_fee)}。 狀態: {self.refund_status}"
+        return f"學生 {str(self.student_auth_id)} 退款 {str(self.refund_amount)} 元，手續費 {str(self.txn_fee)}。 狀態: {self.refund_status}"
     
     class Meta:
         verbose_name = '學生退款紀錄'
@@ -117,7 +117,7 @@ class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
     # 代表學生有沒有退費這門方案，並且成功通過退費。
 
     def __str__(self):
-        return str(self.id)
+        return f"學生auth_id: {str(self.student_auth_id)} >> 課程:{str(self.lesson_id)}, 方案:{str(self.lesson_sales_set_id)}, 可用時數:{str(self.available_remaining_minutes)}, 預扣時數:{str(self.withholding_minutes)}, 已用時數:{str(self.confirmed_consumed_minutes)}" 
     # 時數的名詞解釋範例:
     # 假設我買了100小時的課 已經上完30小時,其中28小時已經確認上完課,
     # 2小時老師跟學生雙方還在確認,實際上那堂課上了3小時
