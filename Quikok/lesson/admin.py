@@ -17,8 +17,14 @@ class LessonSalesSetAdmin(admin.ModelAdmin):
         'selling_volume', 'taking_lesson_volume', 'fulfilled_volume',
          'created_time', 'last_sold_time')
 
+class LessonCompletedAdmin(admin.ModelAdmin):
+    readonly_fields = (
+        'id', 'lesson_booking_info_id', 'student_auth_id', 'teacher_auth_id',
+        'created_time', 'last_changed_time')
+
 
 admin.site.register(lesson_info, LessonAdmin)
 admin.site.register(lesson_info_for_users_not_signed_up, LessonForUserNotSignedUpAdmin)
 admin.site.register(lesson_booking_info, LessonBookingInfoAdmin)
 admin.site.register(lesson_sales_sets, LessonSalesSetAdmin)
+admin.site.register(lesson_completed_record, LessonCompletedAdmin)

@@ -274,8 +274,8 @@ class lesson_completed_record(models.Model):
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
-        # return str(self.id)
-        if self.is_student_confirmed == True:
+        return f"預約({str(self.lesson_booking_info_id)})已被老師({str(self.teacher_auth_id)})通報完課。 學生({str(self.student_auth_id)})是否同意: {str(self.is_student_confirmed)}、是否(曾)申訴: {str(self.is_student_disagree_with_teacher_s_declared_time)}。 是否由Quikok自動確認: {str(self.confirmed_by_quikok)}"
+        '''if self.is_student_confirmed == True:
             # 學生已經確認
             return f"預約({str(self.lesson_booking_info_id)})已被老師({str(self.teacher_auth_id)})通報完課，學生({str(self.student_auth_id)})已確認。"
         elif self.is_student_confirmed == False and self.is_student_disagree_with_teacher_s_declared_time == True:
@@ -285,11 +285,12 @@ class lesson_completed_record(models.Model):
             # 學生反對且Quikok處理完畢
             return f"預約({str(self.lesson_booking_info_id)})已被老師({str(self.teacher_auth_id)})通報完課，學生({str(self.student_auth_id)})一開始不同意，最後由Quikok協調完畢。"
         elif self.confirmed_by_quikok == True:
-            return f"預約({str(self.lesson_booking_info_id)})已被老師({str(self.teacher_auth_id)})通報完課，學生({str(self.student_auth_id)})未確認，超過期限後自動同意。"
+            return f"預約({str(self.lesson_booking_info_id)})已被老師({str(self.teacher_auth_id)})通報完課，學生({str(self.student_auth_id)})未確認，超過期限後自動同意。"'''
 
     class Meta:
-        verbose_name = '完課紀錄'
-        verbose_name_plural = '完課紀錄'
+        verbose_name = '(預約)完課紀錄'
+        verbose_name_plural = '(預約)完課紀錄'
+        ordering = ['-created_time']
         
 
 class lesson_sales_sets(models.Model):
