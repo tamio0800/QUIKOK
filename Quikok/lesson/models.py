@@ -226,7 +226,7 @@ class lesson_booking_info(models.Model):
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
-        return str(self.id)
+        return f"學生({str(self.student_auth_id)})預約老師({str(self.teacher_auth_id)})的課程({str(self.lesson_id)})的方案({str(self.booking_set_id)})。 目前狀態:{self.booking_status}; 最後更改時間:{self.last_changed_time.strftime('%Y-%m-%d %H:%M:%S')}"
 
     def get_booking_date(self):
         # 回傳這次的預約日期
