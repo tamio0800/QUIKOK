@@ -2194,13 +2194,21 @@ def get_student_s_booking_history(request):
 
                 else:
                     # 沒有輸入 searched_by
-                    student_s_lesson_booking_info_queryset = \
-                        lesson_booking_info.objects.filter(
-                            student_auth_id=student_auth_id, 
-                            booking_status=booking_status_filtered_by,
-                            created_time__gt=registered_from_date,
-                            last_changed_time__lt=registered_to_date).order_by('-last_changed_time')
-                
+                    if booking_status_filtered_by != 'finished':
+                        student_s_lesson_booking_info_queryset = \
+                            lesson_booking_info.objects.filter(
+                                Q(student_auth_id=student_auth_id) & 
+                                Q(booking_status=booking_status_filtered_by) & 
+                                Q(created_time__gt=registered_from_date) &
+                                Q(last_changed_time__lt=registered_to_date)).order_by('-last_changed_time')
+                    else:
+                        student_s_lesson_booking_info_queryset = \
+                            lesson_booking_info.objects.filter(
+                                Q(student_auth_id=student_auth_id) & 
+                                Q(booking_status__in=['finished', 'student_not_yet_confirmed', 'quikok_dealing_for_student_disagreed']) & 
+                                Q(created_time__gt=registered_from_date) &
+                                Q(last_changed_time__lt=registered_to_date)).order_by('-last_changed_time')
+
                 if student_s_lesson_booking_info_queryset.count() == 0:
                     # 這個學生什麼預約歷史都沒有
                     response['status'] = 'success'

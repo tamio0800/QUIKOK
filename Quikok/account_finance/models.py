@@ -34,6 +34,7 @@ class student_purchase_record(models.Model):
     class Meta:
         verbose_name = '學生購買紀錄'
         verbose_name_plural = '學生購買紀錄'
+        # ordering = ['-purchase_date']
 
 
 # 學生退款紀錄

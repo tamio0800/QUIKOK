@@ -55,7 +55,6 @@ def storage_order(request):
                 if set_obj is not None:
                     # 確認前端傳來的總金額等於資料庫裡的總金額
                     if int(price) == set_obj.total_amount_of_the_sales_set:
-
                     # 學生欲使用Q幣折抵現金
                         #print('金額有一樣唷~')
                         if q_discount_amount != '0':
@@ -458,7 +457,7 @@ def storage_order(request):
                         response = {'status':'failed',
                         'errCode': 4,
                         'errMsg': '課程金額有問題，請稍後再試，如狀況持續可連絡客服',
-                        'data': None}
+                        'data': set_obj.total_amount_of_the_sales_set}
                 else:
                     response = {'status':'failed',
                     'errCode': 0,
