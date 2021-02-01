@@ -16,7 +16,9 @@ class email_manager:
     def __init__(self):
         self.email_pattern = {
             '通知學生要確認上課時數': './student_send_complete_course.html',
-            '提醒老師要評價學生': './teacher_send_complete_course.html'
+            '提醒老師要評價學生': './teacher_send_complete_course.html',
+            '提醒老師明天要上課': './send_remind _class.html',
+            '提醒學生明天要上課': './send_remind _class.html'
         }
     def send_student_confirm_time_when_teacher_completed_lesson(self, **kwargs):
         # 信件主題:通知學生要確認上課時數
@@ -76,6 +78,84 @@ class email_manager:
                     from_email= settings.EMAIL_HOST_USER,  # 寄件者
                     to =  ['quikok.taiwan@quikok.com']#,'colorfulday0123@gmail.com','w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
                 ) # 正式發布時要改為 to teacher_email
+                email.fail_silently = False
+                email.content_subtype = 'html'
+                email.send()
+                return True
+
+            except Exception as e:
+                print(f'Exception: {e}')
+                return False
+        else:
+            print('缺少參數')
+            return False
+
+    def send_student_remind_one_day_before_lesson(self, **kwargs):
+        # 信件主題:提醒學生明天要上課
+        # 預約時間的前一天寄信提醒
+        
+        student_authID = kwargs['student_authID']
+        lesson_title = kwargs['lesson_title']
+        booking_date_and_time = kwargs['booking_date_and_time']
+        if student_authID :
+            try:
+                pattern_html = self.email_pattern['提醒學生明天要上課']
+                suit_pattern = get_template(pattern_html)
+                student_obj = student_profile.objects.get(auth_id=student_authID)
+                user_nickname = student_obj.nickname
+                student_email = student_obj.username
+                
+                email_context = {
+                    'user_nickname':user_nickname,
+                    'lesson_title': '',
+                    'booking_date_and_time':''
+                }
+                email_body = suit_pattern.render(email_context)
+                email = EmailMessage(
+                    subject = 'Quikok!開課提醒：明天要上課唷',  # 電子郵件標題
+                    body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
+                    from_email= settings.EMAIL_HOST_USER,  # 寄件者
+                    to =  ['quikok.taiwan@quikok.com']#,'colorfulday0123@gmail.com','w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
+                ) # 正式發布時要改為 to student_email
+                email.fail_silently = False
+                email.content_subtype = 'html'
+                email.send()
+                return True
+
+            except Exception as e:
+                print(f'Exception: {e}')
+                return False
+        else:
+            print('缺少參數')
+            return False
+
+    def send_student_remind_one_day_before_lesson(self, **kwargs):
+        # 信件主題:提醒老師明天要上課
+        # 預約時間的前一天寄信提醒
+        lesson_title = kwargs['lesson_title']
+        booking_date_and_time = kwargs['booking_date_and_time']      
+        teacher_authID = kwargs['teacher_authID']
+        
+        if teacher_authID :
+            try:
+                pattern_html = self.email_pattern['提醒老師明天要上課']
+                suit_pattern = get_template(pattern_html)
+                teacher_obj = teacher_profile.objects.get(auth_id=teacher_authID)
+                teacher_nickname = teacher_obj.nickname
+                teacher_email = teacher_obj.username
+                
+                email_context = {
+                    'user_nickname':user_nickname,
+                    'lesson_title': '',
+                    'booking_date_and_time':''
+                }
+                email_body = suit_pattern.render(email_context)
+                email = EmailMessage(
+                    subject = 'Quikok!開課提醒：明天要上課唷',  # 電子郵件標題
+                    body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
+                    from_email= settings.EMAIL_HOST_USER,  # 寄件者
+                    to =  ['quikok.taiwan@quikok.com']#,'colorfulday0123@gmail.com','w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
+                ) # 正式發布時要改為 to student_email
                 email.fail_silently = False
                 email.content_subtype = 'html'
                 email.send()

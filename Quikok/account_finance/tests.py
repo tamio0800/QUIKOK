@@ -14,7 +14,7 @@ from unittest import skip
 from django.contrib.auth.models import User
 from account.models import specific_available_time
 from datetime import datetime, timedelta, date as date_function
-import math
+import math, time
 # python3 manage.py test account_finance/ --settings=Quikok.settings_for_test
 
 class test_finance_functions(TestCase):
@@ -608,6 +608,8 @@ class test_finance_functions(TestCase):
             'q_discount':0
         }  #先測試 10:90 看看是否成功
         self.client.post(path='/api/account_finance/storageOrder/', data=post_data)
+        #time.sleep(10)
+        #self.assertEqual(len(mail.outbox), 1) 
         self.assertEqual(
             student_purchase_record.objects.get(id=1).payment_status,'unpaid',
             student_purchase_record.objects.values()
@@ -629,7 +631,7 @@ class test_finance_functions(TestCase):
         
         #self.assertEqual(len(mail.outbox), 2) # 這是第二封信, 建立訂單時會寄出第一封信
         #self.assertEqual(mail.outbox[0].subject, '訂課匯款提醒')
-        # self.assertEqual(mail.outbox[1].subject, '收到款項提醒')  
+        #self.assertEqual(mail.outbox[1].subject, '收到款項提醒')  
         # 改用多執行緒做實踐
         
 

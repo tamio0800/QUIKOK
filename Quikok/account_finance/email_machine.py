@@ -2,6 +2,8 @@ from django.core.mail import EmailMessage
 from django.conf import settings
 from django.template.loader import get_template
 from account.models import student_profile,teacher_profile
+
+'''
 class email_tools:
 
     # 管理emai主題以及要渲染的html
@@ -51,3 +53,4 @@ class email_tools:
             except Exception as e:
                 print(f'Exception: {e}')
                 return False
+'''

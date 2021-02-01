@@ -30,16 +30,31 @@ from analytics.signals import object_accessed_signal
 from analytics.utils import get_client_ip
 from datetime import datetime, timedelta, date as date_function
 from account_finance.email_sending import email_manager, email_for_edony
-
-##排程功能分隔線##
-# 上課前一天提醒上課時間：在每天早上11:00檢查是否有隔天要上課的人、寄發通知email
-baseline_time = datetime.now()+timedelta(days=1) # 製作出明天的日期
-booking_lesson_queryset = lesson_booking_info.objects.filter( 
-    booking_status='confirmed', 
-    created_time__date = baseline_time)
+from apscheduler.schedulers.background import BackgroundScheduler
+from django.core.cache import cache
 
 
-##排程功能分隔線##
+ ##課前提醒排程功能分隔線##
+# 例項化
+scheduler = BackgroundScheduler()
+# 每間隔24小時執行一次, 要設定起始與結束時間
+scheduler.add_job(test, 'interval',
+    hours = 24, start_date = '2021-02-01 14:30:00',
+    end_date = '2021-02-02 14:31:00') 
+scheduler.start()
+
+def send_email_one_day_before_booking_date():
+   
+    # 上課前一天提醒上課時間：在每天早上11:00檢查是否有隔天要上課的人、寄發通知email
+    baseline_time = datetime.now()+timedelta(days=1) # 製作出明天的日期
+    # 篩選出年月日相同的課程
+    booking_lesson_queryset = lesson_booking_info.objects.filter( 
+        booking_status='confirmed', 
+        created_time__date = baseline_time)
+
+
+
+##課前提醒排程功能分隔線##
 
 @login_required
 def lessons_main_page(request):

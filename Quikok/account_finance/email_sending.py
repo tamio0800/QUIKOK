@@ -97,7 +97,7 @@ class email_manager:
                 subject = email_pattern_name,  # 電子郵件標題
                 body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
                 from_email= settings.EMAIL_HOST_USER,  # 寄件者
-                to =  ['tamio.chou@gmail.com']#,'w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
+                to =  ['quikok.taiwan@quikok.com']#,'w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
             )
             email.fail_silently = False
             email.content_subtype = 'html'
@@ -212,6 +212,8 @@ class email_manager:
             except Exception as e:
                 print(f'Exception: {e}')
                 return False
+
+
 # 這邊是給我們自己的email,有些情況我們會需要提醒自己
 class email_for_edony:
     #提醒我們有學生匯款,要對帳
