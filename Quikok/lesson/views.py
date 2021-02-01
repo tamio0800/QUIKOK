@@ -18,7 +18,7 @@ from handy_functions import (check_if_all_variables_are_true, date_string_2_date
                             sort_dictionaries_in_a_list_by_specific_key, 
                             booking_date_time_to_minutes_and_cleansing,
                             turn_date_string_into_date_format, 
-                            turn_first_time_interval_into_time_format,
+                            turn_first_datetime_string_into_time_format,
                             return_none_if_the_string_is_empty, bound_number_string)
 from lesson.models import (lesson_info, lesson_card, lesson_info_for_users_not_signed_up,
                             lesson_sales_sets,lesson_booking_info, lesson_completed_record,
@@ -1312,7 +1312,7 @@ def booking_lessons(request):
                                         booking_set_id = student_availbale_purchased_lesson_sets.first().lesson_sales_set_id,
                                         remaining_minutes = (available_remaining_minutes - this_booking_minutes),
                                         booking_date_and_time = f'{each_date}:{each_continuous_time};',
-                                        #booking_start_datetime = ,
+                                        booking_start_datetime = turn_first_datetime_string_into_time_format(f'{each_date}:{each_continuous_time};'),
                                         booking_status = 'to_be_confirmed'
                                     ))
                         lesson_booking_info.objects.bulk_create(new_booking_info_list)
@@ -1366,6 +1366,9 @@ def booking_lessons(request):
                             booking_set_id = available_purchased_trial_lesson_sales_sets.id,
                             remaining_minutes = 0,  # 因為是試教
                             booking_date_and_time = f'{[*booking_date_times_dict][0]}:{[*booking_date_times_dict.values()][0][0]};',
+                            booking_start_datetime = turn_first_datetime_string_into_time_format(
+                                f'{[*booking_date_times_dict][0]}:{[*booking_date_times_dict.values()][0][0]};'
+                                ),
                             booking_status = 'to_be_confirmed'
                         )
                         new_booking_info.save()

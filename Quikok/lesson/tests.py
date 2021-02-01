@@ -1,3 +1,4 @@
+from handy_functions import turn_first_datetime_string_into_time_format
 from django.http import response
 from lesson.views import booking_lessons
 from django.test import RequestFactory, TestCase,Client
@@ -1257,6 +1258,15 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             data=booking_post_data)
 
         self.assertIn('success', str(response.content, 'utf8'))
+        # 確認是否有產生datetime形式的預約起始時間點
+        self.assertEqual(
+            turn_first_datetime_string_into_time_format(f'{self.available_date_1}:2;'),
+            lesson_booking_info.objects.get(id=1).booking_start_datetime,
+            lesson_booking_info.objects.get(id=1).booking_start_datetime)
+
+        #self.fail(
+        #    (turn_first_datetime_string_into_time_format(f'{self.available_date_1}:2;'),
+        #    lesson_booking_info.objects.get(id=1).booking_start_datetime))
         
         the_available_remaining_minutes_object = \
             student_remaining_minutes_of_each_purchased_lesson_set.objects.first()
@@ -1365,6 +1375,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, 'Quikok!開課通知：有學生預約上課！')
     
+
     def test_if_booking_trial_lessons_modified_remaining_minutes_after_booking_successfully(self):
         '''
         這個測試用在檢查：當試教預約成功後，是否有從學生那邊扣除剩餘時數，並進行對應的資料庫更新。

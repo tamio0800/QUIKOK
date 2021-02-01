@@ -214,7 +214,7 @@ class lesson_booking_info(models.Model):
     remaining_minutes = models.IntegerField()
     # 這個指的是假設這門課準時上完，則學生還有多少時數，用意是讓老師知道萬一超時會不會多拿到錢
     booking_date_and_time = models.CharField(max_length=400)  
-    booking_start_datetime = models.DateTimeField(auto_now=True)
+    booking_start_datetime = models.DateTimeField()
     # Example: 2020-08-21:1,2,3,4; 之類的
     booking_status = models.CharField(max_length = 60)  
     # to_be_confirmed  >>  發送預約，但是還未經對方確認 
@@ -229,7 +229,7 @@ class lesson_booking_info(models.Model):
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
-        return f"學生({str(self.student_auth_id)})預約老師({str(self.teacher_auth_id)})的課程({str(self.lesson_id)})的方案({str(self.booking_set_id)})。 目前狀態:{self.booking_status}; 最後更改時間:{self.last_changed_time.strftime('%Y-%m-%d %H:%M:%S')}"
+        return f"ID({str(self.id)}): 學生({str(self.student_auth_id)})預約老師({str(self.teacher_auth_id)})的課程({str(self.lesson_id)})的方案({str(self.booking_set_id)})。 目前狀態:{self.booking_status}; 最後更改時間:{self.last_changed_time.strftime('%Y-%m-%d %H:%M:%S')}"
 
     def get_booking_date(self):
         # 回傳這次的預約日期
