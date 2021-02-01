@@ -22,9 +22,17 @@ class LessonCompletedAdmin(admin.ModelAdmin):
         'id', 'lesson_booking_info_id', 'student_auth_id', 'teacher_auth_id',
         'created_time', 'last_changed_time')
 
+class ReviewFromStudentsAndTeachersAdmin(admin.ModelAdmin):
+    readonly_fields = (
+        'id', 'corresponding_lesson_id', 'corresponding_lesson_booking_info_id', 'corresponding_lesson_completed_record_id',
+        'student_auth_id', 'teacher_auth_id', 'created_time')
+
 
 admin.site.register(lesson_info, LessonAdmin)
 admin.site.register(lesson_info_for_users_not_signed_up, LessonForUserNotSignedUpAdmin)
 admin.site.register(lesson_booking_info, LessonBookingInfoAdmin)
 admin.site.register(lesson_sales_sets, LessonSalesSetAdmin)
 admin.site.register(lesson_completed_record, LessonCompletedAdmin)
+
+admin.site.register(lesson_reviews_from_students, ReviewFromStudentsAndTeachersAdmin)
+admin.site.register(student_reviews_from_teachers, ReviewFromStudentsAndTeachersAdmin)

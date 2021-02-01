@@ -149,11 +149,12 @@ class lesson_reviews_from_students(models.Model):
     # picture_folder = models.TextField() # 加上真的有上課的圖以資證明（學蝦皮
     created_time = models.DateTimeField(auto_now_add=True)
     def __str__(self):
-        return str(self.id)
+        return f"課程({str(self.corresponding_lesson_id)}), 預約({str(self.corresponding_lesson_booking_info_id)}), 完課({str(self.corresponding_lesson_completed_record_id)})\
+            學生({str(self.student_auth_id)})對老師({str(self.teacher_auth_id)})。"
 
     class Meta:
-        verbose_name = '學生對老師/課程評價'
-        verbose_name_plural = '學生對老師/課程評價'
+        verbose_name = '評價-學生對老師/課程'
+        verbose_name_plural = '評價-學生對老師/課程'
         ordering = ['-created_time']
 
 
@@ -174,11 +175,12 @@ class student_reviews_from_teachers(models.Model):
     # picture_folder = models.TextField() # 加上真的有上課的圖以資證明（學蝦皮
     created_time = models.DateTimeField(auto_now_add=True)
     def __str__(self):
-        return str(self.id)
+        return f"課程({str(self.corresponding_lesson_id)}), 預約({str(self.corresponding_lesson_booking_info_id)}), 完課({str(self.corresponding_lesson_completed_record_id)})\
+            老師({str(self.teacher_auth_id)})對學生({str(self.student_auth_id)})。"
 
     class Meta:
-        verbose_name = '老師對學生評價'
-        verbose_name_plural = '老師對學生評價'
+        verbose_name = '評價-老師對學生'
+        verbose_name_plural = '評價-老師對學生'
         ordering = ['-created_time']
 
 
@@ -511,14 +513,14 @@ def update_teacher_review_aggregated_info(sender, instance:lesson_reviews_from_s
         if the_teacher_review_info_object is None:
             # 代表沒有這筆記錄，可能是學生在QUIKOK PILOT時就已經註冊，才會沒有連動建立資料
             # 所以我們幫他建立一下吧
-            the_teacher_review_info_object.objects.create(
+            teacher_review_aggregated_info.objects.create(
                 teacher_auth_id = instance.teacher_auth_id,
                 score_given_sum = 0 if instance.score_given is None else instance.score_given,
                 reviewed_times = 1,
                 receiving_review_lesson_minutes_sum = 0,  # 這個值不在這邊進行更新
-                is_teacher_late_for_lesson = 1 if instance.is_teacher_late_for_lesson == True else 0,
-                is_teacher_frivolous_in_lesson = 1 if instance.is_teacher_frivolous_in_lesson == True else 0,
-                is_teacher_incapable = 1 if instance.is_teacher_incapable == True else 0
+                is_teacher_late_for_lesson_times = 1 if instance.is_teacher_late_for_lesson == True else 0,
+                is_teacher_frivolous_in_lesson_times = 1 if instance.is_teacher_frivolous_in_lesson == True else 0,
+                is_teacher_incapable_times = 1 if instance.is_teacher_incapable == True else 0
             )
         else:
             # 代表已經有這筆紀錄，我們只要協助更新即可
