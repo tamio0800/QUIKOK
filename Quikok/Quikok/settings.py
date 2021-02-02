@@ -4,6 +4,7 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 APPEND_SLASH = False
 
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
@@ -26,7 +27,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'chatroom',
     'Quikok',
     'account',   # 用來處理註冊/個人訊息的呈現app
@@ -173,7 +173,11 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static_files'),
     os.path.join(BASE_DIR, "frontend/dist"),
-    os.path.join(BASE_DIR, 'user_upload')]
+    os.path.join(BASE_DIR, 'user_upload'),
+    os.path.join(BASE_DIR, 'account/templates/account'),
+    os.path.join(BASE_DIR, 'account_finance/templates/account_finance'),
+    os.path.join(BASE_DIR, 'lesson/templates/lesson'),
+    ]
 
 # Add for vuejs
 # STATICFILES_DIRS = [

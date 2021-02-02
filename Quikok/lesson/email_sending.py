@@ -8,18 +8,21 @@ from django.template import Context, Template
 import asyncio
 from lesson.models import lesson_info
 import os
+from django.conf import settings
 #from django.utils.html import strip_tags
 #from email.mime.image import MIMEImage 夾附件用
 #from account_finance.email_sending import email_manager
+
+
 class lesson_email_manager:
     print(os.getcwd())
     # 管理email標題以及要渲染的html
     def __init__(self):
         self.email_pattern = {
-            '通知學生要確認上課時數': './student_send_complete_course.html',
-            '提醒老師要評價學生': './teacher_send_complete_course.html',
-            '提醒老師明天要上課': 'account_finance/send_remind_class.html',
-            '提醒學生明天要上課': './send_remind_class.html'
+            '通知學生要確認上課時數': 'student_send_complete_course.html',
+            '提醒老師要評價學生': 'teacher_send_complete_course.html',
+            '提醒老師明天要上課': os.path.join(settings.BASE_DIR,  'lesson/templates/lesson/send_remind_class.html'),
+            '提醒學生明天要上課': os.path.join(settings.BASE_DIR,  'lesson/templates/lesson/send_remind_class.html')
         }
     def send_student_confirm_time_when_teacher_completed_lesson(self, **kwargs):
         # 信件主題:通知學生要確認上課時數
@@ -50,7 +53,7 @@ class lesson_email_manager:
                 return True
 
             except Exception as e:
-                print(f'Exception: {e}')
+                print(f'send_student_confirm_time_when_teacher_completed_lesson Exception: {e}')
                 return False
         else:
             print('缺少參數')
@@ -85,7 +88,7 @@ class lesson_email_manager:
                 return True
 
             except Exception as e:
-                print(f'Exception: {e}')
+                print(f'send_teacher_rate_student_when_teacher_completed_lesson Exception: {e}')
                 return False
         else:
             print('缺少參數')
@@ -99,33 +102,38 @@ class lesson_email_manager:
         lesson_title = kwargs['lesson_title']
         booking_date_and_time = kwargs['booking_date_and_time']
         if student_authID :
-            try:
-                pattern_html = self.email_pattern['提醒學生明天要上課']
-                suit_pattern = get_template(pattern_html)
-                student_obj = student_profile.objects.get(auth_id=student_authID)
-                user_nickname = student_obj.nickname
-                student_email = student_obj.username
-                
-                email_context = {
-                    'user_nickname':user_nickname,
-                    'lesson_title': '',
-                    'booking_date_and_time':''
-                }
-                email_body = suit_pattern.render(email_context)
-                email = EmailMessage(
-                    subject = 'Quikok!開課提醒：明天要上課唷',  # 電子郵件標題
-                    body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
-                    from_email= settings.EMAIL_HOST_USER,  # 寄件者
-                    to =  ['quikok.taiwan@quikok.com']#,'colorfulday0123@gmail.com','w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
-                ) # 正式發布時要改為 to student_email
-                email.fail_silently = False
-                email.content_subtype = 'html'
-                email.send()
-                return True
+            #try:
+            pattern_html = self.email_pattern['提醒學生明天要上課']
+            print('sfsg 0')
+            #print(f"pattern_html: {pattern_html}")
+            #print(f"pattern_html content: {open(pattern_html, 'r').read()}")
+            suit_pattern = get_template(pattern_html)
+            print('sfsg 1')
+            student_obj = student_profile.objects.get(auth_id=student_authID)
+            user_nickname = student_obj.nickname
+            student_email = student_obj.username
+            print('sfsg 2')
+            
+            email_context = {
+                'user_nickname':user_nickname,
+                'lesson_title': '',
+                'booking_date_and_time':''
+            }
+            email_body = suit_pattern.render(email_context)
+            email = EmailMessage(
+                subject = 'Quikok!開課提醒：明天要上課唷',  # 電子郵件標題
+                body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
+                from_email= settings.EMAIL_HOST_USER,  # 寄件者
+                to =  ['quikok.taiwan@quikok.com']#,'colorfulday0123@gmail.com','w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
+            ) # 正式發布時要改為 to student_email
+            email.fail_silently = False
+            email.content_subtype = 'html'
+            email.send()
+            return True
 
-            except Exception as e:
-                print(f'Exception: {e}')
-                return False
+            #except Exception as e:
+            #    print(f'send_student_remind_one_day_before_lesson Exception: {e}')
+            #    return False
         else:
             print('缺少參數')
             return False
@@ -163,7 +171,7 @@ class lesson_email_manager:
                 return True
 
             except Exception as e:
-                print(f'Exception: {e}')
+                print(f'send_teacher_remind_one_day_before_lesson Exception: {e}')
                 return False
         else:
             print('缺少參數')

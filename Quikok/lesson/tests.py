@@ -1351,20 +1351,6 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             2
         )
 
-    def send_student_remind_one_day_before_lesson_basic_function(self):
-        '''信件主題:提醒學生明天要上課，預約時間的前一天寄信提醒，
-        測試該email格式是否可順利寄信'''
-
-        mail.outbox = [] # 清空暫存記憶裡的信
-        email_info_dict = {
-            'booking_date_and_time': datetime.now(),
-            'lesson_title':'test',
-            'teacher_authID': 1,
-            'student_authID':1
-        }
-        send_email = email_manager()
-        send_email.send_student_remind_one_day_before_lesson(**email_info_dict)
-        self.assertEqual(mail.outbox[0].subject, 'Quikok!開課提醒：明天要上課唷')
 
     def test_when_student_booking_lessons_send_email_to_teacher(self):
         '''當學生發出預約的時候，系統要寄email提醒老師確認時間。
