@@ -42,8 +42,8 @@ from .email_sending import lesson_email_manager
 def send_email_one_day_before_booking_date():
     email_info_dict = dict()
     send_email = lesson_email_manager()
-    #baseline_time = datetime.now()+timedelta(days=1) # 製作出明天的日期當基準
-    baseline_time = datetime.now()+timedelta(days=5) # 測試用
+    baseline_time = datetime.now()+timedelta(days=1) # 製作出明天的日期當基準
+    #baseline_time = datetime.now()+timedelta(days=5) # 測試用
     # 篩選出年月日跟基準相同的課程
     st = time()
     booking_lesson_queryset = lesson_booking_info.objects.filter(booking_status='confirmed', 
@@ -65,10 +65,10 @@ scheduler = BackgroundScheduler()
 # 每間隔24小時執行一次, 要設定起始與結束時間
 st = time()
 
-#scheduler.add_job(send_email_one_day_before_booking_date, 'interval',
-#    seconds = 30, start_date = '2021-02-01 10:30:00')
-    #,end_date = '2021-02-02 10:31:00' seconds, minutes, hours
-#scheduler.start()
+scheduler.add_job(send_email_one_day_before_booking_date, 'interval',
+     hours = 1, start_date = '2021-02-02 18:41:00')
+   #,end_date = '2021-02-02 10:31:00' seconds, minutes, hours
+scheduler.start()
 print(f"consumed time test: {time()-st}")
 ##課前提醒排程功能分隔線##
 

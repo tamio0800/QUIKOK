@@ -122,6 +122,7 @@ class lesson_email_manager:
                 from_email= settings.EMAIL_HOST_USER,  # 寄件者
                 to =  ['quikok.taiwan@quikok.com']#,'colorfulday0123@gmail.com','w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
             ) # 正式發布時要改為 to student_email
+            print(f"only EmailMessage consumed time test: {time()-st}")
             email.fail_silently = False
             email.content_subtype = 'html'
             email.send()
