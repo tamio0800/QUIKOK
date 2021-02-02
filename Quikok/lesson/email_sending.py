@@ -21,7 +21,7 @@ class lesson_email_manager:
         self.email_pattern = {
             '通知學生要確認上課時數': 'student_send_complete_course.html',
             '提醒老師要評價學生': 'teacher_send_complete_course.html',
-            '提醒老師明天要上課': os.path.join(settings.BASE_DIR,  'lesson/templates/lesson/send_remind_class.html'),
+            '提醒老師明天要上課': os.path.join(settings.BASE_DIR, 'lesson/templates/lesson/send_remind_class.html'),
             '提醒學生明天要上課': os.path.join(settings.BASE_DIR,  'lesson/templates/lesson/send_remind_class.html')
         }
     def send_student_confirm_time_when_teacher_completed_lesson(self, **kwargs):
@@ -104,15 +104,10 @@ class lesson_email_manager:
         if student_authID :
             #try:
             pattern_html = self.email_pattern['提醒學生明天要上課']
-            print('sfsg 0')
-            #print(f"pattern_html: {pattern_html}")
-            #print(f"pattern_html content: {open(pattern_html, 'r').read()}")
             suit_pattern = get_template(pattern_html)
-            print('sfsg 1')
             student_obj = student_profile.objects.get(auth_id=student_authID)
             user_nickname = student_obj.nickname
             student_email = student_obj.username
-            print('sfsg 2')
             
             email_context = {
                 'user_nickname':user_nickname,
