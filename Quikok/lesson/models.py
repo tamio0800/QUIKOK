@@ -216,8 +216,9 @@ class lesson_booking_info(models.Model):
     remaining_minutes = models.IntegerField()
     # 這個指的是假設這門課準時上完，則學生還有多少時數，用意是讓老師知道萬一超時會不會多拿到錢
     booking_date_and_time = models.CharField(max_length=400)  
-    booking_start_datetime = models.DateTimeField()
     # Example: 2020-08-21:1,2,3,4; 之類的
+    booking_start_datetime = models.DateTimeField()
+    
     booking_status = models.CharField(max_length = 60)  
     # to_be_confirmed  >>  發送預約，但是還未經對方確認 
     # confirmed  >>  發送的預約已經被對方確認
@@ -389,8 +390,8 @@ def when_lesson_completed_notification_sent_by_teacher(sender, instance:lesson_c
         lesson_booking_object.save()
 
         # 通知學生要進行完課時數確認
-        from .email_sending import email_manager
-        send_email = email_manager()
+        from .email_sending import lesson_email_manager
+        send_email = lesson_email_manager()
         send_email.send_student_confirm_time_when_teacher_completed_lesson(
             student_authID = instance.student_auth_id)
         # 提醒老師要評價學生

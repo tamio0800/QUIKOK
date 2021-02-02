@@ -6,14 +6,14 @@ from lesson.models import lesson_info, lesson_sales_sets
 # from blog.models import article_info
 # from django.template import Context, Template
 # import threading
-
+import os
 # import asyncio
 from lesson.models import lesson_info
 #from django.utils.html import strip_tags
 #from email.mime.image import MIMEImage 夾附件用
 #from account_finance.email_sending import email_manager
 class email_manager:
-
+    #print(os.getcwd())
     # 管理email標題以及要渲染的html
     def __init__(self):
         self.email_pattern = {
@@ -23,6 +23,7 @@ class email_manager:
             '通知老師有學生預約':'./teacher_send_remind_order.html'
         }
     def edit_student_balance_after_receive_payment(self, **kwargs):
+        print(os.getcwd())
         q_discount = kwargs['q_discount']
         studentID = kwargs['student_authID'] 
         student_info_obj = student_profile.objects.get(auth_id=studentID)
@@ -97,7 +98,7 @@ class email_manager:
                 subject = email_pattern_name,  # 電子郵件標題
                 body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
                 from_email= settings.EMAIL_HOST_USER,  # 寄件者
-                to =  ['tamio.chou@gmail.com']#,'w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
+                to =  ['quikok.taiwan@quikok.com']#,'w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
             )
             email.fail_silently = False
             email.content_subtype = 'html'
@@ -212,6 +213,8 @@ class email_manager:
             except Exception as e:
                 print(f'Exception: {e}')
                 return False
+
+
 # 這邊是給我們自己的email,有些情況我們會需要提醒自己
 class email_for_edony:
     #提醒我們有學生匯款,要對帳

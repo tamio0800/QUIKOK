@@ -2,7 +2,7 @@ from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from account_finance.email_sending import email_manager
-from account_finance.email_machine import email_tools
+#from account_finance.email_machine import email_tools
 
 # 學生購買紀錄
 class student_purchase_record(models.Model):
