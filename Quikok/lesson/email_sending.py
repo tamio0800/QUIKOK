@@ -9,6 +9,7 @@ import asyncio
 from lesson.models import lesson_info
 import os
 from django.conf import settings
+from time import time
 #from django.utils.html import strip_tags
 #from email.mime.image import MIMEImage 夾附件用
 #from account_finance.email_sending import email_manager
@@ -97,7 +98,7 @@ class lesson_email_manager:
     def send_student_remind_one_day_before_lesson(self, **kwargs):
         # 信件主題:提醒學生明天要上課
         # 預約時間的前一天寄信提醒
-        
+        st = time()
         student_authID = kwargs['student_authID']
         lesson_title = kwargs['lesson_title']
         booking_date_and_time = kwargs['booking_date_and_time']
@@ -124,6 +125,7 @@ class lesson_email_manager:
             email.fail_silently = False
             email.content_subtype = 'html'
             email.send()
+            print(f"only lesson class consumed time test: {time()-st}")
             return True
 
             #except Exception as e:

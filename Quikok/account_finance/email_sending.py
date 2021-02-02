@@ -9,6 +9,7 @@ from lesson.models import lesson_info, lesson_sales_sets
 import os
 # import asyncio
 from lesson.models import lesson_info
+from time import time
 #from django.utils.html import strip_tags
 #from email.mime.image import MIMEImage 夾附件用
 #from account_finance.email_sending import email_manager
@@ -112,7 +113,7 @@ class email_manager:
     def send_teacher_when_student_buy_his_lesson(self, **kwargs):
         # 信件主題:通知老師有學生購買他的課
         # 當有學生買老師的課、經過我們對帳確認後,會寄出這封信
-        
+        st = time()
         teacher_authID = kwargs['teacher_authID']
         student_authID = kwargs['student_authID']
         #teacher_nickname = kwargs['teacher_nickname'] 
@@ -167,7 +168,8 @@ class email_manager:
                 email.fail_silently = False
                 email.content_subtype = 'html'
                 email.send()
-
+                print(f"only account_finance class consumed time test: {time()-st}")
+            
                 return True
             except Exception as e:
                 print(f'Exception: {e}')
