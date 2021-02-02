@@ -1,8 +1,10 @@
+from django.contrib.auth.models import User
 import lesson
 from django.contrib.auth.hashers import PBKDF2SHA1PasswordHasher
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
+from time import time
 import os, shutil
 from django.contrib.auth.models import User
 from account.models import student_profile, teacher_profile, specific_available_time, general_available_time
@@ -18,7 +20,7 @@ from handy_functions import (check_if_all_variables_are_true, date_string_2_date
                             sort_dictionaries_in_a_list_by_specific_key, 
                             booking_date_time_to_minutes_and_cleansing,
                             turn_date_string_into_date_format, 
-                            turn_current_time_into_time_interval,
+                            turn_first_datetime_string_into_time_format,
                             return_none_if_the_string_is_empty, bound_number_string)
 from lesson.models import (lesson_info, lesson_card, lesson_info_for_users_not_signed_up,
                             lesson_sales_sets, lesson_booking_info, lesson_completed_record,
@@ -32,28 +34,43 @@ from datetime import datetime, timedelta, date as date_function
 from account_finance.email_sending import email_manager, email_for_edony
 from apscheduler.schedulers.background import BackgroundScheduler
 from django.core.cache import cache
-
+from .email_sending import lesson_email_manager
 
  ##課前提醒排程功能分隔線##
+
+
+def send_email_one_day_before_booking_date():
+    email_info_dict = dict()
+    send_email = lesson_email_manager()
+    #for i in range(0,48):
+    #    if i %2 == 0:
+    #        print(i) 
+    # 上課前一天提醒上課時間：每天檢查是否有隔天要上課的人、寄發通知email
+    #baseline_time = datetime.now()+timedelta(days=1) # 製作出明天的日期當基準
+    baseline_time = datetime.now()+timedelta(days=5) # 測試用
+    # 篩選出年月日跟基準相同的課程
+    booking_lesson_queryset = lesson_booking_info.objects.filter(booking_status='confirmed', 
+                                                                booking_start_datetime__date = baseline_time)
+    print(len(booking_lesson_queryset))
+    for each_class in booking_lesson_queryset:
+        class_time_datetime = each_class.booking_start_datetime
+        class_time_str = class_time_datetime.strftime('%Y-%m-%d %H:%M:%S')
+        email_info_dict['booking_date_and_time'] = class_time_str
+        lesson_obj = lesson_info.objects.get(id=each_class.lesson_id)
+        email_info_dict['lesson_title'] = lesson_obj.lesson_title
+        email_info_dict['teacher_authID'] =  each_class.teacher_auth_id
+        email_info_dict['student_authID'] =  each_class.student_auth_id
+        send_email.send_student_remind_one_day_before_lesson(**email_info_dict)
+        send_email.send_teacher_remind_one_day_before_lesson(**email_info_dict)
 # 例項化
 scheduler = BackgroundScheduler()
 # 每間隔24小時執行一次, 要設定起始與結束時間
-scheduler.add_job(test, 'interval',
-    hours = 24, start_date = '2021-02-01 14:30:00',
-    end_date = '2021-02-02 14:31:00') 
+st = time()
+scheduler.add_job(send_email_one_day_before_booking_date, 'interval',
+    seconds = 2, start_date = '2021-02-01 10:30:00')
+    #,end_date = '2021-02-02 10:31:00' seconds, minutes, hours
 scheduler.start()
-
-def send_email_one_day_before_booking_date():
-   
-    # 上課前一天提醒上課時間：在每天早上11:00檢查是否有隔天要上課的人、寄發通知email
-    baseline_time = datetime.now()+timedelta(days=1) # 製作出明天的日期
-    # 篩選出年月日相同的課程
-    booking_lesson_queryset = lesson_booking_info.objects.filter( 
-        booking_status='confirmed', 
-        created_time__date = baseline_time)
-
-
-
+print(f"consumed time test: {time()-st}")
 ##課前提醒排程功能分隔線##
 
 @login_required
@@ -1337,6 +1354,7 @@ def booking_lessons(request):
                                         booking_set_id = student_availbale_purchased_lesson_sets.first().lesson_sales_set_id,
                                         remaining_minutes = (available_remaining_minutes - this_booking_minutes),
                                         booking_date_and_time = f'{each_date}:{each_continuous_time};',
+                                        booking_start_datetime = turn_first_datetime_string_into_time_format(f'{each_date}:{each_continuous_time};'),
                                         booking_status = 'to_be_confirmed'
                                     ))
                         lesson_booking_info.objects.bulk_create(new_booking_info_list)
@@ -1390,6 +1408,9 @@ def booking_lessons(request):
                             booking_set_id = available_purchased_trial_lesson_sales_sets.id,
                             remaining_minutes = 0,  # 因為是試教
                             booking_date_and_time = f'{[*booking_date_times_dict][0]}:{[*booking_date_times_dict.values()][0][0]};',
+                            booking_start_datetime = turn_first_datetime_string_into_time_format(
+                                f'{[*booking_date_times_dict][0]}:{[*booking_date_times_dict.values()][0][0]};'
+                                ),
                             booking_status = 'to_be_confirmed'
                         )
                         new_booking_info.save()
@@ -1870,13 +1891,21 @@ def get_teacher_s_booking_history(request):
                                     Q(lesson_id__in=correspodent_lesson_ids)
                                 ).order_by('-last_changed_time')
                 else:
-                    # 有輸入 searched_by
-                    teacher_s_lesson_booking_info_queryset = \
-                        lesson_booking_info.objects.filter(
-                            teacher_auth_id=teacher_auth_id, 
-                            booking_status=booking_status_filtered_by,
-                            created_time__gt=registered_from_date,
-                            last_changed_time__lt=registered_to_date).order_by('-last_changed_time')
+                    # 沒有輸入 searched_by
+                    if booking_status_filtered_by != 'finished':
+                        teacher_s_lesson_booking_info_queryset = \
+                            lesson_booking_info.objects.filter(
+                                Q(teacher_auth_id=teacher_auth_id) & 
+                                Q(booking_status=booking_status_filtered_by) & 
+                                Q(created_time__gt=registered_from_date) &
+                                Q(last_changed_time__lt=registered_to_date)).order_by('-last_changed_time')
+                    else:
+                        teacher_s_lesson_booking_info_queryset = \
+                            lesson_booking_info.objects.filter(
+                                Q(teacher_auth_id=teacher_auth_id) & 
+                                Q(booking_status__in=['finished', 'student_not_yet_confirmed', 'quikok_dealing_for_student_disagreed']) & 
+                                Q(created_time__gt=registered_from_date) &
+                                Q(last_changed_time__lt=registered_to_date)).order_by('-last_changed_time')
                 
                 if teacher_s_lesson_booking_info_queryset.count() == 0:
                     # 這個老師什麼預約歷史都沒有
@@ -1929,7 +1958,7 @@ def get_teacher_s_booking_history(request):
                         response['data'].append(
                             {
                                 'booked_date': each_booking_info_object.booking_date_and_time.split(':')[0],
-                                'booked_time': each_booking_info_object.booking_date_and_time.split(':')[1][:-1],
+                                'booked_time': each_booking_info_object.booking_date_and_time.split(':')[1][:-1].split(','),
                                 # [:-1]是為了去掉最後的 ';'
                                 'booked_status': each_booking_info_object.booking_status,
                                 'lesson_title': \
@@ -2041,7 +2070,7 @@ def get_teacher_s_booking_history(request):
                         response['data'].append(
                             {
                                 'booked_date': each_booking_info_object.booking_date_and_time.split(':')[0],
-                                'booked_time': each_booking_info_object.booking_date_and_time.split(':')[1][:-1],
+                                'booked_time': each_booking_info_object.booking_date_and_time.split(':')[1][:-1].split(','),
                                 # 去掉最後的 ';'
                                 'booked_status': each_booking_info_object.booking_status,
                                 'lesson_title': \
@@ -2210,13 +2239,21 @@ def get_student_s_booking_history(request):
 
                 else:
                     # 沒有輸入 searched_by
-                    student_s_lesson_booking_info_queryset = \
-                        lesson_booking_info.objects.filter(
-                            student_auth_id=student_auth_id, 
-                            booking_status=booking_status_filtered_by,
-                            created_time__gt=registered_from_date,
-                            last_changed_time__lt=registered_to_date).order_by('-last_changed_time')
-                
+                    if booking_status_filtered_by != 'finished':
+                        student_s_lesson_booking_info_queryset = \
+                            lesson_booking_info.objects.filter(
+                                Q(student_auth_id=student_auth_id) & 
+                                Q(booking_status=booking_status_filtered_by) & 
+                                Q(created_time__gt=registered_from_date) &
+                                Q(last_changed_time__lt=registered_to_date)).order_by('-last_changed_time')
+                    else:
+                        student_s_lesson_booking_info_queryset = \
+                            lesson_booking_info.objects.filter(
+                                Q(student_auth_id=student_auth_id) & 
+                                Q(booking_status__in=['finished', 'student_not_yet_confirmed', 'quikok_dealing_for_student_disagreed']) & 
+                                Q(created_time__gt=registered_from_date) &
+                                Q(last_changed_time__lt=registered_to_date)).order_by('-last_changed_time')
+
                 if student_s_lesson_booking_info_queryset.count() == 0:
                     # 這個學生什麼預約歷史都沒有
                     response['status'] = 'success'
@@ -2269,7 +2306,7 @@ def get_student_s_booking_history(request):
                         response['data'].append(
                             {
                                 'booked_date': each_booking_info_object.booking_date_and_time.split(':')[0],
-                                'booked_time': each_booking_info_object.booking_date_and_time.split(':')[1][:-1],
+                                'booked_time': each_booking_info_object.booking_date_and_time.split(':')[1][:-1].split(','),
                                 # [:-1]是為了去掉最後的 ';'
                                 'booked_status': each_booking_info_object.booking_status,
                                 'lesson_title': \
@@ -2379,7 +2416,7 @@ def get_student_s_booking_history(request):
                         response['data'].append(
                             {
                                 'booked_date': each_booking_info_object.booking_date_and_time.split(':')[0],
-                                'booked_time': each_booking_info_object.booking_date_and_time.split(':')[1][:-1],
+                                'booked_time': each_booking_info_object.booking_date_and_time.split(':')[1][:-1].split(','),
                                 # 去掉最後的 ';'
                                 'booked_status': each_booking_info_object.booking_status,
                                 'lesson_title': \
@@ -2493,34 +2530,47 @@ def lesson_completed_notification_from_teacher(request):
             
             else:
                 # 格式都正確
-                
-                teacher_declared_time_in_minutes = \
-                    int((teacher_declared_end_time - teacher_declared_start_time).seconds / 60)
-
-                new_added_record = lesson_completed_record.objects.create(
+                # 先確認該課程完課紀錄是否已經存在，沒有的話才建立，避免重複紀錄
+                if not lesson_completed_record.objects.filter(
                     lesson_booking_info_id = booking_object.id,
-                    student_remaining_minutes_of_each_purchased_lesson_set_id = \
-                        booking_object.remaining_minutes,  # 對應的訂單所剩的時數
                     teacher_auth_id = teacher_auth_id,
-                    student_auth_id = booking_object.student_auth_id, 
-                    booking_time_in_minutes = booking_object.get_booking_time_in_minutes(),
-                    # 預估上課時間時數,單位分鐘,是用預約的時間計算的
-                    teacher_declared_start_time = teacher_declared_start_time,
-                    teacher_declared_end_time = teacher_declared_end_time,
-                    teacher_declared_time_in_minutes = teacher_declared_time_in_minutes,
-                    # 老師號稱的開課時間總時數,可能課程實際時間會比原本預約時有所增減(單位是分鐘)
-                    student_confirmed_deadline = \
-                        date_function.today() + timedelta(days=3),
-                    # 這個的作用是，假設學生遲遲不確認，我們還是要在某個時段過後撥錢給老師，
-                    # 目前先預設3天? 也就是說，當在老師發送確認訊息後的3天後，假設學生還沒確認也沒申訴，
-                    # 則我們將直接撥款給老師
-                    # 萬一學生遲遲不確認，要由我們自動確認的話，最好也做個註記
-                )
-                new_added_record.save()
-                response['status'] = 'success'
-                response['errCode'] = None
-                response['errMsg'] = None
-                response['data'] = new_added_record.id
+                    student_auth_id = booking_object.student_auth_id
+                ).exists():
+                
+                    teacher_declared_time_in_minutes = \
+                        int((teacher_declared_end_time - teacher_declared_start_time).seconds / 60)
+
+                    new_added_record = lesson_completed_record.objects.create(
+                        lesson_booking_info_id = booking_object.id,
+                        student_remaining_minutes_of_each_purchased_lesson_set_id = \
+                            booking_object.remaining_minutes,  # 對應的訂單所剩的時數
+                        teacher_auth_id = teacher_auth_id,
+                        student_auth_id = booking_object.student_auth_id, 
+                        booking_time_in_minutes = booking_object.get_booking_time_in_minutes(),
+                        # 預估上課時間時數,單位分鐘,是用預約的時間計算的
+                        teacher_declared_start_time = teacher_declared_start_time,
+                        teacher_declared_end_time = teacher_declared_end_time,
+                        teacher_declared_time_in_minutes = teacher_declared_time_in_minutes,
+                        # 老師號稱的開課時間總時數,可能課程實際時間會比原本預約時有所增減(單位是分鐘)
+                        student_confirmed_deadline = \
+                            date_function.today() + timedelta(days=3),
+                        # 這個的作用是，假設學生遲遲不確認，我們還是要在某個時段過後撥錢給老師，
+                        # 目前先預設3天? 也就是說，當在老師發送確認訊息後的3天後，假設學生還沒確認也沒申訴，
+                        # 則我們將直接撥款給老師
+                        # 萬一學生遲遲不確認，要由我們自動確認的話，最好也做個註記
+                    )
+                    new_added_record.save()
+                    response['status'] = 'success'
+                    response['errCode'] = None
+                    response['errMsg'] = None
+                    response['data'] = new_added_record.id
+                
+                else:
+                    # 已經有紀錄存在了，拒絕建立新紀錄
+                    response['status'] = 'failed'
+                    response['errCode'] = '4'
+                    response['errMsg'] = '您已經確認完課囉，如果持續遇到這個問題請您告訴我們一聲。'
+                    response['data'] = None
     else:
         # 資料傳輸出現問題
         response['status'] = 'failed'

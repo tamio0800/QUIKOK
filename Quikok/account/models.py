@@ -71,7 +71,7 @@ class teacher_review_aggregated_info(models.Model):
     last_updated_time = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return str(self.teacher_auth_id)  # -- {str(self.score_given_to_times_mean)}
+        return f"老師({str(self.teacher_auth_id)})總共被評價{str(self.reviewed_times)}次，最後一次評價時間為{self.last_updated_time.strftime('%Y-%m-%d %H:%M:%S')}"
 
     # 下面是一些計算的數值
 
@@ -109,8 +109,8 @@ class teacher_review_aggregated_info(models.Model):
 
     class Meta:
         ordering= ['-last_updated_time']  # 越新的會被呈現在越上面
-        verbose_name = '老師評價儀表板'
-        verbose_name_plural = '老師評價儀表板'
+        verbose_name = '評價-老師評價儀表板'
+        verbose_name_plural = '評價-老師評價儀表板'
 
 
 
@@ -128,7 +128,7 @@ class student_review_aggregated_info(models.Model):
     last_updated_time = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return str(self.student_auth_id)  # -- {str(self.score_given_to_times_mean)}
+        return f"學生({str(self.student_auth_id)})總共被評價{str(self.reviewed_times)}次，最後一次評價時間為{self.last_updated_time.strftime('%Y-%m-%d %H:%M:%S')}"
 
     # 下面是一些計算的數值
 
@@ -166,8 +166,8 @@ class student_review_aggregated_info(models.Model):
 
     class Meta:
         ordering= ['-last_updated_time']  # 越新的會被呈現在越上面
-        verbose_name = '學生評價儀表板'
-        verbose_name_plural = '學生評價儀表板'
+        verbose_name = '評價-學生評價儀表板'
+        verbose_name_plural = '評價-學生評價儀表板'
 
 class teacher_profile(models.Model):
     # 這是for存放老師的額外資訊

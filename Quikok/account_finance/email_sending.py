@@ -6,14 +6,14 @@ from lesson.models import lesson_info, lesson_sales_sets
 # from blog.models import article_info
 # from django.template import Context, Template
 # import threading
-
+import os
 # import asyncio
 from lesson.models import lesson_info
 #from django.utils.html import strip_tags
 #from email.mime.image import MIMEImage 夾附件用
 #from account_finance.email_sending import email_manager
 class email_manager:
-
+    #print(os.getcwd())
     # 管理email標題以及要渲染的html
     def __init__(self):
         self.email_pattern = {
@@ -23,6 +23,7 @@ class email_manager:
             '通知老師有學生預約':'./teacher_send_remind_order.html'
         }
     def edit_student_balance_after_receive_payment(self, **kwargs):
+        print(os.getcwd())
         q_discount = kwargs['q_discount']
         studentID = kwargs['student_authID'] 
         student_info_obj = student_profile.objects.get(auth_id=studentID)

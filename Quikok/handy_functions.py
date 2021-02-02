@@ -164,6 +164,29 @@ def turn_current_time_into_time_interval():
         return current_time.hour * 2
 
 
+def turn_first_datetime_string_into_time_format(datetime_string):
+    '''
+    這是為了將如 2020-01-01:1,2,3:
+         "2020-01-01:0,1,2;" 轉換成 >> 2020-01-01 00:00，
+         ""2020-01-01:3,4;" >> 2020-01-01 01:30，
+         ""2020-01-01:2;" >> 2020-01-01 01:00
+    的函式。
+    '''
+    datetime_string = datetime_string.replace(';', '')
+    date_string, time_string = datetime_string.split(':')
+
+    _year, _month, _day = [int(_) for _ in date_string.split('-')]
+    first_element = int(time_string.split(',')[0])
+
+    the_quotient = int(first_element / 2)
+    remainder = first_element % 2
+
+    if remainder == 0:
+        return datetime(_year, _month, _day, the_quotient, 0)
+    else:
+        return datetime(_year, _month, _day, the_quotient, 30)
+
+
 def bound_number_string(target_number_string, min=1, max=5):
     '''
     將超出範圍外的數值限定在不超過範圍的極端值，如果為空字串的話則回傳None.
@@ -186,5 +209,6 @@ def return_none_if_the_string_is_empty(target_string):
         return None
     else:
         return target_string
+
 
 

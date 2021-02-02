@@ -63,6 +63,7 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     class Meta:
         verbose_name = '課程詳細資訊'
         verbose_name_plural = '課程詳細資訊'
+        ordering = ['-created_time']
 
 
 class lesson_card(models.Model):
@@ -148,11 +149,13 @@ class lesson_reviews_from_students(models.Model):
     # picture_folder = models.TextField() # 加上真的有上課的圖以資證明（學蝦皮
     created_time = models.DateTimeField(auto_now_add=True)
     def __str__(self):
-        return str(self.id)
+        return f"課程({str(self.corresponding_lesson_id)}), 預約({str(self.corresponding_lesson_booking_info_id)}), 完課({str(self.corresponding_lesson_completed_record_id)})\
+            學生({str(self.student_auth_id)})對老師({str(self.teacher_auth_id)})。"
 
     class Meta:
-        verbose_name = '學生對老師/課程評價'
-        verbose_name_plural = '學生對老師/課程評價'
+        verbose_name = '評價-學生對老師/課程'
+        verbose_name_plural = '評價-學生對老師/課程'
+        ordering = ['-created_time']
 
 
 class student_reviews_from_teachers(models.Model):
@@ -172,11 +175,13 @@ class student_reviews_from_teachers(models.Model):
     # picture_folder = models.TextField() # 加上真的有上課的圖以資證明（學蝦皮
     created_time = models.DateTimeField(auto_now_add=True)
     def __str__(self):
-        return str(self.id)
+        return f"課程({str(self.corresponding_lesson_id)}), 預約({str(self.corresponding_lesson_booking_info_id)}), 完課({str(self.corresponding_lesson_completed_record_id)})\
+            老師({str(self.teacher_auth_id)})對學生({str(self.student_auth_id)})。"
 
     class Meta:
-        verbose_name = '老師對學生評價'
-        verbose_name_plural = '老師對學生評價'
+        verbose_name = '評價-老師對學生'
+        verbose_name_plural = '評價-老師對學生'
+        ordering = ['-created_time']
 
 
 class lesson_booking_info(models.Model): 
@@ -212,7 +217,9 @@ class lesson_booking_info(models.Model):
     # 這個指的是假設這門課準時上完，則學生還有多少時數，用意是讓老師知道萬一超時會不會多拿到錢
     booking_date_and_time = models.CharField(max_length=400)  
     # Example: 2020-08-21:1,2,3,4; 之類的
-    booking_status = models.CharField(max_length = 20)  
+    booking_start_datetime = models.DateTimeField()
+    
+    booking_status = models.CharField(max_length = 60)  
     # to_be_confirmed  >>  發送預約，但是還未經對方確認 
     # confirmed  >>  發送的預約已經被對方確認
     # canceled  >>  預約被取消（無須對方同意）
@@ -225,7 +232,7 @@ class lesson_booking_info(models.Model):
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
-        return str(self.id)
+        return f"ID({str(self.id)}): 學生({str(self.student_auth_id)})預約老師({str(self.teacher_auth_id)})的課程({str(self.lesson_id)})的方案({str(self.booking_set_id)})。 目前狀態:{self.booking_status}; 最後更改時間:{self.last_changed_time.strftime('%Y-%m-%d %H:%M:%S')}"
 
     def get_booking_date(self):
         # 回傳這次的預約日期
@@ -238,6 +245,7 @@ class lesson_booking_info(models.Model):
     class Meta:
         verbose_name = '課程預約資訊'
         verbose_name_plural = '課程預約資訊'
+        ordering = ['-created_time']
 
 
 # 上課與完課紀錄
@@ -268,14 +276,28 @@ class lesson_completed_record(models.Model):
     # 則我們將直接撥款給老師
     confirmed_by_quikok = models.BooleanField(default= False)
     # 萬一學生遲遲不確認，要由我們自動確認的話，最好也做個註記
+    quikok_remarks = models.TextField(default="", blank=True, null=True)
+    # 萬一未來需要協調時，這個欄位可以讓我們做一些協調紀錄/處理經過
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
-        return str(self.id)
+        return f"預約({str(self.lesson_booking_info_id)})已被老師({str(self.teacher_auth_id)})通報完課。 學生({str(self.student_auth_id)})是否同意: {str(self.is_student_confirmed)}、是否(曾)申訴: {str(self.is_student_disagree_with_teacher_s_declared_time)}。 是否由Quikok自動確認: {str(self.confirmed_by_quikok)}"
+        '''if self.is_student_confirmed == True:
+            # 學生已經確認
+            return f"預約({str(self.lesson_booking_info_id)})已被老師({str(self.teacher_auth_id)})通報完課，學生({str(self.student_auth_id)})已確認。"
+        elif self.is_student_confirmed == False and self.is_student_disagree_with_teacher_s_declared_time == True:
+            # 學生反對且Quikok尚未處理完成
+            return f"預約({str(self.lesson_booking_info_id)})已被老師({str(self.teacher_auth_id)})通報完課，學生({str(self.student_auth_id)})不同意，Quikok處理中..."
+        elif self.is_student_confirmed == True and self.is_student_disagree_with_teacher_s_declared_time == True:
+            # 學生反對且Quikok處理完畢
+            return f"預約({str(self.lesson_booking_info_id)})已被老師({str(self.teacher_auth_id)})通報完課，學生({str(self.student_auth_id)})一開始不同意，最後由Quikok協調完畢。"
+        elif self.confirmed_by_quikok == True:
+            return f"預約({str(self.lesson_booking_info_id)})已被老師({str(self.teacher_auth_id)})通報完課，學生({str(self.student_auth_id)})未確認，超過期限後自動同意。"'''
 
     class Meta:
-        verbose_name = '完課紀錄'
-        verbose_name_plural = '完課紀錄'
+        verbose_name = '(預約)完課紀錄'
+        verbose_name_plural = '(預約)完課紀錄'
+        ordering = ['-created_time']
         
 
 class lesson_sales_sets(models.Model):
@@ -312,6 +334,7 @@ class lesson_sales_sets(models.Model):
     class Meta:
         verbose_name = '課程方案資訊'
         verbose_name_plural = '課程方案資訊'
+        ordering = ['-created_time']
 
 
 class lesson_info_for_users_not_signed_up(models.Model): 
@@ -367,8 +390,8 @@ def when_lesson_completed_notification_sent_by_teacher(sender, instance:lesson_c
         lesson_booking_object.save()
 
         # 通知學生要進行完課時數確認
-        from .email_sending import email_manager
-        send_email = email_manager()
+        from .email_sending import lesson_email_manager
+        send_email = lesson_email_manager()
         send_email.send_student_confirm_time_when_teacher_completed_lesson(
             student_authID = instance.student_auth_id)
         # 提醒老師要評價學生
@@ -491,14 +514,14 @@ def update_teacher_review_aggregated_info(sender, instance:lesson_reviews_from_s
         if the_teacher_review_info_object is None:
             # 代表沒有這筆記錄，可能是學生在QUIKOK PILOT時就已經註冊，才會沒有連動建立資料
             # 所以我們幫他建立一下吧
-            the_teacher_review_info_object.objects.create(
+            teacher_review_aggregated_info.objects.create(
                 teacher_auth_id = instance.teacher_auth_id,
                 score_given_sum = 0 if instance.score_given is None else instance.score_given,
                 reviewed_times = 1,
                 receiving_review_lesson_minutes_sum = 0,  # 這個值不在這邊進行更新
-                is_teacher_late_for_lesson = 1 if instance.is_teacher_late_for_lesson == True else 0,
-                is_teacher_frivolous_in_lesson = 1 if instance.is_teacher_frivolous_in_lesson == True else 0,
-                is_teacher_incapable = 1 if instance.is_teacher_incapable == True else 0
+                is_teacher_late_for_lesson_times = 1 if instance.is_teacher_late_for_lesson == True else 0,
+                is_teacher_frivolous_in_lesson_times = 1 if instance.is_teacher_frivolous_in_lesson == True else 0,
+                is_teacher_incapable_times = 1 if instance.is_teacher_incapable == True else 0
             )
         else:
             # 代表已經有這筆紀錄，我們只要協助更新即可

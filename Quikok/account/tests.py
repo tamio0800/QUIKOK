@@ -73,6 +73,8 @@ class Teacher_Profile_Test(TestCase):
             print(f'Error:  {e}')
 
     
+    
+    @skip
     def test_send_welcom_email_when_create_teacher(self):
         Group.objects.bulk_create(
             [
@@ -109,6 +111,7 @@ class Teacher_Profile_Test(TestCase):
         # 確認有寄出通知信
         self.assertEqual(mail.outbox[0].subject, 'Quikok!開課 註冊成功通知')
 
+    @skip
     def test_teacher_available_and_specific_time_created_after_signing_up(self):
         
         Group.objects.bulk_create(
@@ -581,6 +584,8 @@ class Student_Test(TestCase):
             os.path.isdir(f'user_upload/students/{self.test_username}')
         )
     
+
+    @skip
     def test_send_welcom_email_when_create_teacher(self):
         client = Client()
         test_username = 'test_student@test.com'
