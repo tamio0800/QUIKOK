@@ -64,10 +64,11 @@ def send_email_one_day_before_booking_date():
 scheduler = BackgroundScheduler()
 # 每間隔24小時執行一次, 要設定起始與結束時間
 st = time()
-scheduler.add_job(send_email_one_day_before_booking_date, 'interval',
-    seconds = 30, start_date = '2021-02-01 10:30:00')
+
+#scheduler.add_job(send_email_one_day_before_booking_date, 'interval',
+#    seconds = 30, start_date = '2021-02-01 10:30:00')
     #,end_date = '2021-02-02 10:31:00' seconds, minutes, hours
-scheduler.start()
+#scheduler.start()
 print(f"consumed time test: {time()-st}")
 ##課前提醒排程功能分隔線##
 
