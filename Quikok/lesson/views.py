@@ -2981,7 +2981,7 @@ def student_write_teacher_reviews(request):
                 if lesson_booking_object.booking_status in ('finished', 'student_not_yet_confirmed', 'quikok_dealing_for_student_disagreed'):
                 
                     # 接著確認一下該門預約是否未經學生評價過
-                    if lesson_reviews_from_students.objects.filter(corresponding_lesson_booking_info_id=lesson_booking_object.id).first() is None:
+                    if not lesson_reviews_from_students.objects.filter(corresponding_lesson_booking_info_id=lesson_booking_object.id).exists():
                         # 學生未評價過
                         # 預約課程狀態符合老師送出時段後的條件
                         # 將數值轉成符合我們的規範
