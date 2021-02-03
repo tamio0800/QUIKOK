@@ -20,7 +20,7 @@ from account_finance.models import student_owing_teacher_time
 from lesson.models import lesson_reviews_from_students, student_reviews_from_teachers
 from account.models import student_review_aggregated_info, teacher_review_aggregated_info
 from django.core import mail
-
+# 10.344
 # python3 manage.py test lesson/ --settings=Quikok.settings_for_test
 class Lesson_Info_Related_Functions_Test(TestCase):
  

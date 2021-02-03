@@ -11,6 +11,8 @@ import os, shutil
 from unittest import skip
 from account.email_sending import email_manager
 from django.core import mail
+from time import time
+from django.db.models import Q
 
 # python manage.py test account/ --settings=Quikok.settings_for_test
 class Auth_Related_Functions_Test(TestCase):
@@ -922,3 +924,131 @@ class BANKING_INFO_TEST(TestCase):
             str(response.content, "utf8"))
 
 
+class SPEED_TESTS(TestCase):
+    '''
+    用來測試各式各樣的時間花費
+    '''
+    def setUp(self):
+        self.client = Client()        
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+        self.test_teacher_name1 = 'test_teacher1_user@test.com'
+        teacher_post_data = {
+            'regEmail': self.test_teacher_name1,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;'
+        }
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        
+        self.test_teacher_name2 = 'test_teacher2_user@test.com'
+        teacher_post_data['regEmail'] = self.test_teacher_name2,
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+
+        self.test_teacher_name3 = 'test_teacher3_user@test.com'
+        teacher_post_data['regEmail'] = self.test_teacher_name3,
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        # 建了3個老師
+        
+        self.test_student_name1 = 'test_student1@a.com'
+        student_post_data = {
+            'regEmail': self.test_student_name1,
+            'regPwd': '00000000',
+            'regName': 'test_student_name',
+            'regBirth': '1990-12-25',
+            'regGender': 1,
+            'regRole': 'oneself',
+            'regMobile': '0900-111111',
+            'regNotifiemail': ''
+        }
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        self.test_student_name2 = 'test_student2@a.com'
+        student_post_data['regEmail'] = self.test_student_name2
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        self.test_student_name3 = 'test_student3@a.com'
+        student_post_data['regEmail'] = self.test_student_name3
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        # 建了3個學生
+
+
+    def tearDown(self):
+        # 刪掉(如果有的話)產生的資料夾
+        try:
+            shutil.rmtree('user_upload/students/' + self.test_student_name1)
+            shutil.rmtree('user_upload/students/' + self.test_student_name2)
+            shutil.rmtree('user_upload/students/' + self.test_student_name3)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name1)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name2)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name2)
+        except:
+            pass
+
+
+    @skip
+    def test_string_functions(self):
+        n = 5000000
+        x = 'dwerfwrfwefd'
+        st1 = time()
+        for _ in range(n):
+            len(x)
+        end1 = time()
+        for _ in range(n):
+            x == ''
+        end2 = time()
+        for _ in range(n):
+            x in ['',]
+        end3 = time()
+        for _ in range(n):
+            x != ''
+        end4 = time()
+        for _ in range(n):
+            not x == ''
+        end5 = time()
+
+        self.fail(f"\nlen() takes {end1-st1} seconds\n=='' takes {end2-end1} seconds\nin takes {end3-end2} seconds\n!='' takes {end4-end3} seconds\nnot =='' takes {end5-end4} seconds\n")
+
+
+    
+    def test_django_orm_query_speed(self):
+        n = 2000
+        end = time()
+        t = teacher_profile.objects.get(id=1)
+        for _ in range(n):
+            teacher_profile.objects.get(id=1)
+        end1 = time()
+        for _ in range(n):
+            teacher_profile.objects.filter(id=1).first()
+        end2 = time()
+        for _ in range(n):
+            teacher_profile.objects.filter(id=1).exists()
+        end3 = time()
+        for _ in range(n):
+            t.nickname
+        end4 = time()
+        for _ in range(n):
+            teacher_profile.objects.get(Q(id=1))
+        end5 = time()
+    
+        disc = f"\nget: {end1-end}\nfilter: {end2-end1}\nexists: {end3-end2}\nquery_from_obj: {end4-end3}\nget_with_Q: {end5-end4}\n\n"
+        self.fail(disc)
