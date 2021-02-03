@@ -1828,12 +1828,12 @@ def get_teacher_s_booking_history(request):
         registered_from_date, registered_to_date):
         # 有正確收到資料
         # 因為 registered_from_date 跟 registered_to_date 有可能是空字串，所以另外處理
-        if len(registered_from_date):
+        if registered_from_date != '':
             registered_from_date = date_string_2_dateformat(registered_from_date)
         else:
             registered_from_date = date_string_2_dateformat('2020-01-01')
 
-        if len(registered_to_date):
+        if registered_to_date != '':
             registered_to_date = date_string_2_dateformat(registered_to_date)
         else:
             registered_to_date = date_string_2_dateformat('2050-12-31')
@@ -1850,7 +1850,7 @@ def get_teacher_s_booking_history(request):
         else:
             # 確實有找到這位老師
             # 先看看他的 lesson_booking_info，這裡先過濾篩選條件，避免每次都query一堆東西造成效能問題
-            if len(booking_status_filtered_by):
+            if booking_status_filtered_by != '':
                 # 代表 booking_status_filtered_by 有東西，user有輸入搜尋條件
                 # 輸入 finished 的話，需要另外抓出
                 #       1. student_not_yet_confirmed
@@ -1858,7 +1858,7 @@ def get_teacher_s_booking_history(request):
                 # 當作一樣是finished項目下的內容
 
                 # 檢查 user有沒有輸入 searched_by 條件搜尋學生姓名/暱稱 或是 課程名稱
-                if len(searched_by.strip()):
+                if searched_by.strip() != '':
                     searched_by = searched_by.strip()
                     # 有輸入 searched_by
                     correspodent_student_auth_ids = \
@@ -1906,7 +1906,7 @@ def get_teacher_s_booking_history(request):
                                 Q(created_time__gt=registered_from_date) &
                                 Q(last_changed_time__lt=registered_to_date)).order_by('-last_changed_time')
                 
-                if teacher_s_lesson_booking_info_queryset.count() == 0:
+                if teacher_s_lesson_booking_info_queryset.exists() == False:
                     # 這個老師什麼預約歷史都沒有
                     response['status'] = 'success'
                     response['errCode'] = None
@@ -1930,15 +1930,15 @@ def get_teacher_s_booking_history(request):
                         else:
                             # 這門課已完課
                             # 所以評價狀態應該只有 True 或 False 兩種狀態
-                            lesson_reviews_from_students_object = \
+                            lesson_reviews_from_students_exists = \
                                 lesson_reviews_from_students.objects.filter(
                                     corresponding_lesson_booking_info_id=each_booking_info_object.id
-                                    ).first()  # 學生對老師的評論紀錄
+                                    ).exists()  # 學生對老師的評論紀錄存在
 
-                            student_reviews_from_teachers_object = \
+                            student_reviews_from_teachers_exists = \
                                 student_reviews_from_teachers.objects.filter(
                                     corresponding_lesson_booking_info_id=each_booking_info_object.id
-                                    ).first()  # 老師對學生的評論紀錄
+                                    ).exists()  # 老師對學生的評論紀錄存在
 
                             teacher_declared_start_time = \
                                 corr_lesson_completed_record_object.teacher_declared_start_time.strftime("%H:%M")
@@ -1948,15 +1948,15 @@ def get_teacher_s_booking_history(request):
                                 corr_lesson_completed_record_object.teacher_declared_time_in_minutes
                             student_confirmed_deadline = \
                                  corr_lesson_completed_record_object.student_confirmed_deadline
-                            is_teacher_given_feedback = False if student_reviews_from_teachers_object is None else True
-                            is_student_given_feedback = False if lesson_reviews_from_students_object is None else True
+                            is_teacher_given_feedback = student_reviews_from_teachers_exists
+                            is_student_given_feedback = lesson_reviews_from_students_exists
                         
                         student_object = \
                             student_profile.objects.get(auth_id=each_booking_info_object.student_auth_id)
 
                         response['data'].append(
                             {
-                                'booked_date': each_booking_info_object.booking_date_and_time.split(':')[0],
+                                'booked_date': each_booking_info_object.booking_start_datetime.strftime('%Y-%m-%d'),
                                 'booked_time': each_booking_info_object.booking_date_and_time.split(':')[1][:-1].split(','),
                                 # [:-1]是為了去掉最後的 ';'
                                 'booked_status': each_booking_info_object.booking_status,
@@ -1988,7 +1988,7 @@ def get_teacher_s_booking_history(request):
                 # 代表 booking_status_filtered_by 沒東西，user無輸入搜尋條件，傳回所有資訊
 
                 # 檢查 user有沒有輸入 searched_by 條件搜尋學生姓名/暱稱 或是 課程名稱
-                if len(searched_by.strip()):
+                if searched_by.strip() != '':
                     searched_by = searched_by.strip()
                     # 有輸入 searched_by
                     correspodent_student_auth_ids = \
@@ -2017,7 +2017,7 @@ def get_teacher_s_booking_history(request):
                             last_changed_time__lt=registered_to_date).order_by('-last_changed_time')
                 
                 
-                if teacher_s_lesson_booking_info_queryset.count() == 0:
+                if teacher_s_lesson_booking_info_queryset.exists() == False:
                     # 這個老師什麼預約歷史都沒有
                     response['status'] = 'success'
                     response['errCode'] = None
@@ -2042,15 +2042,15 @@ def get_teacher_s_booking_history(request):
                         else:
                             # 這門課已完課
                             # 所以評價狀態應該只有 True 或 False 兩種狀態
-                            lesson_reviews_from_students_object = \
+                            lesson_reviews_from_students_exists = \
                                 lesson_reviews_from_students.objects.filter(
                                     corresponding_lesson_booking_info_id=each_booking_info_object.id
-                                    ).first()  # 學生對老師的評論紀錄
+                                    ).exists()  # 學生對老師的評論紀錄
 
-                            student_reviews_from_teachers_object = \
+                            student_reviews_from_teachers_exists = \
                                 student_reviews_from_teachers.objects.filter(
                                     corresponding_lesson_booking_info_id=each_booking_info_object.id
-                                    ).first()  # 老師對學生的評論紀錄
+                                    ).exists()  # 老師對學生的評論紀錄
 
                             teacher_declared_start_time = \
                                 corr_lesson_completed_record_object.teacher_declared_start_time.strftime("%H:%M")
@@ -2060,15 +2060,15 @@ def get_teacher_s_booking_history(request):
                                 corr_lesson_completed_record_object.teacher_declared_time_in_minutes
                             student_confirmed_deadline = \
                                  corr_lesson_completed_record_object.student_confirmed_deadline
-                            is_teacher_given_feedback = False if student_reviews_from_teachers_object is None else True
-                            is_student_given_feedback = False if lesson_reviews_from_students_object is None else True
+                            is_teacher_given_feedback = student_reviews_from_teachers_exists
+                            is_student_given_feedback = lesson_reviews_from_students_exists
 
                         student_object = \
                             student_profile.objects.get(auth_id=each_booking_info_object.student_auth_id)
                         
                         response['data'].append(
                             {
-                                'booked_date': each_booking_info_object.booking_date_and_time.split(':')[0],
+                                'booked_date': each_booking_info_object.booking_start_datetime.strftime('%Y-%m-%d'),
                                 'booked_time': each_booking_info_object.booking_date_and_time.split(':')[1][:-1].split(','),
                                 # 去掉最後的 ';'
                                 'booked_status': each_booking_info_object.booking_status,
