@@ -1346,11 +1346,11 @@ def booking_lessons(request):
                                 new_booking_info_list.append(
                                     lesson_booking_info(
                                         lesson_id = lesson_id,
-                                        teacher_auth_id = student_availbale_purchased_lesson_sets.first().teacher_auth_id,
+                                        teacher_auth_id = each_set.teacher_auth_id,
                                         student_auth_id = student_auth_id,
                                         booked_by = 'student',
                                         last_changed_by = 'student',
-                                        booking_set_id = student_availbale_purchased_lesson_sets.first().lesson_sales_set_id,
+                                        booking_set_id = each_set.lesson_sales_set_id,
                                         remaining_minutes = (available_remaining_minutes - this_booking_minutes),
                                         booking_date_and_time = f'{each_date}:{each_continuous_time};',
                                         booking_start_datetime = turn_first_datetime_string_into_time_format(f'{each_date}:{each_continuous_time};'),
@@ -1361,7 +1361,7 @@ def booking_lessons(request):
                         # 寄出一封通知信給老師,提醒老師要來確認時間
                         email_notification = email_manager()
                         email_notification.send_teacher_when_student_booking_his_lesson(
-                            teacher_authID = student_availbale_purchased_lesson_sets.first().teacher_auth_id,
+                            teacher_authID = each_set.teacher_auth_id,
                             student_authID = student_auth_id,
                             lesson_id = lesson_id)
 
@@ -1386,10 +1386,10 @@ def booking_lessons(request):
                         # 先找到試教方案set的id!!!!!!
                         # 將學生的該方案先預扣預約時數，因為是試教，故全部扣除
                         the_target_student_set_of_available_remaining_minutes_of_each_purchased_lesson_set = \
-                            student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                            student_remaining_minutes_of_each_purchased_lesson_set.objects.get(
                                 lesson_sales_set_id=available_purchased_trial_lesson_sales_sets.id,
                                 student_auth_id=student_auth_id,
-                                lesson_id=lesson_id).first()
+                                lesson_id=lesson_id)
                         
                         the_target_student_set_of_available_remaining_minutes_of_each_purchased_lesson_set.available_remaining_minutes = 0
                         the_target_student_set_of_available_remaining_minutes_of_each_purchased_lesson_set.withholding_minutes = 30
@@ -1964,6 +1964,10 @@ def get_teacher_s_booking_history(request):
                                     lesson_info.objects.get(id=each_booking_info_object.lesson_id).lesson_title,
                                 'student_auth_id': \
                                     each_booking_info_object.student_auth_id,
+                                'student_is_male': \
+                                    student_object.is_male,
+                                'student_s_user_type_for_double_check': \
+                                    'student',
                                 'student_nickname': student_object.nickname,
                                 'student_thumbnail_path': student_object.thumbnail_dir,
                                 'discount_price': \
@@ -2076,6 +2080,10 @@ def get_teacher_s_booking_history(request):
                                     lesson_info.objects.get(id=each_booking_info_object.lesson_id).lesson_title,
                                 'student_auth_id': \
                                     each_booking_info_object.student_auth_id,
+                                'student_is_male': \
+                                    student_object.is_male,
+                                'student_s_user_type_for_double_check': \
+                                    'student',
                                 'student_nickname': student_object.nickname,
                                 'student_thumbnail_path': student_object.thumbnail_dir,
                                 'discount_price': \
@@ -2309,6 +2317,10 @@ def get_student_s_booking_history(request):
                                     lesson_info.objects.get(id=each_booking_info_object.lesson_id).lesson_title,
                                 'teacher_auth_id': \
                                     each_booking_info_object.teacher_auth_id,
+                                'teacher_is_male': \
+                                    teacher_object.is_male,
+                                'teacher_s_user_type_for_double_check': \
+                                    'teacher',
                                 'teacher_nickname': teacher_object.nickname,
                                 'teacher_thumbnail_path': teacher_object.thumbnail_dir,
                                 'discount_price': \
@@ -2419,6 +2431,10 @@ def get_student_s_booking_history(request):
                                     lesson_info.objects.get(id=each_booking_info_object.lesson_id).lesson_title,
                                 'teacher_auth_id': \
                                     each_booking_info_object.teacher_auth_id,
+                                'teacher_is_male': \
+                                    teacher_object.is_male,
+                                'teacher_s_user_type_for_double_check': \
+                                    'teacher',
                                 'teacher_nickname': teacher_object.nickname,
                                 'teacher_thumbnail_path': teacher_object.thumbnail_dir,
                                 'discount_price': \
