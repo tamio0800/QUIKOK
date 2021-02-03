@@ -577,7 +577,7 @@ def student_order_history(request):
             'data': []}
 
     except Exception as e:
-        print(f'storage_order Exception {e}')
+        print(f'account_finance/views, student_order_history storage_order Exception {e}')
         response = {'status':'failed',
         'errCode': 1,
         'errMsg': '資料庫有問題，請稍後再試',

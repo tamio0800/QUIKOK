@@ -16,6 +16,7 @@ from lesson.lesson_tools import *
 from django.contrib.auth.decorators import login_required
 from account.model_tools import *
 from django.db.models import Q
+from threading import Thread
 from handy_functions import (check_if_all_variables_are_true, date_string_2_dateformat,
                             sort_dictionaries_in_a_list_by_specific_key, 
                             booking_date_time_to_minutes_and_cleansing,
@@ -36,9 +37,10 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from django.core.cache import cache
 from .email_sending import lesson_email_manager
 
+
+lesson_email_notification = lesson_email_manager()
+
  ##課前提醒排程功能分隔線##
-
-
 def send_email_one_day_before_booking_date():
     email_info_dict = dict()
     send_email = lesson_email_manager()
@@ -59,7 +61,7 @@ def send_email_one_day_before_booking_date():
         email_info_dict['student_authID'] =  each_class.student_auth_id
         send_email.send_student_remind_one_day_before_lesson(**email_info_dict)
         send_email.send_teacher_remind_one_day_before_lesson(**email_info_dict)
-    print(f"booking_lesson_query consumed time test: {time()-st}")
+    print(f"lesson/views email_sending,booking_lesson_query consumed time test: {time()-st}")
 # 例項化
 scheduler = BackgroundScheduler()
 # 每間隔24小時執行一次, 要設定起始與結束時間
@@ -69,7 +71,7 @@ scheduler.add_job(send_email_one_day_before_booking_date, 'interval',
      hours = 1, start_date = '2021-02-02 18:41:00')
    #,end_date = '2021-02-02 10:31:00' seconds, minutes, hours
 scheduler.start()
-print(f"consumed time test: {time()-st}")
+print(f"lesson/views email_sending, scheduler consumed time test: {time()-st}")
 ##課前提醒排程功能分隔線##
 
 @login_required
@@ -2559,6 +2561,22 @@ def lesson_completed_notification_from_teacher(request):
                         # 萬一學生遲遲不確認，要由我們自動確認的話，最好也做個註記
                     )
                     new_added_record.save()
+                    
+                    # email通知學生要進行完課時數確認
+                    when_lesson_completed_email_kwargs = {
+                        'student_authID':booking_object.student_auth_id,
+                        'teacher_authID':teacher_auth_id
+                    }
+                    student_email_thread = Thread(
+                        target = lesson_email_notification.send_student_confirm_time_when_teacher_completed_lesson,
+                        kwargs = when_lesson_completed_email_kwargs)
+                    student_email_thread.start()
+                    # 提醒老師要評價學生
+                    teacher_email_thread = Thread(
+                        target = lesson_email_notification.send_teacher_rate_student_when_teacher_completed_lesson,
+                        kwargs = when_lesson_completed_email_kwargs)
+                    teacher_email_thread.start()
+                    
                     response['status'] = 'success'
                     response['errCode'] = None
                     response['errMsg'] = None

@@ -389,14 +389,14 @@ def when_lesson_completed_notification_sent_by_teacher(sender, instance:lesson_c
         lesson_booking_object.last_changed_by = 'teacher'  # 因為 因老師而改變此則預約的狀態
         lesson_booking_object.save()
 
-        # 通知學生要進行完課時數確認
-        from .email_sending import lesson_email_manager
-        send_email = lesson_email_manager()
-        send_email.send_student_confirm_time_when_teacher_completed_lesson(
-            student_authID = instance.student_auth_id)
+        # email通知學生要進行完課時數確認
+        #from .email_sending import lesson_email_manager
+        #send_email = lesson_email_manager()
+        #send_email.send_student_confirm_time_when_teacher_completed_lesson(
+        #    student_authID = instance.student_auth_id)
         # 提醒老師要評價學生
-        send_email.send_teacher_rate_student_when_teacher_completed_lesson(
-            teacher_authID = instance.teacher_auth_id)
+        #send_email.send_teacher_rate_student_when_teacher_completed_lesson(
+        #    teacher_authID = instance.teacher_auth_id)
             
 @receiver(pre_save, sender=lesson_booking_info)
 def update_receiving_review_lesson_minutes(sender, instance:lesson_booking_info, **kwargs):
