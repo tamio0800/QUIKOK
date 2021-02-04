@@ -5192,7 +5192,7 @@ class CLASS_FINISHED_TEST(TestCase):
             ),
         lesson_completed_record.objects.values())
 
-@skip
+    @skip
     def test_send_email_to_student_and_teacher_when_lesson_completed(self):
         '''
         確認當老師按完課後，學生會收到通知信來確認這個時數是否正確、老師會收到信叫他寫評價

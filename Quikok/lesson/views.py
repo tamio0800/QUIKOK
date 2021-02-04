@@ -43,7 +43,6 @@ lesson_email_notification = lesson_email_manager()
  ##課前提醒排程功能分隔線##
 def send_email_one_day_before_booking_date():
     email_info_dict = dict()
-    send_email = lesson_email_manager()
     baseline_time = datetime.now()+timedelta(days=1) # 製作出明天的日期當基準
     #baseline_time = datetime.now()+timedelta(days=5) # 測試用
     # 篩選出年月日跟基準相同的課程
@@ -59,12 +58,12 @@ def send_email_one_day_before_booking_date():
         email_info_dict['lesson_title'] = lesson_obj.lesson_title
         email_info_dict['teacher_authID'] =  each_class.teacher_auth_id
         email_info_dict['student_authID'] =  each_class.student_auth_id
-        send_email.send_student_remind_one_day_before_lesson(**email_info_dict)
-        send_email.send_teacher_remind_one_day_before_lesson(**email_info_dict)
+        lesson_email_notification.send_student_remind_one_day_before_lesson(**email_info_dict)
+        lesson_email_notification.send_teacher_remind_one_day_before_lesson(**email_info_dict)
     print(f"lesson/views email_sending,booking_lesson_query consumed time test: {time()-st}")
 # 例項化
 scheduler = BackgroundScheduler()
-# 每間隔24小時執行一次, 要設定起始與結束時間
+# 每間隔24小時執行一次, 只設定起始時間
 st = time()
 
 scheduler.add_job(send_email_one_day_before_booking_date, 'interval',
@@ -1597,9 +1596,47 @@ def changing_lesson_booking_status(request):
                     if that_lesson_booking_info.booking_status == 'confirmed':
                         that_lesson_booking_info.remark = \
                             f'{date_function.today()} {character_to_mandarin(which_one_changes_it)}取消預定課程'
+                        student_obj = student_profile.objects.filter(id = that_lesson_booking_info.student_auth_id).first()
+                        teacher_obj = teacher_profile.objects.filter(id = that_lesson_booking_info.teacher_auth_id).first()
+                        # 寄信通知雙方有人取消課程
+                        send_student_email_info = {
+                            'user_email_address':student_obj.username,
+                            'user_nickname' : student_obj.nickname,
+                            'lesson_title' : lesson_info.objects.get(id = that_lesson_booking_info.lesson_id).lesson_title
+                            }
+                        
+                        send_teacher_email_info = {
+                            'user_email_address':teacher_obj.username,
+                            'user_nickname' : teacher_obj.nickname,
+                            'lesson_title' : lesson_info.objects.get(id = that_lesson_booking_info.lesson_id).lesson_title
+                            }
+                       
+                        send_email_studnet_someone_canceld_the_booking = Thread(
+                            target = lesson_email_notification.send_student_and_teacher_someone_canceld_the_booking,
+                            kwargs = send_student_email_info
+                            )
+                        send_email_studnet_someone_canceld_the_booking.start()  
+
+                        send_email_teacher_someone_canceld_the_booking = Thread(
+                            target = lesson_email_notification.send_student_and_teacher_someone_canceld_the_booking,
+                            kwargs = send_teacher_email_info
+                            )
+                        send_email_teacher_someone_canceld_the_booking.start()
+
                     elif that_lesson_booking_info.booking_status == 'to_be_confirmed':
                         that_lesson_booking_info.remark = \
                             f'{date_function.today()} {character_to_mandarin(which_one_changes_it)}婉拒預約'
+                        # 寄通知信給學生,通知他老師婉拒預約,目前理論上只有老師會婉拒主動發起的學生這種情況
+                        student_obj = student_profile.objects.filter(id = that_lesson_booking_info.student_auth_id).first()
+                        teacher_obj = teacher_profile.objects.filter(id = that_lesson_booking_info.teacher_auth_id).first()
+                        send_email_info = {'student_authID' : student_obj.auth_id,
+                            'teacher_nickname' : teacher_obj.auth_id,
+                            'lesson_title' : lesson_info.objects.get(id = that_lesson_booking_info.lesson_id).lesson_title}
+                        send_email_teacher_declined_thread = Thread(
+                            target = lesson_email_notification.send_student_remind_teacher_responded_the_booking,
+                            kwargs = send_email_info)
+                        send_email_teacher_declined_thread.start()
+                    
                     that_lesson_booking_info.last_changed_by = which_one_changes_it
                     that_lesson_booking_info.booking_status = lesson_booking_info_status
                     that_lesson_booking_info.save()
