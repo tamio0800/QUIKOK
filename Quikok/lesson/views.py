@@ -119,8 +119,7 @@ def get_lesson_cards_for_common_users(request):
     only_show_lessons_by_this_teacher_s_auth_id = \
         request.POST.get('only_show_lessons_by_this_teacher_s_auth_id', False)
     response = {}
-    if not check_if_all_variables_are_true(qty, user_auth_id,
-    keywords, filtered_by, ordered_by):
+    if not check_if_all_variables_are_true(qty, user_auth_id, keywords, filtered_by, ordered_by):
         # 之後等加入條件再改寫法 
         # 收取的資料不正確
         response['status'] = 'failed'
@@ -131,7 +130,7 @@ def get_lesson_cards_for_common_users(request):
     else:
         # 收取的資料正確，準備撈資料回傳
         # order_by 跟 filtered_by 暫時不寫
-        if int(qty) == -1:
+        if qty == '-1':
             # 不指定顯示數量，全部都要回傳
             qty = None
         else:
@@ -198,12 +197,12 @@ def get_lesson_cards_for_common_users(request):
         selling_lessons_ids = lesson_info_selling_objects.values_list('id', flat=True)
 
         user_s_all_favorite_lessons_ids = \
-            favorite_lessons.objects.filter(follower_auth_id = user_auth_id).values_list('lesson_id', flat=True)
-        if int(only_show_lessons_by_this_teacher_s_auth_id) == -1:
+            favorite_lessons.objects.values_list('lesson_id', flat=True).filter(follower_auth_id = user_auth_id)
+        if only_show_lessons_by_this_teacher_s_auth_id == '-1':
             # 所有老師的課程小卡都show出來
             if only_show_ones_favorites:
                 # 只show出用戶有收藏的上架中的課程小卡
-                ones_favorite_and_selling_lessons_set = lesson_card.objects.filter(id__in=user_s_all_favorite_lessons_ids).filter(corresponding_lesson_id__in=selling_lessons_ids)[:qty].values()
+                ones_favorite_and_selling_lessons_set = lesson_card.objects.values().filter(id__in=user_s_all_favorite_lessons_ids, corresponding_lesson_id__in=selling_lessons_ids)[:qty]
                 for each_lesson_card_object_values in ones_favorite_and_selling_lessons_set:
                     lesson_attributes = each_lesson_card_object_values
                     lesson_attributes['is_this_my_favorite_lesson'] = True
@@ -229,7 +228,7 @@ def get_lesson_cards_for_common_users(request):
             that_teacher_auth_id = int(only_show_lessons_by_this_teacher_s_auth_id)
             if only_show_ones_favorites:
                 # 只show出用戶有收藏的指定老師的上架中的課程小卡
-                ones_favorite_and_selling_lessons_set = lesson_card.objects.filter(teacher_auth_id=that_teacher_auth_id).filter(id__in=user_s_all_favorite_lessons_ids).filter(corresponding_lesson_id__in=selling_lessons_ids)[:qty].values()   
+                ones_favorite_and_selling_lessons_set = lesson_card.objects.values().filter(teacher_auth_id=that_teacher_auth_id, id__in=user_s_all_favorite_lessons_ids, corresponding_lesson_id__in=selling_lessons_ids)[:qty]
                 for each_lesson_card_object_values in ones_favorite_and_selling_lessons_set:
                     lesson_attributes = each_lesson_card_object_values
                     lesson_attributes['is_this_my_favorite_lesson'] = True
@@ -240,9 +239,9 @@ def get_lesson_cards_for_common_users(request):
                     _data.append(lesson_attributes)
             else:
                 # show出所有上架中的指定老師的課程小卡
-                lesson_card_objects_values_set = lesson_card.objects.filter(teacher_auth_id=that_teacher_auth_id).filter(corresponding_lesson_id__in = selling_lessons_ids)[:qty].values()
+                lesson_card_objects_values_set = lesson_card.objects.values().filter(teacher_auth_id=that_teacher_auth_id, corresponding_lesson_id__in = selling_lessons_ids)[:qty]
                 user_s_all_favorite_lessons_ids = \
-                    favorite_lessons.objects.filter(follower_auth_id = user_auth_id).values_list('lesson_id', flat=True)
+                    favorite_lessons.objects.values_list('lesson_id', flat=True).filter(follower_auth_id = user_auth_id)
                 
                 for each_lesson_card_object_values in lesson_card_objects_values_set:
                     lesson_attributes = each_lesson_card_object_values
