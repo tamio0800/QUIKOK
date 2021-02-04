@@ -1579,6 +1579,19 @@ def changing_lesson_booking_status(request):
                                                 each_student_remaining_minutes_non_trial_object.withholding_minutes
                                             each_student_remaining_minutes_non_trial_object.withholding_minutes = 0
                                             each_student_remaining_minutes_non_trial_object.save()
+
+                    # 寄通知信給學生,通知他老師接受了預約,目前理論上只有老師會回覆主動發起的學生這種情況
+                    student_obj = student_profile.objects.filter(auth_id = that_lesson_booking_info.student_auth_id).first()
+                    teacher_obj = teacher_profile.objects.filter(auth_id = that_lesson_booking_info.teacher_auth_id).first()
+                    send_email_info = {
+                        'student_authID' : student_obj.auth_id,
+                        'teacher_nickname' : teacher_obj.nickname,
+                        'lesson_title' : lesson_info.objects.get(id = that_lesson_booking_info.lesson_id).lesson_title}
+                    send_email_teacher_accept_thread = Thread(
+                        target = lesson_email_notification.send_student_remind_teacher_responded_the_booking,
+                        kwargs = send_email_info)
+                    send_email_teacher_accept_thread.start()
+                    
                                 
                     response['status'] = 'success'
                     response['errCode'] = None
@@ -1595,8 +1608,8 @@ def changing_lesson_booking_status(request):
                     if that_lesson_booking_info.booking_status == 'confirmed':
                         that_lesson_booking_info.remark = \
                             f'{date_function.today()} {character_to_mandarin(which_one_changes_it)}取消預定課程'
-                        student_obj = student_profile.objects.filter(id = that_lesson_booking_info.student_auth_id).first()
-                        teacher_obj = teacher_profile.objects.filter(id = that_lesson_booking_info.teacher_auth_id).first()
+                        student_obj = student_profile.objects.filter(auth_id = that_lesson_booking_info.student_auth_id).first()
+                        teacher_obj = teacher_profile.objects.filter(auth_id = that_lesson_booking_info.teacher_auth_id).first()
                         # 寄信通知雙方有人取消課程
                         send_student_email_info = {
                             'user_email_address':student_obj.username,
@@ -1629,7 +1642,7 @@ def changing_lesson_booking_status(request):
                         student_obj = student_profile.objects.filter(id = that_lesson_booking_info.student_auth_id).first()
                         teacher_obj = teacher_profile.objects.filter(id = that_lesson_booking_info.teacher_auth_id).first()
                         send_email_info = {'student_authID' : student_obj.auth_id,
-                            'teacher_nickname' : teacher_obj.auth_id,
+                            'teacher_nickname' : teacher_obj.nickname,
                             'lesson_title' : lesson_info.objects.get(id = that_lesson_booking_info.lesson_id).lesson_title}
                         send_email_teacher_declined_thread = Thread(
                             target = lesson_email_notification.send_student_remind_teacher_responded_the_booking,

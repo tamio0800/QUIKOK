@@ -213,6 +213,7 @@ class lesson_email_manager:
         else:
             print('缺少參數')
             return False
+    
     def send_student_remind_teacher_responded_the_booking(self, **kwargs):
         # 信件主題:提醒學生老師拒絕或是接受他的預約
         # (請他重新預約時間或與老師聯繫後再預約)
