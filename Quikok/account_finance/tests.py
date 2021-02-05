@@ -300,7 +300,39 @@ class test_finance_functions(TestCase):
                 'errMsg': None,
                 'data': 1 # 建立1號訂單
             })
-       
+
+    def test_student_use_qpoint_more_than_he_has_to_purchase_set(self):
+        '''故意讓學生用超過它有的q幣餘額來買東西看看
+        '''
+        lesson_set = '10:90' #測試 10:90 看看是否成功
+        use_q_coin = 2000000  #使用超多q幣
+        post_data = {
+            'userID':2,
+            'teacherID':1,
+            'lessonID':1,
+            'sales_set': lesson_set,
+            'total_amount_of_the_sales_set': int(self.lesson_post_data['price_per_hour'] * 10 * 0.9),
+            'q_discount': use_q_coin
+        } 
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=post_data)
+        self.assertIn('failed', str(response.content, 'utf8'), str(response.content, 'utf8'))
+    
+    def test_student_use_qpoint_more_than_he_has_to_purchase_no_discount(self):
+        '''故意讓學生用超過它有的q幣餘額來買東西看看
+        '''
+        lesson_set = 'no_discount' #測試單堂課
+        use_q_coin = 2000000  #使用超多q幣
+        post_data = {
+            'userID':2,
+            'teacherID':1,
+            'lessonID':1,
+            'sales_set': lesson_set,
+            'total_amount_of_the_sales_set': int(self.lesson_post_data['price_per_hour']),
+            'q_discount': use_q_coin
+        } 
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=post_data)
+        self.assertIn('failed', str(response.content, 'utf8'), str(response.content, 'utf8'))
+
     def test_student_withholding_balance_change_after_paid(self):
         '''
         當我們確認學生已繳費, unpaid改成paid之後,若有使用Q幣, 
