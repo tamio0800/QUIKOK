@@ -23,13 +23,14 @@ class auth_check(models.Model):
     # 正在瀏覽的網址,不含流水號
     #auth_approve = models.BooleanField()
 
+
 class student_profile(models.Model):
     # 這是for存放一般會員/學生的額外資訊
     auth_id = models.IntegerField()  # 將用戶的auth_id聯動過來，方便進行query
     username = models.CharField(max_length = 150)
     password = models.CharField(max_length = 128)
-    balance = models.IntegerField(default=0)  # 可退款的帳戶餘額, = Q幣全額 -預扣額度
-    withholding_balance = models.IntegerField(default=0)  # 帳戶預扣額度
+    balance = models.PositiveIntegerField(default=0)  # 可退款的帳戶餘額, = Q幣全額 -預扣額度
+    withholding_balance = models.PositiveIntegerField(default=0)  # 帳戶預扣額度
     name = models.CharField(max_length = 40)
     nickname = models.CharField(max_length = 40)
     birth_date = models.DateField(blank=True, null=True)
@@ -174,10 +175,10 @@ class teacher_profile(models.Model):
     auth_id = models.IntegerField()  # 將用戶的auth_id聯動過來，方便進行query
     username = models.CharField(max_length = 150) # 帳號
     password = models.CharField(max_length = 128)
-    balance = models.IntegerField(default=0)  # 這個是帳戶餘額
-    withholding_balance = models.IntegerField(default=0)  # 這個是帳戶預扣額度
+    balance = models.PositiveIntegerField(default=0)  # 這個是帳戶餘額
+    withholding_balance = models.PositiveIntegerField(default=0)  # 這個是帳戶預扣額度
     # future_balance = models.IntegerField(default=0) # 帳戶預進帳金額
-    unearned_balance = models.IntegerField(default=0) # 帳戶預進帳金額，改成會計用語
+    unearned_balance = models.PositiveIntegerField(default=0) # 帳戶預進帳金額，改成會計用語
     name = models.CharField(max_length = 40) #名字
     nickname = models.CharField(max_length = 40)
     birth_date = models.DateField(null=True)
