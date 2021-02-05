@@ -34,10 +34,6 @@ def storage_order(request):
         price = request.POST.get('total_amount_of_the_sales_set', False)
         q_discount_amount = request.POST.get('q_discount', False)
 
-        # 這兩個寫在這裡可能導致失敗(參數沒抓到)，而且檢查 None 的速度比 len() 快很多
-        #teacher_queryset = teacher_profile.objects.filter(auth_id= teacher_authID)
-        #lesson_queryset = lesson_info.objects.filter(id = lesson_id)
-        
         if check_if_all_variables_are_true(student_authID, teacher_authID,
             lesson_id, lesson_set, price, q_discount_amount):
 
@@ -254,26 +250,17 @@ def storage_order(request):
                         else: # 沒有使用q幣
                             # 如果要買試教課程,先檢查是否已經買過了、尚未結帳
                             if lesson_set == 'trial':
-                                #check_trial_query_exist = student_purchase_record.objects.filter(
-                                #                            lesson_sales_set_id = set_obj.id, 
-                                #                            student_auth_id = student_authID).order_by('-id')
-
                                 student_purchase_record_obj = \
                                     student_purchase_record.objects.filter(
                                         lesson_sales_set_id = set_obj.id, 
                                         student_auth_id = student_authID
                                     ).order_by('id').last()
 
-                                # >0 表示已買過
-                                # 一樣，len很耗運算資源，既然query默認是用id排序，則可以使用
                                 if student_purchase_record_obj is not None:
                                     last_record_payment_status = student_purchase_record_obj.payment_status
                                     # 但如果買過又取消,還是可以買
                                     if last_record_payment_status == 'unpaid_cancel':
                                         real_price = int(price)
-                                        # teacher_obj = teacher_queryset.first()
-                                        # lesson_obj = lesson_queryset.first()
-                                        # purchase_date = datetime.now()
                                         payment_deadline = datetime.now() + timedelta(days=6)
                                         # 建立訂單
                                         new_record = student_purchase_record.objects.create(
@@ -333,9 +320,6 @@ def storage_order(request):
 
                                 else: # 沒買過,可以買試教
                                     real_price = int(price)
-                                    # teacher_obj = teacher_queryset.first()
-                                    # lesson_obj = lesson_queryset.first()
-                                    # purchase_date = datetime.now()
                                     payment_deadline = datetime.now() + timedelta(days=6)
 
                                     # 建立訂單
@@ -389,9 +373,6 @@ def storage_order(request):
 
                             else: #不是選試上課就不檢查有沒有買過了,使用者愛一次買幾個都可以
                                 real_price = int(price)
-                                # eacher_obj = teacher_queryset.first()
-                                # lesson_obj = lesson_queryset.first()
-                                # purchase_date = datetime.now()
                                 payment_deadline = datetime.now() + timedelta(days=6)
 
                                 # 建立訂單
