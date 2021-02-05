@@ -304,10 +304,10 @@ class test_finance_functions(TestCase):
     def test_student_withholding_balance_change_after_paid(self):
         '''
         當我們確認學生已繳費, unpaid改成paid之後,若有使用Q幣, 
-        此時他的profile中的withholding_balance_change會歸零,
-        而balance會扣除。用1號學生測試,當他的預扣額
+        此時他的profile中的withholding_balance_change會扣掉Q幣金額,
+        而balance不會改變。用1號學生測試
         '''
-        lesson_set = '10:90' #先測試 10:90 看看是否成功
+        lesson_set = '10:90' #測試 10:90 看看是否成功
         use_q_coin = 20  #使用q幣
         post_data = {
             'userID':2,
@@ -321,7 +321,8 @@ class test_finance_functions(TestCase):
         self.assertEqual(
             student_purchase_record.objects.get(id=1).payment_status,'unpaid')  #目前應該是未付款的狀態
         student_obj = student_profile.objects.get(id=1)
-        self.assertEqual(student_obj.balance, self.dummy_q)
+        # balance = 原本的q幣餘額-新買課程用掉的Q幣
+        self.assertEqual(student_obj.balance, self.dummy_q - use_q_coin) 
         self.assertEqual(student_obj.withholding_balance, use_q_coin)
         student_purchase_obj = student_purchase_record.objects.get(id=1)
         student_purchase_obj.payment_status = 'reconciliation' #模擬系統改為對帳中
@@ -331,11 +332,10 @@ class test_finance_functions(TestCase):
         self.assertEqual(
             student_purchase_record.objects.get(id=1).payment_status,'paid')  # 確認變成已付款
         
-        # 如果我們將它設定為已付款，q_discount要同時從預扣額跟總額中扣除
+        # 如果我們將它設定為已付款，q_discount從預扣額中扣除
         # 確認是否扣除
         student_obj = student_profile.objects.get(id=1)
-        self.assertEqual(student_obj.balance, self.dummy_q - use_q_coin)
-        self.assertEqual(student_obj.withholding_balance, 0)
+        self.assertEqual(student_obj.withholding_balance, 0) # 已經沒有買其他課程,所以也沒有被預扣
 
 
     def test_if_storege_order_select_active_lesson_sales_set(self):

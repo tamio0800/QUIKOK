@@ -17,7 +17,7 @@ class student_purchase_record(models.Model):
     lesson_title = models.CharField(max_length = 30)
     lesson_sales_set_id = models.IntegerField()
     price = models.IntegerField() # total
-    purchased_with_q_points = models.IntegerField(default=0)  # 用Q幣支付
+    purchased_with_q_points = models.IntegerField(default=0)  # 用多少Q幣支付
     purchased_with_money = models.IntegerField() # 實際要支付的費用 total_price -purchased_with_q_points
     part_of_bank_account_code = models.CharField(max_length=30, default='') 
     # 用戶繳費帳號後5碼,對帳用

@@ -24,13 +24,13 @@ class email_manager:
             '通知老師有學生預約':'./teacher_send_remind_order.html'
         }
     def edit_student_balance_after_receive_payment(self, **kwargs):
-        print(os.getcwd())
+        #print(os.getcwd())
         q_discount = kwargs['q_discount']
         studentID = kwargs['student_authID'] 
         student_info_obj = student_profile.objects.get(auth_id=studentID)
 
         student_info_obj.withholding_balance = student_info_obj.withholding_balance - q_discount
-        student_info_obj.balance = student_info_obj.balance - q_discount
+        #student_info_obj.balance = student_info_obj.balance - q_discount
         student_info_obj.save()
 
     # 寄給學生:收到訂單與收到匯款
