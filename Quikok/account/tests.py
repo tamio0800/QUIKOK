@@ -1029,7 +1029,7 @@ class SPEED_TESTS(TestCase):
         self.fail(f"\nlen() takes {end1-st1} seconds\n=='' takes {end2-end1} seconds\nin takes {end3-end2} seconds\n!='' takes {end4-end3} seconds\nnot =='' takes {end5-end4} seconds\n")
 
 
-    
+    @skip
     def test_django_orm_query_speed(self):
         n = 2000
         end = time()
