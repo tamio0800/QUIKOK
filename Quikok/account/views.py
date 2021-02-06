@@ -1657,6 +1657,78 @@ def return_student_profile_for_public_viewing(request):
     return JsonResponse(response)
 
 
+@require_http_methods(['POST'])
+def member_change_password(request):
+    '''
+    會員修改密碼(登入狀態)
+    前端傳遞的資料:
+        userID    user's auth_id
+        oldUserPwd  //舊密碼(加密後)
+        newUserPwd  //新密碼(加密後)
+    '''
+    response = dict()
+    user_auth_id = request.POST.get('userID', False)
+    old_password = request.POST.get('oldUserPwd', False)
+    new_password = request.POST.get('newUserPwd', False)
+
+    if check_if_all_variables_are_true(user_auth_id, old_password, new_password):
+        teacher_object = teacher_profile.objects.filter(auth_id=user_auth_id).first()
+        student_object = student_profile.objects.filter(auth_id=user_auth_id).first()
+
+        if teacher_object is None and student_object is None:
+            # 代表兩個類別都沒有這個用戶
+                response['status'] = 'failed'
+                response['errCode'] = '1'
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                response['data'] = None
+
+        elif student_object is None:
+            # 代表用戶是老師
+            # 先確認舊密碼對不對
+            if old_password == teacher_object.password:
+                # 是對的
+                teacher_object.password = new_password
+                teacher_object.save()
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = None
+            else:
+                # 密碼不對
+                response['status'] = 'failed'
+                response['errCode'] = '2'
+                response['errMsg'] = '不好意思，您的(舊)密碼輸入錯誤，請再次確認唷，如果持續有這個問題請告訴我們，謝謝您。'
+                response['data'] = None
+        else:
+            # 代表用戶是學生
+            # 先確認舊密碼對不對
+            if old_password == student_object.password:
+                # 是對的
+                student_object.password = new_password
+                student_object.save()
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = None
+            else:
+                # 密碼不對
+                response['status'] = 'failed'
+                response['errCode'] = '3'
+                response['errMsg'] = '不好意思，您的(舊)密碼輸入錯誤，請再次確認唷，如果持續有這個問題請告訴我們，謝謝您。'
+                response['data'] = None
+
+    else:
+        # 傳輸有問題
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+
+    return JsonResponse(response)
+    
+
+
+
 
 def test_connect_time(request):
     return HttpResponse("THIS IS A DUMMY TEST FUNCTION.")

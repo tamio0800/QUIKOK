@@ -17,12 +17,153 @@ from django.db.models import Q
 # python manage.py test account/ --settings=Quikok.settings_for_test
 class Auth_Related_Functions_Test(TestCase):
 
+    def setUp(self):
+        self.client = Client()        
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+        self.test_teacher_name1 = 'test_teacher1_user@test.com'
+        teacher_post_data = {
+            'regEmail': self.test_teacher_name1,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;'
+        }
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        
+        self.test_teacher_name2 = 'test_teacher2_user@test.com'
+        teacher_post_data['regEmail'] = self.test_teacher_name2
+        teacher_post_data['regPwd'] = '11111111'
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+
+        self.test_teacher_name3 = 'test_teacher3_user@test.com'
+        teacher_post_data['regEmail'] = self.test_teacher_name3
+        teacher_post_data['regPwd'] = '22222222'
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        # 建了3個老師
+        
+        self.test_student_name1 = 'test_student1@a.com'
+        student_post_data = {
+            'regEmail': self.test_student_name1,
+            'regPwd': '00000000',
+            'regName': 'test_student_name',
+            'regBirth': '1990-12-25',
+            'regGender': 1,
+            'regRole': 'oneself',
+            'regMobile': '0900-111111',
+            'regNotifiemail': ''
+        }
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        self.test_student_name2 = 'test_student2@a.com'
+        student_post_data['regEmail'] = self.test_student_name2
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        self.test_student_name3 = 'test_student3@a.com'
+        student_post_data['regEmail'] = self.test_student_name3
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        # 建了3個學生
+
+
+    def tearDown(self):
+        # 刪掉(如果有的話)產生的資料夾
+        try:
+            shutil.rmtree('user_upload/students/' + self.test_student_name1)
+            shutil.rmtree('user_upload/students/' + self.test_student_name2)
+            shutil.rmtree('user_upload/students/' + self.test_student_name3)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name1)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name2)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name2)
+        except:
+            pass
+
+
     def test_auth_check_exist(self):
         # 測試這個函式是否存在，並且應該回傳status='success', errCode=None, errMsg=None
         # self.factory = RequestFactory()
         self.client = Client()
         response = self.client.get(path='/authCheck/')
         self.assertEqual(response.status_code, 200)
+
+
+    def test_change_password_exist(self):
+        '''
+        測試更改密碼的api存在
+        '''
+        self.client = Client()
+        response = self.client.post(path='/api/account/memberChangePassword/')
+        self.assertEqual(response.status_code, 200)
+
+
+    def test_change_password_received_and_validated_arguments(self):
+        chg_pwd_post_data = {
+            'userID': 3,
+            'oldUserPwd': 'dwedewikrj23oi5joiu4trjoufj432jt34i82043jiefwo',
+            'XXnewUserPwd': 'djwiofdjewu89320894u2304jr23j980rhudnsaljrjfeas'}
+        response = \
+            self.client.post(path='/api/account/memberChangePassword/', data=chg_pwd_post_data)
+        self.assertIn('failed', str(response.content, "utf8"))
+        self.assertIn('"errCode": "0"', str(response.content, "utf8"))
+        # 因為缺乏必要的參數
+
+        chg_pwd_post_data['newUserPwd'] = 'djwiofdjewu89320894u2304jr23j980rhudnsaljrjfeas'
+        response = \
+            self.client.post(path='/api/account/memberChangePassword/', data=chg_pwd_post_data)
+        self.assertIn('failed', str(response.content, "utf8"))
+        self.assertIn('"errCode": "2"', str(response.content, "utf8"))
+        # 因為密碼不對
+
+    
+    def test_change_password_work_on_teachers(self):
+        '''
+        測試老師更改密碼可以成功
+        '''
+        teacher_1 = teacher_profile.objects.get(id=1)
+        # self.fail(teacher_1.password)
+        # 00000000
+        chg_pwd_post_data = {
+            'userID': teacher_1.auth_id,
+            'oldUserPwd': teacher_1.password,
+            'newUserPwd': '44444444'}
+        response = \
+            self.client.post(path='/api/account/memberChangePassword/', data=chg_pwd_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertEqual('44444444', teacher_profile.objects.get(id=1).password)
+
+
+    def test_change_password_work_on_students(self):
+        '''
+        測試學生更改密碼可以成功
+        '''
+        student_1 = student_profile.objects.get(id=1)
+        # self.fail(teacher_1.password)
+        chg_pwd_post_data = {
+            'userID': student_1.auth_id,
+            'oldUserPwd': student_1.password,
+            'newUserPwd': '99999999'}
+        response = \
+            self.client.post(path='/api/account/memberChangePassword/', data=chg_pwd_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertEqual('99999999', student_profile.objects.get(id=1).password)
+
 
 class Teacher_Profile_Test(TestCase):
 
@@ -773,7 +914,6 @@ class Feedback_Test(TestCase):
         self.assertEqual(feedback.objects.first().problem, problem)
         self.assertEqual(feedback.objects.first().on_which_page, on_which_page)
         self.assertEqual(feedback.objects.first().is_signed_in, is_signed_in)
-
 
 
 class BANKING_INFO_TEST(TestCase):

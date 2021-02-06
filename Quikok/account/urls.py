@@ -34,4 +34,5 @@ urlpatterns = [
     path('getBankingInfomation/', views.get_banking_information),
     path('getStudentPublicReview/', views.get_student_public_review),
     path('getTeacherPublicReview/', views.get_teacher_public_review),
+    path('memberChangePassword/', views.member_change_password),
 ]
