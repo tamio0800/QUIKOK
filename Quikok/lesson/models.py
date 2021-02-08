@@ -11,7 +11,7 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     big_title = models.CharField(max_length = 10)  # 背景圖片的大標題
     little_title = models.CharField(max_length = 10)  # 背景圖片的小標題
     title_color = models.CharField(max_length = 7) # 標題顏色 以色碼存入，  >> #\d{6}
-    background_picture_code = models.IntegerField() 
+    background_picture_code = models.IntegerField()
     # 這個用來儲存user選擇了什麼樣的上架背景圖，舉例來說99代表user自己上傳的圖，這時我們要找到對應的路徑回傳給前端；
     # 如果今天這個值是1、2、3之類的Quikok預設圖片，那我們直接回傳代號給前端即可。
     background_picture_path = models.TextField(blank=True) # 指向上傳圖的路徑
@@ -35,9 +35,10 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     # lesson_intro = models.CharField(blank=True, max_length=300)
     # 課程詳細介紹，不超過300長度
     how_does_lesson_go = models.TextField(blank=True, null=True)
-    # how_does_lesson_go = models.CharField(blank=True, max_length=200)
     # 課程方式/教學方式，舉例來說：「本堂課前十分鐘小考，測驗上次的內容吸收程度，
     # 接著正式上課兩小時，最後15分鐘溫習。」
+    is_this_lesson_online_or_offline = models.CharField(max_length=10, default='online')
+    # 是線上課程(online)或是實體課程(offline)
     target_students = models.TextField(blank=True, null=True) # 授課對象
     lesson_remarks = models.TextField(blank=True, null=True) # 備註，目前是用來儲存「給學生的注意事項」
     # lesson_background_folder = models.CharField(max_length = 80)# 該課程背景圖片指向的資料夾 可選預設或上傳
@@ -71,24 +72,25 @@ class lesson_card(models.Model):
     # 要即時組合老師、課程、評價資訊會需要大量的運算，不如多建立一個table，
     # 之後直接query就好。
     corresponding_lesson_id = models.IntegerField()  # 所對應的課程id
-    teacher_thumbnail_path = models.TextField(blank=True)  # 老師的大頭照路徑
+    teacher_thumbnail_path = models.TextField(blank=True, null=True)  # 老師的大頭照路徑
     teacher_nickname = models.CharField(max_length = 40)
     teacher_auth_id = models.IntegerField()
     is_this_teacher_male = models.BooleanField(default=True)
+    is_this_lesson_online_or_offline = models.CharField(max_length=10, default='online') # 是線上課程(online)或是實體課程(offline)
     big_title = models.CharField(max_length = 10)  # 背景圖片的大標題
     little_title = models.CharField(max_length = 10)  # 背景圖片的小標題
     title_color = models.CharField(max_length = 7)    
     background_picture_code = models.IntegerField()
-    background_picture_path = models.TextField(blank=True) # 指向上傳圖的路徑
+    background_picture_path = models.TextField(blank=True, null=True) # 指向上傳圖的路徑
     lesson_title = models.CharField(max_length = 14) # 課程的名稱
     highlight_1 = models.CharField(max_length = 10)  # 亮點介紹1，不要超過10個字元長
     highlight_2 = models.CharField(max_length = 10)  # 亮點介紹2，不要超過10個字元長
     highlight_3 = models.CharField(max_length = 10)  # 亮點介紹3，不要超過10個字元長
     price_per_hour = models.IntegerField()  # 該門課程的鐘點費
     best_sale = models.CharField(max_length = 20) # 用來吸引人的最優惠折價標語
-    education = models.CharField(max_length = 60, blank=True)  # 最高學歷說明
+    education = models.CharField(max_length = 60, blank=True, null=True)  # 最高學歷說明
     education_is_approved = models.BooleanField()
-    working_experience = models.CharField(max_length = 100, blank=True)  # 經歷說明
+    working_experience = models.CharField(max_length = 100, blank=True, null=True)  # 經歷說明
     working_experience_is_approved = models.BooleanField()
     lesson_avg_score = models.FloatField(default = 0.0) # 這個是平均評分，每次評分表一更新這裡也會連動更新
     lesson_reviewed_times = models.IntegerField(default = 0) # 這個是課程被評分過幾次的統計
