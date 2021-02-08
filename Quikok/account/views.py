@@ -1689,6 +1689,12 @@ def member_change_password(request):
                 # 是對的
                 teacher_object.password = new_password
                 teacher_object.save()
+
+                # 接著做User的部份
+                the_user_object = User.objects.get(username=teacher_object.username)
+                the_user_object.password = new_password
+                the_user_object.save()
+
                 response['status'] = 'success'
                 response['errCode'] = None
                 response['errMsg'] = None
@@ -1706,6 +1712,12 @@ def member_change_password(request):
                 # 是對的
                 student_object.password = new_password
                 student_object.save()
+
+                # 接著做User的部份
+                the_user_object = User.objects.get(username=teacher_object.username)
+                the_user_object.password = new_password
+                the_user_object.save()
+                
                 response['status'] = 'success'
                 response['errCode'] = None
                 response['errMsg'] = None
