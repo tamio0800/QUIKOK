@@ -5,8 +5,9 @@ def check_if_all_variables_are_true(*args):
     '''
     確認所有變數皆不為否
     '''
-    for each_arg in args:
-        if each_arg in [False, 'False', 'false']:
+    for i, each_arg in enumerate(args):
+        if each_arg == False:
+            print(f"{i}: {each_arg}")
             return False
     return True
 

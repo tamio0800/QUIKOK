@@ -554,22 +554,249 @@ def return_lesson_details_for_browsing(request):
 
 @require_http_methods(['POST'])
 def create_or_edit_a_lesson(request):
-
+    '''
+    用來建立課程或是修改課程的api。
+    '''
     response = dict()
+
     action = request.POST.get('action', False)
     teacher_auth_id = request.POST.get('userID', False)
-    lesson_id = request.POST.get('lessonID', False)  # 新增沒有, 修改才有
-    the_leeson_manager = lesson_manager()
+    lesson_id = request.POST.get('lessonID', False)  # 新增的話為空值, 修改才有
+    big_title = request.POST.get('big_title', False)
+    little_title = request.POST.get('little_title', False)
+    title_color = request.POST.get('title_color', False)
+    background_picture_code = request.POST.get('background_picture_code', False)
+    lesson_title = request.POST.get('lesson_title', False)
+    price_per_hour = request.POST.get('price_per_hour', False)
+    discount_price = request.POST.get('discount_price', False)
+    trial_class_price = request.POST.get('trial_class_price', False)
+    highlight_1 = request.POST.get('highlight_1', False)
+    highlight_2 = request.POST.get('highlight_2', False)
+    highlight_3 = request.POST.get('highlight_3', False)
+    lesson_intro = request.POST.get('lesson_intro', False)
+    how_does_lesson_go = request.POST.get('how_does_lesson_go', False)
+    target_students = request.POST.get('target_students', False)
+    lesson_remarks = request.POST.get('lesson_remarks', False)
+    syllabus = request.POST.get('syllabus', False)
+    lesson_attributes = request.POST.get('lesson_attributes', False)
+    selling_status = request.POST.get('selling_status', False)
+    lesson_has_one_hour_package = request.POST.get('lesson_has_one_hour_package', False)
+    is_this_lesson_online_or_offline = request.POST.get('lesson_type', False)
 
-    if not check_if_all_variables_are_true(action, teacher_auth_id):
-        # 萬一有變數沒有傳到後端來的話...
+    the_leeson_manager = lesson_manager()
+    
+    if check_if_all_variables_are_true(action, teacher_auth_id, big_title, little_title,
+    title_color, background_picture_code, lesson_title, price_per_hour, trial_class_price, discount_price,
+    highlight_1, highlight_2, highlight_3, lesson_intro, how_does_lesson_go, target_students, lesson_remarks,
+    syllabus, lesson_attributes, selling_status, lesson_has_one_hour_package, is_this_lesson_online_or_offline):
+        # 有成功收到所有資料
+        # 先確認該老師存不存在
+        teacher_object = teacher_profile.objects.filter(auth_id=teacher_auth_id).first()
+
+        if teacher_object is None:
+            # 該老師不存在
+            response['status'] = 'failed'
+            response['errCode'] = 1
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        else:
+            # 有找到該名老師
+            # 確認是要新建課程或是修改課程
+            if action == 'createLesson':
+                # 是新建課程
+                # 要同步建立老師的lessons資料夾, 下方的lesson_id資料夾，如
+                # user_uploaded/teachers/username/lessons/3(<< which is the lesson id)
+                lessons_folder_path = \
+                    f'user_upload/teachers/{teacher_object.username}/lessons'
+
+                if os.path.isdir(lessons_folder_path) == False:
+                    # 該資料夾尚未被建立
+                    os.mkdir(lessons_folder_path)
+                
+                new_lesson_object = \
+                    lesson_info.objects.create(
+                        teacher = teacher_object,
+                        big_title = big_title,
+                        little_title = little_title,
+                        title_color = title_color,
+                        background_picture_code = background_picture_code,
+                        background_picture_path = '',
+                        lesson_title = lesson_title,
+                        price_per_hour = price_per_hour,
+                        lesson_has_one_hour_package = lesson_has_one_hour_package=='true',
+                        trial_class_price = trial_class_price,
+                        discount_price = discount_price,
+                        highlight_1 = highlight_1,
+                        highlight_2 = highlight_2,
+                        highlight_3 = highlight_3,
+                        lesson_intro = lesson_intro,
+                        how_does_lesson_go = how_does_lesson_go,
+                        is_this_lesson_online_or_offline = is_this_lesson_online_or_offline,
+                        target_students = target_students,
+                        lesson_remarks = lesson_remarks,
+                        syllabus = syllabus,
+                        lesson_attributes = lesson_attributes,
+                        lesson_avg_score = 0.0,
+                        lesson_reviewed_times = 0,
+                        selling_status = selling_status
+                    )  # 課程建立完成(尚未儲存寫入)，接著要確認用戶有否上傳背景圖片
+
+                lesson_folder_path = \
+                    f"{lessons_folder_path}/{str(new_lesson_object.id)}"
+                if not os.path.isdir(lesson_folder_path):
+                    # 沒有該門課程專屬的資料夾
+                    os.mkdir(lesson_folder_path)
+
+                # 判斷老師是否有上傳圖片
+                has_teacher_uploaded_lesson_background_picture = \
+                    background_picture_code == '99'
+                if has_teacher_uploaded_lesson_background_picture:
+                    # 有上傳圖片
+                    uploaded_background_picture = request.FILES["background_picture_path"]
+                    fs = FileSystemStorage(location=lesson_folder_path)
+                    file_extension = uploaded_background_picture.name.split('.')[-1]
+                    fs.save(f"customized_lesson_background.{file_extension}" , uploaded_background_picture) # 檔名統一改成thumbnail開頭
+                    new_lesson_object.background_picture_path = \
+                        f"/{lesson_folder_path}/customized_lesson_background.{file_extension}"
+                
+                new_lesson_object.save()
+                # 成功建立課程
+                # 接下來還有 「課程小卡更新」 以及 「課程方案更新」兩件事情要做
+                # 是不是應該移到 models 改用 signal 來做呢 ><
+
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = new_lesson_object.id
+
+                object_accessed_signal.send(
+                    sender='create_or_edit_a_lesson',
+                    auth_id=teacher_auth_id,
+                    ip_address=get_client_ip(request),
+                    url_path=request.META.get('PATH_INFO'),
+                    model_name='lesson_info',
+                    object_name=request.POST.get('lesson_title'),
+                    object_id=new_lesson_object.id,
+                    user_agent=request.META.get('HTTP_USER_AGENT'),
+                    action_type='create lesson after signup',
+                    remark=None) # 傳送訊號到用戶行為TABLE
+
+            elif action == 'editLesson':
+                # 是編輯課程
+                # 先確認一下有沒有該門課程
+                lesson_object = lesson_info.objects.filter(id=lesson_id).first()
+
+                if lesson_object is None:
+                    # 找不到該門課程
+                    response['status'] = 'failed'
+                    response['errCode'] = 2
+                    response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                    response['data'] = lesson_id
+                
+                else:
+                    # 該門課程存在
+                    # 確認一下老師與課程能不能對應
+                    if lesson_object.teacher.auth_id != teacher_object.auth_id:
+                        # 不對應
+                        response['status'] = 'failed'
+                        response['errCode'] = 3
+                        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                        response['data'] = lesson_object.teacher.auth_id
+
+                    else:
+                        # 是對應的，可以開始進行內容改動了
+                        lessons_folder_path = \
+                            f'user_upload/teachers/{teacher_object.username}/lessons'
+                        lesson_folder_path = \
+                            f"{lessons_folder_path}/{str(lesson_object.id)}"
+
+                        if os.path.isdir(lessons_folder_path) == False:
+                            # 該資料夾尚未被建立
+                            os.mkdir(lessons_folder_path)
+
+                        if not os.path.isdir(lesson_folder_path):
+                            # 沒有該門課程專屬的資料夾
+                            os.mkdir(lesson_folder_path)
+
+                        # 判斷老師是否有上傳圖片
+                        has_teacher_uploaded_lesson_background_picture = \
+                            background_picture_code == '99'
+
+                        if has_teacher_uploaded_lesson_background_picture:
+                            # 有上傳圖片
+                            uploaded_background_picture = request.FILES["background_picture_path"]
+                            fs = FileSystemStorage(location=lesson_folder_path)
+                            file_extension = uploaded_background_picture.name.split('.')[-1]
+                            fs.save(f"customized_lesson_background.{file_extension}" , uploaded_background_picture) # 檔名統一改成thumbnail開頭
+                            lesson_object.background_picture_path = \
+                                f"/{lesson_folder_path}/customized_lesson_background.{file_extension}"
+
+                        lesson_object.big_title = big_title
+                        lesson_object.little_title = little_title
+                        lesson_object.title_color = title_color
+                        lesson_object.background_picture_code = background_picture_code
+                        # lesson_object.background_picture_path = background_picture_path
+                        lesson_object.lesson_title = lesson_title
+                        lesson_object.price_per_hour = price_per_hour
+                        lesson_object.lesson_has_one_hour_package = lesson_has_one_hour_package=='true'
+                        lesson_object.trial_class_price = trial_class_price
+                        lesson_object.discount_price = discount_price
+                        lesson_object.highlight_1 = highlight_1
+                        lesson_object.highlight_2 = highlight_2
+                        lesson_object.highlight_3 = highlight_3
+                        lesson_object.lesson_intro = lesson_intro
+                        lesson_object.how_does_lesson_go = how_does_lesson_go
+                        lesson_object.is_this_lesson_online_or_offline = is_this_lesson_online_or_offline
+                        lesson_object.target_students = target_students
+                        lesson_object.lesson_remarks = lesson_remarks
+                        lesson_object.syllabus = syllabus
+                        lesson_object.lesson_attributes = lesson_attributes
+                        lesson_object.selling_status = selling_status
+
+                        lesson_object.save()
+                        # 成功編輯課程
+                        # 接下來還有 「課程小卡更新」 以及 「課程方案更新」兩件事情要做
+                        # 是不是應該移到 models 改用 signal 來做呢 ><
+
+                        response['status'] = 'success'
+                        response['errCode'] = None
+                        response['errMsg'] = None
+                        response['data'] = lesson_object.id
+
+                        object_accessed_signal.send(
+                            sender='create_or_edit_a_lesson',
+                            auth_id=teacher_auth_id,
+                            ip_address=get_client_ip(request),
+                            url_path=request.META.get('PATH_INFO'),
+                            model_name='lesson_info',
+                            object_name=request.POST.get('lesson_title'),
+                            object_id=lesson_object.id,
+                            user_agent=request.META.get('HTTP_USER_AGENT'),
+                            action_type='edit lesson',
+                            remark=None) # 傳送訊號到用戶行為TABLE
+
+            else:
+                # 接收到不知道幹嘛的action
+                response['status'] = 'failed'
+                response['errCode'] = 4
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                response['data'] = action
+                        
+    else:
+        # 資料傳輸錯誤
         response['status'] = 'failed'
         response['errCode'] = 0
         response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
-        return JsonResponse(response)
+    
+    return JsonResponse(response)
+
 
     if action == 'createLesson':
         # 課程新增
+        # 原本是另外開class做，嘗試改寫在這邊
+
+
+        
+
         response['status'], response['errCode'], response['errMsg'], response['data']= \
             the_leeson_manager.setup_a_lesson(
                 teacher_auth_id, request, None, action)

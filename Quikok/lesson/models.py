@@ -379,10 +379,20 @@ class lesson_info_for_users_not_signed_up(models.Model):
         # 理論上一個老師在這張table只會有一個row的資料，所以這樣寫比較好看
 
 
+'''
+下面用來寫signal監聽特定 TABLES 是否有改動，而進行對應動作的機制
+'''
+@receiver(post_save, sender=lesson_completed_record)
+def when_lesson_completed_notification_sent_by_teacher(sender, instance:lesson_completed_record, created, **kwargs):
+
+
+
 
 @receiver(post_save, sender=lesson_completed_record)
 def when_lesson_completed_notification_sent_by_teacher(sender, instance:lesson_completed_record, created, **kwargs):
-    # 代表建立了新資料，此時必須要回去將對應的課程預約狀態 booked_status 改成等待學生確認中
+    '''
+    代表建立了新資料，此時必須要回去將對應的課程預約狀態 booked_status 改成等待學生確認中
+    '''
     if created:
         # 只有建立新資料才要進行這個動作
         lesson_booking_object = lesson_booking_info.objects.get(id = instance.lesson_booking_info_id)
@@ -402,8 +412,10 @@ def when_lesson_completed_notification_sent_by_teacher(sender, instance:lesson_c
             
 @receiver(pre_save, sender=lesson_booking_info)
 def update_receiving_review_lesson_minutes(sender, instance:lesson_booking_info, **kwargs):
-    # 這裡要做的是，當狀態從 non-finished 變成 finished 時，要更新學生與老師的總上課時數
-    # 但因為需要學生進行確認，所以 不可能有一開始就是 finished 的狀況
+    '''
+    這裡要做的是，當狀態從 non-finished 變成 finished 時，要更新學生與老師的總上課時數；
+    但因為需要學生進行確認，所以 不可能有一開始就是 finished 的狀況
+    '''
     
     if instance.id is None:
         pass  # 只有改動的時候才需要注意
@@ -457,12 +469,13 @@ def update_receiving_review_lesson_minutes(sender, instance:lesson_booking_info,
 
 @receiver(post_save, sender=student_reviews_from_teachers)
 def update_student_review_aggregated_info(sender, instance:student_reviews_from_teachers, created, **kwargs):
-    # 當有老師給予學生評價(創建新紀錄)時，必須要連帶的更新該學生的評價儀表板
+    '''
+    當有老師給予學生評價(創建新紀錄)時，必須要連帶的更新該學生的評價儀表板，
+    這邊要確認課程是否有完結(finished)，因為學生/老師會留存上過多長課程的資料，
+    若還沒有雙方確認的時數的話，則不進行上課總時數的更新。
+    '''
     from account.models import student_review_aggregated_info
-    # 這邊要確認課程是否有完結(finished)，因為學生/老師會留存上過多長課程的資料，
-    # 若還沒有雙方確認的時數的話，則不進行上課總時數的更新；
-    # 這代表未來要再寫一個機制，當課程狀態從非 finished 變成 finished 時，要更新 student_review_aggregated_info 的上課時數
-    # >> 我決定先不在這邊進行時數更新，免得有兩邊都更新到的疑慮存在，這個欄位統一在 非 finished 變成 finished 更新!
+
     if created:
         # 只有建立新資料才要進行這個動作，其實編輯也需要啦，但是先不管這件事
         the_student_review_info_object = \
@@ -502,12 +515,13 @@ def update_student_review_aggregated_info(sender, instance:student_reviews_from_
 
 @receiver(post_save, sender=lesson_reviews_from_students)
 def update_teacher_review_aggregated_info(sender, instance:lesson_reviews_from_students, created, **kwargs):
-    # 當有學生給予老師評價(創建新紀錄)時，必須要連帶的更新該老師的評價儀表板
+    '''
+    當有學生給予老師評價(創建新紀錄)時，必須要連帶的更新該老師的評價儀表板，
+    這邊要確認課程是否有完結(finished)，因為學生/老師會留存上過多長課程的資料，
+    若還沒有雙方確認的時數的話，則不進行上課總時數的更新。
+    '''
     from account.models import teacher_review_aggregated_info
-    # 這邊要確認課程是否有完結(finished)，因為學生/老師會留存上過多長課程的資料，
-    # 若還沒有雙方確認的時數的話，則不進行上課總時數的更新；
-    # 這代表未來要再寫一個機制，當課程狀態從非 finished 變成 finished 時，要更新 student_review_aggregated_info 的上課時數
-    # >> 我決定先不在這邊進行時數更新，免得有兩邊都更新到的疑慮存在，這個欄位統一在 非 finished 變成 finished 更新!
+
     if created:
         # 只有建立新資料才要進行這個動作，其實編輯也需要啦，但是先不管這件事
         the_teacher_review_info_object = \
