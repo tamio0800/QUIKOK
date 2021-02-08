@@ -1,14 +1,12 @@
 from django.contrib.auth.models import User
-import lesson
-from django.contrib.auth.hashers import PBKDF2SHA1PasswordHasher
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from time import time
 import os, shutil
 from django.contrib.auth.models import User
-from account.models import student_profile, teacher_profile, specific_available_time, general_available_time
-from django.http import HttpResponse, HttpResponseRedirect, FileResponse
+from account.models import student_profile, teacher_profile, specific_available_time
+from django.http import HttpResponse
 from django.core.files.storage import FileSystemStorage
 import pandas as pd
 from account.models import teacher_profile, favorite_lessons
@@ -32,7 +30,7 @@ from django.db.models import Sum
 from analytics.signals import object_accessed_signal
 from analytics.utils import get_client_ip
 from datetime import datetime, timedelta, date as date_function
-from account_finance.email_sending import email_manager, email_for_edony
+from account_finance.email_sending import email_manager
 from apscheduler.schedulers.background import BackgroundScheduler
 from django.core.cache import cache
 from .email_sending import lesson_email_manager

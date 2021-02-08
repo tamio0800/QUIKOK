@@ -31,6 +31,8 @@ class object_accessed_info(models.Model):
         verbose_name = 'Object Viewed'
         verbose_name_plural = 'Objects Viewed'
 
+
+
 @receiver(object_accessed_signal)
 def update_object_accessed_info(sender, **kwargs):
     '''
@@ -154,14 +156,3 @@ def update_object_accessed_info(sender, **kwargs):
 
 
             
-        
-
-
-            
-            
-
-
-
-
-
-    

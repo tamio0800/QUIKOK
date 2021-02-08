@@ -1,12 +1,9 @@
 from handy_functions import turn_first_datetime_string_into_time_format
-from django.http import response
 from lesson.views import booking_lessons
-from django.test import RequestFactory, TestCase,Client
+from django.test import TestCase, Client
 from django.core import mail
-import pandas as pd
 import os
 import shutil
-from lesson import lesson_tools
 from lesson.models import (lesson_completed_record, lesson_info_for_users_not_signed_up, 
                             lesson_info, lesson_card, lesson_sales_sets)
 from account.models import (general_available_time, student_profile, teacher_profile,
@@ -15,7 +12,7 @@ from django.contrib.auth.models import Permission, User, Group
 from unittest import skip
 from lesson.models import lesson_booking_info
 from account_finance.models import student_purchase_record, student_remaining_minutes_of_each_purchased_lesson_set
-from datetime import datetime, timedelta, timezone, date as date_function
+from datetime import datetime, timedelta, date as date_function
 from account_finance.models import student_owing_teacher_time
 from lesson.models import lesson_reviews_from_students, student_reviews_from_teachers
 from account.models import student_review_aggregated_info, teacher_review_aggregated_info
