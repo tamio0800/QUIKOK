@@ -173,6 +173,7 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static_files'),
     os.path.join(BASE_DIR, "frontend/dist"),
+    os.path.join(BASE_DIR, "website_assets"),
     os.path.join(BASE_DIR, 'user_upload'),
     os.path.join(BASE_DIR, 'account/templates/account'),
     os.path.join(BASE_DIR, 'account_finance/templates/account_finance'),
@@ -187,7 +188,11 @@ STATICFILES_DIRS = [
 
 # 存放使用者上傳的大頭照
 MEDIA_URL = '/user_upload/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'user_upload')  
+MEDIA_ROOT = os.path.join(BASE_DIR, 'user_upload')
+
+# customized pic folder
+PIC_URL = '/website_assets/'
+PIC_ROOT = os.path.join(BASE_DIR, 'website_assets') 
 
 #要寄信的相關設定
 

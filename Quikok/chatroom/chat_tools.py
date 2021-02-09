@@ -7,6 +7,7 @@ from datetime import datetime
 from .system_2user_layer import layer_info_maneger
 import logging
 
+
 logging.basicConfig(level=logging.NOTSET) #DEBUG
 class system_msg_producer:
     # 傳訊息代碼進來, 回應相對的資訊
