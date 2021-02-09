@@ -192,15 +192,12 @@ STATICFILES_DIRS = [
 MEDIA_URL = '/user_upload/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'user_upload')
 
-# customized pic folder
-PIC_URL = '/website_assets/'
-PIC_ROOT = os.path.join(BASE_DIR, 'website_assets') 
 
 #要寄信的相關設定
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 import socket
-EMAIL_HOST = socket.gethostbyname('smtp.gmail.com')
+EMAIL_HOST = socket.gethostbyname('smtp.gmail.com') # 改成這個會固定發IPv4,不用經IPv6,較快
 #EMAIL_HOST = 'smtp.gmail.com'  #SMTP伺服器
 EMAIL_PORT = 587  #TLS通訊埠號
 EMAIL_USE_TLS = True  #開啟TLS(傳輸層安全性)
