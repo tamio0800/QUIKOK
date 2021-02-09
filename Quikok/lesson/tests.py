@@ -654,7 +654,8 @@ class Lesson_Info_Related_Functions_Test(TestCase):
             'target_students': 'test',
             'lesson_remarks': 'test',
             'syllabus': 'test',
-            'lesson_attributes': 'test'   
+            'lesson_attributes': 'test',
+            'lesson_type': 'offline'
             }
         response = \
             self.client.post(
@@ -737,6 +738,21 @@ class Lesson_Info_Related_Functions_Test(TestCase):
             ),
             lesson_card.objects.values()
         )  # 測試課程小卡有寫入
+
+        # 再建立第二門課程
+        lesson_post_data['lesson_title'] = 'second_test_lesson'
+        self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+
+        # 老師更改資訊，看兩門課程小卡會不會同步更新
+        teacher_post_data['nickname'] = 'test_210209_nickname'
+        # 將老師的修改資料傳到對應的api
+        self.client.post(path='/api/account/editTeacherProfile/', data=teacher_post_data)  # 老師修改個人資料
+        self.assertEqual(
+            [teacher_post_data['nickname'], teacher_post_data['nickname']],
+            list(lesson_card.objects.values_list('teacher_nickname', flat=True)),
+            lesson_card.objects.values()
+        )
+
 
         try:
             shutil.rmtree(f'user_upload/teachers/{test_username}')

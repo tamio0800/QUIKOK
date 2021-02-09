@@ -796,7 +796,6 @@ def set_lesson_s_status(request):
     action = request.POST.get('selling_status', False)
     teacher_auth_id = request.POST.get('userID', False)
     lesson_id = request.POST.get('lessonID', False) 
-    #print(action, teacher_auth_id, lesson_id)
 
     if not check_if_all_variables_are_true(action, teacher_auth_id, lesson_id):
         response['status'] = 'failed'
