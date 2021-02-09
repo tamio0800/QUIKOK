@@ -1,6 +1,7 @@
 from django.core.mail import EmailMessage
 from django.conf import settings
 from django.template.loader import get_template #render_to_string, 
+import os
 #from django.template import Context, Template
 #from django.utils.html import strip_tags
 #from email.mime.image import MIMEImage 夾附件用
@@ -10,8 +11,8 @@ class email_manager:
     # 管理emai主題以及要渲染的html
     def __init__(self):
         self.email_pattern = {
-            '學生註冊成功通知': './student_send_sign_up_success.html',
-            '老師註冊成功通知': './teacher_send_sign_up_success.html'
+            '學生註冊成功通知': os.path.join(settings.BASE_DIR,'account/templates/account/student_send_sign_up_success.html'),
+            '老師註冊成功通知': os.path.join(settings.BASE_DIR,'account/templates/account/teacher_send_sign_up_success.html')
         }
     
     def send_welcome_email_new_signup_teacher(self, **kwargs):
@@ -40,7 +41,7 @@ class email_manager:
 
                 return True
             except Exception as e:
-                print(f'Exception: {e}')
+                print(f'account/email_sending send welcome teacher Exception: {e}')
                 return False
     
     def send_welcome_email_new_signup_student(self, **kwargs):
@@ -50,7 +51,7 @@ class email_manager:
         #e.send_welcome_email_new_signup_student(student_authID = 1,student_nickname = 'test',student_email =  'test')
         if False not in [student_authID,student_nickname,student_email]:
             try:
-                pattern_html = self.email_pattern['老師註冊成功通知']
+                pattern_html = self.email_pattern['學生註冊成功通知']
                 suit_pattern = get_template(pattern_html)
                 email_context = {
                     'student_nickname': student_nickname

@@ -16,7 +16,7 @@ from time import time
 
 
 class lesson_email_manager:
-    print(os.getcwd())
+    #print(os.getcwd())
     # 管理email標題以及要渲染的html
     def __init__(self):
         self.email_pattern = {
