@@ -44,10 +44,10 @@ def send_email_one_day_before_booking_date():
     baseline_time = datetime.now()+timedelta(days=1) # 製作出明天的日期當基準
     #baseline_time = datetime.now()+timedelta(days=5) # 測試用
     # 篩選出年月日跟基準相同的課程
-    st = time()
+    # st = time()
     booking_lesson_queryset = lesson_booking_info.objects.filter(booking_status='confirmed', 
                                                                 booking_start_datetime__date = baseline_time)
-    print(len(booking_lesson_queryset))
+    # print(len(booking_lesson_queryset))
     for each_class in booking_lesson_queryset:
         class_time_datetime = each_class.booking_start_datetime
         class_time_str = class_time_datetime.strftime('%Y-%m-%d %H:%M:%S')
@@ -58,17 +58,17 @@ def send_email_one_day_before_booking_date():
         email_info_dict['student_authID'] =  each_class.student_auth_id
         lesson_email_notification.send_student_remind_one_day_before_lesson(**email_info_dict)
         lesson_email_notification.send_teacher_remind_one_day_before_lesson(**email_info_dict)
-    print(f"lesson/views email_sending,booking_lesson_query consumed time test: {time()-st}")
+    # print(f"lesson/views email_sending,booking_lesson_query consumed time test: {time()-st}")
 # 例項化
 scheduler = BackgroundScheduler()
 # 每間隔24小時執行一次, 只設定起始時間
-st = time()
+# st = time()
 
 scheduler.add_job(send_email_one_day_before_booking_date, 'interval',
      hours = 1, start_date = '2021-02-02 18:41:00')
    #,end_date = '2021-02-02 10:31:00' seconds, minutes, hours
 scheduler.start()
-print(f"lesson/views email_sending, scheduler consumed time test: {time()-st}")
+# print(f"lesson/views email_sending, scheduler consumed time test: {time()-st}")
 ##課前提醒排程功能分隔線##
 
 @login_required
@@ -554,191 +554,240 @@ def return_lesson_details_for_browsing(request):
 
 @require_http_methods(['POST'])
 def create_or_edit_a_lesson(request):
-
+    '''
+    用來建立課程或是修改課程的api。
+    '''
     response = dict()
+
     action = request.POST.get('action', False)
     teacher_auth_id = request.POST.get('userID', False)
-    lesson_id = request.POST.get('lessonID', False)  # 新增沒有, 修改才有
-    the_leeson_manager = lesson_manager()
+    lesson_id = request.POST.get('lessonID', False)  # 新增的話為空值, 修改才有
+    big_title = request.POST.get('big_title', False)
+    little_title = request.POST.get('little_title', False)
+    title_color = request.POST.get('title_color', False)
+    background_picture_code = request.POST.get('background_picture_code', False)
+    lesson_title = request.POST.get('lesson_title', False)
+    price_per_hour = request.POST.get('price_per_hour', False)
+    discount_price = request.POST.get('discount_price', False)
+    trial_class_price = request.POST.get('trial_class_price', False)
+    highlight_1 = request.POST.get('highlight_1', False)
+    highlight_2 = request.POST.get('highlight_2', False)
+    highlight_3 = request.POST.get('highlight_3', False)
+    lesson_intro = request.POST.get('lesson_intro', False)
+    how_does_lesson_go = request.POST.get('how_does_lesson_go', False)
+    target_students = request.POST.get('target_students', False)
+    lesson_remarks = request.POST.get('lesson_remarks', False)
+    syllabus = request.POST.get('syllabus', False)
+    lesson_attributes = request.POST.get('lesson_attributes', False)
+    selling_status = request.POST.get('selling_status', False)
+    lesson_has_one_hour_package = request.POST.get('lesson_has_one_hour_package', False)
+    is_this_lesson_online_or_offline = request.POST.get('lesson_type', False)
 
-    if not check_if_all_variables_are_true(action, teacher_auth_id):
-        # 萬一有變數沒有傳到後端來的話...
+    # the_leeson_manager = lesson_manager()
+
+    if check_if_all_variables_are_true(action, teacher_auth_id, big_title, little_title,
+    title_color, background_picture_code, lesson_title, price_per_hour, trial_class_price, discount_price,
+    highlight_1, highlight_2, highlight_3, lesson_intro, how_does_lesson_go, target_students, lesson_remarks,
+    syllabus, lesson_attributes, selling_status, lesson_has_one_hour_package, is_this_lesson_online_or_offline):
+        # 有成功收到所有資料
+        # 先確認該老師存不存在
+        teacher_object = teacher_profile.objects.filter(auth_id=teacher_auth_id).first()
+
+        if teacher_object is None:
+            # 該老師不存在
+            response['status'] = 'failed'
+            response['errCode'] = 1
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        else:
+            # 有找到該名老師
+            # 確認是要新建課程或是修改課程
+            if action == 'createLesson':
+                # 是新建課程
+                # 要同步建立老師的lessons資料夾, 下方的lesson_id資料夾，如
+                # user_uploaded/teachers/username/lessons/3(<< which is the lesson id)
+                lessons_folder_path = \
+                    f'user_upload/teachers/{teacher_object.username}/lessons'
+
+                if os.path.isdir(lessons_folder_path) == False:
+                    # 該資料夾尚未被建立
+                    os.mkdir(lessons_folder_path)
+                
+                new_lesson_object = \
+                    lesson_info.objects.create(
+                        teacher = teacher_object,
+                        big_title = big_title,
+                        little_title = little_title,
+                        title_color = title_color,
+                        background_picture_code = background_picture_code,
+                        background_picture_path = '',
+                        lesson_title = lesson_title,
+                        price_per_hour = price_per_hour,
+                        lesson_has_one_hour_package = lesson_has_one_hour_package=='true',
+                        trial_class_price = trial_class_price,
+                        discount_price = discount_price,
+                        highlight_1 = highlight_1,
+                        highlight_2 = highlight_2,
+                        highlight_3 = highlight_3,
+                        lesson_intro = lesson_intro,
+                        how_does_lesson_go = how_does_lesson_go,
+                        is_this_lesson_online_or_offline = is_this_lesson_online_or_offline,
+                        target_students = target_students,
+                        lesson_remarks = lesson_remarks,
+                        syllabus = syllabus,
+                        lesson_attributes = lesson_attributes,
+                        lesson_avg_score = 0.0,
+                        lesson_reviewed_times = 0,
+                        selling_status = selling_status
+                    )  # 課程建立完成(尚未儲存寫入)，接著要確認用戶有否上傳背景圖片
+
+                lesson_folder_path = \
+                    f"{lessons_folder_path}/{str(new_lesson_object.id)}"
+                if not os.path.isdir(lesson_folder_path):
+                    # 沒有該門課程專屬的資料夾
+                    os.mkdir(lesson_folder_path)
+
+                # 判斷老師是否有上傳圖片
+                has_teacher_uploaded_lesson_background_picture = \
+                    background_picture_code == '99'
+                if has_teacher_uploaded_lesson_background_picture:
+                    # 有上傳圖片
+                    uploaded_background_picture = request.FILES["background_picture_path"]
+                    fs = FileSystemStorage(location=lesson_folder_path)
+                    file_extension = uploaded_background_picture.name.split('.')[-1]
+                    fs.save(f"customized_lesson_background.{file_extension}" , uploaded_background_picture) # 檔名統一改成thumbnail開頭
+                    new_lesson_object.background_picture_path = \
+                        f"/{lesson_folder_path}/customized_lesson_background.{file_extension}"
+                
+                new_lesson_object.save()
+                # 成功建立課程
+                # 接下來還有 「課程小卡更新」 以及 「課程方案更新」兩件事情要做
+                # 是不是應該移到 models 改用 signal 來做呢 ><
+
+                object_accessed_signal.send(
+                    sender='create_or_edit_a_lesson',
+                    auth_id=teacher_auth_id,
+                    ip_address=get_client_ip(request),
+                    url_path=request.META.get('PATH_INFO'),
+                    model_name='lesson_info',
+                    object_name=request.POST.get('lesson_title'),
+                    object_id=new_lesson_object.id,
+                    user_agent=request.META.get('HTTP_USER_AGENT'),
+                    action_type='create lesson after signup',
+                    remark=None) # 傳送訊號到用戶行為TABLE
+
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = new_lesson_object.id
+
+            elif action == 'editLesson':
+                # 是編輯課程
+                # 先確認一下有沒有該門課程
+                lesson_object = lesson_info.objects.filter(id=lesson_id).first()
+
+                if lesson_object is None:
+                    # 找不到該門課程
+                    response['status'] = 'failed'
+                    response['errCode'] = 2
+                    response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                    response['data'] = lesson_id
+                
+                else:
+                    # 該門課程存在
+                    # 確認一下老師與課程能不能對應
+                    if lesson_object.teacher.auth_id != teacher_object.auth_id:
+                        # 不對應
+                        response['status'] = 'failed'
+                        response['errCode'] = 3
+                        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                        response['data'] = lesson_object.teacher.auth_id
+
+                    else:
+                        # 是對應的，可以開始進行內容改動了
+                        lessons_folder_path = \
+                            f'user_upload/teachers/{teacher_object.username}/lessons'
+                        lesson_folder_path = \
+                            f"{lessons_folder_path}/{str(lesson_object.id)}"
+
+                        if os.path.isdir(lessons_folder_path) == False:
+                            # 該資料夾尚未被建立
+                            os.mkdir(lessons_folder_path)
+
+                        if not os.path.isdir(lesson_folder_path):
+                            # 沒有該門課程專屬的資料夾
+                            os.mkdir(lesson_folder_path)
+
+                        # 判斷老師是否有上傳圖片
+                        has_teacher_uploaded_lesson_background_picture = \
+                            background_picture_code == '99'
+
+                        if has_teacher_uploaded_lesson_background_picture:
+                            # 有上傳圖片
+                            uploaded_background_picture = request.FILES["background_picture_path"]
+                            fs = FileSystemStorage(location=lesson_folder_path)
+                            file_extension = uploaded_background_picture.name.split('.')[-1]
+                            fs.save(f"customized_lesson_background.{file_extension}" , uploaded_background_picture) # 檔名統一改成thumbnail開頭
+                            lesson_object.background_picture_path = \
+                                f"/{lesson_folder_path}/customized_lesson_background.{file_extension}"
+
+                        lesson_object.big_title = big_title
+                        lesson_object.little_title = little_title
+                        lesson_object.title_color = title_color
+                        lesson_object.background_picture_code = background_picture_code
+                        # lesson_object.background_picture_path = background_picture_path
+                        lesson_object.lesson_title = lesson_title
+                        lesson_object.price_per_hour = price_per_hour
+                        lesson_object.lesson_has_one_hour_package = lesson_has_one_hour_package=='true'
+                        lesson_object.trial_class_price = trial_class_price
+                        lesson_object.discount_price = discount_price
+                        lesson_object.highlight_1 = highlight_1
+                        lesson_object.highlight_2 = highlight_2
+                        lesson_object.highlight_3 = highlight_3
+                        lesson_object.lesson_intro = lesson_intro
+                        lesson_object.how_does_lesson_go = how_does_lesson_go
+                        lesson_object.is_this_lesson_online_or_offline = is_this_lesson_online_or_offline
+                        lesson_object.target_students = target_students
+                        lesson_object.lesson_remarks = lesson_remarks
+                        lesson_object.syllabus = syllabus
+                        lesson_object.lesson_attributes = lesson_attributes
+                        lesson_object.selling_status = selling_status
+
+                        lesson_object.save()
+                        # 成功編輯課程
+                        # 接下來還有 「課程小卡更新」 以及 「課程方案更新」兩件事情要做
+                        # 是不是應該移到 models 改用 signal 來做呢 ><
+
+                        object_accessed_signal.send(
+                            sender='create_or_edit_a_lesson',
+                            auth_id=teacher_auth_id,
+                            ip_address=get_client_ip(request),
+                            url_path=request.META.get('PATH_INFO'),
+                            model_name='lesson_info',
+                            object_name=request.POST.get('lesson_title'),
+                            object_id=lesson_object.id,
+                            user_agent=request.META.get('HTTP_USER_AGENT'),
+                            action_type='edit lesson',
+                            remark=None) # 傳送訊號到用戶行為TABLE
+
+                        response['status'] = 'success'
+                        response['errCode'] = None
+                        response['errMsg'] = None
+                        response['data'] = lesson_object.id
+
+            else:
+                # 接收到不知道幹嘛的action
+                response['status'] = 'failed'
+                response['errCode'] = 4
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                response['data'] = action
+                        
+    else:
+        # 資料傳輸錯誤
         response['status'] = 'failed'
         response['errCode'] = 0
         response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
-        return JsonResponse(response)
-
-    if action == 'createLesson':
-        # 課程新增
-        response['status'], response['errCode'], response['errMsg'], response['data']= \
-            the_leeson_manager.setup_a_lesson(
-                teacher_auth_id, request, None, action)
-
-        object_accessed_signal.send(
-            sender='create_or_edit_a_lesson',
-            auth_id=teacher_auth_id,
-            ip_address=get_client_ip(request),
-            url_path=request.META.get('PATH_INFO'),
-            model_name='lesson_info',
-            object_name=request.POST.get('lesson_title'),
-            object_id=response.get('data'),
-            user_agent=request.META.get('HTTP_USER_AGENT'),
-            action_type='create lesson after signup',
-            remark=None) # 傳送訊號
-
-        if response['status'] == 'success':
-            try:
-                # 確定成功再來更新 sales_sets
-                # 先把一些共同的欄位合併在一個list內
-                the_lesson_info_object = lesson_info.objects.filter(id=response['data']).first()
-                shared_columns = {
-                    'lesson_id': response['data'],
-                    'teacher_auth_id': the_lesson_info_object.teacher.auth_id,
-                    'price_per_hour': the_lesson_info_object.price_per_hour 
-                }
-                
-                if the_lesson_info_object.selling_status == 'selling':
-                    # 假設是 status: selling 再來進行，反之則不必
-                    # 即使非 selling ，也不需要 inactivate old sales_sets ，因為是新建立的課程
-
-                    # 要先確定 1.是否有試課方案  2.是否有單堂方案  3.其他方案(\d*:\d*的格式) 
-                    if the_lesson_info_object.trial_class_price != -999:
-                        # 有試課方案
-                        shared_columns['sales_set'] = 'trial'
-                        shared_columns['total_hours_of_the_sales_set'] = 1
-                        shared_columns['price_per_hour_after_discount'] = the_lesson_info_object.trial_class_price
-                        shared_columns['total_amount_of_the_sales_set'] = the_lesson_info_object.trial_class_price
-                        
-                        lesson_sales_sets.objects.create(
-                            **shared_columns
-                        ).save()
-                    
-                    if the_lesson_info_object.lesson_has_one_hour_package == True:
-                        # 有單堂方案
-                        shared_columns['sales_set'] = 'no_discount'
-                        shared_columns['total_hours_of_the_sales_set'] = 1
-                        shared_columns['price_per_hour_after_discount'] = the_lesson_info_object.price_per_hour
-                        shared_columns['total_amount_of_the_sales_set'] = the_lesson_info_object.price_per_hour
-
-                        lesson_sales_sets.objects.create(
-                            **shared_columns
-                        ).save()
-
-                    if len(the_lesson_info_object.discount_price) > 2:
-                        # 有其他方案
-                        for each_hours_discount_set in [_ for _ in the_lesson_info_object.discount_price.split(';') if len(_) > 0]:
-                            
-                            hours, discount_price = each_hours_discount_set.split(':')
-                            shared_columns['sales_set'] = each_hours_discount_set
-                            shared_columns['total_hours_of_the_sales_set'] = int(hours)
-                            shared_columns['price_per_hour_after_discount'] = round(the_lesson_info_object.price_per_hour * int(discount_price) / 100)
-                            shared_columns['total_amount_of_the_sales_set'] = round(the_lesson_info_object.price_per_hour * int(hours) * int(discount_price) / 100)
-
-                            lesson_sales_sets.objects.create(
-                                **shared_columns
-                            ).save()
-            except Exception as e:
-                print(f'Exception: {e}')
-                response['status'] = 'failed'
-                response['errCode'] = '5'
-                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
-                response['data'] = None
-
-        return JsonResponse(response)
-
-    elif action == 'editLesson':
-
-        if not lesson_id:
-            # 沒有傳入要編輯的 lesson_id
-            response['status'] = 'failed'
-            response['errCode'] = '6'
-            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
-            response['data'] = None
-        
-        else:
-
-            response['status'], response['errCode'], response['errMsg'], response['data']= \
-                the_leeson_manager.setup_a_lesson(
-                    teacher_auth_id, request, lesson_id, action)
-
-            if response['status'] == 'success':
-                # 確定成功再來更新 sales_sets
-                try:    
-                    # 先把一些共同的欄位合併在一個list內
-                    the_lesson_info_object = lesson_info.objects.filter(id=response['data']).first()
-                    shared_columns = {
-                        'lesson_id': response['data'],
-                        'teacher_auth_id': the_lesson_info_object.teacher.auth_id,
-                        'price_per_hour': the_lesson_info_object.price_per_hour 
-                    }
-                    # 要先將舊版的 sales_sets 狀態設成 closed >> is_open: False
-                    # 但如果只是修改 selling_status 呢? >>
-                    #   這樣好了，只有當 selling_status 為 "selling" 時才紀錄 lesson_sales_sets，
-                    #   其他時候只要把存在的 sales_sets 改為 is_open: False 就好了
-                    if the_lesson_info_object.selling_status == 'selling':
-                        
-                        # 先將舊的 sales_sets inactivate
-                        for each_sales_set in lesson_sales_sets.objects.filter(lesson_id=response['data']).filter(is_open=True):
-                            setattr(each_sales_set, 'is_open', False)
-                            each_sales_set.save()
-
-                        # 要確定 1.是否有試課方案  2.是否有單堂方案  3.其他方案(\d*:\d*的格式)
-                        if the_lesson_info_object.trial_class_price != -999:
-                            # 有試課方案
-                            shared_columns['sales_set'] = 'trial'
-                            shared_columns['total_hours_of_the_sales_set'] = 1
-                            shared_columns['price_per_hour_after_discount'] = the_lesson_info_object.trial_class_price
-                            shared_columns['total_amount_of_the_sales_set'] = the_lesson_info_object.trial_class_price
-                            
-                            lesson_sales_sets.objects.create(
-                                **shared_columns
-                            ).save()
-                        
-                        if the_lesson_info_object.lesson_has_one_hour_package == True:
-                            # 有單堂方案
-                            shared_columns['sales_set'] = 'no_discount'
-                            shared_columns['total_hours_of_the_sales_set'] = 1
-                            shared_columns['price_per_hour_after_discount'] = the_lesson_info_object.price_per_hour
-                            shared_columns['total_amount_of_the_sales_set'] = the_lesson_info_object.price_per_hour
-
-                            lesson_sales_sets.objects.create(
-                                **shared_columns
-                            ).save()
-
-                        if len(the_lesson_info_object.discount_price) > 2:
-                            # 有其他方案
-                            for each_hours_discount_set in [_ for _ in the_lesson_info_object.discount_price.split(';') if len(_) > 0]:
-                                
-                                hours, discount_price = each_hours_discount_set.split(':')
-                                shared_columns['sales_set'] = each_hours_discount_set
-                                shared_columns['total_hours_of_the_sales_set'] = int(hours)
-                                shared_columns['price_per_hour_after_discount'] = round(the_lesson_info_object.price_per_hour * int(discount_price) / 100)
-                                shared_columns['total_amount_of_the_sales_set'] = round(the_lesson_info_object.price_per_hour * int(hours) * int(discount_price) / 100)
-
-                                lesson_sales_sets.objects.create(
-                                    **shared_columns
-                                ).save()
-                    else:
-                        # 因為最新的課程狀態不是 selling ，因此把 sales_sets 取消 active 就好了
-                        for each_sales_set in lesson_sales_sets.objects.filter(lesson_id=response['data']).filter(is_open=True):
-                            setattr(each_sales_set, 'is_open', False)
-                            each_sales_set.save()
-                                
-                except Exception as e:
-                    print(f'Exception: {e}')
-                    response['status'] = 'failed'
-                    response['errCode'] = '5'
-                    response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
-                    response['data'] = None  
-                
-        return JsonResponse(response)
-
-    else:
-        response['status'] = 'failed'
-        response['errCode'] = 1
-        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
-        response['data'] = None
-        return JsonResponse(response)
+    
+    return JsonResponse(response)
 
 
 @require_http_methods(['POST'])
@@ -747,7 +796,6 @@ def set_lesson_s_status(request):
     action = request.POST.get('selling_status', False)
     teacher_auth_id = request.POST.get('userID', False)
     lesson_id = request.POST.get('lessonID', False) 
-    #print(action, teacher_auth_id, lesson_id)
 
     if not check_if_all_variables_are_true(action, teacher_auth_id, lesson_id):
         response['status'] = 'failed'

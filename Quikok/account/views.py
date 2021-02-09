@@ -386,14 +386,15 @@ def edit_teacher_profile(request):
         the_teacher_info_object.save()  # 儲存資料
 
         # ================更新課程小卡================
-        the_lesson_card_manager = lesson_card_manager()
+        # 2021.02.09  >>  改用signal做
+        # the_lesson_card_manager = lesson_card_manager()
         
-        all_lesson_ids_of_the_teacher = list(lesson_info.objects.filter(teacher__auth_id=auth_id).values_list('id', flat=True))
-        for each_lesson_id in all_lesson_ids_of_the_teacher:
-            the_lesson_card_manager.setup_a_lesson_card(
-                teacher_auth_id=auth_id,
-                corresponding_lesson_id=each_lesson_id
-            )
+        # all_lesson_ids_of_the_teacher = list(lesson_info.objects.filter(teacher__auth_id=auth_id).values_list('id', flat=True))
+        # for each_lesson_id in all_lesson_ids_of_the_teacher:
+        #     the_lesson_card_manager.setup_a_lesson_card(
+        #         teacher_auth_id=auth_id,
+        #         corresponding_lesson_id=each_lesson_id
+        #     )
         # ================更新課程小卡================
 
     response['status'] = 'success'

@@ -2,6 +2,11 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
+from handy_functions import get_lesson_s_best_sale, get_teacher_s_best_education_and_working_experience
+
+import logging
+FORMAT = '%(asctime)s %(levelname)s: %(message)s'
+logging.basicConfig(level=logging.DEBUG, format=FORMAT)
 
 
 
@@ -319,6 +324,37 @@ class feedback(models.Model):
     # 可以用來衡量問題回覆、解決的時間長度
     def __str__(self):
         return str(self.id)
+
+'''
+下面用來寫signal監聽特定 TABLES 是否有改動，而進行對應動作的機制
+'''
+@receiver(post_save, sender=teacher_profile)
+def when_lesson_info_changed_synchronize_lesson_card(sender, instance:teacher_profile, created, **kwargs):
+    '''
+    當 teacher_profile 這個 table 有新建課程或是編輯課程的動作時，要同步對課程小卡進行更新。
+    '''
+    from lesson.models import lesson_card
+
+    if created:
+        # 一般只有註冊後才會開設課程，所以註冊暫時不用做任何事
+        logging.info(f"A teacher has registered ({instance.username}). ")
+        pass
+        
+    else:
+        # 先列出這個老師所有的課程(小卡)
+        lesson_card_objects = lesson_card.objects.filter(teacher_auth_id=instance.auth_id)
+        first_exp, second_exp, is_first_exp_approved, is_second_exp_approved = \
+            get_teacher_s_best_education_and_working_experience(instance)
+
+        lesson_card_objects.update(
+            teacher_thumbnail_path = instance.thumbnail_dir,
+            teacher_nickname = instance.nickname,
+            education = first_exp,
+            education_is_approved = is_first_exp_approved,
+            working_experience = second_exp,
+            working_experience_is_approved = is_second_exp_approved)
+        logging.info(f"A teacher has editted onself profile ({instance.username}), and has synchronized {str(lesson_card_objects.count())} lesson cards.")
+
 
     
 @receiver(post_save, sender=student_profile)

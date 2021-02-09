@@ -279,6 +279,8 @@ class lesson_manager:
                 if not os.path.isdir(lessons_folder_path):
                     os.mkdir(lessons_folder_path)
                 # 判斷老師是否有上傳圖片
+                
+                
                 has_teacher_uploaded_lesson_background_picture = \
                     int(_temp_lesson_info['background_picture_code']) == 99
                 _temp_lesson_info['background_picture_path'] = ''  # 因為還不知道lesson_id，故先給空字串
@@ -290,6 +292,7 @@ class lesson_manager:
                     lessons_folder_path + '/' + str(created_lesson.id)
                 if not os.path.isdir(lessons_folder_path):
                     os.mkdir(lessons_folder_path)
+                
                 if has_teacher_uploaded_lesson_background_picture:
                     # 有上傳圖片
                     uploaded_background_picture = a_request_object.FILES["background_picture_path"]
@@ -519,6 +522,7 @@ class lesson_card_manager:
             self.lesson_card_info['background_picture_path'] =  lesson_object.background_picture_path
             self.lesson_card_info['price_per_hour'] =  lesson_object.price_per_hour
             self.lesson_card_info['lesson_title'] =  lesson_object.lesson_title
+            self.lesson_card_info['is_this_lesson_online_or_offline'] =  lesson_object.is_this_lesson_online_or_offline
             self.lesson_card_info['highlight_1'] =  lesson_object.highlight_1
             self.lesson_card_info['highlight_2'] =  lesson_object.highlight_2
             self.lesson_card_info['highlight_3'] =  lesson_object.highlight_3

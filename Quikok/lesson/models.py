@@ -3,6 +3,12 @@ from account.models import teacher_profile, student_profile
 from datetime import timedelta, date as date_function
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
+from handy_functions import get_lesson_s_best_sale, get_teacher_s_best_education_and_working_experience
+
+import logging
+FORMAT = '%(asctime)s %(levelname)s: %(message)s'
+logging.basicConfig(level=logging.DEBUG, format=FORMAT)
+        
 
 class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的東西填入
     # 每堂課程會有自己的unique id，我們用這個來辨識、串連課程 09/25 討論後認為先用內建的id就好
@@ -11,7 +17,7 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     big_title = models.CharField(max_length = 10)  # 背景圖片的大標題
     little_title = models.CharField(max_length = 10)  # 背景圖片的小標題
     title_color = models.CharField(max_length = 7) # 標題顏色 以色碼存入，  >> #\d{6}
-    background_picture_code = models.IntegerField() 
+    background_picture_code = models.IntegerField()
     # 這個用來儲存user選擇了什麼樣的上架背景圖，舉例來說99代表user自己上傳的圖，這時我們要找到對應的路徑回傳給前端；
     # 如果今天這個值是1、2、3之類的Quikok預設圖片，那我們直接回傳代號給前端即可。
     background_picture_path = models.TextField(blank=True) # 指向上傳圖的路徑
@@ -35,9 +41,10 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     # lesson_intro = models.CharField(blank=True, max_length=300)
     # 課程詳細介紹，不超過300長度
     how_does_lesson_go = models.TextField(blank=True, null=True)
-    # how_does_lesson_go = models.CharField(blank=True, max_length=200)
     # 課程方式/教學方式，舉例來說：「本堂課前十分鐘小考，測驗上次的內容吸收程度，
     # 接著正式上課兩小時，最後15分鐘溫習。」
+    is_this_lesson_online_or_offline = models.CharField(max_length=10, default='online')
+    # 是線上課程(online)或是實體課程(offline)
     target_students = models.TextField(blank=True, null=True) # 授課對象
     lesson_remarks = models.TextField(blank=True, null=True) # 備註，目前是用來儲存「給學生的注意事項」
     # lesson_background_folder = models.CharField(max_length = 80)# 該課程背景圖片指向的資料夾 可選預設或上傳
@@ -71,24 +78,25 @@ class lesson_card(models.Model):
     # 要即時組合老師、課程、評價資訊會需要大量的運算，不如多建立一個table，
     # 之後直接query就好。
     corresponding_lesson_id = models.IntegerField()  # 所對應的課程id
-    teacher_thumbnail_path = models.TextField(blank=True)  # 老師的大頭照路徑
+    teacher_thumbnail_path = models.TextField(blank=True, null=True)  # 老師的大頭照路徑
     teacher_nickname = models.CharField(max_length = 40)
     teacher_auth_id = models.IntegerField()
     is_this_teacher_male = models.BooleanField(default=True)
+    is_this_lesson_online_or_offline = models.CharField(max_length=10, default='online') # 是線上課程(online)或是實體課程(offline)
     big_title = models.CharField(max_length = 10)  # 背景圖片的大標題
     little_title = models.CharField(max_length = 10)  # 背景圖片的小標題
     title_color = models.CharField(max_length = 7)    
     background_picture_code = models.IntegerField()
-    background_picture_path = models.TextField(blank=True) # 指向上傳圖的路徑
+    background_picture_path = models.TextField(blank=True, null=True) # 指向上傳圖的路徑
     lesson_title = models.CharField(max_length = 14) # 課程的名稱
     highlight_1 = models.CharField(max_length = 10)  # 亮點介紹1，不要超過10個字元長
     highlight_2 = models.CharField(max_length = 10)  # 亮點介紹2，不要超過10個字元長
     highlight_3 = models.CharField(max_length = 10)  # 亮點介紹3，不要超過10個字元長
     price_per_hour = models.IntegerField()  # 該門課程的鐘點費
     best_sale = models.CharField(max_length = 20) # 用來吸引人的最優惠折價標語
-    education = models.CharField(max_length = 60, blank=True)  # 最高學歷說明
+    education = models.CharField(max_length = 60, blank=True, null=True)  # 最高學歷說明
     education_is_approved = models.BooleanField()
-    working_experience = models.CharField(max_length = 100, blank=True)  # 經歷說明
+    working_experience = models.CharField(max_length = 100, blank=True, null=True)  # 經歷說明
     working_experience_is_approved = models.BooleanField()
     lesson_avg_score = models.FloatField(default = 0.0) # 這個是平均評分，每次評分表一更新這裡也會連動更新
     lesson_reviewed_times = models.IntegerField(default = 0) # 這個是課程被評分過幾次的統計
@@ -377,10 +385,77 @@ class lesson_info_for_users_not_signed_up(models.Model):
         # 理論上一個老師在這張table只會有一個row的資料，所以這樣寫比較好看
 
 
+'''
+下面用來寫signal監聽特定 TABLES 是否有改動，而進行對應動作的機制
+'''
+
+@receiver(post_save, sender=lesson_info)
+def when_lesson_info_changed_synchronize_lesson_card(sender, instance:lesson_info, created, **kwargs):
+    '''
+    當 lesson_info 這個 table 有新建課程或是編輯課程的動作時，要同步對課程小卡進行更新。
+    '''
+    first_exp, second_exp, is_first_exp_approved, is_second_exp_approved = \
+        get_teacher_s_best_education_and_working_experience(instance.teacher)
+
+    if created:
+        # 代表新建立了一門課程，此時要建立課程小卡的資料
+        lesson_card.objects.create(
+            corresponding_lesson_id = instance.id,
+            teacher_thumbnail_path = instance.teacher.thumbnail_dir,
+            teacher_nickname = instance.teacher.nickname,
+            teacher_auth_id = instance.teacher.auth_id,
+            is_this_teacher_male = instance.teacher.is_male,
+            is_this_lesson_online_or_offline = instance.is_this_lesson_online_or_offline,
+            big_title = instance.big_title,
+            little_title = instance.little_title,
+            title_color = instance.title_color,
+            background_picture_code = instance.background_picture_code,
+            background_picture_path = instance.background_picture_path,
+            lesson_title = instance.lesson_title,
+            highlight_1 = instance.highlight_1,
+            highlight_2 = instance.highlight_2,
+            highlight_3 = instance.highlight_3,
+            price_per_hour = instance.price_per_hour,
+            best_sale = get_lesson_s_best_sale(instance),
+            education = first_exp,
+            education_is_approved = is_first_exp_approved,
+            working_experience = second_exp,
+            working_experience_is_approved = is_second_exp_approved,
+            lesson_avg_score = 0.0,
+            lesson_reviewed_times = 0)
+        logging.info(f'Created lesson_card object after creating a lesson ({instance.lesson_title}).')
+    else:
+        # 代表編輯了一門課程，此時要同步更新課程小卡的資料，只要更新跟課程有關的即可
+        # 先找到對應的小卡物件
+        lesson_card_objects = lesson_card.objects.get(corresponding_lesson_id=instance.id)
+        
+        lesson_card_objects.is_this_lesson_online_or_offline = instance.is_this_lesson_online_or_offline
+        lesson_card_objects.big_title = instance.big_title
+        lesson_card_objects.little_title = instance.little_title
+        lesson_card_objects.title_color = instance.title_color
+        lesson_card_objects.background_picture_code = instance.background_picture_code
+        lesson_card_objects.background_picture_path = instance.background_picture_path
+        lesson_card_objects.lesson_title = instance.lesson_title
+        lesson_card_objects.highlight_1 = instance.highlight_1
+        lesson_card_objects.highlight_2 = instance.highlight_2
+        lesson_card_objects.highlight_3 = instance.highlight_3
+        lesson_card_objects.price_per_hour = instance.price_per_hour
+        lesson_card_objects.best_sale = get_lesson_s_best_sale(instance)
+        lesson_card_objects.education = first_exp
+        lesson_card_objects.education_is_approved = is_first_exp_approved
+        lesson_card_objects.working_experience = second_exp
+        lesson_card_objects.working_experience_is_approved = is_second_exp_approved
+
+        lesson_card_objects.save()
+        logging.info(f'Editted lesson_card object after editting a lesson ({instance.lesson_title}).')
+
+
 
 @receiver(post_save, sender=lesson_completed_record)
 def when_lesson_completed_notification_sent_by_teacher(sender, instance:lesson_completed_record, created, **kwargs):
-    # 代表建立了新資料，此時必須要回去將對應的課程預約狀態 booked_status 改成等待學生確認中
+    '''
+    代表建立了新資料，此時必須要回去將對應的課程預約狀態 booked_status 改成等待學生確認中
+    '''
     if created:
         # 只有建立新資料才要進行這個動作
         lesson_booking_object = lesson_booking_info.objects.get(id = instance.lesson_booking_info_id)
@@ -400,8 +475,10 @@ def when_lesson_completed_notification_sent_by_teacher(sender, instance:lesson_c
             
 @receiver(pre_save, sender=lesson_booking_info)
 def update_receiving_review_lesson_minutes(sender, instance:lesson_booking_info, **kwargs):
-    # 這裡要做的是，當狀態從 non-finished 變成 finished 時，要更新學生與老師的總上課時數
-    # 但因為需要學生進行確認，所以 不可能有一開始就是 finished 的狀況
+    '''
+    這裡要做的是，當狀態從 non-finished 變成 finished 時，要更新學生與老師的總上課時數；
+    但因為需要學生進行確認，所以 不可能有一開始就是 finished 的狀況
+    '''
     
     if instance.id is None:
         pass  # 只有改動的時候才需要注意
@@ -455,12 +532,13 @@ def update_receiving_review_lesson_minutes(sender, instance:lesson_booking_info,
 
 @receiver(post_save, sender=student_reviews_from_teachers)
 def update_student_review_aggregated_info(sender, instance:student_reviews_from_teachers, created, **kwargs):
-    # 當有老師給予學生評價(創建新紀錄)時，必須要連帶的更新該學生的評價儀表板
+    '''
+    當有老師給予學生評價(創建新紀錄)時，必須要連帶的更新該學生的評價儀表板，
+    這邊要確認課程是否有完結(finished)，因為學生/老師會留存上過多長課程的資料，
+    若還沒有雙方確認的時數的話，則不進行上課總時數的更新。
+    '''
     from account.models import student_review_aggregated_info
-    # 這邊要確認課程是否有完結(finished)，因為學生/老師會留存上過多長課程的資料，
-    # 若還沒有雙方確認的時數的話，則不進行上課總時數的更新；
-    # 這代表未來要再寫一個機制，當課程狀態從非 finished 變成 finished 時，要更新 student_review_aggregated_info 的上課時數
-    # >> 我決定先不在這邊進行時數更新，免得有兩邊都更新到的疑慮存在，這個欄位統一在 非 finished 變成 finished 更新!
+
     if created:
         # 只有建立新資料才要進行這個動作，其實編輯也需要啦，但是先不管這件事
         the_student_review_info_object = \
@@ -500,12 +578,13 @@ def update_student_review_aggregated_info(sender, instance:student_reviews_from_
 
 @receiver(post_save, sender=lesson_reviews_from_students)
 def update_teacher_review_aggregated_info(sender, instance:lesson_reviews_from_students, created, **kwargs):
-    # 當有學生給予老師評價(創建新紀錄)時，必須要連帶的更新該老師的評價儀表板
+    '''
+    當有學生給予老師評價(創建新紀錄)時，必須要連帶的更新該老師的評價儀表板，
+    這邊要確認課程是否有完結(finished)，因為學生/老師會留存上過多長課程的資料，
+    若還沒有雙方確認的時數的話，則不進行上課總時數的更新。
+    '''
     from account.models import teacher_review_aggregated_info
-    # 這邊要確認課程是否有完結(finished)，因為學生/老師會留存上過多長課程的資料，
-    # 若還沒有雙方確認的時數的話，則不進行上課總時數的更新；
-    # 這代表未來要再寫一個機制，當課程狀態從非 finished 變成 finished 時，要更新 student_review_aggregated_info 的上課時數
-    # >> 我決定先不在這邊進行時數更新，免得有兩邊都更新到的疑慮存在，這個欄位統一在 非 finished 變成 finished 更新!
+
     if created:
         # 只有建立新資料才要進行這個動作，其實編輯也需要啦，但是先不管這件事
         the_teacher_review_info_object = \
