@@ -48,8 +48,6 @@ class email_manager:
             teacher_authID = kwargs['teacherID']
             lesson_id = kwargs['lessonID']
             lesson_set = kwargs['lesson_set']
-            #print('lesson_set_id')
-            #print(lesson_set_id)
             q_discount = kwargs['q_discount']
 
             student_info = student_profile.objects.filter(auth_id = student_authID).first()
