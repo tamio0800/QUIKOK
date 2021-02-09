@@ -169,6 +169,8 @@ USE_TZ = False
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 # 不加這一行會出現奇怪的錯誤，無法進行python manage.py collectstatic
 
+# 在前端取用圖片的時候, /static/會取代在這邊註冊的路徑,所以要找以下路徑當中的檔案時,
+# 路徑是 /static/開頭
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static_files'),

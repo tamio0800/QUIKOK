@@ -18,10 +18,10 @@ class email_manager:
     # 管理email標題以及要渲染的html
     def __init__(self):
         self.email_pattern = {
-            '訂課匯款提醒': './send_new_order_remind.html',
-            '收到款項提醒': './send_order_success.html',
-            '通知老師有學生購買他的課': './teacher_send_order_success.html',
-            '通知老師有學生預約':'./teacher_send_remind_order.html'
+            '訂課匯款提醒': os.path.join(settings.BASE_DIR,'account_finance/templates/account_finance/send_new_order_remind.html'),
+            '收到款項提醒': os.path.join(settings.BASE_DIR,'account_finance/templates/account_finance/send_order_success.html'),
+            '通知老師有學生購買他的課': os.path.join(settings.BASE_DIR,'account_finance/templates/account_finance/teacher_send_order_success.html'),
+            '通知老師有學生預約': os.path.join(settings.BASE_DIR,'account_finance/templates/account_finance/teacher_send_remind_order.html')
         }
     def edit_student_balance_after_receive_payment(self, **kwargs):
         #print(os.getcwd())
