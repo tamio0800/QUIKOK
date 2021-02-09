@@ -478,9 +478,7 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         }
         self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
         self.assertEqual(
-            os.path.isdir('user_upload/teachers/' + test_username),
-            True
-        )
+            os.path.isdir('user_upload/teachers/' + test_username), True)
         # 應該已經建立完成了
 
         lesson_post_data = {
@@ -491,7 +489,7 @@ class Lesson_Info_Related_Functions_Test(TestCase):
             'title_color': '#000000',
             'background_picture_code': 1,
             'background_picture_path': '',
-            'lesson_title': 'test',
+            'lesson_title': 'test1_lesson_title',
             'price_per_hour': 800,
             'discount_price': '10:90;20:80;30:75;',
             'selling_status': 'selling',

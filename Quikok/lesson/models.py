@@ -4,6 +4,86 @@ from datetime import timedelta, date as date_function
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 
+import logging
+FORMAT = '%(asctime)s %(levelname)s: %(message)s'
+logging.basicConfig(level=logging.DEBUG, format=FORMAT)
+
+'''
+這裡先用來寫一些會用到的函式
+'''
+def get_lesson_s_best_sale(lesson_object):
+    '''
+    用來取得該門課程最優惠/吸引人的標語
+    '''
+    # lesson_object = lesson_info.objects.filter(id=lesson_id).first()
+    trial_class_price = lesson_object.trial_class_price
+    price_per_hour = lesson_object.price_per_hour
+    if trial_class_price != -999 and trial_class_price < price_per_hour:
+        # 有試教優惠的話就直接回傳
+        return "試課優惠"
+    else:
+        discount_price = lesson_object.discount_price
+        discount_pairs = discount_price.split(';')
+        all_discounts = [int(_.split(':')[-1]) for _ in discount_pairs if len(_) > 0]
+        if len(all_discounts) == 0:
+            # 沒有折數
+            return ''
+        else:
+            best_discount = min(all_discounts)
+            return str(100 - best_discount) + '% off'
+            # 反之則回傳  xx% off
+
+
+def get_teacher_s_best_education_and_working_experience(teacher_object):
+    '''
+    這個用來取得最適合呈現的，老師的「學歷」與「經歷」，以及這兩者的認證情況。
+    '''
+    # teacher_object = teacher_profile.objects.get(auth_id=teacher_auth_id)
+    
+    first_exp, second_exp = '', ''  # 第一個與第二個要回傳的東西
+    is_first_one_approved, is_second_one_approved = False, False  # 第一個與第二個要回傳的東西是否有經過認證
+    
+    if teacher_object.education_1 != '':
+        # 老師的 education_1 有值，理論上應該要有啦!
+        first_exp = teacher_object.education_1
+        is_first_one_approved = teacher_object.education_approved
+    elif teacher_object.education_2 != '':
+        # 老師的 education_1 沒有值，檢查第二學歷
+        first_exp = teacher_object.education_2
+        is_first_one_approved = teacher_object.education_approved
+    elif teacher_object.education_3 != '':
+        # 老師的 education_2 沒有值，檢查第三學歷
+        first_exp = teacher_object.education_3
+        is_first_one_approved = teacher_object.education_approved
+    elif teacher_object.company != '':
+        first_exp = teacher_object.company
+        is_first_one_approved = teacher_object.work_approved
+    elif teacher_object.special_exp != '':
+        first_exp = teacher_object.special_exp
+        is_first_one_approved = teacher_object.other_approved
+
+    if first_exp != '':
+        # 已經找到第一欄位了
+        if teacher_object.company != '' and first_exp != teacher_object.company:
+            # 開始找第二欄位，先看原本的工作有沒有值
+            second_exp = teacher_object.company
+            is_second_one_approved = teacher_object.work_approved
+        elif teacher_object.education_2 != '' and first_exp != teacher_object.education_2:
+            # 工作沒有值，但是第二學歷有值，用第二學歷
+            second_exp = teacher_object.education_2
+            is_second_one_approved = teacher_object.education_approved
+        elif teacher_object.special_exp != '' and first_exp != teacher_object.special_exp:
+            # 第二學歷也沒有值，用特殊經歷作為工作
+            second_exp = teacher_object.special_exp
+            is_second_one_approved = teacher_object.other_approved
+        elif teacher_object.education_3 != '' and first_exp != teacher_object.education_3:
+            # 特殊經歷也沒有值，但是第三學歷有值，用第三學歷
+            second_exp = teacher_object.education_3
+            is_second_one_approved = teacher_object.education_approved
+
+    return (first_exp, second_exp, is_first_one_approved, is_second_one_approved)
+        
+
 class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的東西填入
     # 每堂課程會有自己的unique id，我們用這個來辨識、串連課程 09/25 討論後認為先用內建的id就好
     # lesson_id = models.CharField(max_length = 40) 
@@ -382,9 +462,65 @@ class lesson_info_for_users_not_signed_up(models.Model):
 '''
 下面用來寫signal監聽特定 TABLES 是否有改動，而進行對應動作的機制
 '''
-@receiver(post_save, sender=lesson_completed_record)
-def when_lesson_completed_notification_sent_by_teacher(sender, instance:lesson_completed_record, created, **kwargs):
+@receiver(post_save, sender=lesson_info)
+def when_lesson_info_changed_synchronize_lesson_card(sender, instance:lesson_info, created, **kwargs):
+    '''
+    當 lesson_info 這個 table 有新建課程或是編輯課程的動作時，要同步對課程小卡進行更新。
+    '''
+    first_exp, second_exp, is_first_exp_approved, is_second_exp_approved = \
+        get_teacher_s_best_education_and_working_experience(instance.teacher)
 
+    if created:
+        # 代表新建立了一門課程，此時要建立課程小卡的資料
+        lesson_card.objects.create(
+            corresponding_lesson_id = instance.id,
+            teacher_thumbnail_path = instance.teacher.thumbnail_dir,
+            teacher_nickname = instance.teacher.nickname,
+            teacher_auth_id = instance.teacher.auth_id,
+            is_this_teacher_male = instance.teacher.is_male,
+            is_this_lesson_online_or_offline = instance.is_this_lesson_online_or_offline,
+            big_title = instance.big_title,
+            little_title = instance.little_title,
+            title_color = instance.title_color,
+            background_picture_code = instance.background_picture_code,
+            background_picture_path = instance.background_picture_path,
+            lesson_title = instance.lesson_title,
+            highlight_1 = instance.highlight_1,
+            highlight_2 = instance.highlight_2,
+            highlight_3 = instance.highlight_3,
+            price_per_hour = instance.price_per_hour,
+            best_sale = get_lesson_s_best_sale(instance),
+            education = first_exp,
+            education_is_approved = is_first_exp_approved,
+            working_experience = second_exp,
+            working_experience_is_approved = is_second_exp_approved,
+            lesson_avg_score = 0.0,
+            lesson_reviewed_times = 0)
+        logging.info(f'Created lesson_card object after creating a lesson ({instance.lesson_title}).')
+    else:
+        # 代表編輯了一門課程，此時要同步更新課程小卡的資料，只要更新跟課程有關的即可
+        # 先找到對應的小卡物件
+        lesson_card_objects = lesson_card.objects.get(corresponding_lesson_id=instance.id)
+        
+        lesson_card_objects.is_this_lesson_online_or_offline = instance.is_this_lesson_online_or_offline
+        lesson_card_objects.big_title = instance.big_title
+        lesson_card_objects.little_title = instance.little_title
+        lesson_card_objects.title_color = instance.title_color
+        lesson_card_objects.background_picture_code = instance.background_picture_code
+        lesson_card_objects.background_picture_path = instance.background_picture_path
+        lesson_card_objects.lesson_title = instance.lesson_title
+        lesson_card_objects.highlight_1 = instance.highlight_1
+        lesson_card_objects.highlight_2 = instance.highlight_2
+        lesson_card_objects.highlight_3 = instance.highlight_3
+        lesson_card_objects.price_per_hour = instance.price_per_hour
+        lesson_card_objects.best_sale = get_lesson_s_best_sale(instance)
+        lesson_card_objects.education = first_exp
+        lesson_card_objects.education_is_approved = is_first_exp_approved
+        lesson_card_objects.working_experience = second_exp
+        lesson_card_objects.working_experience_is_approved = is_second_exp_approved
+
+        lesson_card_objects.save()
+        logging.info(f'Editted lesson_card object after editting a lesson ({instance.lesson_title}).')
 
 
 

@@ -583,8 +583,8 @@ def create_or_edit_a_lesson(request):
     lesson_has_one_hour_package = request.POST.get('lesson_has_one_hour_package', False)
     is_this_lesson_online_or_offline = request.POST.get('lesson_type', False)
 
-    the_leeson_manager = lesson_manager()
-    
+    # the_leeson_manager = lesson_manager()
+
     if check_if_all_variables_are_true(action, teacher_auth_id, big_title, little_title,
     title_color, background_picture_code, lesson_title, price_per_hour, trial_class_price, discount_price,
     highlight_1, highlight_2, highlight_3, lesson_intro, how_does_lesson_go, target_students, lesson_remarks,
@@ -663,11 +663,6 @@ def create_or_edit_a_lesson(request):
                 # 接下來還有 「課程小卡更新」 以及 「課程方案更新」兩件事情要做
                 # 是不是應該移到 models 改用 signal 來做呢 ><
 
-                response['status'] = 'success'
-                response['errCode'] = None
-                response['errMsg'] = None
-                response['data'] = new_lesson_object.id
-
                 object_accessed_signal.send(
                     sender='create_or_edit_a_lesson',
                     auth_id=teacher_auth_id,
@@ -679,6 +674,11 @@ def create_or_edit_a_lesson(request):
                     user_agent=request.META.get('HTTP_USER_AGENT'),
                     action_type='create lesson after signup',
                     remark=None) # 傳送訊號到用戶行為TABLE
+
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = new_lesson_object.id
 
             elif action == 'editLesson':
                 # 是編輯課程
@@ -757,11 +757,6 @@ def create_or_edit_a_lesson(request):
                         # 接下來還有 「課程小卡更新」 以及 「課程方案更新」兩件事情要做
                         # 是不是應該移到 models 改用 signal 來做呢 ><
 
-                        response['status'] = 'success'
-                        response['errCode'] = None
-                        response['errMsg'] = None
-                        response['data'] = lesson_object.id
-
                         object_accessed_signal.send(
                             sender='create_or_edit_a_lesson',
                             auth_id=teacher_auth_id,
@@ -773,6 +768,11 @@ def create_or_edit_a_lesson(request):
                             user_agent=request.META.get('HTTP_USER_AGENT'),
                             action_type='edit lesson',
                             remark=None) # 傳送訊號到用戶行為TABLE
+
+                        response['status'] = 'success'
+                        response['errCode'] = None
+                        response['errMsg'] = None
+                        response['data'] = lesson_object.id
 
             else:
                 # 接收到不知道幹嘛的action
@@ -788,184 +788,6 @@ def create_or_edit_a_lesson(request):
         response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
     
     return JsonResponse(response)
-
-
-    if action == 'createLesson':
-        # 課程新增
-        # 原本是另外開class做，嘗試改寫在這邊
-
-
-        
-
-        response['status'], response['errCode'], response['errMsg'], response['data']= \
-            the_leeson_manager.setup_a_lesson(
-                teacher_auth_id, request, None, action)
-
-        object_accessed_signal.send(
-            sender='create_or_edit_a_lesson',
-            auth_id=teacher_auth_id,
-            ip_address=get_client_ip(request),
-            url_path=request.META.get('PATH_INFO'),
-            model_name='lesson_info',
-            object_name=request.POST.get('lesson_title'),
-            object_id=response.get('data'),
-            user_agent=request.META.get('HTTP_USER_AGENT'),
-            action_type='create lesson after signup',
-            remark=None) # 傳送訊號
-
-        if response['status'] == 'success':
-            try:
-                # 確定成功再來更新 sales_sets
-                # 先把一些共同的欄位合併在一個list內
-                the_lesson_info_object = lesson_info.objects.filter(id=response['data']).first()
-                shared_columns = {
-                    'lesson_id': response['data'],
-                    'teacher_auth_id': the_lesson_info_object.teacher.auth_id,
-                    'price_per_hour': the_lesson_info_object.price_per_hour 
-                }
-                
-                if the_lesson_info_object.selling_status == 'selling':
-                    # 假設是 status: selling 再來進行，反之則不必
-                    # 即使非 selling ，也不需要 inactivate old sales_sets ，因為是新建立的課程
-
-                    # 要先確定 1.是否有試課方案  2.是否有單堂方案  3.其他方案(\d*:\d*的格式) 
-                    if the_lesson_info_object.trial_class_price != -999:
-                        # 有試課方案
-                        shared_columns['sales_set'] = 'trial'
-                        shared_columns['total_hours_of_the_sales_set'] = 1
-                        shared_columns['price_per_hour_after_discount'] = the_lesson_info_object.trial_class_price
-                        shared_columns['total_amount_of_the_sales_set'] = the_lesson_info_object.trial_class_price
-                        
-                        lesson_sales_sets.objects.create(
-                            **shared_columns
-                        ).save()
-                    
-                    if the_lesson_info_object.lesson_has_one_hour_package == True:
-                        # 有單堂方案
-                        shared_columns['sales_set'] = 'no_discount'
-                        shared_columns['total_hours_of_the_sales_set'] = 1
-                        shared_columns['price_per_hour_after_discount'] = the_lesson_info_object.price_per_hour
-                        shared_columns['total_amount_of_the_sales_set'] = the_lesson_info_object.price_per_hour
-
-                        lesson_sales_sets.objects.create(
-                            **shared_columns
-                        ).save()
-
-                    if len(the_lesson_info_object.discount_price) > 2:
-                        # 有其他方案
-                        for each_hours_discount_set in [_ for _ in the_lesson_info_object.discount_price.split(';') if len(_) > 0]:
-                            
-                            hours, discount_price = each_hours_discount_set.split(':')
-                            shared_columns['sales_set'] = each_hours_discount_set
-                            shared_columns['total_hours_of_the_sales_set'] = int(hours)
-                            shared_columns['price_per_hour_after_discount'] = round(the_lesson_info_object.price_per_hour * int(discount_price) / 100)
-                            shared_columns['total_amount_of_the_sales_set'] = round(the_lesson_info_object.price_per_hour * int(hours) * int(discount_price) / 100)
-
-                            lesson_sales_sets.objects.create(
-                                **shared_columns
-                            ).save()
-            except Exception as e:
-                print(f'Exception: {e}')
-                response['status'] = 'failed'
-                response['errCode'] = '5'
-                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
-                response['data'] = None
-
-        return JsonResponse(response)
-
-    elif action == 'editLesson':
-
-        if not lesson_id:
-            # 沒有傳入要編輯的 lesson_id
-            response['status'] = 'failed'
-            response['errCode'] = '6'
-            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
-            response['data'] = None
-        
-        else:
-
-            response['status'], response['errCode'], response['errMsg'], response['data']= \
-                the_leeson_manager.setup_a_lesson(
-                    teacher_auth_id, request, lesson_id, action)
-
-            if response['status'] == 'success':
-                # 確定成功再來更新 sales_sets
-                try:    
-                    # 先把一些共同的欄位合併在一個list內
-                    the_lesson_info_object = lesson_info.objects.filter(id=response['data']).first()
-                    shared_columns = {
-                        'lesson_id': response['data'],
-                        'teacher_auth_id': the_lesson_info_object.teacher.auth_id,
-                        'price_per_hour': the_lesson_info_object.price_per_hour 
-                    }
-                    # 要先將舊版的 sales_sets 狀態設成 closed >> is_open: False
-                    # 但如果只是修改 selling_status 呢? >>
-                    #   這樣好了，只有當 selling_status 為 "selling" 時才紀錄 lesson_sales_sets，
-                    #   其他時候只要把存在的 sales_sets 改為 is_open: False 就好了
-                    if the_lesson_info_object.selling_status == 'selling':
-                        
-                        # 先將舊的 sales_sets inactivate
-                        for each_sales_set in lesson_sales_sets.objects.filter(lesson_id=response['data']).filter(is_open=True):
-                            setattr(each_sales_set, 'is_open', False)
-                            each_sales_set.save()
-
-                        # 要確定 1.是否有試課方案  2.是否有單堂方案  3.其他方案(\d*:\d*的格式)
-                        if the_lesson_info_object.trial_class_price != -999:
-                            # 有試課方案
-                            shared_columns['sales_set'] = 'trial'
-                            shared_columns['total_hours_of_the_sales_set'] = 1
-                            shared_columns['price_per_hour_after_discount'] = the_lesson_info_object.trial_class_price
-                            shared_columns['total_amount_of_the_sales_set'] = the_lesson_info_object.trial_class_price
-                            
-                            lesson_sales_sets.objects.create(
-                                **shared_columns
-                            ).save()
-                        
-                        if the_lesson_info_object.lesson_has_one_hour_package == True:
-                            # 有單堂方案
-                            shared_columns['sales_set'] = 'no_discount'
-                            shared_columns['total_hours_of_the_sales_set'] = 1
-                            shared_columns['price_per_hour_after_discount'] = the_lesson_info_object.price_per_hour
-                            shared_columns['total_amount_of_the_sales_set'] = the_lesson_info_object.price_per_hour
-
-                            lesson_sales_sets.objects.create(
-                                **shared_columns
-                            ).save()
-
-                        if len(the_lesson_info_object.discount_price) > 2:
-                            # 有其他方案
-                            for each_hours_discount_set in [_ for _ in the_lesson_info_object.discount_price.split(';') if len(_) > 0]:
-                                
-                                hours, discount_price = each_hours_discount_set.split(':')
-                                shared_columns['sales_set'] = each_hours_discount_set
-                                shared_columns['total_hours_of_the_sales_set'] = int(hours)
-                                shared_columns['price_per_hour_after_discount'] = round(the_lesson_info_object.price_per_hour * int(discount_price) / 100)
-                                shared_columns['total_amount_of_the_sales_set'] = round(the_lesson_info_object.price_per_hour * int(hours) * int(discount_price) / 100)
-
-                                lesson_sales_sets.objects.create(
-                                    **shared_columns
-                                ).save()
-                    else:
-                        # 因為最新的課程狀態不是 selling ，因此把 sales_sets 取消 active 就好了
-                        for each_sales_set in lesson_sales_sets.objects.filter(lesson_id=response['data']).filter(is_open=True):
-                            setattr(each_sales_set, 'is_open', False)
-                            each_sales_set.save()
-                                
-                except Exception as e:
-                    print(f'Exception: {e}')
-                    response['status'] = 'failed'
-                    response['errCode'] = '5'
-                    response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
-                    response['data'] = None  
-                
-        return JsonResponse(response)
-
-    else:
-        response['status'] = 'failed'
-        response['errCode'] = 1
-        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
-        response['data'] = None
-        return JsonResponse(response)
 
 
 @require_http_methods(['POST'])
