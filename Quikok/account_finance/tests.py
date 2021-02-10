@@ -1,11 +1,10 @@
-from django.http import response
-from django.test import TestCase, Client, RequestFactory
+from django.test import TestCase, Client
 from account_finance.models import student_purchase_record
 from account_finance.models import (student_remaining_minutes_of_each_purchased_lesson_set,
                             student_remaining_minutes_when_request_refund_each_purchased_lesson_set)
 from account_finance.models import teacher_refund, student_refund
 from account.models import student_profile, teacher_profile
-from lesson.models import lesson_info, lesson_sales_sets, lesson_booking_info
+from lesson.models import lesson_info, lesson_sales_sets
 from account_finance.email_sending import email_manager
 from django.contrib.auth.models import Group
 import os, shutil
@@ -14,7 +13,9 @@ from unittest import skip
 from django.contrib.auth.models import User
 from account.models import specific_available_time
 from datetime import datetime, timedelta, date as date_function
-import math, time
+import math
+from django.conf import settings
+
 # python3 manage.py test account_finance/ --settings=Quikok.settings_for_test
 
 class test_finance_functions(TestCase):
@@ -634,8 +635,10 @@ class test_finance_functions(TestCase):
         ret = e.system_email_new_order_and_payment_remind(**data_test)
         self.assertTrue(ret)
         # 確認程式有正確執行
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].subject, '訂課匯款提醒')
+        if settings.DISABLED_EMAIL == False:
+            # 如果有設定要寄信的話，再執行測試
+            self.assertEqual(len(mail.outbox), 1)
+            self.assertEqual(mail.outbox[0].subject, '訂課匯款提醒')
     
 
     def test_email_sending_to_student_receive_order_payment_and_reconciliation_turned_into_paid(self):
@@ -971,8 +974,10 @@ class test_student_purchase_payment_status(TestCase):
         self.assertIn('success', str(response.content))
         self.assertEqual(record.payment_status , 'reconciliation')
         self.assertEqual(record.part_of_bank_account_code, '11111')
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].subject, '學生匯款通知信')
+        if settings.DISABLED_EMAIL == False:
+            # 如果有設定要寄信的話，再執行測試
+            self.assertEqual(len(mail.outbox), 1)
+            self.assertEqual(mail.outbox[0].subject, '學生匯款通知信')
     
 
     def test_student_edit_order_when_paid_a_trial_request_a_refund(self):
