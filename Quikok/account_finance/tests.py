@@ -18,6 +18,7 @@ import math, time
 # python3 manage.py test account_finance/ --settings=Quikok.settings_for_test
 
 class test_finance_functions(TestCase):
+    
     def setUp(self):
         self.client =  Client()        
         Group.objects.bulk_create(
@@ -90,7 +91,7 @@ class test_finance_functions(TestCase):
             'price_per_hour': 800,
             'discount_price': '10:90;20:80;30:75;',
             'selling_status': 'selling',
-            'lesson_has_one_hour_package': True,
+            'lesson_has_one_hour_package': 'true',
             'trial_class_price': 69,
             'highlight_1': 'test',
             'highlight_2': 'test',
@@ -100,7 +101,8 @@ class test_finance_functions(TestCase):
             'target_students': 'test',
             'lesson_remarks': 'test',
             'syllabus': 'test',
-            'lesson_attributes': 'test'      
+            'lesson_attributes': 'test',
+            'lesson_type': 'online'    
             }
         self.lesson_post_data = lesson_post_data
         response = \
@@ -108,6 +110,7 @@ class test_finance_functions(TestCase):
                 path='/api/lesson/createOrEditLesson/',
                 data=lesson_post_data)
 
+    
     def test_storege_order(self):
         # 測試前端trial方案時,是否能順利寫入
         # 要建立課程才能測試
@@ -128,6 +131,8 @@ class test_finance_functions(TestCase):
                 'errMsg': None,
                 'data': 1 # 建立1號訂單
             })
+    
+    
     def test_storege_order_student_select_a_trial_mutiple_times(self):
         '''因為每堂課每個學生只能上一次試教課，所以當學生把某一堂課的試教放進購物車之後，
         他將不可以再把該堂課的試教方案放進購物車，
@@ -146,6 +151,7 @@ class test_finance_functions(TestCase):
         # 對同一堂課再做一次購買,這時要回傳failed
         response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
         self.assertIn('failed', str(response.content))
+
 
     def test_storege_order_student_cancel_trial_but_buy_it_again(self):
         '''因為每堂課每個學生只能上一次試教課，所以當學生把某一堂課的試教放進購物車之後，
@@ -184,6 +190,7 @@ class test_finance_functions(TestCase):
         response = self.client.post(path='/api/account_finance/storageOrder/', data=buy_data)
         self.assertIn('success', str(response.content))
 
+
     def test_storege_order_student_select_a_no_discount_lesson_mutiple_times(self):
         '''除了試教課程以外，在同一個lesson的情況下，
         單堂或多堂的購買都沒有一次不能把多堂課放進購物車的限制，因此當一次買多堂課時，
@@ -202,6 +209,7 @@ class test_finance_functions(TestCase):
         # 對同一堂課再做一次購買,這時要回傳success
         response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
         self.assertIn('success', str(response.content))
+
 
     def test_storege_order_student_select_a_no_discount_and_a_trial_same_time(self):
         '''除了試教課程以外，在同一個lesson的情況下，
@@ -230,6 +238,7 @@ class test_finance_functions(TestCase):
         response = self.client.post(path='/api/account_finance/storageOrder/', data=data2)
         self.assertIn('success', str(response.content))
 
+
     def test_storege_order_check_if_Q_point_is_enough(self):
         '''如果學生使用q幣抵扣學費,要檢查他確實有該筆q幣'''
         # 建立一筆訂單,使用超過該學生有的Q幣
@@ -244,6 +253,7 @@ class test_finance_functions(TestCase):
         # 選擇要用69q幣折抵, 但實際上他只有50q 
         response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
         self.assertIn('failed', str(response.content))
+
 
     def test_storege_order_student_use_Qcoin_with_no_withholding_balance(self):
         '''
@@ -271,6 +281,7 @@ class test_finance_functions(TestCase):
                 'data': 1 # 建立1號訂單
             })
     
+
     def test_storege_order_student_use_Qcoin_already_have_withholding_balance(self):
         '''
         如果學生使用Q幣, 那送出訂單後使用的Q更新到他的profile中的withholding_balance_change.
@@ -301,6 +312,7 @@ class test_finance_functions(TestCase):
                 'data': 1 # 建立1號訂單
             })
 
+
     def test_student_use_qpoint_more_than_he_has_to_purchase_set(self):
         '''故意讓學生用超過它有的q幣餘額來買東西看看
         '''
@@ -317,6 +329,7 @@ class test_finance_functions(TestCase):
         response = self.client.post(path='/api/account_finance/storageOrder/', data=post_data)
         self.assertIn('failed', str(response.content, 'utf8'), str(response.content, 'utf8'))
     
+
     def test_student_use_qpoint_more_than_he_has_to_purchase_no_discount(self):
         '''故意讓學生用超過它有的q幣餘額來買東西看看
         '''
@@ -332,6 +345,7 @@ class test_finance_functions(TestCase):
         } 
         response = self.client.post(path='/api/account_finance/storageOrder/', data=post_data)
         self.assertIn('failed', str(response.content, 'utf8'), str(response.content, 'utf8'))
+
 
     def test_student_withholding_balance_change_after_paid(self):
         '''
@@ -623,6 +637,7 @@ class test_finance_functions(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, '訂課匯款提醒')
     
+
     def test_email_sending_to_student_receive_order_payment_and_reconciliation_turned_into_paid(self):
         '''
         這個函式用來測試，當學生付完款(一般的方案)後，管理員或程式把該筆訂單的付款狀態設定為「已付款」後，
@@ -710,6 +725,8 @@ class test_finance_functions(TestCase):
         # self.assertEqual(mail.outbox[2].subject, 'Quikok!開課通知：有學生購買您開設的課程')
         #print('check')
         #print(len(mail.outbox))
+    
+    
     def create_student_purchase_remain_minutes(self):
         response = self.client.post(path='/api/account_finance/create_lesson_order_minute/')
         self.assertEqual(response.status_code, 200)
@@ -780,7 +797,7 @@ class test_student_purchase_payment_status(TestCase):
             'price_per_hour': 800,
             'discount_price': '10:90;20:80;30:75;',
             'selling_status': 'selling',
-            'lesson_has_one_hour_package': True,
+            'lesson_has_one_hour_package': 'true',
             'trial_class_price': 69,
             'highlight_1': 'test',
             'highlight_2': 'test',
@@ -790,7 +807,8 @@ class test_student_purchase_payment_status(TestCase):
             'target_students': 'test',
             'lesson_remarks': 'test',
             'syllabus': 'test',
-            'lesson_attributes': 'test'      
+            'lesson_attributes': 'test',
+            'lesson_type': 'offline'
             }
         self.lesson_post_data = lesson_post_data
         response = \
@@ -917,6 +935,7 @@ class test_student_purchase_payment_status(TestCase):
                 #'data': 1 # 建立1號訂單
         #    })
 
+
     def test_student_edit_order_from_unpaid_to_paid(self):
         '''
         check update payment_status改成對帳中reconciliation, 且有存入銀行5碼,並有寄信給edony
@@ -1005,6 +1024,7 @@ class test_student_purchase_payment_status(TestCase):
         self.assertEqual(info.snapshot_available_remaining_minutes, 30)
         # 確認退款紀錄的Q幣 = 試教課程費用,有算對
         self.assertEqual(info.available_minutes_turn_into_q_points, self.lesson_post_data['trial_class_price'])
+
 
     @skip
     def test_if_set_still_can_be_booked_when_the_purchase_order_was_refunded(self):
@@ -1235,9 +1255,6 @@ class test_student_purchase_payment_status(TestCase):
         lesson_payment_status = student_purchase_record.objects.get(id = new_record_id).payment_status
         self.assertEqual(lesson_payment_status, 'unpaid_cancel',lesson_payment_status)
 
-    
-
-
 
 class LESSON_SALES_HISTORY_TEST(TestCase):
     
@@ -1318,7 +1335,7 @@ class LESSON_SALES_HISTORY_TEST(TestCase):
             'price_per_hour': 800,
             'discount_price': '10:90;20:80;30:75;',
             'selling_status': 'selling',
-            'lesson_has_one_hour_package': True,
+            'lesson_has_one_hour_package': 'true',
             'trial_class_price': 69,
             'highlight_1': 'test',
             'highlight_2': 'test',
@@ -1328,7 +1345,8 @@ class LESSON_SALES_HISTORY_TEST(TestCase):
             'target_students': 'test',
             'lesson_remarks': 'test',
             'syllabus': 'test',
-            'lesson_attributes': 'test'      
+            'lesson_attributes': 'test',
+            'lesson_type': 'offline'
             }
         self.client.post(path='/api/lesson/createOrEditLesson/', data=self.lesson_post_data1)
 
@@ -1344,7 +1362,7 @@ class LESSON_SALES_HISTORY_TEST(TestCase):
             'price_per_hour': 1200,
             'discount_price': '5:90;20:80;30:70;',
             'selling_status': 'selling',
-            'lesson_has_one_hour_package': True,
+            'lesson_has_one_hour_package': 'true',
             'trial_class_price': -999,
             'highlight_1': 'test',
             'highlight_2': 'test',
@@ -1354,7 +1372,8 @@ class LESSON_SALES_HISTORY_TEST(TestCase):
             'target_students': 'test',
             'lesson_remarks': 'test',
             'syllabus': 'test',
-            'lesson_attributes': 'test'      
+            'lesson_attributes': 'test',
+            'lesson_type': 'offline' 
             }
         self.client.post(path='/api/lesson/createOrEditLesson/', data=self.lesson_post_data2)
 
@@ -1840,14 +1859,13 @@ class LESSON_SALES_HISTORY_TEST(TestCase):
         self.assertIn(f'"available_remaining_minutes": {available_remaining_minutes}', str(response.content, "utf8"))
         self.assertIn(f'"total_non_confirmed_minutes": {total_non_confirmed_minutes}', str(response.content, "utf8"))
         self.assertIn(f'"is_selling": true', str(response.content, "utf8"))
-        print(f'test_lesson_and_its_content_is_right_common_1 {str(response.content, "utf8")}')
+        # print(f'test_lesson_and_its_content_is_right_common_1 {str(response.content, "utf8")}')
 
         # 接下來測試一下當 老師不繼續開放 10:90 購買時，看看 is_selling 會否變成 false
-        self.lesson_post_data1['sales_set'] = '20:80'
+        # 因為現在透過 pre_save 偵測TABLE變化，所以要用api執行才行
+        self.lesson_post_data1['discount_price'] = '20:80;'
         self.lesson_post_data1['action'] = 'editLesson'
-        self.lesson_post_data1['lessonID'] = lesson_info.objects.filter(\
-            teacher=teacher_profile.objects.get(id=1)).first().id
-        
+        self.lesson_post_data1['lessonID'] = 1
         response = \
             self.client.post(path='/api/lesson/createOrEditLesson/', data=self.lesson_post_data1)
         self.assertIn('success', str(response.content, "utf8"))
@@ -1857,8 +1875,10 @@ class LESSON_SALES_HISTORY_TEST(TestCase):
             'type': 'teacher'}
         response = \
             self.client.post(path='/api/account_finance/getLessonSalesHistory/', data=query_history_post_data)
-        self.assertIn(f'"is_selling": false', str(response.content, "utf8"))
-        print(f'test_lesson_and_its_content_is_right_common_2 {str(response.content, "utf8")}')
+        self.assertIn(f'success', str(response.content, "utf8"))
+        self.assertIn(f'"is_selling": false', str(response.content, "utf8"), 
+            lesson_sales_sets.objects.values_list('id', 'is_open', 'sales_set').filter(lesson_id=1))
+        # print(f'test_lesson_and_its_content_is_right_common_2 {str(response.content, "utf8")}')
 
         # 接下來測試一下 如果將學生 的 時數都消耗掉，則其 
         # purchased_lesson_sales_set_status 應該會變成 finished

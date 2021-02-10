@@ -1715,7 +1715,7 @@ def member_change_password(request):
                 student_object.save()
 
                 # 接著做User的部份
-                the_user_object = User.objects.get(username=teacher_object.username)
+                the_user_object = User.objects.get(username=student_object.username)
                 the_user_object.password = new_password
                 the_user_object.save()
                 

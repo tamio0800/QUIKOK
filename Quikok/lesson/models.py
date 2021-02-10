@@ -622,5 +622,158 @@ def update_teacher_review_aggregated_info(sender, instance:lesson_reviews_from_s
         pass
 
 
+@receiver(pre_save, sender=lesson_info)
+def when_lesson_info_changed_synchronize_lesson_sales_sets(sender, instance:lesson_info, **kwargs):
+    '''
+    當 lesson_info 這個 table 有新建課程或是編輯課程的動作時，要同步對 lesson_sales_sets 進行更新。    
+    '''
+    #if instance.selling_status == 'selling':
+        # 先確定該門課程的狀態是販售中再做就好
+    if instance.id is None:
+        # 代表這個課程是全新建立的，因此不用比對舊資料，
+        # 也不需要新增方案，因為課程第一次建立時並沒有對應的id（pre_save），
+        # 並且目前的課程建立機制是兩段式，會先 create 一個幾乎完成的dummy record，
+        # 再補上正確的課程資料夾路徑後，才算是正式完成。
+        pass
+        
+    else:
+        # 課程進行編輯，這時候要先將舊的方案都 disabled 掉，再更新新的上去就好。
+        # 不過更新前先確定新舊是否一致，如果完全一致的話就不動，只要其中一個不一致就全動，
+        # 避免老師只是更改課程的其他內容而已。
+        previous = lesson_info.objects.get(id=instance.id)
+
+        from_selling_to_not_selling = \
+            previous.selling_status == 'selling' and instance.selling_status != 'selling'
+        from_selling_to_selling = \
+            previous.selling_status == 'selling' and instance.selling_status == 'selling'
+        from_not_selling_to_selling = \
+            previous.selling_status != 'selling' and instance.selling_status == 'selling'
+        from_not_selling_to_not_selling = \
+            previous.selling_status != 'selling' and instance.selling_status != 'selling'
+    
+        if from_not_selling_to_not_selling:
+            # 什麼事情都不用做
+            pass
+        elif from_selling_to_not_selling:
+            # 只要將所有的 is_open 方案變成 non-open 就好
+            old_sales_sets = \
+                lesson_sales_sets.objects.filter(lesson_id=instance.id, is_open=True)
+            old_sales_sets.update(is_open=False)
+            logging.info(f"Old lesson sales sets have been all disabled due to non-selling.")
+        else:
+            shared_columns = {
+                'lesson_id': instance.id,
+                'teacher_auth_id': instance.teacher.auth_id,
+                'price_per_hour': instance.price_per_hour,
+                'is_open': True}
+
+            if from_not_selling_to_selling:
+                # 全部都要新增，並且不用管舊的資料
+                if int(instance.trial_class_price) != -999:
+                    # 有試課方案
+                    shared_columns['sales_set'] = 'trial'
+                    shared_columns['total_hours_of_the_sales_set'] = 1
+                    shared_columns['price_per_hour_after_discount'] = instance.trial_class_price
+                    shared_columns['total_amount_of_the_sales_set'] = instance.trial_class_price
+                    
+                    lesson_sales_sets.objects.create(
+                        **shared_columns
+                    ).save()
+                                    
+                if instance.lesson_has_one_hour_package == True:
+                    # 有單堂方案
+                    shared_columns['sales_set'] = 'no_discount'
+                    shared_columns['total_hours_of_the_sales_set'] = 1
+                    shared_columns['price_per_hour_after_discount'] = instance.price_per_hour
+                    shared_columns['total_amount_of_the_sales_set'] = instance.price_per_hour
+
+                    lesson_sales_sets.objects.create(
+                        **shared_columns
+                    ).save()
+
+                if len(instance.discount_price) > 2:
+                    # 有其他方案
+                    for each_hours_discount_set in [_ for _ in instance.discount_price.split(';') if len(_) > 0]:
+                        
+                        hours, discount_price = each_hours_discount_set.split(':')
+                        shared_columns['sales_set'] = each_hours_discount_set
+                        shared_columns['total_hours_of_the_sales_set'] = int(hours)
+                        shared_columns['price_per_hour_after_discount'] = round(int(instance.price_per_hour) * int(discount_price) / 100)
+                        shared_columns['total_amount_of_the_sales_set'] = round(int(instance.price_per_hour) * int(hours) * int(discount_price) / 100)
+
+                        lesson_sales_sets.objects.create(
+                            **shared_columns
+                        ).save()
+
+            elif from_selling_to_selling:
+                # 先檢查跟舊的課程方案一不一樣，不一樣的話就 disabled 後新增
+                if lesson_sales_sets.objects.filter(lesson_id=instance.id).exists() == False:
+                    # 代表這是課程建立的那一次「編輯」
+                    sales_sets_not_changed = False
+                else:
+                    sales_sets_not_changed = \
+                        (
+                            int(instance.trial_class_price) == int(previous.trial_class_price) and
+                            instance.lesson_has_one_hour_package == previous.lesson_has_one_hour_package and
+                            instance.discount_price == previous.discount_price and
+                            int(instance.price_per_hour) == int(previous.price_per_hour)
+                        )  # 確認是否完全一致
+                
+                if sales_sets_not_changed == False:
+                    # 先把舊的方案都 disabled 掉
+                    old_sales_sets = \
+                        lesson_sales_sets.objects.filter(lesson_id=instance.id, is_open=True)
+                    old_sales_sets.update(is_open=False)
+
+                    logging.info(f"Old lesson sales sets have been disabled due to unmatched.")
+
+                    # 要先確定 1.是否有試課方案  2.是否有單堂方案  3.其他方案(\d*:\d*的格式)
+                    if int(instance.trial_class_price) != -999:
+                        # 有試課方案
+                        shared_columns['sales_set'] = 'trial'
+                        shared_columns['total_hours_of_the_sales_set'] = 1
+                        shared_columns['price_per_hour_after_discount'] = instance.trial_class_price
+                        shared_columns['total_amount_of_the_sales_set'] = instance.trial_class_price
+                        
+                        lesson_sales_sets.objects.create(
+                            **shared_columns
+                        ).save()
+                        
+                        logging.info(f"Trial sets have been established.")
+                    
+                    if instance.lesson_has_one_hour_package == True:
+                        # 有單堂方案
+                        shared_columns['sales_set'] = 'no_discount'
+                        shared_columns['total_hours_of_the_sales_set'] = 1
+                        shared_columns['price_per_hour_after_discount'] = instance.price_per_hour
+                        shared_columns['total_amount_of_the_sales_set'] = instance.price_per_hour
+
+                        lesson_sales_sets.objects.create(
+                            **shared_columns
+                        ).save()
+
+                        logging.info(f"No_discount sets have been established.")
+
+                    if len(instance.discount_price) > 2:
+                        # 有其他方案
+                        logging.info(f"instance.discount_price: {instance.discount_price}")
+                        for each_hours_discount_set in [_ for _ in instance.discount_price.split(';') if len(_) > 0]:
+                            
+                            hours, discount_price = each_hours_discount_set.split(':')
+                            shared_columns['sales_set'] = each_hours_discount_set
+                            shared_columns['total_hours_of_the_sales_set'] = int(hours)
+                            shared_columns['price_per_hour_after_discount'] = round(int(instance.price_per_hour) * int(discount_price) / 100)
+                            shared_columns['total_amount_of_the_sales_set'] = round(int(instance.price_per_hour) * int(hours) * int(discount_price) / 100)
+
+                            lesson_sales_sets.objects.create(
+                                **shared_columns
+                            )
+                            logging.info(f"sales set created: {shared_columns}")
+                            
+                        logging.info(f"Discount sets have been established.")
+
+        logging.info(f"Lesson sales sets have been updated after lesson editted ({instance.lesson_title}).")
+
+
 
     
