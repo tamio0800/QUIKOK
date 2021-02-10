@@ -5,8 +5,10 @@ from .models import *
 from account.models import student_profile, teacher_profile
 from datetime import datetime
 from .system_2user_layer import layer_info_maneger
+import logging
 
 
+logging.basicConfig(level=logging.NOTSET) #DEBUG
 class system_msg_producer:
     # 傳訊息代碼進來, 回應相對的資訊
     def wellcome_msg(self):
@@ -134,6 +136,8 @@ class chat_room_manager:
             room_queryset= chatroom_info_user2user.objects.filter(Q(student_auth_id=kwargs['userID'])|Q(teacher_auth_id=kwargs['userID'])).order_by("created_time")
             print('使用者有這些聊天室')
             print(room_queryset)
+            logging.debug('chat_tools room_queryset debug info:')
+            
             # 如果有資料的前提..
             # 包成可以回傳給前端的格式
             if len(room_queryset) >0:

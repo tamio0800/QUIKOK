@@ -169,10 +169,13 @@ USE_TZ = False
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 # 不加這一行會出現奇怪的錯誤，無法進行python manage.py collectstatic
 
+# 在前端取用圖片的時候, /static/會取代在這邊註冊的路徑,所以要找以下路徑當中的檔案時,
+# 路徑是 /static/開頭
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static_files'),
     os.path.join(BASE_DIR, "frontend/dist"),
+    os.path.join(BASE_DIR, "website_assets"),
     os.path.join(BASE_DIR, 'user_upload'),
     os.path.join(BASE_DIR, 'account/templates/account'),
     os.path.join(BASE_DIR, 'account_finance/templates/account_finance'),
@@ -187,13 +190,14 @@ STATICFILES_DIRS = [
 
 # 存放使用者上傳的大頭照
 MEDIA_URL = '/user_upload/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'user_upload')  
+MEDIA_ROOT = os.path.join(BASE_DIR, 'user_upload')
+
 
 #要寄信的相關設定
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 import socket
-EMAIL_HOST = socket.gethostbyname('smtp.gmail.com')
+EMAIL_HOST = socket.gethostbyname('smtp.gmail.com') # 改成這個會固定發IPv4,不用經IPv6,較快
 #EMAIL_HOST = 'smtp.gmail.com'  #SMTP伺服器
 EMAIL_PORT = 587  #TLS通訊埠號
 EMAIL_USE_TLS = True  #開啟TLS(傳輸層安全性)
