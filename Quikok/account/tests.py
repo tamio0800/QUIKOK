@@ -1165,12 +1165,46 @@ class SPEED_TESTS(TestCase):
             not x == ''
         end5 = time()
 
+        '''
+        len() takes 0.46376800537109375 seconds
+        =='' takes 0.34960293769836426 seconds
+        in takes 0.5897660255432129 seconds
+        !='' takes 1.100010871887207 seconds
+        not =='' takes 0.9897921085357666 seconds
+        '''
+
         self.fail(f"\nlen() takes {end1-st1} seconds\n=='' takes {end2-end1} seconds\nin takes {end3-end2} seconds\n!='' takes {end4-end3} seconds\nnot =='' takes {end5-end4} seconds\n")
 
 
     @skip
+    def test_comparasion_operators(self):
+        n = 5000000
+        x = True
+        st1 = time()
+        for _ in range(n):
+            x == True
+        end1 = time()
+        for _ in range(n):
+            x is True
+        end2 = time()
+        for _ in range(n):
+            x != True
+        end3 = time()
+        for _ in range(n):
+            x is not True
+        end4 = time()
+        '''
+        == True takes 0.28649282455444336 seconds
+        is True takes 0.24224424362182617 seconds
+        != True takes 0.27544379234313965 seconds
+        is not True takes 0.26437926292419434 seconds
+        '''
+        self.fail(f"\n== True takes {end1-st1} seconds\nis True takes {end2-end1} seconds\n!= True takes {end3-end2} seconds\nis not True takes {end4-end3} seconds\n")
+
+
+    @skip
     def test_django_orm_query_speed(self):
-        n = 2000
+        n = 5000
         end = time()
         t = teacher_profile.objects.get(id=1)
         for _ in range(n):
@@ -1188,6 +1222,14 @@ class SPEED_TESTS(TestCase):
         for _ in range(n):
             teacher_profile.objects.get(Q(id=1))
         end5 = time()
-    
-        disc = f"\nget: {end1-end}\nfilter: {end2-end1}\nexists: {end3-end2}\nquery_from_obj: {end4-end3}\nget_with_Q: {end5-end4}\n\n"
+        disc = f"\nget: {end1-end}\nfilter.first(): {end2-end1}\nexists: {end3-end2}\nquery_from_obj: {end4-end3}\nget_with_Q: {end5-end4}\n\n"
+        
+        '''
+        get: 6.031943082809448
+        filter.first(): 16.3274347782135
+        exists: 4.141175985336304
+        query_from_obj: 0.0011720657348632812
+        get_with_Q: 7.71540904045105
+        '''
+        
         self.fail(disc)
