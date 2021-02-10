@@ -454,103 +454,129 @@ def storage_order(request):
         'data': None}
         return JsonResponse(response)
 
-#回傳訂單紀錄api, 我的存摺頁
+
 def student_order_history(request):
-    try:
-        student_authID = request.POST.get('userID', False)
-        token_from_user_raw = request.headers.get('Authorization', False)
-        if token_from_user_raw is not False:
-            token = token_from_user_raw.split(' ')[1]
-        else:
-            token = ''
-        user_type = request.POST.get('type', False)
-        if check_if_all_variables_are_true(student_authID, user_type):
-            data = []
-            record_history = {}
-            remittance_info = {
-                    'bank_code': '088',
-                    'bank_name': '國泰世華銀行',
-                    'bank_branches': '板橋分行',
-                    'bank_account':'012345-411153',
-                    'bank_account_name': '豆沙科技股份有限公司'}
-            for record in student_purchase_record.objects.filter(student_auth_id=student_authID):
-                set_name = lesson_sales_sets.objects.filter(id=record.lesson_sales_set_id).first()
+    '''
+    用以回傳訂單紀錄api, 我的存摺頁
+    '''
+    student_authID = request.POST.get('userID', False)
+    user_type = request.POST.get('type', False)
+    token_from_user_raw = request.headers.get('Authorization', False)
+    
+    # 偵測 user's token
+    if token_from_user_raw is not False:
+        token = token_from_user_raw.split(' ')[1]
+    else:
+        token = ''
+
+    if check_if_all_variables_are_true(student_authID, user_type):
+        data = []
+        record_history = {}
+        remittance_info = {
+            'bank_code': '088',
+            'bank_name': '國泰世華銀行',
+            'bank_branches': '板橋分行',
+            'bank_account':'012345-411153',
+            'bank_account_name': '豆沙科技股份有限公司'}
+
+        # 這裡在 query 之餘也要進行資料排序，
+        # 先以時間排序（由新至遠），行有餘力再回來加上類別排序
+        # 但因為我(tamio)改以在 models 的 meta 設定了這個排序方式，所以這邊不用再加上時間排序
+        this_student_s_all_purchased_record = \
+            student_purchase_record.objects.filter(student_auth_id=student_authID)
+        
+        if this_student_s_all_purchased_record.exists():
+            # 有返回相關的資料再做這段就好，節省另外 query 的時間
+            for record in this_student_s_all_purchased_record:
+                # 開始進行資料的搜集
+                sales_set_object = \
+                    lesson_sales_sets.objects.get(id=record.lesson_sales_set_id)
                 
                 # 所有尚未確認時間計算用
-                if set_name.sales_set == 'trial':
+                if sales_set_object.sales_set == 'trial':
                     total_time = 30
                 # 試教總時數等於半小時
                 #    record_set_name = '試教'
-                elif set_name.sales_set == 'no_discount':
+                elif sales_set_object.sales_set == 'no_discount':
                     total_time = 60
                 #買單堂課的時數為一個小時((嚴格來說是兩堂課
                 #    record_set_name = '單堂'
                 else:
-                    lesson_time = set_name.sales_set.split(':')[0]
-                    total_time = int(lesson_time)*60 # 小時轉成分鐘
+                    lesson_time_in_hour = sales_set_object.sales_set.split(':')[0]
+                    total_time = int(lesson_time_in_hour) * 60 # 小時轉成分鐘
                 #    lesson_discount = set_name.sales_set.split[1]
                 #    if '0' in lesson_discount: # 70 折-> 7折
                 #        lesson_discount = set_discount.strip('0')
                 #    record_set_name = f'{lesson_time}小時{lesson_discount}折'
                 
                 # 如果這筆訂單還沒從reconciliation改成paid, 剩餘時數的table也就還沒長出來
-                # 所以必須把分付款狀態來處理
-                if record.payment_status in ['paid','refunded', 'cancel_after_paid']:
-                    
-                    remain_time_info = student_remaining_minutes_of_each_purchased_lesson_set.objects.get(student_purchase_record_id=record.id)
+                # 所以必須分付款狀態來處理
+                if record.payment_status in ['paid', 'refunded', 'cancel_after_paid']:
+                    remain_time_info = \
+                        student_remaining_minutes_of_each_purchased_lesson_set.objects.get(student_purchase_record_id=record.id)
                     total_non_confirmed_minutes = total_time - remain_time_info.confirmed_consumed_minutes
                     available_remaining_minutes = remain_time_info.available_remaining_minutes
                     # 回傳退款金額
-                    if record.payment_status in ['refunded', 'cancel_after_paid']:
-                        refunded_price = student_remaining_minutes_when_request_refund_each_purchased_lesson_set.objects.get(
-                            student_purchase_record_id=record.id).available_minutes_turn_into_q_points
-                    else:
+                    # in 的處理速度比單純比對字串慢，所以單獨比對 paid 字串
+                    if record.payment_status == 'paid':
                         refunded_price = ''
+                    else:
+                        refunded_price = \
+                            student_remaining_minutes_when_request_refund_each_purchased_lesson_set.objects.get(
+                                student_purchase_record_id=record.id
+                            ).available_minutes_turn_into_q_points
+                    # if record.payment_status in ['refunded', 'cancel_after_paid']:
+                    #     refunded_price = student_remaining_minutes_when_request_refund_each_purchased_lesson_set.objects.get(
+                    #         student_purchase_record_id=record.id).available_minutes_turn_into_q_points
+                    # else:
+                    #     refunded_price = ''
                 else:
                     refunded_price = ''
                     available_remaining_minutes = ''
                     total_non_confirmed_minutes = ''
                 
                 # 將日期轉換為給前端的格式
-                purchase_date = record.purchase_date
-                date_format_change = purchase_date.strftime('%Y-%m-%d')
-                
+                # purchase_date = record.purchase_date
+                date_format_change = record.purchase_date.strftime('%Y-%m-%d')
                 #print(available_remaining_minutes)
                 record_history = {
-                'purchase_recordID':record.id,
-                'purchase_status':record.payment_status,
-                'refunded_price':refunded_price,
-                'purchase_date':date_format_change,
-                'teacher_authID':record.teacher_auth_id,
-                'teacher_nickname': record.teacher_nickname,
-                'lesson_name': record.lesson_title,
-                'lessonID': record.lesson_id,
-                'lesson_sales_set': set_name.sales_set, 
-                'purchased_with_money':record.purchased_with_money,
-                'available_remaining_minutes': available_remaining_minutes,
-                'total_non_confirmed_minutes': total_non_confirmed_minutes} #全部時數減掉已confirm完課的時數,主要是給老師看的
+                    'purchase_recordID':record.id,
+                    'purchase_status':record.payment_status,
+                    'refunded_price':refunded_price,
+                    'purchase_date':date_format_change,
+                    'teacher_authID':record.teacher_auth_id,
+                    'teacher_nickname': record.teacher_nickname,
+                    'lesson_name': record.lesson_title,
+                    'lessonID': record.lesson_id,
+                    'lesson_sales_set': sales_set_object.sales_set, 
+                    'purchased_with_money':record.purchased_with_money,
+                    'available_remaining_minutes': available_remaining_minutes,
+                    'total_non_confirmed_minutes': total_non_confirmed_minutes} 
+                    #全部時數減掉已confirm完課的時數,主要是給老師看的
                 #'付款末五碼': record.part_of_bank_account_code} # 後五碼
 
                 record_history['edony_bank_info'] = remittance_info
                 data.append(record_history)
-            #print(data)
+    
+        response = {
+            'status':'success',
+            'errCode': None,
+            'errMsg': None,
+            'data': data}
 
-            response = {'status':'success',
-                        'errCode': None,
-                        'errMsg': None,
-                        'data': data}
-        else:
-            response = {'status':'failed',
+    else:
+        response = {
+            'status':'failed',
             'errCode': 0,
             'errMsg': '系統沒有收到資料，請重新整理，如狀況持續可連絡客服',
-            'data': []}
+            'data': list()}
 
-    except Exception as e:
-        print(f'account_finance/views, student_order_history storage_order Exception {e}')
-        response = {'status':'failed',
-        'errCode': 1,
-        'errMsg': '資料庫有問題，請稍後再試',
-        'data': []}
+    # except Exception as e:
+    #     print(f'account_finance/views, student_order_history storage_order Exception {e}')
+    #     response = {'status':'failed',
+    #     'errCode': 1,
+    #     'errMsg': '資料庫有問題，請稍後再試',
+    #     'data': []}
     return JsonResponse(response)
 
 
