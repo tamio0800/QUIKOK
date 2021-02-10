@@ -3,6 +3,7 @@ from lesson.views import booking_lessons
 from django.test import TestCase, Client
 from django.core import mail
 import os
+from django.conf import settings
 import shutil
 from lesson.models import (lesson_completed_record, lesson_info_for_users_not_signed_up, 
                             lesson_info, lesson_card, lesson_sales_sets)
@@ -1501,8 +1502,10 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         response = self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)
         self.assertIn('success', str(response.content, 'utf8'))
         # 檢查是否有寄出提醒信
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].subject, 'Quikok!開課通知：有學生預約上課！')
+        if settings.DISABLED_EMAIL == False:
+            # 如果有設定要寄信的話，再執行測試
+            self.assertEqual(len(mail.outbox), 1)
+            self.assertEqual(mail.outbox[0].subject, 'Quikok!開課通知：有學生預約上課！')
     
 
     def test_if_booking_trial_lessons_modified_remaining_minutes_after_booking_successfully(self):
