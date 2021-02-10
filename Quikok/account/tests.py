@@ -1,18 +1,16 @@
-from django.http import response
-from django.test import RequestFactory, TestCase,Client
-from django.contrib.auth.models import Permission, User, Group
+from django.test import TestCase,Client
+from django.contrib.auth.models import Group
 from django.urls.conf import path
-from account.models import (student_profile, teacher_profile, user_token, feedback,
-                                general_available_time,specific_available_time)
-from account.auth_tools import auth_check_manager
+from account.models import (student_profile, teacher_profile, feedback,
+                            general_available_time,specific_available_time)
 from datetime import datetime, timedelta, date as date_function
-from lesson.models import lesson_card
 import os, shutil
 from unittest import skip
-from account.email_sending import email_manager
 from django.core import mail
 from time import time
 from django.db.models import Q
+from django.conf import settings
+
 
 # python manage.py test account/ --settings=Quikok.settings_for_test
 class Auth_Related_Functions_Test(TestCase):
@@ -251,7 +249,8 @@ class Teacher_Profile_Test(TestCase):
         # 建立會員有成功
         self.assertIn('success', str(response.content))
         # 確認有寄出通知信
-        self.assertEqual(mail.outbox[0].subject, 'Quikok!開課 註冊成功通知')
+        if settings.DISABLED_EMAIL == False:
+            self.assertEqual(mail.outbox[0].subject, 'Quikok!開課 註冊成功通知')
 
     
     def test_teacher_available_and_specific_time_created_after_signing_up(self):

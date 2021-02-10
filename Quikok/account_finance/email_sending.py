@@ -23,13 +23,14 @@ class email_manager:
             '通知老師有學生購買他的課': os.path.join(settings.BASE_DIR,'account_finance/templates/account_finance/teacher_send_order_success.html'),
             '通知老師有學生預約': os.path.join(settings.BASE_DIR,'account_finance/templates/account_finance/teacher_send_remind_order.html')
         }
+
     def edit_student_balance_after_receive_payment(self, **kwargs):
         #print(os.getcwd())
         q_discount = kwargs['q_discount']
         studentID = kwargs['student_authID'] 
         student_info_obj = student_profile.objects.get(auth_id=studentID)
 
-        student_info_obj.withholding_balance = student_info_obj.withholding_balance - q_discount
+        student_info_obj.withholding_balance -= q_discount
         #student_info_obj.balance = student_info_obj.balance - q_discount
         student_info_obj.save()
 
@@ -50,11 +51,11 @@ class email_manager:
             lesson_set = kwargs['lesson_set']
             q_discount = kwargs['q_discount']
 
-            student_info = student_profile.objects.filter(auth_id = student_authID).first()
+            student_info = student_profile.objects.get(auth_id = student_authID)
             student_email_address = student_info.username
-            teacher_info = teacher_profile.objects.filter(auth_id = teacher_authID).first() 
+            teacher_info = teacher_profile.objects.get(auth_id = teacher_authID)
             teacher_name = teacher_info.nickname
-            lesson_title = lesson_info.objects.filter(id = lesson_id).first().lesson_title
+            lesson_title = lesson_info.objects.get(id = lesson_id).lesson_title
             #lesson_set = lesson_sales_sets.objects.get(id = lesson_set_id).sales_set
             #print(lesson_set)
             # 選擇方案的文字
@@ -93,15 +94,16 @@ class email_manager:
             }
             email_body = suit_pattern.render(email_context)
 
-            email = EmailMessage(
-                subject = email_pattern_name,  # 電子郵件標題
-                body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
-                from_email= settings.EMAIL_HOST_USER,  # 寄件者
-                to =  ['quikok.taiwan@quikok.com']#,'w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
-            )
-            email.fail_silently = False
-            email.content_subtype = 'html'
-            email.send()
+            if settings.DISABLED_EMAIL == False:
+                email = EmailMessage(
+                    subject = email_pattern_name,  # 電子郵件標題
+                    body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
+                    from_email= settings.EMAIL_HOST_USER,  # 寄件者
+                    to =  ['quikok.taiwan@quikok.com']#,'w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
+                )
+                email.fail_silently = False
+                email.content_subtype = 'html'
+                email.send()
 
             return True
         except Exception as e:
@@ -157,18 +159,21 @@ class email_manager:
                     'price':price
                 }
                 email_body = suit_pattern.render(email_context)
-                email = EmailMessage(
-                    subject = 'Quikok!開課通知：有學生購買您開設的課程',  # 電子郵件標題
-                    body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
-                    from_email= settings.EMAIL_HOST_USER,  # 寄件者
-                    to =  ['colorfulday0123@gmail.com']#,'w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
-                ) # 正式發布時要改為 to teacher_email
-                email.fail_silently = False
-                email.content_subtype = 'html'
-                email.send()
+
+                if settings.DISABLED_EMAIL == False:
+                    email = EmailMessage(
+                        subject = 'Quikok!開課通知：有學生購買您開設的課程',  # 電子郵件標題
+                        body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
+                        from_email= settings.EMAIL_HOST_USER,  # 寄件者
+                        to =  ['colorfulday0123@gmail.com']#,'w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
+                    ) # 正式發布時要改為 to teacher_email
+                    email.fail_silently = False
+                    email.content_subtype = 'html'
+                    email.send()
                 print(f"only account_finance class consumed time test: {time()-st}")
             
                 return True
+
             except Exception as e:
                 print(f'Exception: {e}')
                 return False
@@ -199,17 +204,20 @@ class email_manager:
                     'lesson_title': lesson_title
                 }
                 email_body = suit_pattern.render(email_context)
-                email = EmailMessage(
-                    subject = 'Quikok!開課通知：有學生預約上課！',  # 電子郵件標題
-                    body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
-                    from_email= settings.EMAIL_HOST_USER,  # 寄件者
-                    to =  ['colorfulday0123@gmail.com']#,'w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
-                ) # 正式發布時要改為 to teacher_email
-                email.fail_silently = False
-                email.content_subtype = 'html'
-                email.send()
+
+                if settings.DISABLED_EMAIL == False:
+                    email = EmailMessage(
+                        subject = 'Quikok!開課通知：有學生預約上課！',  # 電子郵件標題
+                        body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
+                        from_email= settings.EMAIL_HOST_USER,  # 寄件者
+                        to =  ['colorfulday0123@gmail.com']#,'w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
+                    ) # 正式發布時要改為 to teacher_email
+                    email.fail_silently = False
+                    email.content_subtype = 'html'
+                    email.send()
 
                 return True
+
             except Exception as e:
                 print(f'Exception: {e}')
                 return False
@@ -222,28 +230,14 @@ class email_for_edony:
         student_authID =  kwargs['student_authID']
         user5_bank_code =  kwargs['user5_bank_code']
         total_price =  kwargs['total_price']
-        email = EmailMessage(
-            subject = '學生匯款通知信',  # 電子郵件標題
-            body = f'學生authID：{student_authID}已匯款，金額：{total_price}元，銀行帳號末五碼：{user5_bank_code}。請對帳',
-            from_email=settings.EMAIL_HOST_USER,  # 寄件者
-            to = ['quikok.taiwan@quikok.com']  # 收件者
-        )
-        email.fail_silently = False
-        email.send()
 
-
-
-#class EMAIL_MANAGER_WITH_THREAD(threading.Thread):
-    '''
-    利用多執行緒的方式來寄送Email，避免用戶等待 G-Mail 初始化過久。
-    '''
-#    def __init__(self, **kwargs):
-#        print(f"kwargs in THREAD {kwargs}")
-#        super().__init__()  # 繼承 Thread 類別的所有 init 元素
-#        # self.notifications = kwargs['notifications']  # 下訂單時會用到
-#        self.notifications = kwargs
-#
-#    def run(self):
-#        mail_notification = email_manager()
-#        mail_notification.system_email_new_order_and_payment_remind(self.notifications)
-
+        if settings.DISABLED_EMAIL == False:
+            email = EmailMessage(
+                subject = '學生匯款通知信',  # 電子郵件標題
+                body = f'學生authID：{student_authID}已匯款，金額：{total_price}元，銀行帳號末五碼：{user5_bank_code}。請對帳',
+                from_email=settings.EMAIL_HOST_USER,  # 寄件者
+                to = ['quikok.taiwan@quikok.com']  # 收件者
+            )
+            email.fail_silently = False
+            email.send()
+        

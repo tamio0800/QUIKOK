@@ -1,9 +1,14 @@
 import os
+import socket
+
+DISABLED_EMAIL = os.environ.get('DISABLED_EMAIL', False) == 'true'
+# 將 DISABLED_EMAIL 設做環境變數，假使這個值為真，則不與 gmail 連線進行 email 的「寄送」，
+# 主要是為了解決開發/除錯時必定要有網路的問題。
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 APPEND_SLASH = False
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
@@ -195,12 +200,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'user_upload')
 
 #要寄信的相關設定
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-import socket
-EMAIL_HOST = socket.gethostbyname('smtp.gmail.com') # 改成這個會固定發IPv4,不用經IPv6,較快
-#EMAIL_HOST = 'smtp.gmail.com'  #SMTP伺服器
-EMAIL_PORT = 587  #TLS通訊埠號
-EMAIL_USE_TLS = True  #開啟TLS(傳輸層安全性)
-EMAIL_HOST_USER = 'quikok.taiwan@quikok.com'     # 'edony.ai.tech@gmail.com'  #寄件者電子郵件
-EMAIL_HOST_PASSWORD = 'jamthqadrfcxesdq'  #Gmail應用程式的密碼   
+if DISABLED_EMAIL == False:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = socket.gethostbyname('smtp.gmail.com') # 改成這個會固定發IPv4,不用經IPv6,較快
+    #EMAIL_HOST = 'smtp.gmail.com'  #SMTP伺服器
+    EMAIL_PORT = 587  #TLS通訊埠號
+    EMAIL_USE_TLS = True  #開啟TLS(傳輸層安全性)
+    EMAIL_HOST_USER = 'quikok.taiwan@quikok.com'     # 'edony.ai.tech@gmail.com'  #寄件者電子郵件
+    EMAIL_HOST_PASSWORD = 'jamthqadrfcxesdq'  #Gmail應用程式的密碼   
 
