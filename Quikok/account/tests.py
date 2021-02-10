@@ -214,8 +214,7 @@ class Teacher_Profile_Test(TestCase):
             shutil.rmtree(f'user_upload/teachers/{test_username}')
         except Exception as e:
             print(f'Error:  {e}')
-
-    
+  
     
     
     def test_send_welcom_email_when_create_teacher(self):
@@ -727,7 +726,7 @@ class Student_Test(TestCase):
             os.path.isdir(f'user_upload/students/{self.test_username}')
         )
     
-
+    
     @skip
     def test_send_welcom_email_when_create_teacher(self):
         client = Client()
@@ -748,6 +747,7 @@ class Student_Test(TestCase):
         self.assertIn('success', str(response.content))
         # 確認有寄出通知信
         self.assertEqual(mail.outbox[0].subject, 'Quikok!開課 註冊成功通知')
+
 
     def test_if_student_editted_properly(self):
 

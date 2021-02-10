@@ -19,6 +19,8 @@ from account.models import student_review_aggregated_info, teacher_review_aggreg
 from django.core import mail
 # 10.344
 # python3 manage.py test lesson/ --settings=Quikok.settings_for_test
+
+
 class Lesson_Info_Related_Functions_Test(TestCase):
  
     @skip  # 2021.02.08 因為搶先開課成效不彰，先不維護了
@@ -557,7 +559,6 @@ class Lesson_Info_Related_Functions_Test(TestCase):
             str(response.content, encoding='utf8')
         )
 
-
         # 測試課程小卡有寫入
         self.assertEqual(
             (
@@ -761,7 +762,9 @@ class Lesson_Info_Related_Functions_Test(TestCase):
 
 
     def test_sales_set_update_after_creating_a_lesson(self):
-        
+        '''
+        測試建立課程後，會不會連動建立方案的資料
+        '''
         self.client = Client()
         # 要先建立老師才能做測試
         Group.objects.bulk_create(
@@ -820,7 +823,7 @@ class Lesson_Info_Related_Functions_Test(TestCase):
             'price_per_hour': 800,
             'discount_price': '10:90;20:80;30:75;',
             'selling_status': 'selling',
-            'lesson_has_one_hour_package': True,
+            'lesson_has_one_hour_package': 'true',
             'trial_class_price': 69,
             'highlight_1': 'test',
             'highlight_2': 'test',
@@ -887,7 +890,9 @@ class Lesson_Info_Related_Functions_Test(TestCase):
 
 
     def test_sales_set_update_after_editting_a_lesson(self):
-        
+        '''
+        測試編輯課程後，會不會連動建立方案的資料
+        '''
         client = Client()
         # 要先建立老師才能做測試
         Group.objects.bulk_create(
@@ -923,10 +928,7 @@ class Lesson_Info_Related_Functions_Test(TestCase):
             'teacher_general_availabale_time': '0:1,2,3,4,5;'
         }
         response = client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
-        self.assertIn(
-            'success',
-            str(response.content, 'utf8'),
-        )
+        self.assertIn('success', str(response.content, 'utf8'))
 
         # 應該已經建立完成了
         lesson_post_data = {
@@ -972,13 +974,13 @@ class Lesson_Info_Related_Functions_Test(TestCase):
 
         response = \
             client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
-        
         self.assertIn('success', str(response.content, 'utf8'),
             (
                 teacher_profile.objects.values(),
                 lesson_info.objects.values()
             )
         )
+
         '''
         理論上這時該課程的 sales_sets 會存有 8 個 rows：
             non-active的:
@@ -1001,11 +1003,11 @@ class Lesson_Info_Related_Functions_Test(TestCase):
                 lesson_post_data['lesson_intro']
             ),
             (
-                lesson_info.objects.filter(id=1).first().price_per_hour,
-                lesson_info.objects.filter(id=1).first().little_title,
-                lesson_info.objects.filter(id=1).first().trial_class_price,
-                lesson_info.objects.filter(id=1).first().discount_price,
-                lesson_info.objects.filter(id=1).first().lesson_intro,
+                lesson_info.objects.get(id=1).price_per_hour,
+                lesson_info.objects.get(id=1).little_title,
+                lesson_info.objects.get(id=1).trial_class_price,
+                lesson_info.objects.get(id=1).discount_price,
+                lesson_info.objects.get(id=1).lesson_intro,
             ),
             lesson_info.objects.values()
         )
@@ -1035,8 +1037,8 @@ class Lesson_Info_Related_Functions_Test(TestCase):
                 round(lesson_post_data['price_per_hour'] * 50 * 0.7),
             ),
             (
-                lesson_sales_sets.objects.filter(is_open=True).filter(sales_set='50:70').first().price_per_hour_after_discount,
-                lesson_sales_sets.objects.filter(is_open=True).filter(sales_set='50:70').first().total_amount_of_the_sales_set,
+                lesson_sales_sets.objects.filter(is_open=True).get(sales_set='50:70').price_per_hour_after_discount,
+                lesson_sales_sets.objects.filter(is_open=True).get(sales_set='50:70').total_amount_of_the_sales_set,
             )
         )
 
@@ -1052,22 +1054,39 @@ class Lesson_Info_Related_Functions_Test(TestCase):
                 lesson_info.objects.values()
             )
         )
+        self.assertEqual('draft', lesson_info.objects.get(id=1).selling_status)
+        # 因為是暫存，不是selling，所以完全沒有 open 的方案了
         self.assertEqual(
-            8, lesson_sales_sets.objects.count(),
-            (
-                lesson_sales_sets.objects.values_list('sales_set', flat=True),
-                lesson_sales_sets.objects.values_list('is_open', flat=True)
-            )
-        )
-        self.assertEqual(
-            8, lesson_sales_sets.objects.filter(is_open=False).count(),
+            0, lesson_sales_sets.objects.filter(lesson_id=1, is_open=True).count(),
+            lesson_sales_sets.objects.values_list('id', 'sales_set', 'is_open')
         )
 
+        lesson_post_data['action'] = 'editLesson'
+        lesson_post_data['lessonID'] = 1  # 因為是課程編輯，所以需要給課程的id
+        lesson_post_data['lesson_title'] = '最最最新的課程標題'
+        lesson_post_data['discount_price'] = '10:80;'
+        lesson_post_data['selling_status'] = 'selling'
+        response = \
+            client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
+        # 又編輯完課程了
+        self.assertEqual(
+            '最最最新的課程標題',
+            lesson_info.objects.get(id=1).lesson_title,
+            lesson_info.objects.values())
+
+        # 目前is_open的sales_set只有一個，就是 10:80
+        self.assertEqual(
+            1, 
+            lesson_sales_sets.objects.filter(is_open=True, lesson_id=1).count(),
+            lesson_sales_sets.objects.values_list('id', 'is_open', 'sales_set').filter(lesson_id=1)
+        )
 
         try:
             shutil.rmtree(f'user_upload/teachers/{test_username}')
         except Exception as e:
             print(f'Error:  {e}')
+
 
 
 class Lesson_Info_Test(TestCase):
@@ -1257,7 +1276,8 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
             'target_students': 'test',
             'lesson_remarks': 'test',
             'syllabus': 'test',
-            'lesson_attributes': 'test'      
+            'lesson_attributes': 'test',
+            'lesson_type': 'online'     
             }
         self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
 
@@ -2785,7 +2805,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
             'price_per_hour': 800,
             'discount_price': '10:90;20:80;30:75;',
             'selling_status': 'selling',
-            'lesson_has_one_hour_package': True,
+            'lesson_has_one_hour_package': 'true',
             'trial_class_price': 69,
             'highlight_1': 'test',
             'highlight_2': 'test',
@@ -2795,7 +2815,8 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
             'target_students': 'test',
             'lesson_remarks': 'test',
             'syllabus': 'test',
-            'lesson_attributes': 'test'      
+            'lesson_attributes': 'test',
+            'lesson_type': 'offline'     
             }
         self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
 
@@ -2889,6 +2910,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
 
      
     def test_get_teacher_s_booking_history_work_when_teacher_has_common_lessons_filtered_and_not(self):
+        
         purchase_post_data = {
             'userID':student_profile.objects.first().auth_id,
             'teacherID':teacher_profile.objects.first().auth_id,
@@ -3141,6 +3163,13 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
 
         
     def test_get_teacher_s_booking_history_work_when_teacher_has_trial_and_no_discount_lessons_filtered_and_not(self):
+        
+        self.assertTrue(
+            lesson_sales_sets.objects.filter(
+                lesson_id=lesson_info.objects.get(lesson_title='test_lesson_1').id
+            ).exists()
+            )
+        
         purchase_post_data = {
             'userID':student_profile.objects.first().auth_id,
             'teacherID':teacher_profile.objects.first().auth_id,
@@ -3217,7 +3246,10 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
             'sales_set': 'no_discount',
             'total_amount_of_the_sales_set': 800,
             'q_discount':0}
-        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+        response = \
+            self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+        self.assertIn('success', str(response.content, "utf8"),
+        lesson_sales_sets.objects.values_list('id', 'sales_set', 'lesson_id'))
 
         student_edit_booking_status_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,
@@ -3847,7 +3879,7 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
             'price_per_hour': 800,
             'discount_price': '10:90;20:80;30:75;',
             'selling_status': 'selling',
-            'lesson_has_one_hour_package': True,
+            'lesson_has_one_hour_package': 'true',
             'trial_class_price': 69,
             'highlight_1': 'test',
             'highlight_2': 'test',
@@ -3857,7 +3889,8 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
             'target_students': 'test',
             'lesson_remarks': 'test',
             'syllabus': 'test',
-            'lesson_attributes': 'test'      
+            'lesson_attributes': 'test',
+            'lesson_type': 'online'    
             }
         self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
 
@@ -3873,7 +3906,7 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
             'price_per_hour': 1200,
             'discount_price': '5:90;20:80;30:70;',
             'selling_status': 'selling',
-            'lesson_has_one_hour_package': True,
+            'lesson_has_one_hour_package': 'true',
             'trial_class_price': -999,
             'highlight_1': 'test',
             'highlight_2': 'test',
@@ -3883,7 +3916,8 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
             'target_students': 'test',
             'lesson_remarks': 'test',
             'syllabus': 'test',
-            'lesson_attributes': 'test'      
+            'lesson_attributes': 'test',
+            'lesson_type': 'online'     
             }
         self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
 
@@ -5028,7 +5062,7 @@ class CLASS_FINISHED_TEST(TestCase):
             'price_per_hour': 800,
             'discount_price': '10:90;20:80;30:75;',
             'selling_status': 'selling',
-            'lesson_has_one_hour_package': True,
+            'lesson_has_one_hour_package': 'true',
             'trial_class_price': 69,
             'highlight_1': 'test',
             'highlight_2': 'test',
@@ -5038,7 +5072,8 @@ class CLASS_FINISHED_TEST(TestCase):
             'target_students': 'test',
             'lesson_remarks': 'test',
             'syllabus': 'test',
-            'lesson_attributes': 'test'      
+            'lesson_attributes': 'test',
+            'lesson_type': 'online'    
             }
         self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
 
@@ -5054,7 +5089,7 @@ class CLASS_FINISHED_TEST(TestCase):
             'price_per_hour': 1200,
             'discount_price': '5:90;20:80;30:70;',
             'selling_status': 'selling',
-            'lesson_has_one_hour_package': True,
+            'lesson_has_one_hour_package': 'true',
             'trial_class_price': -999,
             'highlight_1': 'test',
             'highlight_2': 'test',
@@ -5064,7 +5099,8 @@ class CLASS_FINISHED_TEST(TestCase):
             'target_students': 'test',
             'lesson_remarks': 'test',
             'syllabus': 'test',
-            'lesson_attributes': 'test'      
+            'lesson_attributes': 'test',
+            'lesson_type': 'online'    
             }
         self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
 
@@ -6530,7 +6566,7 @@ class REVIEWS_TESTS(TestCase):
             'price_per_hour': 800,
             'discount_price': '10:90;20:80;30:75;',
             'selling_status': 'selling',
-            'lesson_has_one_hour_package': True,
+            'lesson_has_one_hour_package': 'true',
             'trial_class_price': 69,
             'highlight_1': 'test',
             'highlight_2': 'test',
@@ -6540,7 +6576,8 @@ class REVIEWS_TESTS(TestCase):
             'target_students': 'test',
             'lesson_remarks': 'test',
             'syllabus': 'test',
-            'lesson_attributes': 'test'      
+            'lesson_attributes': 'test',
+            'lesson_type': 'online'
             }
         self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
 
@@ -6556,7 +6593,7 @@ class REVIEWS_TESTS(TestCase):
             'price_per_hour': 1200,
             'discount_price': '5:90;20:80;30:70;',
             'selling_status': 'selling',
-            'lesson_has_one_hour_package': True,
+            'lesson_has_one_hour_package': 'true',
             'trial_class_price': -999,
             'highlight_1': 'test',
             'highlight_2': 'test',
@@ -6566,7 +6603,8 @@ class REVIEWS_TESTS(TestCase):
             'target_students': 'test',
             'lesson_remarks': 'test',
             'syllabus': 'test',
-            'lesson_attributes': 'test'      
+            'lesson_attributes': 'test',
+            'lesson_type': 'online'  
             }
         self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
 
