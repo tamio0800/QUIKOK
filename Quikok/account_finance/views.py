@@ -16,8 +16,7 @@ from account_finance.models import student_refund, teacher_refund
 from time import time
 from threading import Thread
 import asyncio
-from asgiref.sync import sync_to_async  # 其他函式用
-# sfrom channels.db import database_sync_to_async  # ORM 用
+from asgiref.sync import sync_to_async
 from django.conf import settings
 
 
