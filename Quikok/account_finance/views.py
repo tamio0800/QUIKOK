@@ -1,3 +1,4 @@
+import logging
 from django.shortcuts import render
 import math
 from account_finance.models import (student_purchase_record, 
@@ -14,6 +15,10 @@ from django.views.decorators.http import require_http_methods
 from account_finance.models import student_refund, teacher_refund
 from time import time
 from threading import Thread
+import asyncio
+from asgiref.sync import sync_to_async  # 其他函式用
+# sfrom channels.db import database_sync_to_async  # ORM 用
+from django.conf import settings
 
 
 def view_email_new_order_remind(request):
@@ -122,7 +127,6 @@ def storage_order(request):
                                                 target=email_notification.system_email_new_order_and_payment_remind,
                                                 kwargs=notification)
                                             the_thread.start()
-                                            print(f"consumed time test: {time()-st}")
 
                                         else:
                                             response = {'status':'failed',
@@ -182,9 +186,7 @@ def storage_order(request):
                                         the_thread = Thread(
                                             target=email_notification.system_email_new_order_and_payment_remind,
                                             kwargs=notification)
-                                        the_thread.start()
-                                        print(f"consumed time test: {time()-st}")
-                                        
+                                        the_thread.start()                                        
 
                                 else: # 不是選試上課就不檢查有沒有買過了,使用者愛一次買幾個都可以
                                     real_price = int(price) - int(q_discount_amount)
@@ -231,15 +233,14 @@ def storage_order(request):
                                     #email_notification = email_manager()
                                     #email_notification.system_email_new_order_and_payment_remind(**notification)
                                     response = {'status':'success',
-                                    'errCode': None,
-                                    'errMsg': None,
-                                    'data': new_record.id}
+                                        'errCode': None,
+                                        'errMsg': None,
+                                        'data': new_record.id}
 
                                     the_thread = Thread(
                                         target=email_notification.system_email_new_order_and_payment_remind,
                                         kwargs=notification)
                                     the_thread.start()
-                                    print(f"consumed time test: {time()-st}")
 
                             else:
                                 response = {'status':'failed',
@@ -302,21 +303,20 @@ def storage_order(request):
                                         #print(f"consumed time: {time()-st}")
 
                                         response = {'status':'success',
-                                        'errCode': None,
-                                        'errMsg': None,
-                                        'data': new_record.id}
+                                            'errCode': None,
+                                            'errMsg': None,
+                                            'data': new_record.id}
 
                                         the_thread = Thread(
                                             target=email_notification.system_email_new_order_and_payment_remind,
                                             kwargs=notification)
                                         the_thread.start()
-                                        print(f"consumed time test: {time()-st}")
 
                                     else: #有買過或正在買的試教課程
                                         response = {'status':'failed',
-                                                    'errCode': 6,
-                                                    'errMsg': '您已選購此堂課程的試教方案，請前往帳務中心查看或選擇其他方案',
-                                                    'data': None}
+                                            'errCode': 6,
+                                            'errMsg': '您已選購此堂課程的試教方案，請前往帳務中心查看或選擇其他方案',
+                                            'data': None}
 
                                 else: # 沒買過,可以買試教
                                     real_price = int(price)
@@ -361,15 +361,14 @@ def storage_order(request):
                                     #email_notification.system_email_new_order_and_payment_remind(**notification)
 
                                     response = {'status':'success',
-                                    'errCode': None,
-                                    'errMsg': None,
-                                    'data': new_record.id}
+                                        'errCode': None,
+                                        'errMsg': None,
+                                        'data': new_record.id}
 
                                     the_thread = Thread(
                                         target=email_notification.system_email_new_order_and_payment_remind,
                                         kwargs=notification)
                                     the_thread.start()
-                                    print(f"consumed time test: {time()-st}")
 
                             else: #不是選試上課就不檢查有沒有買過了,使用者愛一次買幾個都可以
                                 real_price = int(price)
@@ -411,15 +410,14 @@ def storage_order(request):
                                 #email_notification.system_email_new_order_and_payment_remind(**notification)
                     
                                 response = {'status':'success',
-                                'errCode': None,
-                                'errMsg': None,
-                                'data': new_record.id}
+                                    'errCode': None,
+                                    'errMsg': None,
+                                    'data': new_record.id}
 
                                 the_thread = Thread(
                                     target=email_notification.system_email_new_order_and_payment_remind,
                                     kwargs=notification)
                                 the_thread.start()
-                                print(f"consumed time test: {time()-st}")
 
                                 return JsonResponse(response)
                     else:# 正常情況下前端傳來的金額要與資料庫一致
@@ -458,7 +456,10 @@ def storage_order(request):
 def student_order_history(request):
     '''
     用以回傳訂單紀錄api, 我的存摺頁
+    優化後的同步執行速度: 2.93、3.01、3.03、2.95 秒（以student6測試）
+    改成異步執行後的速度: 1.09、1.15、1.39、1.05 秒（以student6測試）
     '''
+    st = time()
     student_authID = request.POST.get('userID', False)
     user_type = request.POST.get('type', False)
     token_from_user_raw = request.headers.get('Authorization', False)
@@ -471,7 +472,6 @@ def student_order_history(request):
 
     if check_if_all_variables_are_true(student_authID, user_type):
         data = []
-        record_history = {}
         remittance_info = {
             'bank_code': '088',
             'bank_name': '國泰世華銀行',
@@ -482,82 +482,156 @@ def student_order_history(request):
         # 這裡在 query 之餘也要進行資料排序，
         # 先以時間排序（由新至遠），行有餘力再回來加上類別排序
         # 但因為我(tamio)改以在 models 的 meta 設定了這個排序方式，所以這邊不用再加上時間排序
+
+        # 同步的方法（測試時使用，因為sqlite會lock住單一指令）
+        def fetch_data_synchronously(record):
+            # 開始進行資料的搜集
+            sales_set_object = \
+                lesson_sales_sets.objects.get(id=record.lesson_sales_set_id)
+        
+            # 所有尚未確認時間計算用
+            if sales_set_object.sales_set == 'trial':
+                total_time = 30
+            # 試教總時數等於半小時
+            #    record_set_name = '試教'
+            elif sales_set_object.sales_set == 'no_discount':
+                total_time = 60
+            #買單堂課的時數為一個小時((嚴格來說是兩堂課
+            #    record_set_name = '單堂'
+            else:
+                lesson_time_in_hour = sales_set_object.sales_set.split(':')[0]
+                total_time = int(lesson_time_in_hour) * 60 # 小時轉成分鐘
+            
+            if record.payment_status in ['paid', 'refunded', 'cancel_after_paid']:
+
+                remain_time_info = \
+                    student_remaining_minutes_of_each_purchased_lesson_set.objects.get(student_purchase_record_id=record.id)
+                
+                total_non_confirmed_minutes = total_time - remain_time_info.confirmed_consumed_minutes
+                available_remaining_minutes = remain_time_info.available_remaining_minutes
+                # 回傳退款金額
+                # in 的處理速度比單純比對字串慢，所以單獨比對 paid 字串
+                if record.payment_status == 'paid':
+                    refunded_price = ''
+                else:
+
+                    refunded_price = \
+                        student_remaining_minutes_when_request_refund_each_purchased_lesson_set.objects.get(
+                            student_purchase_record_id=record.id
+                        ).available_minutes_turn_into_q_points
+                  
+            else:
+                refunded_price = ''
+                available_remaining_minutes = ''
+                total_non_confirmed_minutes = ''
+
+            record_history = {
+                'purchase_recordID':record.id,
+                'purchase_status':record.payment_status,
+                'refunded_price':refunded_price,
+                'purchase_date':record.purchase_date.strftime('%Y-%m-%d'),  # 將日期轉換為給前端的格式
+                'teacher_authID':record.teacher_auth_id,
+                'teacher_nickname': record.teacher_nickname,
+                'lesson_name': record.lesson_title,
+                'lessonID': record.lesson_id,
+                'lesson_sales_set': sales_set_object.sales_set, 
+                'purchased_with_money':record.purchased_with_money,
+                'available_remaining_minutes': available_remaining_minutes,
+                'total_non_confirmed_minutes': total_non_confirmed_minutes,
+                'edony_bank_info': remittance_info,
+                'updated_time': record.updated_time  # 這個是用來排序用的而已
+                }
+                #全部時數減掉已confirm完課的時數,主要是給老師看的
+            #'付款末五碼': record.part_of_bank_account_code} # 後五碼
+            data.append(record_history)
+
+
+        # 嘗試用異步的方式做做看 
+        async def fetch_data_asynchronously(record):
+            '''
+            用異步的方式來處理學生的購買紀錄，以便回傳給前端做呈現。
+            '''
+            # 開始進行資料的搜集
+            sales_set_object = \
+                await sync_to_async(lesson_sales_sets.objects.get)(id=record.lesson_sales_set_id)
+            
+            # 所有尚未確認時間計算用
+            if sales_set_object.sales_set == 'trial':
+                total_time = 30
+            # 試教總時數等於半小時
+            #    record_set_name = '試教'
+            elif sales_set_object.sales_set == 'no_discount':
+                total_time = 60
+            #買單堂課的時數為一個小時((嚴格來說是兩堂課
+            #    record_set_name = '單堂'
+            else:
+                lesson_time_in_hour = sales_set_object.sales_set.split(':')[0]
+                total_time = int(lesson_time_in_hour) * 60 # 小時轉成分鐘
+            
+            if record.payment_status in ['paid', 'refunded', 'cancel_after_paid']:
+
+                remain_time_info = \
+                    await sync_to_async(student_remaining_minutes_of_each_purchased_lesson_set.objects.get)(student_purchase_record_id=record.id)
+                    
+                total_non_confirmed_minutes = total_time - remain_time_info.confirmed_consumed_minutes
+                available_remaining_minutes = remain_time_info.available_remaining_minutes
+                # 回傳退款金額
+                # in 的處理速度比單純比對字串慢，所以單獨比對 paid 字串
+                if record.payment_status == 'paid':
+                    refunded_price = ''
+                else:
+                    remaining_minutes_object = \
+                        await sync_to_async(student_remaining_minutes_when_request_refund_each_purchased_lesson_set.objects.get)(
+                        student_purchase_record_id=record.id)
+                    refunded_price = \
+                        remaining_minutes_object.available_minutes_turn_into_q_points
+            else:
+                refunded_price = ''
+                available_remaining_minutes = ''
+                total_non_confirmed_minutes = ''
+
+            record_history = {
+                'purchase_recordID':record.id,
+                'purchase_status':record.payment_status,
+                'refunded_price':refunded_price,
+                'purchase_date':record.purchase_date.strftime('%Y-%m-%d'),  # 將日期轉換為給前端的格式
+                'teacher_authID':record.teacher_auth_id,
+                'teacher_nickname': record.teacher_nickname,
+                'lesson_name': record.lesson_title,
+                'lessonID': record.lesson_id,
+                'lesson_sales_set': sales_set_object.sales_set, 
+                'purchased_with_money':record.purchased_with_money,
+                'available_remaining_minutes': available_remaining_minutes,
+                'total_non_confirmed_minutes': total_non_confirmed_minutes,
+                'edony_bank_info': remittance_info,
+                'updated_time': record.updated_time  # 這個是用來排序用的而已
+                }
+                #全部時數減掉已confirm完課的時數,主要是給老師看的
+            #'付款末五碼': record.part_of_bank_account_code} # 後五碼
+            data.append(record_history)
+
+
         this_student_s_all_purchased_record = \
             student_purchase_record.objects.filter(student_auth_id=student_authID)
         
         if this_student_s_all_purchased_record.exists():
             # 有返回相關的資料再做這段就好，節省另外 query 的時間
-            for record in this_student_s_all_purchased_record:
-                # 開始進行資料的搜集
-                sales_set_object = \
-                    lesson_sales_sets.objects.get(id=record.lesson_sales_set_id)
-                
-                # 所有尚未確認時間計算用
-                if sales_set_object.sales_set == 'trial':
-                    total_time = 30
-                # 試教總時數等於半小時
-                #    record_set_name = '試教'
-                elif sales_set_object.sales_set == 'no_discount':
-                    total_time = 60
-                #買單堂課的時數為一個小時((嚴格來說是兩堂課
-                #    record_set_name = '單堂'
-                else:
-                    lesson_time_in_hour = sales_set_object.sales_set.split(':')[0]
-                    total_time = int(lesson_time_in_hour) * 60 # 小時轉成分鐘
-                #    lesson_discount = set_name.sales_set.split[1]
-                #    if '0' in lesson_discount: # 70 折-> 7折
-                #        lesson_discount = set_discount.strip('0')
-                #    record_set_name = f'{lesson_time}小時{lesson_discount}折'
-                
-                # 如果這筆訂單還沒從reconciliation改成paid, 剩餘時數的table也就還沒長出來
-                # 所以必須分付款狀態來處理
-                if record.payment_status in ['paid', 'refunded', 'cancel_after_paid']:
-                    remain_time_info = \
-                        student_remaining_minutes_of_each_purchased_lesson_set.objects.get(student_purchase_record_id=record.id)
-                    total_non_confirmed_minutes = total_time - remain_time_info.confirmed_consumed_minutes
-                    available_remaining_minutes = remain_time_info.available_remaining_minutes
-                    # 回傳退款金額
-                    # in 的處理速度比單純比對字串慢，所以單獨比對 paid 字串
-                    if record.payment_status == 'paid':
-                        refunded_price = ''
-                    else:
-                        refunded_price = \
-                            student_remaining_minutes_when_request_refund_each_purchased_lesson_set.objects.get(
-                                student_purchase_record_id=record.id
-                            ).available_minutes_turn_into_q_points
-                    # if record.payment_status in ['refunded', 'cancel_after_paid']:
-                    #     refunded_price = student_remaining_minutes_when_request_refund_each_purchased_lesson_set.objects.get(
-                    #         student_purchase_record_id=record.id).available_minutes_turn_into_q_points
-                    # else:
-                    #     refunded_price = ''
-                else:
-                    refunded_price = ''
-                    available_remaining_minutes = ''
-                    total_non_confirmed_minutes = ''
-                
-                # 將日期轉換為給前端的格式
-                # purchase_date = record.purchase_date
-                date_format_change = record.purchase_date.strftime('%Y-%m-%d')
-                #print(available_remaining_minutes)
-                record_history = {
-                    'purchase_recordID':record.id,
-                    'purchase_status':record.payment_status,
-                    'refunded_price':refunded_price,
-                    'purchase_date':date_format_change,
-                    'teacher_authID':record.teacher_auth_id,
-                    'teacher_nickname': record.teacher_nickname,
-                    'lesson_name': record.lesson_title,
-                    'lessonID': record.lesson_id,
-                    'lesson_sales_set': sales_set_object.sales_set, 
-                    'purchased_with_money':record.purchased_with_money,
-                    'available_remaining_minutes': available_remaining_minutes,
-                    'total_non_confirmed_minutes': total_non_confirmed_minutes} 
-                    #全部時數減掉已confirm完課的時數,主要是給老師看的
-                #'付款末五碼': record.part_of_bank_account_code} # 後五碼
 
-                record_history['edony_bank_info'] = remittance_info
-                data.append(record_history)
-    
+            query_purchased_records_tasks = \
+                [fetch_data_asynchronously(record) for record in this_student_s_all_purchased_record]
+            
+            if settings.ASYNC_TO_SYNC:
+                # 同步執行
+                for record in this_student_s_all_purchased_record:
+                    fetch_data_synchronously(record)
+            else:
+                # 異步執行
+                asyncio.run(asyncio.wait(query_purchased_records_tasks))
+                
+            # 用來排序資料，從最後更改日期最新的開始排下去
+            data = \
+                sorted(data, key=lambda x:x['updated_time'], reverse=True)
+        
         response = {
             'status':'success',
             'errCode': None,
@@ -571,12 +645,7 @@ def student_order_history(request):
             'errMsg': '系統沒有收到資料，請重新整理，如狀況持續可連絡客服',
             'data': list()}
 
-    # except Exception as e:
-    #     print(f'account_finance/views, student_order_history storage_order Exception {e}')
-    #     response = {'status':'failed',
-    #     'errCode': 1,
-    #     'errMsg': '資料庫有問題，請稍後再試',
-    #     'data': []}
+    print(f"student_order_history_takes {time()-st} seconds.")
     return JsonResponse(response)
 
 
@@ -752,9 +821,9 @@ def student_edit_order(request):
                         email_to_edony.send_email_reconciliation_reminder(student_authID=student_authID,
                         user5_bank_code =user5_bank_code, total_price = record.purchased_with_money)
                         response = {'status':'success',
-                                    'errCode': None,
-                                    'errMsg': None,
-                                    'data': None}
+                            'errCode': None,
+                            'errMsg': None,
+                            'data': None}
                                     
                     elif status_update == '2': 
                         # 申請取消 如果這筆訂單沒有用q幣折抵不用動作,如果有用q幣,
@@ -770,28 +839,28 @@ def student_edit_order(request):
                         record.payment_status = 'unpaid_cancel'
                         record.save()
                         response = {'status':'success',
-                                    'errCode': None,
-                                    'errMsg': None,
-                                    'data': None}
+                            'errCode': None,
+                            'errMsg': None,
+                            'data': None}
                     else:
                         response = {'status':'failed',
-                        'errCode': 3,
-                        'errMsg': '您的訂單有問題，請聯絡客服協助您處理，謝謝！',
-                        'data': None}
+                            'errCode': 3,
+                            'errMsg': '您的訂單有問題，請聯絡客服協助您處理，謝謝！',
+                            'data': None}
 
                 else: # 不是已付款或未付款不能動作
                     response = {'status':'failed',
-                    'errCode': 6,
-                    'errMsg': '您的訂單狀態有問題，請聯絡客服協助您處理，謝謝！',
-                    'data': None}
+                        'errCode': 6,
+                        'errMsg': '您的訂單狀態有問題，請聯絡客服協助您處理，謝謝！',
+                        'data': None}
                     
-
         else:
-            print(student_authID, token,user_type,purchase_recordID,status_update, user5_bank_code)
+            #print(student_authID, token,user_type,purchase_recordID,status_update, user5_bank_code)
             response = {'status':'failed',
-            'errCode': 2,
-            'errMsg': '資料庫有問題，請稍後再試',
-            'data': None}
+                'errCode': 2,
+                'errMsg': '資料庫有問題，請稍後再試',
+                'data': None}
+                
         return JsonResponse(response)
         
     except Exception as e:

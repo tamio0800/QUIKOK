@@ -906,29 +906,42 @@ class test_student_purchase_payment_status(TestCase):
 
 
     def test_order_history_response(self):
+        '''
+        我(tamio)猜這支應該是要測試 order_history 這個api能不能建立連線、
+        並且返還正確的數值。
+        '''
+
         obj_amount = student_purchase_record.objects.all().count()
         # 建立一個訂單
         purchase_data = {
-            'userID':2,
-            'teacherID':1, 'lessonID':1,
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'teacherID': teacher_profile.objects.get(id=1).auth_id,
+            'lessonID': 1,
             'sales_set': 'trial',#,'30:70''no_discount'
             'total_amount_of_the_sales_set':self.lesson_post_data['trial_class_price'],
             'q_discount': 0}
         response = self.client.post(path= '/api/account_finance/storageOrder/', 
                                     data= purchase_data)
         # 確認有新建訂單
-        self.assertEqual(student_purchase_record.objects.all().count(), obj_amount+1)
-
+        self.assertEqual(student_purchase_record.objects.all().count(), obj_amount+1,
+            student_purchase_record.objects.values())
         '''測試回傳指定userID的所有purchase這支api是否work'''
         data = {
-            'userID':'2',
+            'userID': str(student_profile.objects.get(id=1).auth_id),
             'token':'1',
             'type':'1'}
-        response = self.client.post(path='/api/account_finance/studentOrderHistory/', data=data)
+
+        response = \
+            self.client.post(path='/api/account_finance/studentOrderHistory/', data=data)
+        
         self.assertEqual(response.status_code, 200)
         self.assertIn('success', str(response.content))
         # 檢查是否有回傳退款金額資訊
-        self.assertIn('refunded_price', str(response.content))
+        self.assertIn('refunded_price', str(response.content),
+            '使用異步執行不會回傳data，將ASYNC_TO_SYNC=true設為環境變數即可正常pass。')
+        # 這個在異步化api後會失敗 >>
+        #   Exception is: database table is locked: account_student_profile
+        # 原因是sqlite不支援同時query。
         #self.assertJSONEqual(
         #    str(response.content, encoding='utf8'),
         #    {

@@ -7,10 +7,11 @@ from datetime import datetime, timedelta, date as date_function
 import os, shutil
 from unittest import skip
 from django.core import mail
-from time import time
+from time import time, sleep
 from django.db.models import Q
 from django.conf import settings
-
+import asyncio
+import threading
 
 # python manage.py test account/ --settings=Quikok.settings_for_test
 class Auth_Related_Functions_Test(TestCase):
@@ -112,21 +113,25 @@ class Auth_Related_Functions_Test(TestCase):
 
 
     def test_change_password_received_and_validated_arguments(self):
+        '''
+        測試修改密碼的這支api能不能正確收取到參數。
+        '''
         chg_pwd_post_data = {
             'userID': 3,
             'oldUserPwd': 'dwedewikrj23oi5joiu4trjoufj432jt34i82043jiefwo',
-            'XXnewUserPwd': 'djwiofdjewu89320894u2304jr23j980rhudnsaljrjfeas'}
+            'newUserPwd': 'djwiofdjewu89320894u2304jr23j980rhudnsaljrjfeas'}
         response = \
             self.client.post(path='/api/account/memberChangePassword/', data=chg_pwd_post_data)
+        # 因為是隨便輸入的，密碼不符合 （錯誤2或錯誤3）
         self.assertIn('failed', str(response.content, "utf8"))
-        self.assertIn('"errCode": "0"', str(response.content, "utf8"))
-        # 因為缺乏必要的參數
+        self.assertTrue('"errCode": "2"' in str(response.content, "utf8") or
+            '"errCode": "3"' in str(response.content, "utf8"))
 
-        chg_pwd_post_data['newUserPwd'] = 'djwiofdjewu89320894u2304jr23j980rhudnsaljrjfeas'
-        response = \
-            self.client.post(path='/api/account/memberChangePassword/', data=chg_pwd_post_data)
-        self.assertIn('failed', str(response.content, "utf8"))
-        self.assertIn('"errCode": "2"', str(response.content, "utf8"))
+        #chg_pwd_post_data['newUserPwd'] = 'djwiofdjewu89320894u2304jr23j980rhudnsaljrjfeas'
+        #response = \
+        #    self.client.post(path='/api/account/memberChangePassword/', data=chg_pwd_post_data)
+        #self.assertIn('failed', str(response.content, "utf8"))
+        #self.assertIn('"errCode": "2"', str(response.content, "utf8"))
         # 因為密碼不對
 
     
@@ -1233,3 +1238,98 @@ class SPEED_TESTS(TestCase):
         '''
         
         self.fail(disc)
+
+
+    @skip
+    def test_if_asyncio_faster_than_sync_in_creating_record(self):
+        '''
+        測試使用異步方式建立資料會不會比同步快，理論上是一定會啦，
+        但我想知道異步function寫在同步的django views function中究竟會不會以異步來執行，
+        同時如果可以的話，速度又會快多少。
+        '''
+        from asgiref.sync import sync_to_async
+
+        # 使用異步寫入的方式，變成一筆都沒有進去，有沒有可能只是不能同時寫入，但可以同時讀取呢？
+        # 來試試看先同步寫入再比較同步讀取 & 異步讀取。
+
+        test_epochs = 50
+        # 先建立50個epochs就好，免得等半天
+        for i in range(test_epochs):
+            teacher_post_data = {
+                'regEmail': f"user_sync_test_{i}@gmail.com",
+                'regPwd': '00000000',
+                'regName': f'test_sync_name_{i}',
+                'regNickname': f'test_nickname_{i}',
+                'regBirth': '2000-01-01',
+                'regGender': '0',
+                'intro': 'test_intro',
+                'regMobile': '0912-345678',
+                'tutor_experience': '一年以下',
+                'subject_type': 'test_subject',
+                'education_1': 'education_1_test',
+                'education_2': 'education_2_test',
+                'education_3': 'education_3_test',
+                'company': 'test_company',
+                'special_exp': 'test_special_exp',
+                'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;'
+            }
+            self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        print(f"{test_epochs} records have been created.")
+
+        # 先嘗試同步讀取
+        sync_results = list()
+        sync_read_start_time = time()
+        for i in range(test_epochs):
+            teacher_object = \
+                teacher_profile.objects.get(username = f"user_sync_test_{i}@gmail.com")
+            sync_results.append(teacher_object.username)
+        
+        self.assertTrue(len(sync_results)==50, sync_results)
+        print(f"sync_read_end_time: {time() - sync_read_start_time}")
+        
+        # 嘗試看看能不能異步讀取 >>  不行，要改寫ORM API，不然到了ORM還是要一步一步來
+        # 嘗試看看能不能多線程讀取 >>  不行，sqlite不能同時讀取，但不曉得MySql可不可以
+        # 呈上，是可以的，使用方法如下：
+        '''
+        async def async_read(id):
+            teacher = \
+                 await sync_to_async(teacher_profile.objects.filter(id=id).first)()
+             print(f"Found teacher: {teacher is None} {id}.")
+        
+        tasks = [async_read(_) for _ in range(50)]
+        asyncio.run(asyncio.wait(tasks))
+        '''
+
+        '''async_results = list()
+        async def async_read(user_id):
+            await sync_to_async(list)(
+                teacher_profile.objects.get(username = f"user_async_test_{user_id}@gmail.com").username
+                )
+            teacher_object = \
+                teacher_profile.objects.get(username = f"user_async_test_{user_id}@gmail.com")
+            async_results.append(teacher_object.username)
+        
+        async_read_start_time = time()
+        tasks = [async_read(_) for _ in range(test_epochs)]
+        asyncio.run(asyncio.wait(tasks))
+        
+        self.assertTrue(len(async_results)==50, async_results)
+        print(f"async_read_end_time: {time() - async_read_start_time}")'''
+        
+        '''thread_read_start_time = time()
+        def thread_get_object(user_id):
+            print(f"Getting teacher:{user_id}...")
+            teacher_object = \
+                teacher_profile.objects.get(username = f"user_async_test_{user_id}@gmail.com")
+            print(f"Teacher\'s username: {teacher_object.username}...")
+
+        # 使用多線程讀取看看
+        for _ in range(50):
+            threading.Thread(target=thread_get_object, args=(_,)).start()
+
+        print(f"thread_read_end_time: {time() - thread_read_start_time}")'''
+
+
+        
+        
+

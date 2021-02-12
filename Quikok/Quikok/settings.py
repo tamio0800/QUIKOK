@@ -2,6 +2,7 @@ import os
 import socket
 
 DISABLED_EMAIL = os.environ.get('DISABLED_EMAIL', False) == 'true'
+ASYNC_TO_SYNC = os.environ.get('ASYNC_TO_SYNC', False) == 'true'
 # 將 DISABLED_EMAIL 設做環境變數，假使這個值為真，則不與 gmail 連線進行 email 的「寄送」，
 # 主要是為了解決開發/除錯時必定要有網路的問題。
 

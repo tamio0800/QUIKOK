@@ -1692,7 +1692,7 @@ def member_change_password(request):
                 teacher_object.save()
 
                 # 接著做User的部份
-                the_user_object = User.objects.get(username=teacher_object.username)
+                the_user_object = User.objects.get(id=teacher_object.auth_id)
                 the_user_object.password = new_password
                 the_user_object.save()
 
@@ -1715,7 +1715,7 @@ def member_change_password(request):
                 student_object.save()
 
                 # 接著做User的部份
-                the_user_object = User.objects.get(username=student_object.username)
+                the_user_object = User.objects.get(id=student_object.auth_id)
                 the_user_object.password = new_password
                 the_user_object.save()
                 
@@ -1740,11 +1740,9 @@ def member_change_password(request):
     return JsonResponse(response)
     
 
-
-
-
 def test_connect_time(request):
     return HttpResponse("THIS IS A DUMMY TEST FUNCTION.")
+
 
 
 '''# @receiver(request_finished, sender=test_connect_time)
