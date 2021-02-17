@@ -4590,7 +4590,7 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         purchase_post_data = {
             'userID':student_profile.objects.first().auth_id,
             'teacherID':teacher_profile.objects.first().auth_id,
-            'lessonID':lesson_info.objects.get(lesson_title='test11111').id,
+            'lessonID':lesson_info.objects.get(lesson_title='test1111').id,
             'sales_set': 'trial',
             'total_amount_of_the_sales_set': 69,
             'q_discount':0}
@@ -4603,10 +4603,10 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
             'purchase_recordID': student_purchase_record.objects.get(
                 student_auth_id = student_profile.objects.get(id=1).auth_id,
                 teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
-                lesson_id = lesson_info.objects.get(lesson_title='test11111').id,
+                lesson_id = lesson_info.objects.get(lesson_title='test1111').id,
                 lesson_sales_set_id = lesson_sales_sets.objects.get(
                     sales_set = 'trial',
-                    lesson_id = lesson_info.objects.get(lesson_title='test11111').id,
+                    lesson_id = lesson_info.objects.get(lesson_title='test1111').id,
                     is_open = True
                 ).id
             ).id,

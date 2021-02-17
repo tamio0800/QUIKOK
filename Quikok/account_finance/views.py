@@ -531,7 +531,7 @@ def student_order_history(request):
                 'purchase_date':record.purchase_date.strftime('%Y-%m-%d'),  # 將日期轉換為給前端的格式
                 'teacher_authID':record.teacher_auth_id,
                 'teacher_nickname': record.teacher_nickname,
-                'lesson_name': record.lesson_title,
+                'lesson_title': record.lesson_title,
                 'lessonID': record.lesson_id,
                 'lesson_sales_set': sales_set_object.sales_set, 
                 'purchased_with_money':record.purchased_with_money,
