@@ -58,8 +58,8 @@ class student_refund(models.Model):
         return f"學生 {str(self.student_auth_id)} 退款 {str(self.refund_amount)} 元，手續費 {str(self.txn_fee)}。 狀態: {self.refund_status}"
     
     class Meta:
-        verbose_name = '學生退款紀錄'
-        verbose_name_plural = '學生退款紀錄'
+        verbose_name = '學生退款紀錄(退款用)'
+        verbose_name_plural = '學生退款紀錄(退款用)'
 
 
 # 老師提款紀錄(預設系統每個月自動轉帳
@@ -79,8 +79,8 @@ class teacher_refund(models.Model):
         return str(self.id)
 
     class Meta:
-        verbose_name = '老師提款紀錄'
-        verbose_name_plural = '老師提款紀錄'
+        verbose_name = '老師提款紀錄(退款用)'
+        verbose_name_plural = '老師提款紀錄(退款用)'
 
 
 class student_remaining_minutes_of_each_purchased_lesson_set(models.Model):
