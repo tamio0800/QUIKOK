@@ -1972,6 +1972,7 @@ def get_teacher_s_booking_history(request):
 
         response['data'].append(
             {
+                'lesson_id': lesson_object.id,
                 'booked_date': booking_info_object.booking_start_datetime.strftime('%Y-%m-%d'),
                 'booked_time': booking_info_object.booking_date_and_time.split(':')[1][:-1].split(','),
                 # [:-1]是為了去掉最後的 ';'
@@ -2044,6 +2045,7 @@ def get_teacher_s_booking_history(request):
 
         response['data'].append(
             {
+                'lesson_id': lesson_object.id,
                 'booked_date': booking_info_object.booking_start_datetime.strftime('%Y-%m-%d'),
                 'booked_time': booking_info_object.booking_date_and_time.split(':')[1][:-1].split(','),
                 # [:-1]是為了去掉最後的 ';'
@@ -2357,6 +2359,7 @@ def get_student_s_booking_history(request):
 
         response['data'].append(
             {
+                'lesson_id': lesson_object.id,
                 'booked_date': booking_info_object.booking_start_datetime.strftime("%Y-%m-%d"),
                 'booked_time': booking_info_object.booking_date_and_time.split(':')[1][:-1].split(','),
                 # [:-1]是為了去掉最後的 ';'
@@ -2430,6 +2433,7 @@ def get_student_s_booking_history(request):
 
         response['data'].append(
             {
+                'lesson_id': lesson_object.id,
                 'booked_date': booking_info_object.booking_start_datetime.strftime("%Y-%m-%d"),
                 'booked_time': booking_info_object.booking_date_and_time.split(':')[1][:-1].split(','),
                 # [:-1]是為了去掉最後的 ';'
