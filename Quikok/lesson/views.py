@@ -1972,6 +1972,7 @@ def get_teacher_s_booking_history(request):
 
         response['data'].append(
             {
+                'lesson_id': lesson_object.id,
                 'booked_date': booking_info_object.booking_start_datetime.strftime('%Y-%m-%d'),
                 'booked_time': booking_info_object.booking_date_and_time.split(':')[1][:-1].split(','),
                 # [:-1]是為了去掉最後的 ';'
@@ -2044,6 +2045,7 @@ def get_teacher_s_booking_history(request):
 
         response['data'].append(
             {
+                'lesson_id': lesson_object.id,
                 'booked_date': booking_info_object.booking_start_datetime.strftime('%Y-%m-%d'),
                 'booked_time': booking_info_object.booking_date_and_time.split(':')[1][:-1].split(','),
                 # [:-1]是為了去掉最後的 ';'
@@ -2357,6 +2359,7 @@ def get_student_s_booking_history(request):
 
         response['data'].append(
             {
+                'lesson_id': lesson_object.id,
                 'booked_date': booking_info_object.booking_start_datetime.strftime("%Y-%m-%d"),
                 'booked_time': booking_info_object.booking_date_and_time.split(':')[1][:-1].split(','),
                 # [:-1]是為了去掉最後的 ';'
@@ -2385,6 +2388,7 @@ def get_student_s_booking_history(request):
         '''
         將原本要回傳給前端的資料改用異步的方式處理。
         '''
+        print(f"booking_info_object_teacher_auth_id: {booking_info_object.teacher_auth_id}")
         corr_lesson_completed_record_object = \
             await sync_to_async(lesson_completed_record.objects.filter(lesson_booking_info_id=booking_info_object.id).first)()
 
@@ -2429,6 +2433,7 @@ def get_student_s_booking_history(request):
 
         response['data'].append(
             {
+                'lesson_id': lesson_object.id,
                 'booked_date': booking_info_object.booking_start_datetime.strftime("%Y-%m-%d"),
                 'booked_time': booking_info_object.booking_date_and_time.split(':')[1][:-1].split(','),
                 # [:-1]是為了去掉最後的 ';'
@@ -2458,6 +2463,7 @@ def get_student_s_booking_history(request):
     booking_status_filtered_by = request.POST.get('filtered_by', False)
     registered_from_date = request.POST.get('registered_from_date', False)
     registered_to_date = request.POST.get('registered_to_date', False)
+    print(f"ARGS_FROM_FRONTEND: {student_auth_id}, {booking_status_filtered_by}")
 
     if check_if_all_variables_are_true(student_auth_id, booking_status_filtered_by, 
         registered_from_date, registered_to_date, searched_by):
@@ -2549,11 +2555,16 @@ def get_student_s_booking_history(request):
                 else:
                     # 這個學生 非 什麼預約歷史都沒有
                     response['data'] = list()
+
+                    for _ in student_s_lesson_booking_info_queryset:
+                        print(f"student_s_lesson_booking_info_queryset: {_.teacher_auth_id}")
+                    print(teacher_profile.objects.values())
+                    print(lesson_booking_info.objects.values())
                     
                     if settings.ASYNC_TO_SYNC:
                         for each_booking_info_object in student_s_lesson_booking_info_queryset:
                             fetch_data_synchronously(each_booking_info_object)
-                    else:
+                    else:                            
                         tasks = \
                             [
                                 fetch_data_asynchronously(each_booking_info_object) 

@@ -18,7 +18,9 @@ from account_finance.models import student_owing_teacher_time
 from lesson.models import lesson_reviews_from_students, student_reviews_from_teachers
 from account.models import student_review_aggregated_info, teacher_review_aggregated_info
 from django.core import mail
-# 10.344
+
+# 設定環境變數ASYNC_TO_SYNC為true >>  export ASYNC_TO_SYNC=true
+# 取消環境變數ASYNC_TO_SYNC >> unset ASYNC_TO_SYNC
 # python3 manage.py test lesson/ --settings=Quikok.settings_for_test
 
 
@@ -257,7 +259,7 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
 
         lesson_post_data = {
-            'userID': teacher_profile.objects.get(id=1).auth_id,   # 這是老師的auth_id
+            'userID': teacher_profile.objects.get(username=test_username).auth_id,   # 這是老師的auth_id
             'lessonID': 'null',
             'action': 'createLesson',
             'big_title': 'big_title',
@@ -352,14 +354,14 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         # 應該已經建立完成了
 
         lesson_post_data = {
-            'userID': 1,   # 這是老師的auth_id
+            'userID': teacher_profile.objects.get(username=test_username).auth_id,   # 這是老師的auth_id
             'action': 'createLesson',
             'big_title': 'big_title',
-            'little_title': 'test',
+            'little_title': 'test_little_title',
             'title_color': '#000000',
             'background_picture_code': 1,
             'background_picture_path': '',
-            'lesson_title': 'test',
+            'lesson_title': 'test_lesson_title',
             'price_per_hour': 800,
             'discount_price': '10:90;20:80;30:75;',
             'selling_status': 'selling',
@@ -377,9 +379,7 @@ class Lesson_Info_Related_Functions_Test(TestCase):
             'lesson_type': 'online'
             }
         response = \
-            self.client.post(
-                path='/api/lesson/createOrEditLesson/',
-                data=lesson_post_data)
+            self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
         try:
             shutil.rmtree(f'user_upload/teachers/{test_username}')
         except Exception as e:
@@ -391,8 +391,9 @@ class Lesson_Info_Related_Functions_Test(TestCase):
                 'status': 'success',
                 'errCode': None,
                 'errMsg': None,
-                'data': 1
-            }
+                'data': lesson_info.objects.get(lesson_title='test_lesson_title').id
+            },
+            lesson_info.objects.values()
         )
 
         # 測試課程有寫入
@@ -485,7 +486,7 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         # 應該已經建立完成了
 
         lesson_post_data = {
-            'userID': 1,   # 這是老師的auth_id
+            'userID': teacher_profile.objects.get(username=test_username).auth_id,   # 這是老師的auth_id
             'action': 'createLesson',
             'big_title': 'big_title',
             'little_title': 'test',
@@ -510,9 +511,7 @@ class Lesson_Info_Related_Functions_Test(TestCase):
             'lesson_type': 'online'
             }
         response = \
-            self.client.post(
-                path='/api/lesson/createOrEditLesson/',
-                data=lesson_post_data)
+            self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
         
         self.assertJSONEqual(
             str(response.content, encoding='utf8'),
@@ -635,14 +634,14 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         # 應該已經建立完成了
 
         lesson_post_data = {
-            'userID': 1,   # 這是老師的auth_id
+            'userID': teacher_profile.objects.get(username=test_username).auth_id,   # 這是老師的auth_id
             'action': 'createLesson',
             'big_title': 'big_title',
             'little_title': 'test',
             'title_color': '#000000',
             'background_picture_code': 1,
             'background_picture_path': '',
-            'lesson_title': 'test',
+            'lesson_title': 'test_lesson_title',
             'price_per_hour': 800,
             'discount_price': '10:90;20:80;30:75;',
             'selling_status': 'selling',
@@ -671,8 +670,9 @@ class Lesson_Info_Related_Functions_Test(TestCase):
                 'status': 'success',
                 'errCode': None,
                 'errMsg': None,
-                'data': 1
-            }
+                'data': lesson_info.objects.get(lesson_title='test_lesson_title').id
+            },
+            lesson_info.objects.values()
         )  # 建立新課程成功
 
         self.assertEqual(
@@ -742,7 +742,7 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         )  # 測試課程小卡有寫入
 
         # 再建立第二門課程
-        lesson_post_data['lesson_title'] = 'second_test_lesson'
+        lesson_post_data['lesson_title'] = '2_test_lesson'
         self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
 
         # 老師更改資訊，看兩門課程小卡會不會同步更新
@@ -805,22 +805,23 @@ class Lesson_Info_Related_Functions_Test(TestCase):
             'special_exp': 'test_special_exp',
             'teacher_general_availabale_time': '0:1,2,3,4,5;'
         }
-        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
-        self.assertEqual(
-            os.path.isdir('user_upload/teachers/' + test_username),
-            True
-        )
+        response = \
+            self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
+        # 建立完老師了
+
+        self.assertEqual(os.path.isdir('user_upload/teachers/' + test_username), True)
         # 應該已經建立完成了
 
         lesson_post_data = {
-            'userID': 1,   # 這是老師的auth_id
+            'userID': teacher_profile.objects.get(username=test_username).auth_id,   # 這是老師的auth_id
             'action': 'createLesson',
             'big_title': 'big_title',
             'little_title': 'test',
             'title_color': '#000000',
             'background_picture_code': 1,
             'background_picture_path': '',
-            'lesson_title': 'test',
+            'lesson_title': 'test_lesson_title',
             'price_per_hour': 800,
             'discount_price': '10:90;20:80;30:75;',
             'selling_status': 'selling',
@@ -838,14 +839,14 @@ class Lesson_Info_Related_Functions_Test(TestCase):
             'lesson_type': 'online'    
             }
         response = \
-            self.client.post(
-                path='/api/lesson/createOrEditLesson/',
-                data=lesson_post_data)
+            self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+        self.assertIn('success', str(response.content, 'utf8'),
+            teacher_profile.objects.values())
         # 建立完課程了
 
         # 接下來測試看看課程小卡有沒有連動更改
         all_lesson_1_sales_sets = \
-            list(lesson_sales_sets.objects.filter(lesson_id=1).values_list('sales_set', flat=True))
+            list(lesson_sales_sets.objects.filter(lesson_id=lesson_info.objects.first().id).values_list('sales_set', flat=True))
         
         # print(f'lesson_info.objects.values():  {lesson_info.objects.values()}')
         # 因為上方有 "試課優惠"，且也有 "單堂方案"，故應該有:
@@ -933,7 +934,7 @@ class Lesson_Info_Related_Functions_Test(TestCase):
 
         # 應該已經建立完成了
         lesson_post_data = {
-            'userID': 1,   # 這是老師的auth_id
+            'userID': teacher_profile.objects.get(username=test_username).auth_id,   # 這是老師的auth_id
             'action': 'createLesson',
             'lessonID': 'null',
             'big_title': 'big_title',
@@ -1137,7 +1138,7 @@ class Lesson_Info_Test(TestCase):
         self.client.post(path='/api/account/signupStudent/', data=student_post_data)
         # 建立課程
         lesson_post_data = {
-            'userID': 1,   # 這是老師的auth_id
+            'userID': teacher_profile.objects.get(username=self.test_username).auth_id,   # 這是老師的auth_id
             'action': 'createLesson',
             'big_title': 'big_title',
             'little_title': 'test',
@@ -1254,9 +1255,9 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         }  # 建立學生2號
         self.client.post(path='/api/account/signupStudent/', data=student_post_data2)
         
-        # 建立課程
+        # 建立課程teacher_profile.objects.get(username=test_username)
         lesson_post_data = {
-            'userID': 1,   # 這是老師的auth_id
+            'userID': teacher_profile.objects.get(username=self.test_username).auth_id,   # 這是老師的auth_id
             'action': 'createLesson',
             'big_title': 'big_title',
             'little_title': 'test',
@@ -2797,7 +2798,7 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         
         # 建立課程
         lesson_post_data = {
-            'userID': 1,   # 這是老師的auth_id
+            'userID': teacher_profile.objects.get(username=self.test_username).auth_id,   # 這是老師的auth_id
             'action': 'createLesson',
             'big_title': 'big_title',
             'little_title': 'test',
@@ -2831,11 +2832,11 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
 
         # 先取得兩個可預約日期，避免hard coded未來出錯
         # 時段我都設1,2,3,4,5，所以只要在其中就ok
-        self.available_date_1 = specific_available_time.objects.filter(id=1).first().date
-        self.available_date_2 = specific_available_time.objects.filter(id=2).first().date
-        self.available_date_3 = specific_available_time.objects.filter(id=3).first().date
-        self.available_date_4 = specific_available_time.objects.filter(id=4).first().date
-        self.available_date_5 = specific_available_time.objects.filter(id=5).first().date
+        self.available_date_1 = specific_available_time.objects.all()[0].date
+        self.available_date_2 = specific_available_time.objects.all()[1].date
+        self.available_date_3 = specific_available_time.objects.all()[2].date
+        self.available_date_4 = specific_available_time.objects.all()[3].date
+        self.available_date_5 = specific_available_time.objects.all()[4].date
 
 
     def tearDown(self):
@@ -3395,7 +3396,9 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
             'sales_set': 'trial',
             'total_amount_of_the_sales_set': 69,
             'q_discount':0}
-        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+        response = \
+            self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
         # print(f"test_searched_by_feature  {student_purchase_record.objects.values()}")
 
         student_edit_booking_status_post_data = {
@@ -3414,7 +3417,9 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
             ).id,
             'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
             'part_of_bank_account_code': '11111'}
-        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+        response = \
+            self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
 
         the_purchase_object = \
             student_purchase_record.objects.first()
@@ -3427,27 +3432,29 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
             'lessonID': lesson_info.objects.get(lesson_title='test_lesson_1').id,
             'bookingDateTime': f'{self.available_date_2}:4;'
         }  # 預約 30min  >> 1門課
-        self.client.post(
-            path='/api/lesson/bookingLessons/',
-            data=booking_post_data)  # 送出預約，此時老師應該有1則 待確認 預約訊息
+        
+        response = \
+            self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)  # 送出預約，此時老師應該有1則 待確認 預約訊息
 
         # 加入學生 auth_id = 2，讓他購買第二門課
         purchase_post_data = {
-            'userID':student_profile.objects.get(id=2).auth_id,
+            'userID':student_profile.objects.all()[1].auth_id,
             'teacherID':teacher_profile.objects.first().auth_id,
             'lessonID':lesson_info.objects.get(lesson_title='test_lesson_2').id,
             'sales_set': '10:90',
             'total_amount_of_the_sales_set': int(1300*10*0.9),
             'q_discount':0}
-        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+        response = \
+            self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
 
         # 學生說付款了
         student_edit_booking_status_post_data = {
-            'userID': student_profile.objects.get(id=2).auth_id,
+            'userID': student_profile.objects.all()[1].auth_id,
             'token':'',
             'type':'',
             'purchase_recordID': student_purchase_record.objects.get(
-                student_auth_id = student_profile.objects.get(id=2).auth_id,
+                student_auth_id = student_profile.objects.all()[1].auth_id,
                 teacher_auth_id = teacher_profile.objects.first().auth_id,
                 lesson_id = lesson_info.objects.get(lesson_title='test_lesson_2').id,
                 lesson_sales_set_id = lesson_sales_sets.objects.get(
@@ -3458,37 +3465,41 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
             ).id,
             'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
             'part_of_bank_account_code': '11111'}
-        self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+        response = \
+            self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
 
         the_purchase_object = \
-            student_purchase_record.objects.get(student_auth_id=student_profile.objects.get(id=2).auth_id)
+            student_purchase_record.objects.get(student_auth_id=student_profile.objects.all()[1].auth_id)
         the_purchase_object.payment_status = 'paid'
         the_purchase_object.save()
 
         # 讓學生2預約2門課
         booking_post_data = {
-            'userID': student_profile.objects.get(id=2).auth_id,  # 學生的auth_id
+            'userID': student_profile.objects.all()[1].auth_id,  # 學生的auth_id
             'lessonID': lesson_info.objects.get(lesson_title='test_lesson_2').id,
             'bookingDateTime': f'{self.available_date_1}:1,2,4,5;'
         }  # 預約 120min  >> 2門課 >> 1,2 4,5
-        self.client.post(
-            path='/api/lesson/bookingLessons/',
-            data=booking_post_data)  # 送出預約，此時老師應該有2+1則 待確認 預約訊息
+        response = \
+            self.client.post(path='/api/lesson/bookingLessons/', data=booking_post_data)  # 送出預約，此時老師應該有2+1則 待確認 預約訊息
+        self.assertIn('success', str(response.content, 'utf8'))
 
         # 測試搜尋功能是否正常，只能搜尋學生姓名(暱稱)或課程title
         booking_history_post_data = {
             'userID': teacher_profile.objects.first().auth_id,
-            'searched_by': student_profile.objects.get(id=2).nickname,
+            'searched_by': student_profile.objects.all()[1].nickname,
             'filtered_by': 'to_be_confirmed',
             'registered_from_date': '2020-01-01',
             'registered_to_date': '2050-01-01'
         }  # 測試有篩選條件
         response = self.client.post(
             path='/api/lesson/getTeachersBookingHistory/', data=booking_history_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
             
-        self.assertEquals(2, str(response.content, "utf8").count('"to_be_confirmed"')) 
+        self.assertEquals(2, str(response.content, "utf8").count('"to_be_confirmed"'),
+        f'{str(response.content, "utf8")}\nuserID: {teacher_profile.objects.first().auth_id}\nsearched_by_id: {student_profile.objects.all()[1].auth_id}\n{lesson_booking_info.objects.values()}') 
         # 應該有2門 來自學生 2的 to_be_confirmed
-        self.assertEquals(2, str(response.content, "utf8").count(f'"student_nickname": "{student_profile.objects.get(id=2).nickname}"')) 
+        self.assertEquals(2, str(response.content, "utf8").count(f'"student_nickname": "{student_profile.objects.all()[1].nickname}"')) 
         # 共2筆
         self.assertEquals(2, str(response.content, "utf8").count('"discount_price": "10:90"')) 
         # 共2筆
@@ -3847,12 +3858,14 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
             'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;'
         }
         self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        self.teacher1 = teacher_profile.objects.get(username='test_teacher1_user@test.com')
         
         self.test_teacher_name2 = 'test_teacher2_user@test.com'
         teacher_post_data['regEmail'] = self.test_teacher_name2,
         teacher_post_data['regName'] = 'test_name_2~~',
         teacher_post_data['regNickname'] = 'test_nickname_2~~',
         self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        self.teacher2 = teacher_profile.objects.get(username='test_teacher2_user@test.com')
         # 建了2個老師
         
         self.test_student_name1 = 'test_student1@a.com'
@@ -3867,26 +3880,29 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
             'regNotifiemail': ''
         }
         self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        self.student1 = student_profile.objects.get(username=self.test_student_name1)
 
         self.test_student_name2 = 'test_student2@a.com'
         student_post_data['regEmail'] = self.test_student_name2
         self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        self.student2 = student_profile.objects.get(username=self.test_student_name2)
 
         self.test_student_name3 = 'test_student3@a.com'
         student_post_data['regEmail'] = self.test_student_name3
         self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        self.student3 = student_profile.objects.get(username=self.test_student_name3)
         # 建了3個學生
         
         # 建立課程
         lesson_post_data = {
-            'userID': teacher_profile.objects.get(id=1).auth_id,   # 這是老師1的auth_id
+            'userID': self.teacher1.auth_id,   # 這是老師1的auth_id
             'action': 'createLesson',
             'big_title': 'big_title',
             'little_title': 'test1111',
             'title_color': '#000000',
             'background_picture_code': 1,
             'background_picture_path': '',
-            'lesson_title': 'test11111',
+            'lesson_title': 'test1111',
             'price_per_hour': 800,
             'discount_price': '10:90;20:80;30:75;',
             'selling_status': 'selling',
@@ -3904,9 +3920,10 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
             'lesson_type': 'online'    
             }
         self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+        self.lesson1 = lesson_info.objects.get(lesson_title=lesson_post_data['lesson_title'])
 
         lesson_post_data = {
-            'userID': teacher_profile.objects.get(id=2).auth_id,   # 這是老師2的auth_id
+            'userID': self.teacher2.auth_id,   # 這是老師2的auth_id
             'action': 'createLesson',
             'big_title': 'big_title',
             'little_title': 'test',
@@ -3931,20 +3948,21 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
             'lesson_type': 'online'     
             }
         self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+        self.lesson2 = lesson_info.objects.get(lesson_title=lesson_post_data['lesson_title'])
 
         # 先取得兩個可預約日期，避免hard coded未來出錯
         # 時段我都設1,2,3,4,5，所以只要在其中就ok
-        self.available_date_1_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=1)).first().date
-        self.available_date_2_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=1))[1].date
-        self.available_date_3_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=1))[2].date
-        self.available_date_4_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=1))[3].date
-        self.available_date_5_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=1))[4].date
+        self.available_date_1_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(username=self.test_teacher_name1)).first().date
+        self.available_date_2_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(username=self.test_teacher_name1))[1].date
+        self.available_date_3_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(username=self.test_teacher_name1))[2].date
+        self.available_date_4_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(username=self.test_teacher_name1))[3].date
+        self.available_date_5_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(username=self.test_teacher_name1))[4].date
 
-        self.available_date_11_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=2))[10].date
-        self.available_date_12_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=2))[11].date
-        self.available_date_13_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=2))[12].date
-        self.available_date_4_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=2))[3].date
-        self.available_date_15_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=2))[14].date
+        self.available_date_11_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(username=self.test_teacher_name2))[10].date
+        self.available_date_12_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(username=self.test_teacher_name2))[11].date
+        self.available_date_13_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(username=self.test_teacher_name2))[12].date
+        self.available_date_4_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(username=self.test_teacher_name2))[3].date
+        self.available_date_15_t2 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(username=self.test_teacher_name2))[14].date
 
 
     def tearDown(self):
@@ -3975,7 +3993,7 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         }
         ''' 
         booking_history_post_data = {
-            'userID': student_profile.objects.first().auth_id,
+            'userID': self.student1.auth_id,
             'filtered_by': 'to_be_confirmed',
             'registered_from_date': '2000-01-01',
             'registered_to_date': '2021-01-31'
@@ -3990,7 +4008,7 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
 
     def test_get_student_s_booking_history_api_work_when_student_has_no_booking_history_at_all(self):
         booking_history_post_data = {
-            'userID': student_profile.objects.first().auth_id,
+            'userID': self.student1.auth_id,
             'filtered_by': '',
             'searched_by': '',
             'registered_from_date': '2000-01-01',
@@ -4023,26 +4041,26 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
 
     def test_get_student_s_booking_history_work_when_student_has_common_lessons_filtered_and_not(self):
         purchase_post_data = {
-            'userID':student_profile.objects.first().auth_id,
-            'teacherID':teacher_profile.objects.first().auth_id,
-            'lessonID':lesson_info.objects.get(id=1).id,
+            'userID':self.student1.auth_id,
+            'teacherID':self.teacher1.auth_id,
+            'lessonID':self.lesson1.id,
             'sales_set': '10:90',
             'total_amount_of_the_sales_set': int(800*10*0.9),
             'q_discount':0}
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
         student_edit_booking_status_post_data = {
-            'userID': student_profile.objects.get(id=1).auth_id,
+            'userID': self.student1.auth_id,
             'token':'',
             'type':'',
             'purchase_recordID': student_purchase_record.objects.get(
-                student_auth_id = student_profile.objects.get(id=1).auth_id,
-                teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
-                lesson_id = lesson_info.objects.get(id=1).id,
+                student_auth_id = self.student1.auth_id,
+                teacher_auth_id = self.teacher1.auth_id,
+                lesson_id = self.lesson1.id,
                 lesson_sales_set_id = lesson_sales_sets.objects.get(
                     sales_set = '10:90',
                     is_open = True,
-                    lesson_id = lesson_info.objects.get(id=1).id
+                    lesson_id = self.lesson1.id,
                 ).id
             ).id,
             'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
@@ -4051,17 +4069,17 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
 
         the_purchase_object = \
             student_purchase_record.objects.get(
-                student_auth_id = student_profile.objects.get(id=1).auth_id,
-                teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
-                lesson_id = lesson_info.objects.get(id=1).id
+                student_auth_id = self.student1.auth_id,
+                teacher_auth_id = self.teacher1.auth_id,
+                lesson_id = self.lesson1.id,
             )
         the_purchase_object.payment_status = 'paid'
         the_purchase_object.save()
         # 理論上現在已經購買、付款完成了，所以 學生1應該有600min的可用時數
 
         booking_post_data = {
-            'userID': student_profile.objects.get(id=1).auth_id,  # 學生的auth_id
-            'lessonID': 1,
+            'userID': self.student1.auth_id,  # 學生的auth_id
+            'lessonID': self.lesson1.id,
             'bookingDateTime': f'{self.available_date_1_t1}:1,2,5;{self.available_date_2_t1}:1,2,3,4,5;{self.available_date_4_t1}:1,3,4;'
         }  # 預約 330min  >> 5門課
 
@@ -4070,20 +4088,19 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
             data=booking_post_data)  # 送出預約，此時學生應該有5則 送出的 待確認預約訊息
         
         self.assertEquals(5, 
-        lesson_booking_info.objects.filter(student_auth_id=student_profile.objects.get(id=1).auth_id).count(),
+        lesson_booking_info.objects.filter(student_auth_id=self.student1.auth_id,).count(),
         lesson_booking_info.objects.values())
         
         booking_history_post_data = {
-            'userID': student_profile.objects.get(id=1).auth_id,
+            'userID': self.student1.auth_id,
             'filtered_by': 'to_be_confirmed',
             'searched_by': '',
             'registered_from_date': '2020-01-01',
             'registered_to_date': '2050-01-01'
         }  # 測試有篩選條件
-
+        print(f"booking_history_post_data.userID: {self.student1.auth_id}")
         response = self.client.post(
-            path='/api/lesson/getStudentsBookingHistory/', 
-            data=booking_history_post_data)
+            path='/api/lesson/getStudentsBookingHistory/', data=booking_history_post_data)
         
         # print(f'has_common_lessons_to_be_confirmed_1 {str(response.content, "utf8")}')
         self.assertIn('success', str(response.content, "utf8"))
@@ -4093,7 +4110,7 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         self.assertIn(f'"booked_status": "to_be_confirmed"', str(response.content, "utf8"))
 
         booking_history_post_data = {
-            'userID': student_profile.objects.get(id=1).auth_id,
+            'userID': self.student1.auth_id,
             'filtered_by': '',
             'searched_by': '',
             'registered_from_date': '2020-01-01',
@@ -4113,14 +4130,14 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
             [lesson_booking_info.objects.get(booking_date_and_time=f'{self.available_date_1_t1}:5;').id, 
             lesson_booking_info.objects.get(booking_date_and_time=f'{self.available_date_2_t1}:1,2,3,4,5;').id]:
             changing_post_data = {
-                'userID': teacher_profile.objects.get(id=1).auth_id,
+                'userID': self.teacher1.auth_id,
                 'bookingID': booking_id_to_be_canceled,
                 'bookingStatus': 'canceled'
             }  # 換老師取消
             self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=changing_post_data)
         
         booking_history_post_data = {
-            'userID': student_profile.objects.get(id=1).auth_id,
+            'userID': self.student1.auth_id,
             'filtered_by': 'to_be_confirmed',
             'searched_by': '',
             'registered_from_date': '2020-01-01',
@@ -4135,7 +4152,7 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         str(response.content, "utf8")) # 並且總共只有3筆資料
 
         booking_history_post_data = {
-            'userID': student_profile.objects.get(id=1).auth_id,
+            'userID': self.student1.auth_id,
             'filtered_by': 'canceled',
             'searched_by': '',
             'registered_from_date': '2020-01-01',
@@ -4150,13 +4167,13 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         str(response.content, "utf8")) # 並且總共只有2筆 canceled
 
         changing_post_data = {
-            'userID': teacher_profile.objects.get(id=1).auth_id,
-            'bookingID': lesson_booking_info.objects.get(id=1).id,
+            'userID': self.teacher1.auth_id,
+            'bookingID': self.lesson1.id,
             'bookingStatus': 'confirmed'
         }  # 接下來老師確認第一筆的預約
         self.client.post(path='/api/lesson/changingLessonBookingStatus/', data=changing_post_data)
         booking_history_post_data = {
-            'userID': student_profile.objects.get(id=1).auth_id,
+            'userID': self.student1.auth_id,
             'filtered_by': 'confirmed',
             'searched_by': '',
             'registered_from_date': '2020-01-01',
@@ -4171,7 +4188,7 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         str(response.content, "utf8")) # 並且總共只有1筆資料
 
         booking_history_post_data = {
-            'userID': student_profile.objects.get(id=1).auth_id,
+            'userID': self.student1.auth_id,
             'filtered_by': '',
             'searched_by': '',
             'registered_from_date': '2010-01-01',
@@ -4186,7 +4203,7 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         str(response.content, "utf8")) # 並且總共只有0筆資料
 
         booking_history_post_data = {
-            'userID': student_profile.objects.get(id=1).auth_id,
+            'userID': self.student1.auth_id,
             'filtered_by': '',
             'searched_by': '',
             'registered_from_date': '2010-01-01',
@@ -4208,26 +4225,26 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
 
         # 此時帶入學生2號
         purchase_post_data = {
-            'userID':student_profile.objects.get(id=2).auth_id,
-            'teacherID':teacher_profile.objects.get(id=1).auth_id,
-            'lessonID':lesson_info.objects.get(id=1).id,
+            'userID':self.student2.auth_id,
+            'teacherID':self.teacher1.auth_id,
+            'lessonID':self.lesson1.id,
             'sales_set': '10:90',
             'total_amount_of_the_sales_set': int(800*10*0.9),
             'q_discount':0}
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
         student_edit_booking_status_post_data = {
-            'userID': student_profile.objects.get(id=1).auth_id,
+            'userID': self.student2.auth_id,
             'token':'',
             'type':'',
             'purchase_recordID': student_purchase_record.objects.get(
-                student_auth_id = student_profile.objects.get(id=2).auth_id,
-                teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
-                lesson_id = lesson_info.objects.get(id=1).id,
+                student_auth_id = self.student2.auth_id,
+                teacher_auth_id = self.teacher1.auth_id,
+                lesson_id = self.lesson1.id,
                 lesson_sales_set_id = lesson_sales_sets.objects.get(
                     sales_set = '10:90',
                     is_open = True,
-                    lesson_id = lesson_info.objects.get(id=1).id
+                    lesson_id = self.lesson1.id,
                 ).id
             ).id,
             'status_update': 0, # 0-付款完成/1-申請退款/2-申請取消
@@ -4235,14 +4252,14 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         self.client.post(path='/api/account_finance/studentEditOrder/', data=student_edit_booking_status_post_data)
 
         the_purchase_object = \
-            student_purchase_record.objects.get(student_auth_id=student_profile.objects.get(id=2).auth_id)
+            student_purchase_record.objects.get(student_auth_id=self.student2.auth_id)
         the_purchase_object.payment_status = 'paid'
         the_purchase_object.save()
         # 理論上現在已經購買、付款完成了，所以 學生2應該有600min的可用時數
 
         booking_post_data = {
-            'userID': student_profile.objects.get(id=2).auth_id,  # 學生的auth_id
-            'lessonID': 1,
+            'userID': self.student2.auth_id,  # 學生的auth_id
+            'lessonID': self.lesson1.id,
             'bookingDateTime': f'{self.available_date_12_t2}:1,2,3,4,5;{self.available_date_4_t2}:1,2,3,4;'
         }  # 預約 270min  >> 2門課
         response = self.client.post(
@@ -4254,7 +4271,7 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
             # 兩者時段是重複的
         
         booking_history_post_data = {
-            'userID':student_profile.objects.get(id=2).auth_id,
+            'userID':self.student2.auth_id,
             'filtered_by': 'to_be_confirmed',
             'searched_by': '',
             'registered_from_date': '2010-01-01',
@@ -4270,7 +4287,7 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         # 檢查學生1 是不是多了一筆 canceled
 
         booking_history_post_data = {
-            'userID':student_profile.objects.get(id=1).auth_id,
+            'userID':self.student1.auth_id,
             'filtered_by': 'to_be_confirmed',
             'searched_by': '',
             'registered_from_date': '2010-01-01',
@@ -4288,9 +4305,9 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         # "status": "success", "errCode": null, "errMsg": null}
 
         changing_post_data = {
-            'userID': teacher_profile.objects.first().auth_id,
+            'userID': self.teacher1.auth_id,
             'bookingID': lesson_booking_info.objects.filter(
-                student_auth_id = student_profile.objects.get(id=2).auth_id,
+                student_auth_id = self.student2.auth_id,
                 booking_date_and_time = f'{self.available_date_4_t2}:1,2,3,4;'
                 ).first().id,
             'bookingStatus': 'confirmed'
@@ -4304,7 +4321,7 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         
         # 此時學生2應該有1筆confirmed，1筆 to_be_confirmed
         booking_history_post_data = {
-            'userID':student_profile.objects.get(id=2).auth_id,
+            'userID':self.student2.auth_id,
             'filtered_by': 'to_be_confirmed',
             'registered_from_date': '2010-01-01',
             'registered_to_date': '2050-01-01',
@@ -4317,7 +4334,7 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         str(response.content, "utf8")) # 學生2 應該剩1門 to_be_confirmed
 
         booking_history_post_data = {
-            'userID':student_profile.objects.get(id=2).auth_id,
+            'userID':self.student2.auth_id,
             'filtered_by': 'confirmed',
             'searched_by': '',
             'registered_from_date': '2010-01-01',
@@ -4332,7 +4349,7 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         # 然後學生1 應該多了2筆 canceled，變成4筆
 
         booking_history_post_data = {
-            'userID':student_profile.objects.get(id=1).auth_id,
+            'userID':self.student1.auth_id,
             'filtered_by': 'canceled',
             'searched_by': '',
             'registered_from_date': '2010-01-01',
@@ -4575,7 +4592,7 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         purchase_post_data = {
             'userID':student_profile.objects.first().auth_id,
             'teacherID':teacher_profile.objects.first().auth_id,
-            'lessonID':lesson_info.objects.get(lesson_title='test11111').id,
+            'lessonID':lesson_info.objects.get(lesson_title='test1111').id,
             'sales_set': 'trial',
             'total_amount_of_the_sales_set': 69,
             'q_discount':0}
@@ -4588,10 +4605,10 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
             'purchase_recordID': student_purchase_record.objects.get(
                 student_auth_id = student_profile.objects.get(id=1).auth_id,
                 teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
-                lesson_id = lesson_info.objects.get(lesson_title='test11111').id,
+                lesson_id = lesson_info.objects.get(lesson_title='test1111').id,
                 lesson_sales_set_id = lesson_sales_sets.objects.get(
                     sales_set = 'trial',
-                    lesson_id = lesson_info.objects.get(lesson_title='test11111').id,
+                    lesson_id = lesson_info.objects.get(lesson_title='test1111').id,
                     is_open = True
                 ).id
             ).id,

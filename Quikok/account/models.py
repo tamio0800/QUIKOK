@@ -355,7 +355,6 @@ def when_lesson_info_changed_synchronize_lesson_card(sender, instance:teacher_pr
             working_experience_is_approved = is_second_exp_approved)
         logging.info(f"A teacher has editted onself profile ({instance.username}), and has synchronized {str(lesson_card_objects.count())} lesson cards.")
 
-
     
 @receiver(post_save, sender=student_profile)
 def student_aggregated_review_record_created_after_signing_up(sender, instance:student_profile, created, **kwargs):
