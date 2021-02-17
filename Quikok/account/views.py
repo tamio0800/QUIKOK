@@ -9,6 +9,7 @@ from account.models import teacher_review_aggregated_info
 from account.models import user_token
 from account.models import student_profile, teacher_profile
 from account.models import specific_available_time, general_available_time, feedback
+from account_finance.models import teacher_refund, student_refund
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.core.files.storage import FileSystemStorage
 from lesson.models import lesson_info_for_users_not_signed_up, lesson_info
@@ -1460,6 +1461,15 @@ def feedback_view_function(request):
 
 @require_http_methods(['POST'])
 def get_banking_information(request):
+    '''
+    用來傳遞給前端匯款的資訊，回傳參數有:
+        bank_code(銀行代碼): 808
+        bank_name(銀行名稱(選填)): 玉山銀行
+        bank_account_code(銀行帳號)
+        balance: 可用餘額(Q幣)
+        withholding_balance: 預扣額度(Q幣)
+        txn_fee: 提領手續費費用，若無則給0
+    '''
     response = dict()
     user_type = request.POST.get('type', False)
     if check_if_all_variables_are_true(user_type):
@@ -1475,6 +1485,17 @@ def get_banking_information(request):
                 response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
                 response['data'] = None
             else:
+                # 確認要不要跟該用戶收取手續費
+                try:
+                    last_record = teacher_refund.objects.filter(teacher_auth_id=teacher_auth_id).latest('created_time')
+                    if last_record.created_time.month == datetime.now().month:
+                        # 相同月份有過提領紀錄
+                        txn_fee = 30
+                    else:
+                        txn_fee = 0
+                except:
+                    txn_fee = 0
+
                 response['status'] = 'success'
                 response['errCode'] = None
                 response['errMsg'] = None
@@ -1483,7 +1504,9 @@ def get_banking_information(request):
                     'bank_name': teacher_object.bank_name,
                     'bank_account_code': teacher_object.bank_account_code,
                     'balance': teacher_object.balance,
-                    'withholding_balance': teacher_object.withholding_balance}
+                    'withholding_balance': teacher_object.withholding_balance,
+                    'txn_fee': txn_fee
+                    }
         else:
             # 用戶是學生
             student_auth_id = request.POST.get('userID', False)
@@ -1496,6 +1519,16 @@ def get_banking_information(request):
                 response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
                 response['data'] = None
             else:
+                # 確認要不要跟該用戶收取手續費
+                try:
+                    last_record = student_refund.objects.filter(student_auth_id=student_auth_id).latest('created_time')
+                    if last_record.created_time.month == datetime.now().month:
+                        # 相同月份有過提領紀錄
+                        txn_fee = 30
+                    else:
+                        txn_fee = 0
+                except:
+                    txn_fee = 0
                 response['status'] = 'success'
                 response['errCode'] = None
                 response['errMsg'] = None
@@ -1504,7 +1537,9 @@ def get_banking_information(request):
                     'bank_name': student_object.bank_name,
                     'bank_account_code': student_object.bank_account_code,
                     'balance': student_object.balance,
-                    'withholding_balance': student_object.withholding_balance}
+                    'withholding_balance': student_object.withholding_balance,
+                    'txn_fee': txn_fee
+                    }
 
     else:
         # 傳輸有問題

@@ -53,6 +53,7 @@ class student_refund(models.Model):
     bank_account_code = models.CharField(max_length=30, default='')
     bank_name = models.CharField(max_length=30, default='')
     bank_code = models.CharField(max_length=5, default='')
+    
     def __str__(self):
         return f"學生 {str(self.student_auth_id)} 退款 {str(self.refund_amount)} 元，手續費 {str(self.txn_fee)}。 狀態: {self.refund_status}"
     
