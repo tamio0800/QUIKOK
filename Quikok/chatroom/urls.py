@@ -5,5 +5,6 @@ from . import views
 urlpatterns = [
     path('checkOrCreateChatroom/',views.check_if_chatroom_exist),
     path('contentAndHistoryOfChatroom/',views.chatroom_content),
-    path('<str:user_url>/', views.chat, name='chat'),
+    path('updateUser2UserIsRead/',views.update_user2user_chatroom_msg_is_read),
+    #path('<str:user_url>/', views.chat, name='chat'),
 ]

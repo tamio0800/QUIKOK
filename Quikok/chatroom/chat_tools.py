@@ -9,12 +9,6 @@ import logging
 
 
 logging.basicConfig(level=logging.NOTSET) #DEBUG
-class system_msg_producer:
-    # 傳訊息代碼進來, 回應相對的資訊
-    def wellcome_msg(self):
-        pass
-    def first_system_msg(self):
-        pass
 class chat_room_manager:
     def __init__(self):
         self.status = None
@@ -86,11 +80,12 @@ class chat_room_manager:
         parent_authID = -1 #暫時未使用因此設 -1
         chatroom_type = 'teacher2student' # 暫時只有這種
         try:
+            # 正常來說聊天室只會有唯一一個存在, 超過就有問題
             chatroom = chatroom_info_user2user.objects.filter(Q(student_auth_id=student_authID)&Q(teacher_auth_id=teacher_authID))
             if len(chatroom) == 0 :
                 new_chatroom = chatroom_info_user2user.objects.create(student_auth_id=student_authID,
-                teacher_auth_id=teacher_authID, parent_auth_id = parent_authID,
-                chatroom_type = chatroom_type)
+                    teacher_auth_id=teacher_authID, parent_auth_id = parent_authID,
+                    chatroom_type = chatroom_type)
                 # 當聊天室建立時, 系統自動產生一筆訊息, 以便前端推播到最前面
                 first_system_msg = chat_history_user2user.objects.create(    
                     chatroom_info_user2user_id = new_chatroom.id,    
@@ -117,6 +112,10 @@ class chat_room_manager:
                 return (self.status, self.errCode, self.errMsg, self.data)
             else:
                 print('something wrong...find multi chatrooms')
+                self.status = 'failed'
+                self.errCode = '1'
+                self.errMsg = 'Querying Data Failed.'
+                return (self.status, self.errCode, self.errMsg, self.data)
         except Exception as e:
             print(e)
             self.status = 'failed'
@@ -136,7 +135,7 @@ class chat_room_manager:
             room_queryset= chatroom_info_user2user.objects.filter(Q(student_auth_id=kwargs['userID'])|Q(teacher_auth_id=kwargs['userID'])).order_by("created_time")
             print('使用者有這些聊天室')
             print(room_queryset)
-            logging.debug('chat_tools room_queryset debug info:')
+            logging.debug(f'chat_tools room_queryset debug info:使用者有這些聊天室{room_queryset}')
             
             # 如果有資料的前提..
             # 包成可以回傳給前端的格式
