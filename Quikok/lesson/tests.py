@@ -18,7 +18,9 @@ from account_finance.models import student_owing_teacher_time
 from lesson.models import lesson_reviews_from_students, student_reviews_from_teachers
 from account.models import student_review_aggregated_info, teacher_review_aggregated_info
 from django.core import mail
-# 10.344
+
+# 設定環境變數ASYNC_TO_SYNC為true >>  export ASYNC_TO_SYNC=true
+# 取消環境變數ASYNC_TO_SYNC >> unset ASYNC_TO_SYNC
 # python3 manage.py test lesson/ --settings=Quikok.settings_for_test
 
 

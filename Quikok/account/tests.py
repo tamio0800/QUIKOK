@@ -13,6 +13,8 @@ from django.conf import settings
 import asyncio
 import threading
 
+# 設定環境變數ASYNC_TO_SYNC為true >>  export ASYNC_TO_SYNC=true
+# 取消環境變數ASYNC_TO_SYNC >> unset ASYNC_TO_SYNC
 # python manage.py test account/ --settings=Quikok.settings_for_test
 class Auth_Related_Functions_Test(TestCase):
 
