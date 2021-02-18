@@ -126,8 +126,6 @@ class chat_room_manager:
     # 調出主對話框全部內容
     # kwargs: userID, user_type
     def chat_main_content(self, **kwargs):
-        # 目前先設定0~100之後這個變數可以給前端傳
-        # 希望可以達到假設user滑到頂一次給100之類的效果(前端告訴後端user是第幾次滑到頂)
         self.data = list()
         try:
             # 首先篩選出所有這個人的聊天室
@@ -139,34 +137,42 @@ class chat_room_manager:
             
             # 如果有資料的前提..
             # 包成可以回傳給前端的格式
-            if len(room_queryset) >0:
+            if room_queryset is not None:
                 response_data = list()
                 for a_chatroom in room_queryset:
                     a_chatroom_info = dict()
                     for key in self.response_msg_key:
-                        a_chatroom_info[key] = None
+                        a_chatroom_info[key] = None # 建立要回傳給前端的字典結構, values尚未填入
                     chatroomID = a_chatroom.id
                     if user_type == 'teacher':
                         chatUserID = a_chatroom.student_auth_id
                         chat_user = student_profile.objects.filter(auth_id = chatUserID).first()
-                        chatUserType = 'student'
+                        chatUserType = 'student'                  
+                        #chatUnreadMessageQty 未讀訊息計算分為老師跟學生      
+                        chat_history_set = chat_history_user2user.objects.filter\
+                            (Q(chatroom_info_user2user_id=chatroomID)&Q(teacher_is_read = 0))
                     elif user_type == 'student':
                         chatUserID = a_chatroom.teacher_auth_id
                         chat_user = teacher_profile.objects.filter(auth_id = chatUserID).first()
                         chatUserType = 'teacher'
+                        chat_history_set = chat_history_user2user.objects.filter\
+                            (Q(chatroom_info_user2user_id=chatroomID)&Q(student_is_read = 0))
                     else: # 將來可能有其他類別
                         pass
+                    chatUnreadMessageQty = len(chat_history_set)
+                    
                     # 對方可能會沒有大頭貼
                     if len(chat_user.thumbnail_dir) > 0:
-                        print(chat_user.thumbnail_dir)
+                        #print(chat_user.thumbnail_dir)
                         chatUserPath = chat_user.thumbnail_dir
                     else:
                         chatUserPath = ''
                     chatUserName = chat_user.nickname
                     chatUsergender = chat_user.is_male
-                     # chatUnreadMessageQty 歷史訊息的id = roomid,且發送者不是 user, 且未讀 = 0
-                    chat_history_obj = chat_history_user2user.objects.filter(Q(chatroom_info_user2user_id=chatroomID)&Q(is_read = 0)& ~Q(who_is_sender = kwargs['userID']))
-                    chatUnreadMessageQty = len(chat_history_obj)
+
+                    # chatUnreadMessageQty 歷史訊息的id = roomid,且發送者不是 user, 且未讀 = 0
+                    #chat_history_set = chat_history_user2user.objects.filter(Q(chatroom_info_user2user_id=chatroomID)&Q(is_read = 0)& ~Q(who_is_sender = kwargs['userID']))
+                    
                     update_response_msg = {'chatroomID':chatroomID,'chatUnreadMessageQty':chatUnreadMessageQty,
                     'chatUserID' : chatUserID, 'chatUserType': chatUserType ,'chatUsergender':chatUsergender,
                                 'chatUserName' : chatUserName, 'chatUserPath' : chatUserPath}
@@ -174,7 +180,7 @@ class chat_room_manager:
                 # messageInfo 每一則訊息的資訊
                 # messageType: 訊息類別(0:一般文字, 1:系統訊息, 2:預約方塊)
                     all_messages = chat_history_user2user.objects.filter(chatroom_info_user2user_id=chatroomID).order_by("created_time")
-                    if len(all_messages) > 0:
+                    if all_messages is not None:
                         message_info_group = list()
                         for a_message in all_messages:
                             temp_info = dict()

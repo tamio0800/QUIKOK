@@ -21,9 +21,9 @@ def chat(request, user_url):
 
     room_list=chat_room.objects.filter(Q(student=user.id)|Q(teacher=user.id)).order_by("-date")
 
-# 以下為左邊好友列表顯示暱稱用
-# 用room_list的member id 找到對應的 auth_username
-# 再用 auth_username 去 account的兩個table找 nickname
+    # 以下為左邊好友列表顯示暱稱用
+    # 用room_list的member id 找到對應的 auth_username
+    # 再用 auth_username 去 account的兩個table找 nickname
     friend_nick_list = [] #好友暱稱表
     roomid_list = [] # 聊天室 id
     thumb_nail_list = [] # 大頭貼
@@ -125,3 +125,44 @@ def chat(request, user_url):
         'roomid_and_friend_list':roomid_and_friend_list,
     })
     '''
+# 這個是測試接收WS的過程...
+
+    def connect_2(self):
+        print('成功!')
+        print('\n\nconnect_info:\n'+str(self.scope)+'\n\n')
+        # 當用戶上線就建立所有它在info裡面的連線, 加入同一個group
+        # 這種作法需要前端丟變數來讓我知道是要建立連線還是只是聊
+        # add connection to existing groups
+        userID = self.scope["url_route"]["kwargs"]["room_url"].split('_')[0]
+        user_type = auth_ckeck.check_user_type(userID)
+        if user_type == 'teacher':
+            for friend_room in chatroom_info_user2user.objects.filter(teacher_auth_id=userID):
+                async_to_sync(self.channel_layer.group_add)(friend_room.id, self.channel_name)
+
+        # 接收格式 'kwargs': {'room_url': '204_chatroom_4_0'}
+        if self.scope["url_route"]["kwargs"]["room_url"].split('_')[3] == '0':
+            self.room_group_name = self.scope["url_route"]["kwargs"]["room_url"].split('_')[2]
+            self.chatroom_type = 'user2user'
+        # 系統與user接收格式 'kwargs': {'room_url': '204_chatroom_4_1'}
+        elif self.scope["url_route"]["kwargs"]["room_url"].split('_')[3] == '1':
+            self.room_group_name = self.scope["url_route"]["kwargs"]["room_url"].split('_')[2]
+            #self.room_group_name = 'system'+ str(self.scope["url_route"]["kwargs"]["room_url"].split('_')[2])
+            self.chatroom_type = 'system2user'
+            # 測試對一個使用者來說, self變數是否會留存,還是我得另存db
+            self.system_room_group_name = copy.deepcopy(self.room_group_name)
+            print(type(self.room_group_name))
+        else: #以後聊天室如果有更多種類可以加這
+            pass
+        print('channel name:')
+        print(self.channel_name)
+        print('room_group_name')
+        print(self.room_group_name)
+        
+        # Join room group
+        # 目前我不確定用for loop來做時,是否自是將各channel加入這個group
+        async_to_sync(self.channel_layer.group_add)(
+            self.room_group_name,
+            self.channel_name)
+        self.accept()
+        # 如果是系統連線,此時要存到記憶體中
+        print('websocket connect success')
