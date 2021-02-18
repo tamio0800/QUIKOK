@@ -2121,14 +2121,17 @@ class Q_POINTS_WITHDRAWAL_TEST(TestCase):
             'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;'
         }
         self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        self.teacher_1 = teacher_profile.objects.get(username=self.test_teacher_name1)
         
         self.test_teacher_name2 = 'test_teacher2_user@test.com'
         teacher_post_data['regEmail'] = self.test_teacher_name2,
         self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        self.teacher_2 = teacher_profile.objects.get(username=self.test_teacher_name2)
 
         self.test_teacher_name3 = 'test_teacher3_user@test.com'
         teacher_post_data['regEmail'] = self.test_teacher_name3,
         self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        self.teacher_3 = teacher_profile.objects.get(username=self.test_teacher_name3)
         # 建了3個老師
         
         self.test_student_name1 = 'test_student1@a.com'
@@ -2143,14 +2146,17 @@ class Q_POINTS_WITHDRAWAL_TEST(TestCase):
             'regNotifiemail': ''
         }
         self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        self.student_1 = student_profile.objects.get(username=self.test_student_name1)
 
         self.test_student_name2 = 'test_student2@a.com'
         student_post_data['regEmail'] = self.test_student_name2
         self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        self.student_2 = student_profile.objects.get(username=self.test_student_name2)
 
         self.test_student_name3 = 'test_student3@a.com'
         student_post_data['regEmail'] = self.test_student_name3
         self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        self.student_3 = student_profile.objects.get(username=self.test_student_name3)
         # 建了3個學生
 
 
@@ -2242,7 +2248,7 @@ class Q_POINTS_WITHDRAWAL_TEST(TestCase):
     def test_withdraw_q_points_withdrawal_teacher_and_student_work(self):
         # 測試老師能夠成功發起匯款訊息
         withdrawal_post_data = {
-            'userID': teacher_profile.objects.get(id=1).auth_id,
+            'userID': self.teacher_1.auth_id,
             'type': 'teacher',
             'bank_code': '009',
             'bank_name': '彰化銀行',
@@ -2297,7 +2303,7 @@ class Q_POINTS_WITHDRAWAL_TEST(TestCase):
 
         # 測試學生能夠成功發起匯款訊息
         withdrawal_post_data = {
-            'userID': student_profile.objects.get(id=2).auth_id,
+            'userID': self.student_2.auth_id,
             'type': 'student',
             'bank_code': '009',
             'bank_name': '彰化銀行',
