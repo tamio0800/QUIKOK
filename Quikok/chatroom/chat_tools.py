@@ -11,6 +11,7 @@ import logging
 logging.basicConfig(level=logging.NOTSET) #DEBUG
 class chat_room_manager:
     def __init__(self):
+        self.parent_auth_id = -1 # 目前尚未定義,因此全部都給-1
         self.status = None
         self.errCode = None
         self.errMsg = None
@@ -77,7 +78,7 @@ class chat_room_manager:
     def check_and_create_chat_room(self,**kwargs):
         student_authID = kwargs['userID']
         teacher_authID = kwargs['chatUserID']
-        parent_authID = -1 #暫時未使用因此設 -1
+        parent_authID = self.parent_auth_id #暫時未使用因此設 -1
         chatroom_type = 'teacher2student' # 暫時只有這種
         try:
             # 正常來說聊天室只會有唯一一個存在, 超過就有問題
@@ -90,12 +91,13 @@ class chat_room_manager:
                 first_system_msg = chat_history_user2user.objects.create(    
                     chatroom_info_user2user_id = new_chatroom.id,    
                     teacher_auth_id = teacher_authID,    
-                    student_auth_id = student_authID, parent_auth_id = -1,       # 現在parent_auth_id預設都是-1
+                    student_auth_id = student_authID, parent_auth_id = parent_authID,       # 現在parent_auth_id預設都是-1
                     message = '於'+ datetime.now().strftime('%H:%M') +'創立聊天室',
                     message_type = 1 ,# 0:一般文字, 1:系統訊息, 2:預約方塊
                     who_is_sender = 'system' ,   # teacher/student/parent/system
                     sender_auth_id = 1,
-                    is_read = 0)
+                    teacher_is_read = True,
+                    student_is_read = False)
 
                 print('create new chatroom')
                 self.status = 'success'
@@ -220,6 +222,7 @@ class websocket_manager:
     def __init__(self):
         # 系統的authID
         self.system_authID = 1 
+        self.parent_auth_id = -1 # 還沒用到先都給-1
     def check_authID_type(self, authID):
         # 判斷某個ID的身分
         if authID == self.system_authID: # 目前1是system的auth_id
@@ -255,26 +258,43 @@ class websocket_manager:
                 if self.user_type == 'student':
                     # 發送者是學生
                     self.teacher_id = chatroom_info.teacher_auth_id
-                    self.student_id = self.sender
-                elif self.user_type == 'teacher':
-                    self.teacher_id = self.sender
-                    self.student_id= chatroom_info.student_auth_id
-                else:
-                    pass
-                parent_auth_id = -1 # 目前先給-1
-                
-                new_msg = chat_history_user2user.objects.create(
+                    self.student_id = self.sender                
+                    new_msg = chat_history_user2user.objects.create(
                         chatroom_info_user2user_id= self.chatroom_id,
                         teacher_auth_id =self.teacher_id,
                         student_auth_id= self.student_id,
-                        parent_auth_id =parent_auth_id,
+                        parent_auth_id = self.parent_auth_id,
                         message = message,
                         message_type= messageType,
                         who_is_sender= self.user_type,
                         sender_auth_id = self.sender,
-                        is_read= 0,
+                        teacher_is_read= False,
+                        student_is_read = True
                         )
-                new_msg.save()
+                    new_msg.save()
+                elif self.user_type == 'teacher':
+                    #發送者是老師
+                    self.teacher_id = self.sender
+                    self.student_id= chatroom_info.student_auth_id
+                    new_msg = chat_history_user2user.objects.create(
+                        chatroom_info_user2user_id= self.chatroom_id,
+                        teacher_auth_id =self.teacher_id,
+                        student_auth_id= self.student_id,
+                        parent_auth_id = self.parent_auth_id,
+                        message = message,
+                        message_type= messageType,
+                        who_is_sender= self.user_type,
+                        sender_auth_id = self.sender,
+                        teacher_is_read= False,
+                        student_is_read = True
+                        )
+                    new_msg.save()
+
+                else:
+                    pass
+                parent_auth_id = self.parent_auth_id # 目前先給-1
+                
+
 
                 return(new_msg.id, new_msg.created_time)
             

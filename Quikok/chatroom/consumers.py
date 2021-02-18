@@ -135,9 +135,24 @@ class ChatConsumer(WebsocketConsumer):
                 'messageText': 'test',
                 'messageType': 3,
                 'systemCode':0,
-                'messageCreateTime': now_time
+                'messageCreateTime': str(datetime.datetime.now())
             }))
         print('system send to WebSocket')
+
+    #測試寫法2
+    #c = ChatConsumer(scope = {"url_route":{"kwargs":{"room_url": '204_chatroom_4_0'}}})
+    def test_send_ws_msg(self):
+            async_to_sync(self.channel_layer.group_send)(
+            self.room_group_name, 
+            {   'type' : "chat.message", # channel要求必填,不填channel會收不到
+                'chatroomID':pass_to_chat_tools['chatroomID'],
+                'senderID': pass_to_chat_tools['senderID'],
+                'messageText': pass_to_chat_tools['messageText'],
+                'messageType': pass_to_chat_tools['messageType'],
+                'systemCode':systemCode,
+                'messageCreateTime': now_time
+            },)
+            print('system2 send to WebSocket')
 
 
 #class ChatSystem(ChatConsumer):
