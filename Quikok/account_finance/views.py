@@ -1027,7 +1027,6 @@ def withdraw_q_points(request):
     }'''
     response = dict()
     user_type = request.POST.get('type', False)
-    
     bank_code = request.POST.get('bank_code', False)
     bank_name = request.POST.get('bank_name', False)
     bank_account_code = request.POST.get('bank_account_code', False)
@@ -1036,7 +1035,6 @@ def withdraw_q_points(request):
     if check_if_all_variables_are_true(user_type, bank_code, bank_name,
         bank_account_code, action):
         # 確實有收到除了 userID 以外的資料
-
         if user_type == 'teacher':
             # 老師用戶
             teacher_auth_id = request.POST.get('userID', False)
@@ -1060,12 +1058,17 @@ def withdraw_q_points(request):
                         response['errMsg'] = '不好意思，請您要填寫匯款金額唷，謝謝您。'
                         response['data'] = None
                     else:
-                        # 確認一下距離上次提款日期是否為一個月(30d)內，是的話要收手續費，反之不用
-                        if teacher_refund.objects.filter(teacher_auth_id=teacher_auth_id).last() is None:
+                        # 確認一下距離上次提款日期是否為一個月內，是的話要收手續費，反之不用
+                        if teacher_refund.objects.filter(teacher_auth_id=teacher_auth_id).exists() == False:
                             within_a_month = False
                         else:
-                            within_a_month = \
-                                (datetime.now() - teacher_refund.objects.filter(teacher_auth_id=teacher_auth_id).latest('created_time').created_time).days < 31
+                            # 有提領資料，確認一下是否為當月份
+                            if teacher_refund.objects.filter(teacher_auth_id=teacher_auth_id).latest('created_time').created_time.month == datetime.now().month:
+                                # 是當月
+                                within_a_month = True
+                            else:
+                                within_a_month = False
+                            
                         txn_fee = 30 if within_a_month else 0
                         # 帳戶餘額必須 >= 手續費加上要提領的金額
                         if teacher_object.balance >= withdrawal_amount + txn_fee:
@@ -1080,10 +1083,12 @@ def withdraw_q_points(request):
                                 bank_code = bank_code
                             )
                             the_new_record.save()
+
                             # 然後將user profile 的 balance 移到 withholding_balance
                             teacher_object.withholding_balance += (withdrawal_amount + txn_fee)
                             teacher_object.balance -= (withdrawal_amount + txn_fee)
                             teacher_object.save()
+
                             response['status'] = 'success'
                             response['errCode'] = None
                             response['errMsg'] = None
@@ -1128,12 +1133,16 @@ def withdraw_q_points(request):
                         response['errMsg'] = '不好意思，請您要填寫匯款金額唷，謝謝您。'
                         response['data'] = None
                     else:
-                        # 確認一下距離上次提款日期是否為一個月(30d)內，是的話要收手續費，反之不用
-                        if student_refund.objects.filter(student_auth_id=student_auth_id).last() is None:
+                        # 確認一下距離上次提款日期是否為一個月內，是的話要收手續費，反之不用
+                        if student_refund.objects.filter(student_auth_id=student_auth_id).exists() == False:
                             within_a_month = False
                         else:
-                            within_a_month = \
-                                (datetime.now() - student_refund.objects.filter(student_auth_id=student_auth_id).latest('created_time').created_time).days < 31  
+                            # 有提領資料，確認一下是否為當月份
+                            if student_refund.objects.filter(student_auth_id=student_auth_id).latest('created_time').created_time.month == datetime.now().month:
+                                # 是當月
+                                within_a_month = True
+                            else:
+                                within_a_month = False
                         txn_fee = 30 if within_a_month else 0
                         if student_object.balance >= (withdrawal_amount + txn_fee):
                             # Q幣足夠
