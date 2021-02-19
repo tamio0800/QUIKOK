@@ -147,6 +147,7 @@ def get_lesson_cards_for_common_users(request):
         if if_there_was_any_filtering:
             # 代表user有輸入篩選資訊
             if the_lesson_manager.current_filtered_times is not None:
+                # 篩選老師可供預約的時段
                 # current_filtered_times >>
                 # [1, 2, 3, 4, 5, 10, 22, 35, 44....]
                 # 先看哪一些老師符合裡面的時段，然後列出這些老師所有的課程id即可
@@ -170,23 +171,30 @@ def get_lesson_cards_for_common_users(request):
                     lesson_info_selling_objects.filter(teacher__auth_id__in = matched_teacher_auth_ids)     
 
             if the_lesson_manager.current_filtered_price_per_hour is not None:
+                # 篩選課程的鐘點費用
                 lesson_info_selling_objects = lesson_info_selling_objects.filter(price_per_hour__gt=the_lesson_manager.current_filtered_price_per_hour[0]-1).filter(price_per_hour__lt=the_lesson_manager.current_filtered_price_per_hour[1]+1)
                 # 限制鐘點費需要介於(含)最高與最低之間
+
             if the_lesson_manager.current_filtered_subjects is not None:
+                # 篩選老師的課程主題/科目
                 for i, each_subject in enumerate(the_lesson_manager.current_filtered_subjects):
                     if i == 0:
                         query = Q(lesson_attributes__contains=each_subject)
                     else:
                         query.add(Q(lesson_attributes__contains=each_subject), Q.OR)
                 lesson_info_selling_objects = lesson_info_selling_objects.filter(query)
+
             if the_lesson_manager.current_filtered_target_students is not None:
+                # 篩選老師的家教學生對象
                 for i, each_target_student in enumerate(the_lesson_manager.current_filtered_target_students):
                     if i == 0:
                         query = Q(lesson_attributes__contains=each_target_student)
                     else:
                         query.add(Q(lesson_attributes__contains=each_target_student), Q.OR)
                 lesson_info_selling_objects = lesson_info_selling_objects.filter(query)
+
             if the_lesson_manager.current_filtered_tutoring_experience is not None:
+                # 篩選老師的家教經驗
                 for i, each_tutoring_experience in enumerate(the_lesson_manager.current_filtered_tutoring_experience):
                     if i == 0:
                         query = Q(tutor_experience=each_tutoring_experience)
@@ -194,6 +202,15 @@ def get_lesson_cards_for_common_users(request):
                         query.add(Q(tutor_experience=each_tutoring_experience), Q.OR)
                 matched_teacher_ids = teacher_profile.objects.filter(query).values_list('id', flat=True)
                 lesson_info_selling_objects = lesson_info_selling_objects.filter(teacher_id__in = matched_teacher_ids)
+
+            if the_lesson_manager.current_filtered_lesson_type is not None:
+                # 篩選該門課程的授課型態，線上或是實體
+                for i, each_lesson_type in enumerate(the_lesson_manager.current_filtered_lesson_type):
+                    if i == 0:
+                        query = Q(is_this_lesson_online_or_offline=each_lesson_type)
+                    else:
+                        query.add(Q(is_this_lesson_online_or_offline=each_lesson_type), Q.OR)
+                lesson_info_selling_objects = lesson_info_selling_objects.filter(query)
                 
         selling_lessons_ids = lesson_info_selling_objects.values_list('id', flat=True)
 
@@ -411,14 +428,17 @@ def get_all_filtered_keys_and_values(request):
     filtered_target_students = the_lesson_manager.filtered_target_students
     filtered_times = the_lesson_manager.filtered_times
     filtered_tutoring_experience = the_lesson_manager.filtered_tutoring_experience
+    filtered_lesson_type = the_lesson_manager.filtered_lesson_type
+
     mapping_index = {
         0: 'filtered_subjects',
         1: 'filtered_target_students',
         2: 'filtered_times',
-        3: 'filtered_tutoring_experience'
+        3: 'filtered_tutoring_experience',
+        4: 'filtered_lesson_type',
     }
     for i, each_filtering in enumerate([filtered_subjects, filtered_target_students,
-    filtered_times, filtered_tutoring_experience]):
+    filtered_times, filtered_tutoring_experience, filtered_lesson_type]):
         # 'filtered_subjects': [
         #   {text:國文, value:0, select:False},
         #   {text:英文, value:1, select:False},
@@ -1688,8 +1708,8 @@ def changing_lesson_booking_status(request):
                         that_lesson_booking_info.remark = \
                             f'{date_function.today()} {character_to_mandarin(which_one_changes_it)}婉拒預約'
                         # 寄通知信給學生,通知他老師婉拒預約,目前理論上只有老師會婉拒主動發起的學生這種情況
-                        student_obj = student_profile.objects.filter(id = that_lesson_booking_info.student_auth_id).first()
-                        teacher_obj = teacher_profile.objects.filter(id = that_lesson_booking_info.teacher_auth_id).first()
+                        student_obj = student_profile.objects.filter(auth_id = that_lesson_booking_info.student_auth_id).first()
+                        teacher_obj = teacher_profile.objects.filter(auth_id = that_lesson_booking_info.teacher_auth_id).first()
                         send_email_info = {'student_authID' : student_obj.auth_id,
                             'teacher_nickname' : teacher_obj.nickname,
                             'lesson_title' : lesson_info.objects.get(id = that_lesson_booking_info.lesson_id).lesson_title}

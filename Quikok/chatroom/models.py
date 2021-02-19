@@ -90,7 +90,7 @@ class chat_history_user2user(models.Model):
     teacher_is_read = models.BooleanField(default=False)
     created_time = models.DateTimeField(auto_now_add=True)
     def __str__(self):
-        return str(self.id)
+        return f"{self.who_is_sender}: {self.message}"
 
     # 預約資訊message儲存格式如下:{'bookingID': 1;
                 #    'lesson_name': '好棒'
@@ -111,10 +111,11 @@ class chat_history_Mr_Q2user(models.Model):
     message_type = models.CharField(max_length=30)
     who_is_sender = models.CharField(max_length=20)  # teacher  or  student  or parent or system_user
     sender_auth_id = models.IntegerField()
-    is_read = models.BooleanField()
+    system_is_read = models.BooleanField(default=False)
+    user_is_read = models.BooleanField(default=False)
     created_time = models.DateTimeField(auto_now_add=True)
     def __str__(self):
-        return str(self.id)
+        return f"{self.who_is_sender}: {self.message}"
 
 
 class default_notifications_from_system(models.Model):
