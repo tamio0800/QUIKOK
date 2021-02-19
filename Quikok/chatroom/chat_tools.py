@@ -4,6 +4,7 @@ from django.db.models import Q
 from .models import *
 from account.models import student_profile, teacher_profile
 from datetime import datetime
+from account.auth_tools import auth_check_manager
 from .system_2user_layer import layer_info_maneger
 import logging
 
@@ -76,13 +77,34 @@ class chat_room_manager:
         print('建立系統聊天室')
 
     def check_and_create_chat_room(self,**kwargs):
-        student_authID = kwargs['userID']
-        teacher_authID = kwargs['chatUserID']
+        user_authID = kwargs['userID'] 
+        chatuser_authID = kwargs['chatUserID']
         parent_authID = self.parent_auth_id #暫時未使用因此設 -1
         chatroom_type = 'teacher2student' # 暫時只有這種
+
         try:
+            # 首先確認發msg的user身分
+            #user_type = teacher_profile.objects.filter(auth_id = user_authID)
+            check_tool = auth_check_manager()
+            user_type = check_tool.check_user_type(user_authID)
+            chatuser_type = check_tool.check_user_type(user_authID)
+            
+            if user_type==0 or chatuser_type == 0:
+                # 這邊要做新增system2user的聊天室
+                self.status = 'failed'
+                self.errCode = '1'
+                self.errMsg = 'Querying Data Failed.'
+                return (self.status, self.errCode, self.errMsg, self.data)
+            
+            elif user_type == 'teacher':
             # 正常來說聊天室只會有唯一一個存在, 超過就有問題
-            chatroom = chatroom_info_user2user.objects.filter(Q(student_auth_id=student_authID)&Q(teacher_auth_id=teacher_authID))
+                chatroom = chatroom_info_user2user.objects.filter(Q(student_auth_id=chatuser_authID)&Q(teacher_auth_id=user_authID))
+                student_authID = chatuser_authID
+                teacher_authID = user_authID
+            elif user_type =='student':
+                chatroom = chatroom_info_user2user.objects.filter(Q(student_auth_id=chatuser_authID)&Q(teacher_auth_id=user_authID))
+                student_authID = user_authID
+                teacher_authID = chatuser_authID
             if len(chatroom) == 0 :
                 new_chatroom = chatroom_info_user2user.objects.create(student_auth_id=student_authID,
                     teacher_auth_id=teacher_authID, parent_auth_id = parent_authID,

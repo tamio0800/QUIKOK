@@ -96,12 +96,15 @@ class auth_check_manager:
         return(response)
     # 這是個很常用到的功能, 但權限檢查用不到
     def check_user_type(self, userID):
-        if len(teacher_profile.objects.filter(auth_id=userID))> 0:
-            return('teacher')
-        elif len(student_profile.objects.filter(auth_id=userID)) > 0:
-            return('student')
+        if userID == 1:
+            return('system')
         else:
-            pass
+            if len(teacher_profile.objects.filter(auth_id=userID))> 0:
+                return('teacher')
+            elif len(student_profile.objects.filter(auth_id=userID)) > 0:
+                return('student')
+            else:
+                return(0)
     # gate.1 url種類如果是public一律有權限
     def check_url_is_public(self):
         for info_key,auth_info in self.auth_page.items():
