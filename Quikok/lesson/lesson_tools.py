@@ -74,12 +74,15 @@ class lesson_manager:
         self.filtered_times = self.get_filtered_times()
         self.filtered_time_index = self.get_filtered_time_mapping_index()
         self.filtered_tutoring_experience = self.get_filtered_tutoring_experience()
+        self.filtered_lesson_type = self.get_filtered_lesson_type()
         # current打頭的是指目前的篩選條件
         self.current_filtered_subjects = None
         self.current_filtered_target_students = None
         self.current_filtered_times = None
         self.current_filtered_tutoring_experience = None
         self.current_filtered_price_per_hour = None
+        self.current_filtered_lesson_type = None
+
     def get_filtered_subjects(self):
         return {
             0: '英文',
@@ -124,6 +127,12 @@ class lesson_manager:
             2: '3-5年',
             3: '5-10年',
             4: '10年以上',
+        }
+
+    def get_filtered_lesson_type(self):
+        return {
+            0: '線上',  # online
+            1: '實體',  # offline
         }
 
     def parse_filtered_conditions(self, filtered_by_in_string):

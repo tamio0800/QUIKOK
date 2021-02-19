@@ -411,14 +411,17 @@ def get_all_filtered_keys_and_values(request):
     filtered_target_students = the_lesson_manager.filtered_target_students
     filtered_times = the_lesson_manager.filtered_times
     filtered_tutoring_experience = the_lesson_manager.filtered_tutoring_experience
+    filtered_lesson_type = the_lesson_manager.filtered_lesson_type
+
     mapping_index = {
         0: 'filtered_subjects',
         1: 'filtered_target_students',
         2: 'filtered_times',
-        3: 'filtered_tutoring_experience'
+        3: 'filtered_tutoring_experience',
+        4: 'filtered_lesson_type',
     }
     for i, each_filtering in enumerate([filtered_subjects, filtered_target_students,
-    filtered_times, filtered_tutoring_experience]):
+    filtered_times, filtered_tutoring_experience, filtered_lesson_type]):
         # 'filtered_subjects': [
         #   {text:國文, value:0, select:False},
         #   {text:英文, value:1, select:False},
@@ -1688,8 +1691,8 @@ def changing_lesson_booking_status(request):
                         that_lesson_booking_info.remark = \
                             f'{date_function.today()} {character_to_mandarin(which_one_changes_it)}婉拒預約'
                         # 寄通知信給學生,通知他老師婉拒預約,目前理論上只有老師會婉拒主動發起的學生這種情況
-                        student_obj = student_profile.objects.filter(id = that_lesson_booking_info.student_auth_id).first()
-                        teacher_obj = teacher_profile.objects.filter(id = that_lesson_booking_info.teacher_auth_id).first()
+                        student_obj = student_profile.objects.filter(auth_id = that_lesson_booking_info.student_auth_id).first()
+                        teacher_obj = teacher_profile.objects.filter(auth_id = that_lesson_booking_info.teacher_auth_id).first()
                         send_email_info = {'student_authID' : student_obj.auth_id,
                             'teacher_nickname' : teacher_obj.nickname,
                             'lesson_title' : lesson_info.objects.get(id = that_lesson_booking_info.lesson_id).lesson_title}
