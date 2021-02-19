@@ -102,7 +102,8 @@ class ChatConsumer(WebsocketConsumer):
                 'messageText': pass_to_chat_tools['messageText'],
                 'messageType': pass_to_chat_tools['messageType'],
                 'systemCode':systemCode,
-                'messageCreateTime': now_time
+                'messageCreateTime': now_time,
+                'messageID':msgID
             },)
         print('send no.1 msg')
         # 若符合才會>1, 不符合會=0
@@ -142,17 +143,17 @@ class ChatConsumer(WebsocketConsumer):
     #測試寫法2
     #c = ChatConsumer(scope = {"url_route":{"kwargs":{"room_url": '204_chatroom_4_0'}}})
     def test_send_ws_msg(self):
-            async_to_sync(self.channel_layer.group_send)(
-            self.room_group_name, 
-            {   'type' : "chat.message", # channel要求必填,不填channel會收不到
-                'chatroomID':pass_to_chat_tools['chatroomID'],
-                'senderID': pass_to_chat_tools['senderID'],
-                'messageText': pass_to_chat_tools['messageText'],
-                'messageType': pass_to_chat_tools['messageType'],
-                'systemCode':systemCode,
-                'messageCreateTime': now_time
-            },)
-            print('system2 send to WebSocket')
+        async_to_sync(self.channel_layer.group_send)(
+        self.room_group_name, 
+        {   'type' : "chat.message", # channel要求必填,不填channel會收不到
+            'chatroomID':pass_to_chat_tools['chatroomID'],
+            'senderID': pass_to_chat_tools['senderID'],
+            'messageText': pass_to_chat_tools['messageText'],
+            'messageType': pass_to_chat_tools['messageType'],
+            'systemCode':systemCode,
+            'messageCreateTime': now_time
+        },)
+        print('system2 send to WebSocket')
 
 
 #class ChatSystem(ChatConsumer):
