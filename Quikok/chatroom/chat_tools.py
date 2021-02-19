@@ -337,11 +337,13 @@ class websocket_manager:
                 #find_layer = layer_info_maneger.show_channel_layer_info(self.teacher_id)
                 chatroomID = chatroom_info_Mr_Q2user.objects.filter(user_auth_id =  self.teacher_id).first()
                 self.system_chatroomID = 'system'+ str(chatroomID.id)
+
+
                 return(self.system_chatroomID)
             else:
-                return('0')
+                return(0)
         else: 
-            return('0')    
+            return(0)    
 
     # 特殊情況1的系統回傳
     def msg_maker1_system_2teacher(self, chatroomID):

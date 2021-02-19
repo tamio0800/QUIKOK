@@ -90,6 +90,7 @@ class ChatConsumer(WebsocketConsumer):
         system_chatroomID = ws_manager.query_chat_history(pass_to_chat_tools['senderID'])
         
         print('\n\nstorge message')
+
         # Send message to room group
         # 會發到下面的def chat_message (雖然不曉得怎麼發的)
         print('this is self.channel_layer.group_send')
@@ -108,8 +109,8 @@ class ChatConsumer(WebsocketConsumer):
         print('send no.1 msg')
         # 若符合才會>1, 不符合會=0
         # 符合會在學生傳msg給老師時同步發到系統聊天室
-        # system_chatroomID 格式: system_1
-        if len(system_chatroomID) > 1:
+        # system_chatroomID 格式: system_1 ((若符合情況一定會>1)
+        if system_chatroomID != 0:
             # 傳給ws的內容
             content = ws_manager.msg_maker1_system_2teacher(pass_to_chat_tools['chatroomID'])
             async_to_sync(self.channel_layer.group_send)(
