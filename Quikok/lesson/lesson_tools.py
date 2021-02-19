@@ -131,8 +131,8 @@ class lesson_manager:
 
     def get_filtered_lesson_type(self):
         return {
-            0: '線上',  # online
-            1: '實體',  # offline
+            0: '線上1對1家教',  # online
+            1: '實體1對1家教',  # offline
         }
 
     def parse_filtered_conditions(self, filtered_by_in_string):
@@ -174,6 +174,23 @@ class lesson_manager:
                         self.current_filtered_tutoring_experience.append(
                             self.filtered_tutoring_experience[int(each_key_in_list)]
                         )
+                elif 'filtered_lesson_type' in each_filtering:
+                    # 用戶有輸入課程類型的篩選條件，
+                    # 因為0雖然指向「線上1對1家教」，但在資料庫其實是 "online"
+                    # 而1雖然指向「實體1對1家教」，但在資料庫其實是 "offline"
+                    # 所以這裡先人工給定這兩個 values
+                    keys_in_list = each_filtering.split(':')[-1].split(',')
+                    self.current_filtered_lesson_type = list()
+                    
+                    if '0' in keys_in_list:
+                        self.current_filtered_lesson_type.append('online')
+                    
+                    if '1' in keys_in_list:
+                        self.current_filtered_lesson_type.append('offline')
+                    # for each_key_in_list in keys_in_list:
+                    #     self.current_filtered_lesson_type.append(
+                    #         self.filtered_lesson_type[int(each_key_in_list)]
+                    #     )
                 elif 'filtered_price_per_hour' in each_filtering:
                     keys_in_list = each_filtering.split(':')[-1].split(',')
                     min_func = lambda x: 0 if x == '' else int(x)
