@@ -222,11 +222,13 @@ class lesson_manager:
         self.errCode = None
         self.errMsg = None
         # 在下面定義API的回傳, 就是回傳資料加工區啦
+        self.data['lesson_type'] =  self.data['is_this_lesson_online_or_offline']
         exclude_columns = [
             'id', 'teacher_id', 'created_time', 'edited_time']      
         for each_col in _data.keys():
             if each_col not in exclude_columns:
                 self.data[each_col] = _data[each_col]
+
         # 課程的資料加工完畢，來點開課老師本身的資訊
         self.data['is_this_teacher_male'] = \
             teacher_profile.objects.filter(id=lesson_object.teacher_id).first().is_male

@@ -503,76 +503,184 @@ def import_lesson(request):
 
 @require_http_methods(['GET'])
 def return_lesson_details_for_teacher_who_created_it(request):
-    # http://127.0.0.1:8000/api/lesson/returnLessonDetailsForTeacherWhoCreatedIt/?action=editLesson&userID=2&lessonID=1
+    '''
+    回傳課程資訊讓老師進行編輯
+    '''
     response = dict()
     action = request.GET.get('action', False)
     teacher_auth_id = request.GET.get('userID', False)
     lesson_id = request.GET.get('lessonID', False)
-    the_lesson_manager = lesson_manager()
-    #print('action', action)
-    #print('teacher_auth_id', teacher_auth_id)
-    #print('lesson_id', lesson_id)
-
-    if action != 'editLesson':
-        response['status'] = 'failed'
-        response['errCode'] = 0
-        response['errMsg'] = 'Unknown Action'
-        response['data'] = None
-        return JsonResponse(response)
-    else:
-        # print('check1')
-        try:   
-            status, errCode, errMsg, _data = the_lesson_manager.return_lesson_details(
-                lesson_id=lesson_id,
-                user_auth_id = teacher_auth_id,
-                for_whom='teacher_who_created_it',
-            )
-           
-            response['status'] = status
-            response['errCode'] = errCode
-            response['errMsg'] = errMsg
-            response['data'] = _data
-            return JsonResponse(response)
-        except:
+    
+    if check_if_all_variables_are_true(action, teacher_auth_id, lesson_id):
+        # 有收到資料
+        
+        if action != 'editLesson':
+            # 不是編輯狀態
             response['status'] = 'failed'
-            response['errCode'] = 3
-            response['errMsg'] = 'Querying Failed.'
+            response['errCode'] = '5'
+            response['errMsg'] = '不好意思，系統出了一點問題，請您跟我們說一聲並且稍後試試看唷。'
             response['data'] = None
-            return JsonResponse(response)
+            
+        else:
+            try: 
+                # 開始回傳課程的資料
+                # 確認一下老師與該課程 match 與否
+                lesson_object = \
+                    lesson_info.objects.filter(id=lesson_id, teacher__auth_id=teacher_auth_id).first()
+                
+                if lesson_object is None:
+                    # 不 match
+                    response['status'] = 'failed'
+                    response['errCode'] = '1'
+                    response['errMsg'] = '不好意思，系統出了一點問題，請您跟我們說一聲並且稍後試試看唷。'
+                    response['data'] = None
+
+                else:
+                    # 是 match 的
+                     response['data'] = {
+                        'lessonID': lesson_id,
+                        'is_this_teacher_male': lesson_object.teacher.is_male,
+                        'big_title': lesson_object.big_title,
+                        'little_title': lesson_object.little_title,
+                        'title_color': lesson_object.title_color,
+                        'background_picture_code': lesson_object.background_picture_code,
+                        'background_picture_path': lesson_object.background_picture_path,
+                        'lesson_title': lesson_object.lesson_title,
+                        'price_per_hour': lesson_object.price_per_hour,
+                        'trial_class_price': lesson_object.trial_class_price,
+                        'discount_price': lesson_object.discount_price,
+                        'highlight_1': lesson_object.highlight_1,
+                        'highlight_2': lesson_object.highlight_2,
+                        'highlight_3': lesson_object.highlight_3,
+                        'lesson_intro': lesson_object.lesson_intro,
+                        'lesson_type': lesson_object.is_this_lesson_online_or_offline,  # 課程的型態
+                        'how_does_lesson_go': lesson_object.how_does_lesson_go,
+                        'target_students': lesson_object.target_students,
+                        'lesson_remarks': lesson_object.lesson_remarks,
+                        'syllabus': lesson_object.syllabus,
+                        'lesson_attributes': lesson_object.lesson_attributes,
+                        'lesson_avg_score': lesson_object.lesson_avg_score,
+                        'lesson_reviewed_times': lesson_object.lesson_reviewed_times,
+                        'selling_status': lesson_object.selling_status,
+                        'lesson_has_one_hour_package': lesson_object.lesson_has_one_hour_package,
+                        'best_sale': get_lesson_s_best_sale(lesson_id)
+                     }
+            
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+
+            except:
+                response['status'] = 'failed'
+                response['errCode'] = '2'
+                response['errMsg'] = '不好意思，系統出了一點問題，請您跟我們說一聲並且稍後試試看唷。'
+                response['data'] = None
+
+    else:
+        # 資料傳輸出錯
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統出了一點問題，請您跟我們說一聲並且稍後試試看唷。'
+        response['data'] = None
+    
+    return JsonResponse(response)
+
             
 
 @require_http_methods(['GET'])
 def return_lesson_details_for_browsing(request):
+    '''
+    要呈現給一般user看的課程詳細資料
+    '''
     response = dict()
-    the_lesson_manager = lesson_manager()
     action = request.GET.get('action', False)
-    teacher_auth_id = request.GET.get('userID', False)
+    user_auth_id = request.GET.get('userID', False)
     lesson_id = request.GET.get('lessonID', False)
+    
+    if check_if_all_variables_are_true(action, user_auth_id, lesson_id):
+        # 有收到資料
+        if action != 'browsing':
+            # 不是瀏覽
+            response['status'] = 'failed'
+            response['errCode'] = '5'
+            response['errMsg'] = '不好意思，系統出了一點問題，請您跟我們說一聲並且稍後試試看唷。'
+            response['data'] = None
+            
+        else:
+            try: 
+                # 開始回傳課程的資料
+                # 確認一下有沒有這門課
+                lesson_object = \
+                    lesson_info.objects.filter(id=lesson_id).first()
+                
+                if lesson_object is None:
+                    # 找不到該門課程
+                    response['status'] = 'failed'
+                    response['errCode'] = '1'
+                    response['errMsg'] = '不好意思，系統出了一點問題，請您跟我們說一聲並且稍後試試看唷。'
+                    response['data'] = None
 
-    if action != 'browsing':
+                else:
+                    # 有找到對應的課程
+                    # 找一下這個 user 收藏/最愛的課程
+                    if favorite_lessons.objects.filter(follower_auth_id=user_auth_id).exists() == False:
+                        # user 沒有任何 收藏/最愛的課程
+                        is_favorite = False
+                    else:
+                        # user 有收藏/最愛的課程
+                        this_user_favorite_lessons_s_ids = \
+                            favorite_lessons.objects.filter(follower_auth_id=user_auth_id).values_list('lesson_id', flat=True)
+                        is_favorite = int(lesson_id) in this_user_favorite_lessons_s_ids
+
+                    response['data'] = {
+                        'lessonID': lesson_id,
+                        'teacher_auth_id': lesson_object.teacher.auth_id,
+                        'is_this_my_favorite_lesson': is_favorite,
+                        'teacher_nickname': lesson_object.teacher.nickname,
+                        'is_this_teacher_male': lesson_object.teacher.is_male,
+                        'big_title': lesson_object.big_title,
+                        'little_title': lesson_object.little_title,
+                        'title_color': lesson_object.title_color,
+                        'background_picture_code': lesson_object.background_picture_code,
+                        'background_picture_path': lesson_object.background_picture_path,
+                        'lesson_title': lesson_object.lesson_title,
+                        'price_per_hour': lesson_object.price_per_hour,
+                        'trial_class_price': lesson_object.trial_class_price,
+                        'discount_price': lesson_object.discount_price,
+                        'highlight_1': lesson_object.highlight_1,
+                        'highlight_2': lesson_object.highlight_2,
+                        'highlight_3': lesson_object.highlight_3,
+                        'lesson_intro': lesson_object.lesson_intro,
+                        'lesson_type': lesson_object.is_this_lesson_online_or_offline,  # 課程的型態
+                        'how_does_lesson_go': lesson_object.how_does_lesson_go,
+                        'target_students': lesson_object.target_students,
+                        'lesson_remarks': lesson_object.lesson_remarks,
+                        'syllabus': lesson_object.syllabus,
+                        'lesson_attributes': lesson_object.lesson_attributes,
+                        'lesson_avg_score': lesson_object.lesson_avg_score,
+                        'lesson_reviewed_times': lesson_object.lesson_reviewed_times,
+                        'selling_status': lesson_object.selling_status,
+                        'lesson_has_one_hour_package': lesson_object.lesson_has_one_hour_package,
+                        'best_sale': get_lesson_s_best_sale(lesson_id)
+                     }
+            
+                    response['status'] = 'success'
+                    response['errCode'] = None
+                    response['errMsg'] = None
+
+            except:
+                response['status'] = 'failed'
+                response['errCode'] = '2'
+                response['errMsg'] = '不好意思，系統出了一點問題，請您跟我們說一聲並且稍後試試看唷。'
+                response['data'] = None
+    else:
+        # 資料傳輸出錯
         response['status'] = 'failed'
         response['errCode'] = '0'
-        response['errMsg'] = 'Unknown Action'
+        response['errMsg'] = '不好意思，系統出了一點問題，請您跟我們說一聲並且稍後試試看唷。'
         response['data'] = None
-        return JsonResponse(response)
-    else:
-        try:
-            status, errCode, errMsg, _data = the_lesson_manager.return_lesson_details(
-                lesson_id=int(lesson_id),
-                user_auth_id = teacher_auth_id,
-                for_whom='common_users',
-            )
-            response['status'] = status
-            response['errCode'] = errCode
-            response['errMsg'] = errMsg
-            response['data'] = _data
-            return JsonResponse(response)
-        except:
-            response['status'] = 'failed'
-            response['errCode'] = '3'
-            response['errMsg'] = 'Querying Failed.'
-            response['data'] = None
-            return JsonResponse(response)
+    
+    return JsonResponse(response)
 
 
 @require_http_methods(['POST'])
@@ -581,7 +689,6 @@ def create_or_edit_a_lesson(request):
     用來建立課程或是修改課程的api。
     '''
     response = dict()
-
     action = request.POST.get('action', False)
     teacher_auth_id = request.POST.get('userID', False)
     lesson_id = request.POST.get('lessonID', False)  # 新增的話為空值, 修改才有
