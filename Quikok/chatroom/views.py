@@ -46,6 +46,41 @@ def check_if_chatroom_exist(request):
         chat_manager.check_and_create_chat_room(**pass_data_to_chat_tools)
         return JsonResponse(response)
 
+# 確認系統聊天室是否存在、回傳聊天室ID
+@require_http_methods(['POST'])
+def check_system_chatroom(request):
+    response = dict()
+    pass_data_to_chat_tools = dict()
+
+    userID = request.POST.get('userID' ,False)
+    token_from_user_raw = request.headers.get('Authorization', False)
+    token = token_from_user_raw.split(' ')[1]
+    pass_data_to_chat_tools['token'] = token
+    
+    if False in [userID, token]:    
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = 'Received Arguments Failed.如問題持續麻煩聯絡我們!'
+        response['data'] = None
+        return JsonResponse(response)
+
+    else:
+        # 檢查是否存在,理論上user註冊時就會建立一個唯一的房間,所以沒找到或超過1的話就failed
+        system_chatroom_query = chatroom_info_Mr_Q2user.objects.filter(user_auth_id = userID)
+        if len(system_chatroom_query) != 1 :
+            response['status'] = 'failed'
+            response['errCode'] = '1'
+            response['errMsg'] = 'Query Failed.聊天室不存在。如問題持續麻煩聯絡我們!'
+            response['data'] = None
+            return JsonResponse(response)
+        
+        else:
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+            response['data'] = {'chatroomID':system_chatroom_query.id}
+            return JsonResponse(response)
+
 # 回傳聊天室歷史紀錄
 def chatroom_content(request):
     response = dict()

@@ -96,6 +96,7 @@ class auth_check_manager:
         return(response)
     # 這是個很常用到的功能, 但權限檢查用不到
     def check_user_type(self, userID):
+        # 目前的systemID就只有1,將來可能會有很多組
         if userID == 1:
             return('system')
         else:

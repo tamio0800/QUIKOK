@@ -77,6 +77,7 @@ class chat_room_manager:
         print('建立系統聊天室')
 
     def check_and_create_chat_room(self,**kwargs):
+        # 確認聊天室是否存在,存在的話回傳ID,不存在的話建立再回傳ID
         user_authID = kwargs['userID'] 
         chatuser_authID = kwargs['chatUserID']
         parent_authID = self.parent_auth_id #暫時未使用因此設 -1
@@ -84,18 +85,23 @@ class chat_room_manager:
 
         try:
             # 首先確認發msg的user身分
-            #user_type = teacher_profile.objects.filter(auth_id = user_authID)
             check_tool = auth_check_manager()
             user_type = check_tool.check_user_type(user_authID)
             chatuser_type = check_tool.check_user_type(user_authID)
             
             if user_type==0 or chatuser_type == 0:
-                # 這邊要做新增system2user的聊天室
+                # 找不到人
                 self.status = 'failed'
                 self.errCode = '1'
                 self.errMsg = 'Querying Data Failed.'
                 return (self.status, self.errCode, self.errMsg, self.data)
             
+            #elif user_type == 'system' or chatuser_type == 'system':
+                # 因為system2user的聊天室是使用者在註冊的時候就建立了,
+                # 因此這邊只需要回傳id, 不用再建立(理論上")
+            #    system_chatroom_query = chatroom_info_Mr_Q2user.objects.filter/
+            #        (Q(user_auth_id = chatuser_authID)&Q(system_user_auth_id = user_authID))
+
             elif user_type == 'teacher':
             # 正常來說聊天室只會有唯一一個存在, 超過就有問題
                 chatroom = chatroom_info_user2user.objects.filter(Q(student_auth_id=chatuser_authID)&Q(teacher_auth_id=user_authID))
@@ -105,7 +111,9 @@ class chat_room_manager:
                 chatroom = chatroom_info_user2user.objects.filter(Q(student_auth_id=chatuser_authID)&Q(teacher_auth_id=user_authID))
                 student_authID = user_authID
                 teacher_authID = chatuser_authID
+            
             if len(chatroom) == 0 :
+                # 聊天室尚未存在,要新建立
                 new_chatroom = chatroom_info_user2user.objects.create(student_auth_id=student_authID,
                     teacher_auth_id=teacher_authID, parent_auth_id = parent_authID,
                     chatroom_type = chatroom_type)
@@ -125,14 +133,15 @@ class chat_room_manager:
                 self.status = 'success'
                 self.errCode = None
                 self.errMsg = None
-                self.data = {'chatID' : new_chatroom.id}
-                return (self.status, self.errCode, self.errMsg, self.data)               
+                self.data = {'chatroomID' : new_chatroom.id}
+                return (self.status, self.errCode, self.errMsg, self.data)
+                               
             elif len(chatroom) == 1 :
                 print('their chatroom already exist')
                 self.status = 'success'
                 self.errCode = None
                 self.errMsg = None
-                self.data = {'chatID' : chatroom[0].id}
+                self.data = {'chatroomID' : chatroom[0].id}
                 return (self.status, self.errCode, self.errMsg, self.data)
             else:
                 print('something wrong...find multi chatrooms')
@@ -359,8 +368,6 @@ class websocket_manager:
                 #find_layer = layer_info_maneger.show_channel_layer_info(self.teacher_id)
                 chatroomID = chatroom_info_Mr_Q2user.objects.filter(user_auth_id =  self.teacher_id).first()
                 self.system_chatroomID = 'system'+ str(chatroomID.id)
-
-
                 return(self.system_chatroomID)
             else:
                 return(0)
@@ -368,7 +375,7 @@ class websocket_manager:
             return(0)    
 
     # 特殊情況1的系統回傳
-    def msg_maker1_system_2teacher(self, chatroomID):
+    def msg_new_student_system_2teacher(self, chatroomID):
 
         send_to_ws = {
             'type' : "chat.message",
