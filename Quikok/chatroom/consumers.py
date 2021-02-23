@@ -72,6 +72,7 @@ class ChatConsumer(WebsocketConsumer):
         'chatroomID' : text_data_json['chatroomID'],
         'messageType' : text_data_json['messageType'],
         'messageText' : text_data_json['messageText'],
+        'msg_status_update' : text_data_json['msg_status_update'],
         'chatroom_type': self.chatroom_type}
         #now_time = datetime.datetime.now().strftime('%H:%M')
         # 儲存對話紀錄到db
@@ -104,7 +105,8 @@ class ChatConsumer(WebsocketConsumer):
                 'messageType': pass_to_chat_tools['messageType'],
                 'systemCode':systemCode,
                 'messageCreateTime': now_time,
-                'messageID':msgID
+                'messageID':msgID,
+                'messageTempID' : text_data_json['messageTempID'],
             },)
         print('send no.1 msg')
         # 若符合才會>1, 不符合會=0
@@ -126,8 +128,11 @@ class ChatConsumer(WebsocketConsumer):
         self.send(text_data=json.dumps(event))
         print('send to WebSocket')
     
+    
+    # 以下寫法失敗qq
     # 測試是否可以直接發到特定聊天室
     # 推測這方式沒寫儲存msg應該可收到
+'''
     def system_msg_new_order_payment_remind(self):
         # 這邊先固定寫死傳看看是否成功
         self.send(text_data=json.dumps(
@@ -155,7 +160,7 @@ class ChatConsumer(WebsocketConsumer):
             'messageCreateTime': now_time
         },)
         print('system2 send to WebSocket')
-
+'''
 
 #class ChatSystem(ChatConsumer):
 #    self.room_group_name =self.scope["url_route"]["kwargs"]["room_url"].split('_')[2]

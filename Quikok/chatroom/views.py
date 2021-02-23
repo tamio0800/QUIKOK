@@ -65,23 +65,31 @@ def check_system_chatroom(request):
         return JsonResponse(response)
 
     else:
-        # 檢查是否存在,理論上user註冊時就會建立一個唯一的房間,所以沒找到或超過1的話就failed
-        system_chatroom_query = chatroom_info_Mr_Q2user.objects.filter(user_auth_id = userID)
-        if len(system_chatroom_query) != 1 :
+        try:
+            # 檢查是否存在,理論上user註冊時就會建立一個唯一的房間,所以沒找到或超過1的話就failed
+            system_chatroom_query = chatroom_info_Mr_Q2user.objects.filter(user_auth_id = userID)
+            if len(system_chatroom_query) != 1 :
+                response['status'] = 'failed'
+                response['errCode'] = '1'
+                response['errMsg'] = 'Query Failed.聊天室不存在。如問題持續麻煩聯絡我們!'
+                response['data'] = None
+                return JsonResponse(response)
+            
+            else:
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = {'chatroomID':system_chatroom_query.id}
+                return JsonResponse(response)
+        except:
+            logging.error("chatroom/views:check_system_chatroom except error.", exc_info=True)
             response['status'] = 'failed'
-            response['errCode'] = '1'
-            response['errMsg'] = 'Query Failed.聊天室不存在。如問題持續麻煩聯絡我們!'
+            response['errCode'] = '2'
+            response['errMsg'] = '資料庫有問題，如狀況持續麻煩您聯絡客服！'
             response['data'] = None
             return JsonResponse(response)
-        
-        else:
-            response['status'] = 'success'
-            response['errCode'] = None
-            response['errMsg'] = None
-            response['data'] = {'chatroomID':system_chatroom_query.id}
-            return JsonResponse(response)
 
-# 回傳聊天室歷史紀錄
+# 回傳一般聊天室歷史紀錄
 def chatroom_content(request):
     response = dict()
     pass_data_to_chat_tools = dict()
@@ -89,8 +97,7 @@ def chatroom_content(request):
     token_from_user_raw = request.headers.get('Authorization', False)
     token = token_from_user_raw.split(' ')[1]
     pass_data_to_chat_tools['token'] = token
-    print('聊天室收到的token')
-    print(token)
+    logging.info(f"chatroom/views:chatroom_content.聊天室收到的token:{token}")
 
     for key_name in key_from_request:
         value = request.POST.get(key_name ,False)
@@ -102,6 +109,7 @@ def chatroom_content(request):
         response['errCode'] = '0'
         response['errMsg'] = 'Received Arguments Failed.'
         response['data'] = None
+        logging.error("chatroom/views:chatroom_content Received Arguments Failed.", exc_info=True)
         return JsonResponse(response)
 
     else:        
