@@ -85,17 +85,20 @@ class ChatConsumer(WebsocketConsumer):
         else:
             systemCode = None
 
-        # 在學生第一次聯絡老師此一特殊情況下，才需要同步發送訊息
-        # 到第二個聊天室(也就是老師與系統的聊天室), 特殊形況的判斷寫在chat_tool
+        # 在學生或老師彼此第一次聯絡對方此特殊情況下，才需要同步發送訊息\
+        # 到第二個聊天室(也就是老師與系統的聊天室或學生與系統的聊天室), 特殊形況的判斷寫在chat_tool \
         # 若條件有滿足, 回傳聊天室的id, 若沒有滿足則回傳0
-        system_chatroomID = ws_manager.query_chat_history(pass_to_chat_tools['senderID'])
+        if self.chatroom_type == 'user2user':
+            is_first_time_system_chatroomID = ws_manager.check_if_users_chat_first_time(pass_to_chat_tools['senderID'])
+        else: # 如果是系統聊天室不用檢查
+            is_first_time_system_chatroomID = 0
+        logging.info("chatroom/consumer:\n\nstorge message.", exc_info=True)
         
-        print('\n\nstorge message')
 
         # Send message to room group
         # 會發到下面的def chat_message (雖然不曉得怎麼發的)
-        print('this is self.channel_layer.group_send')
-        print(self.channel_layer.group_send)
+        #print('this is self.channel_layer.group_send')
+        #print(self.channel_layer.group_send)
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name, 
             {   'type' : "chat.message", # channel要求必填,不填channel會收不到
@@ -108,16 +111,17 @@ class ChatConsumer(WebsocketConsumer):
                 'messageID':msgID,
                 'messageTempID' : text_data_json['messageTempID'],
             },)
-        print('send no.1 msg')
+        logging.info("chatroom/consumer:send no.1 msg.", exc_info=True)
+        
         # 若符合才會>1, 不符合會=0
         # 符合會在學生傳msg給老師時同步發到系統聊天室
         # system_chatroomID 格式: system_1 ((若符合情況一定會>1)
-        if system_chatroomID != 0:
-            # 傳給ws的內容
+        if is_first_time_system_chatroomID != 0:
+            # 傳給ws的內容,給另一方聊天室收到有第一次聊天
             content = ws_manager.msg_maker1_system_2teacher(pass_to_chat_tools['chatroomID'])
             async_to_sync(self.channel_layer.group_send)(
-                    system_chatroomID, content ,)
-            print('send no.2 msg')
+                    is_first_time_system_chatroomID, content ,)
+            logging.info("chatroom/consumer:send no.2 msg.", exc_info=True)
         else:
             pass
 

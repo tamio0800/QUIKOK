@@ -371,7 +371,7 @@ class websocket_manager:
     # 特殊情況: 找尋user和user是不是第一次聊天 02.22 更新老師與學生互相都可能第一次發訊息給對方
     # ...學生跟老師和系統間也可能是第一次互相發msg給對方? 啊不會因為system2user的通道一開始就建立了!
     # 如果是, 查詢他找的新老師與系統的聊天室id資訊並回傳
-    def query_chat_history(self, senderID):
+    def check_if_users_chat_first_time(self, senderID):
         #if self.chatroom_type == 'system2user':
         #    if self.user_type == 'system': # 客服是sender的時候
         #        total = chat_history_mr_q2user.objects.filter(chatroom_info_system2user_id = self.chatroom_id)
@@ -395,21 +395,18 @@ class websocket_manager:
                 if len(total) != 2 : 
                     # 當user跟系統聊天的時候才會發生<2,因為system_authID不會在user2user出現
                     # 02.22 看不懂上面的意思,如果哪天理解再補qq
-                    return('0')
+                    return(0)
                 # 第一筆是系統在聊天室建立時自動發送的訊息
                 # 第二筆是學生剛發送的訊息, 所以=2 筆的話表示是新老師
                 else: 
-                    #print('self.teacher_id:')
-                    #print(self.teacher_id)
-                    #find_layer = layer_info_maneger.show_channel_layer_info(self.teacher_id)
                     chatroomID = chatroom_info_Mr_Q2user.objects.filter(user_auth_id =  self.teacher_id).first()
                     self.system_chatroomID = 'system'+ str(chatroomID.id)
                     return(self.system_chatroomID)
               
-            else: # self.user_type == 'teacher'
+            else: # 此時 self.user_type == 'teacher'
                 total = chat_history_user2user.objects.filter(Q(student_auth_id=self.student_id)&Q(teacher_auth_id=self.teacher_id))
                 if len(total) != 2 : 
-                    return('0')
+                    return(0)
                 # 第一筆是系統在聊天室建立時自動發送的訊息
                 # 第二筆是老師剛發送的訊息, 所以=2 筆的話表示是新學生
                 else: 
@@ -426,16 +423,19 @@ class websocket_manager:
             'chatroomID':self.system_chatroomID, # user與系統聊天室
             'senderID': self.system_authID, # 系統的auth_id
             'messageText':'',
-            'messageType': '2', # 系統方塊
-            'systemCode':1, # 建立聊天室
-            'messageCreateTime': str(datetime.now())
+            'messageType': 'notice_first_msg', # 系統方塊
+            'systemCode': 'create_chatroom', # 建立聊天室
+            'messageCreateTime': str(datetime.now()),
+            'messageID': '',
+            'messageTempID': '',
+            'messageStatus':'unread'
             }
 
         messageText = {
             'Aim':'聊天室資訊', #系統方塊標的
             'Title':'新聊天通知', #系統方塊標題文字
             'Subtitle':'', #系統方塊副標文字
-            'Content': '有新訊息！', #系統方塊內容文字
+            'Content': '有新聯絡對象！', #系統方塊內容文字
             'BtnText': '立即前往', #系統方塊按鈕文字
             'BtnCode': chatroomID #系統方塊按鈕代碼(學生與老師新聊天室序號)
         }
