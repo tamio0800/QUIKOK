@@ -62,7 +62,7 @@ class chat_room_manager:
     # 要先建立與系統的聊天室作為通道
     # account建立時會叫這個def
     def create_system2user_chatroom(self,**kwargs):
-    # user註冊時call來建立聊天室
+    # user註冊時call來建立系統聊天室
         user_authID = kwargs['userID']
         user_type = kwargs['user_type']
         systemID = 1 # 1 暫定為系統專用auth_id
@@ -75,8 +75,9 @@ class chat_room_manager:
         new_chatroom = chatroom_info_Mr_Q2user.objects.create(user_auth_id=user_authID,
                 user_type = user_type, system_user_auth_id = systemID,
                 chatroom_type = chatroom_type)
-        new_chatroom.save()        
-        print('建立系統聊天室')
+        new_chatroom.save()   
+        logging.info(f"chatroom/chat_tools:建立系統聊天室")
+        
 
     def check_and_create_chat_room(self,**kwargs):
         # 確認聊天室是否存在,存在的話回傳ID,不存在的話建立再回傳ID
@@ -192,7 +193,7 @@ class chat_room_manager:
                             (Q(chatroom_info_user2user_id=chatroomID)&Q(student_is_read = 0))
                     else: # 將來可能有其他類別
                         pass
-                    chatUnreadMessageQty = len(chat_history_set)
+                    chatUnreadMessageQty = chat_history_set.count()
                     
                     # 對方可能會沒有大頭貼
                     if len(chat_user.thumbnail_dir) > 0:
@@ -253,6 +254,121 @@ class chat_room_manager:
             self.errMsg = 'Querying Data Failed.'
             return (self.status, self.errCode, self.errMsg, self.data)
 
+    
+    # 調出系統聊天室中對話框全部內容
+    # userID 可能是系統或user    
+    def system_chat_main_content(self, user_authID):
+        self.data = list()
+        try:
+            # 首先確認查詢歷史msg的user身分
+            check_tool = auth_check_manager()
+            user_type = check_tool.check_user_type(user_authID)
+            
+            if user_type == 0:
+                # 找不到user類別
+                self.status = 'failed'
+                self.errCode = '1'
+                self.errMsg = 'Querying Data Failed.'
+                return (self.status, self.errCode, self.errMsg, self.data)
+            else:
+                # 篩選出所有這個人的聊天室,目前理論上user只會有唯一一個與系統的聊天室,但系統對user會有很多個
+                room_queryset= chatroom_info_mr_q2user.objects.filter(
+                    Q(user_auth_id=kwargs['userID'])|Q(system_auth_id=kwargs['userID'])).order_by("created_time")
+                
+                logging.info(f'chat_tools room_queryset info:使用者有這些系統聊天室{room_queryset}')
+                
+            # 如果有資料的前提(not none)包成可以回傳給前端的格式
+            if room_queryset is not None:
+                response_data = list()
+                for a_chatroom in room_queryset:
+                    a_chatroom_info = dict()
+                    for key in self.response_msg_key:
+                        a_chatroom_info[key] = None # 建立要回傳給前端的字典結構, values尚未填入
+                    chatroomID = a_chatroom.id
+                    if user_type == 'system': # 目前的system auth_id=1是老師
+                        chatUserID = a_chatroom.user_auth_id
+                        chat_user_type = check_tool.check_user_type(chatUserID)
+                        # 聊天對象可能是學生or老師
+                        if chat_user_type == "teacher":
+                            chat_user = teacher_profile.objects.filter(auth_id = chatUserID).first()
+                        elif chat_user_type == "student":
+                            chat_user = student_profile.objects.filter(auth_id = chatUserID).first()
+                        # 下面的chatUnreadMessageQty 未讀訊息計算分為user未讀或system未讀,所以一起在這邊做      
+                        chat_history_set = chat_history_mr_q2user.objects.filter\
+                            (Q(chatroom_info_user2user_id=chatroomID)&Q(system_is_read = 0))
+                    else: # user type = 老師或學生, 那聊天對象就是 system, system目前是老師
+                        chatUserID = a_chatroom.system_auth_id
+                        chat_user = teacher_profile.objects.filter(auth_id = chatUserID).first()
+                        chatUserType = 'system'
+                        # 下面的chatUnreadMessageQty 未讀訊息計算分為user或system,所以一起在這邊做
+                        chat_history_set = chat_history_mr_q2user.objects.filter\
+                            (Q(chatroom_info_user2user_id=chatroomID)&Q(user_is_read = 0))
+                    
+                    chatUnreadMessageQty = chat_history_set.count()
+                    
+                    # 對方可能會沒有大頭貼
+                    if len(chat_user.thumbnail_dir) > 0:
+                        #print(chat_user.thumbnail_dir)
+                        chatUserPath = chat_user.thumbnail_dir
+                    else:
+                        chatUserPath = ''
+                    chatUserName = chat_user.nickname
+                    chatUsergender = chat_user.is_male
+
+                    # chatUnreadMessageQty 歷史訊息的id = roomid,且發送者不是 user, 且未讀 = 0
+                    #chat_history_set = chat_history_user2user.objects.filter(Q(chatroom_info_user2user_id=chatroomID)&Q(is_read = 0)& ~Q(who_is_sender = kwargs['userID']))
+                    
+                    update_response_msg = {'chatroomID':chatroomID,'chatUnreadMessageQty':chatUnreadMessageQty,
+                    'chatUserID' : chatUserID, 'chatUserType': chatUserType ,'chatUsergender':chatUsergender,
+                                'chatUserName' : chatUserName, 'chatUserPath' : chatUserPath}
+                    a_chatroom_info.update(update_response_msg)
+                # messageInfo 每一則訊息的資訊
+                # messageType: 訊息類別(0:一般文字, 1:系統訊息, 2:預約方塊)
+                    all_messages = chat_history_user2user.objects.filter(chatroom_info_user2user_id=chatroomID).order_by("created_time")
+                    # Query 該聊天室的全部訊息
+                    if all_messages is not None:
+                        message_info_group = list()
+                        for a_message in all_messages:
+                            temp_info = dict()
+                            temp_info['senderID'] = a_message.sender_auth_id
+                            temp_info['messageType'] = a_message.message_type
+                            temp_info['messageText'] = a_message.message
+                            temp_info['messageID'] = a_message.id
+                            temp_info['messageCreateTime'] = a_message.created_time
+                            # 這個system code目前暫時只是讓前端區分是系統訊息還是一般而已
+                            # 前端預想之後可能依照這個號碼來做不同動作,可能會需要改成新增model來記錄
+                            if user_type == 'system':
+                                temp_info['messageStatus'] = a_message.system_is_read
+                            else:
+                                temp_info['messageStatus'] = a_message.user_is_read
+                            if a_message.message_type == 'auto_system_msg':
+                                temp_info['systemCode'] = 'no_action' 
+                            else:
+                                temp_info['systemCode'] = 'user2user'
+                            message_info_group.append(temp_info)
+                    else:
+                        message_info_group = list()
+
+                    a_chatroom_info['messageInfo'] = message_info_group 
+                    response_data.append(a_chatroom_info)
+                
+                self.status = 'success'
+                self.data = response_data
+
+            else: # 沒有任何聊天室,理論上不存在這個情況
+                logging.error("chatroom/chat_tools:system_chat_main_content error.找不到系統聊天室", exc_info=True)
+                self.status = 'failed'
+                self.errCode = '2'
+                self.errMsg = 'Querying Data Failed.如狀況持續麻煩透過e-mail或電話聯絡客服'
+            
+            return (self.status, self.errCode, self.errMsg, self.data)
+        
+        except:
+            logging.error("chatroom/chat_tools:chatroom_content exception.", exc_info=True)
+            self.status = 'failed'
+            self.errCode = '1'
+            self.errMsg = 'Querying Data Failed.如狀況持續麻煩透過e-mail或電話聯絡客服'
+            return (self.status, self.errCode, self.errMsg, self.data)
 
 class websocket_manager:
     def __init__(self):

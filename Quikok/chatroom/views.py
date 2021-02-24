@@ -119,6 +119,31 @@ def chatroom_content(request):
         
         return JsonResponse(response)
 
+# 回傳系統聊天室歷史紀錄
+def system_chatroom_content(request):
+    response = dict()
+    pass_data_to_chat_tools = dict()
+    userID = request.POST.get('userID',False) 
+    token_from_user_raw = request.headers.get('Authorization', False)
+    token = token_from_user_raw.split(' ')[1]
+    pass_data_to_chat_tools['token'] = token
+    logging.info(f"chatroom/views:chatroom_content.聊天室收到的token:{token}")
+    
+    if False in [userID, token]:    
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = 'Received Arguments Failed.'
+        response['data'] = None
+        logging.error("chatroom/views:chatroom_content Received Arguments Failed.", exc_info=True)
+        return JsonResponse(response)
+
+    else:        
+        chat_manager = chat_room_manager()
+        response['status'], response['errCode'], response['errMsg'], response['data'] =\
+        chat_manager.chat_main_content(userID = userID)
+        
+        return JsonResponse(response)
+
 
 # 這個api:54會將指定聊天室裡該user是否已讀的狀態全部改為 is_read
 def update_user2user_chatroom_msg_is_read(request):

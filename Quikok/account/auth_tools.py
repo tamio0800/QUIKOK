@@ -96,9 +96,13 @@ class auth_check_manager:
         return(response)
     # 這是個很常用到的功能, 但權限檢查用不到
     def check_user_type(self, userID):
-        # 目前的systemID就只有1,將來可能會有很多組
+
         if userID == 1:
-            return('system')
+            return('system')        
+            # 目前的systemID就只有1,將來可能會有很多組
+            # 但如果要新增很多組system要注意身分問題,system auth_id=1是老師, 
+            # 在例如回傳系統聊天室的時候為了拿大頭照跟nickname,
+            # 會去teacher_profile拿,如果將來的系統又有學生,那類似這種情況時會出錯
         else:
             if len(teacher_profile.objects.filter(auth_id=userID))> 0:
                 return('teacher')
