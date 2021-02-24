@@ -106,10 +106,11 @@ class ChatConsumer(WebsocketConsumer):
                 'senderID': pass_to_chat_tools['senderID'],
                 'messageText': pass_to_chat_tools['messageText'],
                 'messageType': pass_to_chat_tools['messageType'],
-                'systemCode':systemCode,
+                'systemCode': systemCode,
                 'messageCreateTime': now_time,
                 'messageID':msgID,
                 'messageTempID' : text_data_json['messageTempID'],
+                'messageStatus': 'unread'
             },)
         logging.info("chatroom/consumer:send no.1 msg.", exc_info=True)
         
@@ -119,6 +120,7 @@ class ChatConsumer(WebsocketConsumer):
         if is_first_time_system_chatroomID != 0:
             # 傳給ws的內容,給另一方聊天室收到有第一次聊天
             content = ws_manager.msg_maker1_system_2teacher(pass_to_chat_tools['chatroomID'])
+            # 發送
             async_to_sync(self.channel_layer.group_send)(
                     is_first_time_system_chatroomID, content ,)
             logging.info("chatroom/consumer:send no.2 msg.", exc_info=True)

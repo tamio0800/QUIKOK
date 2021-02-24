@@ -405,8 +405,8 @@ class websocket_manager:
         try:
             if chatroom_type == 'user2user':
                 chatroom_info = chatroom_info_user2user.objects.filter(id = self.chatroom_id).first()
-                print(chatroom_info)
-                print(chatroom_info.id)
+                logging.info("chatroom/consumer:\n\nstorge user2user message.{chatroom_info}", exc_info=True)
+                
                 if self.user_type == 'student':
                     # 發送者是學生
                     self.teacher_id = chatroom_info.teacher_auth_id
@@ -444,14 +444,14 @@ class websocket_manager:
 
                 else:
                     pass
-                parent_auth_id = self.parent_auth_id # 目前先給-1
 
                 return(new_msg.id, new_msg.created_time)
             
             else: # chatroom_type == 'system2user'
                 chatroom_info = chatroom_info_mr_q2user.objects.filter(id = self.chatroom_id).first()
-                print(chatroom_info)
-                print(chatroom_info.id)
+                
+                logging.info("chatroom/consumer:\n\nstorge system2user message.{chatroom_info}", exc_info=True)
+                
                 if self.sender == chatroom_info.system_user_auth_id : # 發言者是系統
                     new_msg = chat_history_mr_q2user.objects.create(
                             chatroom_info_system2user_id= self.chatroom_id,
