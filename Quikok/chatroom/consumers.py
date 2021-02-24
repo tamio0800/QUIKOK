@@ -80,8 +80,8 @@ class ChatConsumer(WebsocketConsumer):
         msgID, time = ws_manager.chat_storge(**pass_to_chat_tools)
         now_time = str(time)
         # systemCode 暫時沒有作用,統一給0
-        if text_data_json['messageType'] == 1:
-            systemCode = 0
+        if text_data_json['messageType'] ==  'text_msg' :
+            systemCode = 'no_action'
         else:
             systemCode = None
 
