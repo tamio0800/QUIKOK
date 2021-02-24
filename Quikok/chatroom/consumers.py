@@ -75,10 +75,13 @@ class ChatConsumer(WebsocketConsumer):
         'msg_status_update' : text_data_json['msg_status_update'],
         'chatroom_type': self.chatroom_type}
         #now_time = datetime.datetime.now().strftime('%H:%M')
-        # 儲存對話紀錄到db
-        ws_manager = websocket_manager()
-        msgID, time = ws_manager.chat_storge(**pass_to_chat_tools)
-        now_time = str(time)
+        # 儲存對話紀錄到db, 如果是前端用來更新已讀狀態的資料就不用存
+        if text_data_json['messageType'] == 'update_read_msg':
+            pass
+        else:
+            ws_manager = websocket_manager()
+            msgID, time = ws_manager.chat_storge(**pass_to_chat_tools)
+            now_time = str(time)
         # systemCode 暫時沒有作用,統一給0
         if text_data_json['messageType'] ==  'text_msg' :
             systemCode = 'no_action'
@@ -223,3 +226,6 @@ asynchronous version
 #             'message': message
 #         }))
 #
+
+
+    

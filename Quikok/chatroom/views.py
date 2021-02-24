@@ -129,6 +129,7 @@ def system_chatroom_content(request):
     pass_data_to_chat_tools['token'] = token
     logging.info(f"chatroom/views:chatroom_content.聊天室收到的token:{token}")
     
+    
     if False in [userID, token]:    
         response['status'] = 'failed'
         response['errCode'] = '0'
