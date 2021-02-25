@@ -486,12 +486,12 @@ class websocket_manager:
 
     
     def update_chat_msg_is_read_status(self, **kwargs):
-        chatroom_id = kwargs['chatroomID']
+        #chatroom_id = kwargs['chatroomID']
         userID = kwargs['senderID'] # 要改成已讀的ID
         chatroom_type = kwargs['chatroom_type']
-        user_type = check_authID_type(userID)
-        msg_status_update_dict = kwargs['msg_status_update'] # 理解上這邊也會是dict
-        update_msgID_list =msg_status_update_dict['messageID'] 
+        user_type = self.check_authID_type(userID)
+        msg_status_update_dict = kwargs['msg_status_update'] # 這邊也會是dict
+        update_msgID_list = msg_status_update_dict['messageID'] 
 
         if chatroom_type == 'user2user':
             if user_type == 'student':
