@@ -403,7 +403,7 @@ class websocket_manager:
         self.check_authID_type(self.sender) # 發訊息者的身分
         
         try:
-            if chatroom_type == 'user2user':
+            if self.chatroom_type == 'user2user':
                 chatroom_info = chatroom_info_user2user.objects.filter(id = self.chatroom_id).first()
                 logging.info("chatroom/consumer:\n\nstorge user2user message.{chatroom_info}", exc_info=True)
                 
