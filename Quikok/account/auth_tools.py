@@ -104,9 +104,9 @@ class auth_check_manager:
             # 在例如回傳系統聊天室的時候為了拿大頭照跟nickname,
             # 會去teacher_profile拿,如果將來的系統又有學生,那類似這種情況時會出錯
         else:
-            if len(teacher_profile.objects.filter(auth_id=userID))> 0:
+            if teacher_profile.objects.filter(auth_id=userID).count()>0:
                 return('teacher')
-            elif len(student_profile.objects.filter(auth_id=userID)) > 0:
+            elif student_profile.objects.filter(auth_id=userID).count()>0:
                 return('student')
             else:
                 return(0)

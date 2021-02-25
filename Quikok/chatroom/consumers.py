@@ -79,7 +79,8 @@ class ChatConsumer(WebsocketConsumer):
         # 儲存對話紀錄到db, 如果是前端用來更新已讀狀態的資料就不用存對話紀錄但是要更新已讀狀態
         if text_data_json['messageType'] == 'update_read_msg':
             ws_manager.update_chat_msg_is_read_status(**pass_to_chat_tools)
-            pass
+            now_time = ''
+            msgID = ''
         #elif len(text_data_json['msg_status_update']['messageID']) > 0:
             # 要更新對話是否已讀的變數
         else: # 一般對話,要儲存
@@ -90,15 +91,10 @@ class ChatConsumer(WebsocketConsumer):
             systemCode = 'no_action'
         else:
             systemCode = None
-
-        # 在學生或老師彼此第一次聯絡對方此特殊情況下，才需要同步發送訊息\
-        # 到第二個聊天室(也就是老師與系統的聊天室或學生與系統的聊天室), 特殊形況的判斷寫在chat_tool \
-        # 若條件有滿足, 回傳聊天室的id, 若沒有滿足則回傳0
-        if self.chatroom_type == 'user2user':
-            is_first_time_system_chatroomID = ws_manager.check_if_users_chat_first_time(pass_to_chat_tools['senderID'])
-        else: # 如果是系統聊天室不用檢查
-            is_first_time_system_chatroomID = 0
         logging.info("chatroom/consumer:\n\nstorge message.", exc_info=True)
+        
+
+        
         
 
         # Send message to room group
@@ -120,12 +116,19 @@ class ChatConsumer(WebsocketConsumer):
             },)
         logging.info("chatroom/consumer:send no.1 msg.", exc_info=True)
         
+        # 在學生或老師彼此第一次聯絡對方此特殊情況下，才需要同步發送訊息\
+        # 到第二個聊天室(也就是老師與系統的聊天室或學生與系統的聊天室), 特殊形況的判斷寫在chat_tool \
+        # 若條件有滿足, 回傳聊天室的id, 若沒有滿足則回傳0
+        if self.chatroom_type == 'user2user':
+            is_first_time_system_chatroomID = ws_manager.check_if_users_chat_first_time(**pass_to_chat_tools)
+        else: # 如果是系統聊天室不用檢查
+            is_first_time_system_chatroomID = 0
         # 若符合才會>1, 不符合會=0
         # 符合會在學生傳msg給老師時同步發到系統聊天室
         # system_chatroomID 格式: system_1 ((若符合情況一定會>1)
         if is_first_time_system_chatroomID != 0:
             # 傳給ws的內容,給另一方聊天室收到有第一次聊天
-            content = ws_manager.msg_maker1_system_2teacher(pass_to_chat_tools['chatroomID'])
+            content = ws_manager.system_auto_msg_when_user_first_chat(pass_to_chat_tools['chatroomID'])
             # 發送
             async_to_sync(self.channel_layer.group_send)(
                     is_first_time_system_chatroomID, content ,)

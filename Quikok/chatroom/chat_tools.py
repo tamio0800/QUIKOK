@@ -235,6 +235,8 @@ class chat_room_manager:
                             else:
                                 temp_info['systemCode'] = 'user2user'
                             message_info_group.append(temp_info)
+                        
+                            logging.info(f'chat_tools chat_history info:每一則訊息的資訊:{temp_info}')
                     else:
                         message_info_group = list()
 
@@ -375,23 +377,30 @@ class websocket_manager:
         # 系統的authID
         self.system_authID = 1 
         self.parent_auth_id = -1 # 還沒用到先都給-1
+        self.user_type = ''
+        #self.teacher_id = ''
+        #self.student_id = ''
+        self.chatroom_id = ''
+        self.sender = ''
+
     def check_authID_type(self, authID):
         # 判斷某個ID的身分
         if authID == self.system_authID: # 目前1是system的auth_id
             self.user_type = 'system'
+            
         else:
             _find_teacher = teacher_profile.objects.filter(auth_id=authID)
             _find_student = student_profile.objects.filter(auth_id=authID)
 
-            if _find_teacher != None:
+            if _find_teacher.count() > 0 :
                 self.user_type = 'teacher'
-            elif _find_student != None :
+            elif _find_student.count() > 0 :
                 self.user_type = 'student'
             else: # 等到預約寫了這邊還會再加上預約(system)
                 # 1224由於當初架構只分老師和學生,目前系統身分是'老師',
                 # 所以系統的身分先給老師, unknown先保留做為沒資料時避免程式壞掉用
                 self.user_type = 'unknown'
-    
+        print(self.user_type)
     # 儲存聊天訊息到 db
     # user_2_user & system2user
     def chat_storge(self, **kwargs):
@@ -401,20 +410,20 @@ class websocket_manager:
         messageType = kwargs['messageType']
         self.chatroom_type = kwargs['chatroom_type']
         self.check_authID_type(self.sender) # 發訊息者的身分
-        
+        logging.info(f"chatroom/consumer:\n\n storge check user_type:{self.user_type}", exc_info=True)
+                
         try:
             if self.chatroom_type == 'user2user':
                 chatroom_info = chatroom_info_user2user.objects.filter(id = self.chatroom_id).first()
-                logging.info("chatroom/consumer:\n\nstorge user2user message.{chatroom_info}", exc_info=True)
+                logging.info(f"chatroom/consumer:\n\n storge start user2user message.chatroomID:{chatroom_info}", exc_info=True)
                 
                 if self.user_type == 'student':
                     # 發送者是學生
-                    self.teacher_id = chatroom_info.teacher_auth_id
-                    self.student_id = self.sender                
+                    teacher_id = chatroom_info.teacher_auth_id     
                     new_msg = chat_history_user2user.objects.create(
                         chatroom_info_user2user_id= self.chatroom_id,
-                        teacher_auth_id =self.teacher_id,
-                        student_auth_id= self.student_id,
+                        teacher_auth_id = teacher_id,
+                        student_auth_id= self.sender,
                         parent_auth_id = self.parent_auth_id,
                         message = message,
                         message_type= messageType,
@@ -482,26 +491,26 @@ class websocket_manager:
                 return(new_msg.id, new_msg.created_time)
 
         except Exception as e:
-            logging.error("chatroom/consumer:\n\nstorge error message.{e}", exc_info=True)
+            logging.error("chatroom/chat_tools:\n\nstorge error message.{e}", exc_info=True)
 
     
     def update_chat_msg_is_read_status(self, **kwargs):
         #chatroom_id = kwargs['chatroomID']
         userID = kwargs['senderID'] # 要改成已讀的ID
         chatroom_type = kwargs['chatroom_type']
-        user_type = self.check_authID_type(userID)
+        self.user_type = self.check_authID_type(userID)
         msg_status_update_dict = kwargs['msg_status_update'] # 這邊也會是dict
         update_msgID_list = msg_status_update_dict['messageID'] 
 
         if chatroom_type == 'user2user':
-            if user_type == 'student':
+            if self.user_type == 'student':
                 chat_history_user2user.objects.filter(id__in = update_msgID_list).update(student_is_read=True)
                 
             else: # 理論上就是老師
                 chat_history_user2user.objects.filter(id__in = update_msgID_list).update(teacher_is_read=True)
                 
         else:
-            if user_type == 'system':
+            if self.user_type == 'system':
                 chat_history_user2user.objects.filter(id__in = update_msgID_list).update(system_is_read=True)
             
             else: # 老師或學生
@@ -511,49 +520,48 @@ class websocket_manager:
     # 特殊情況: 找尋user和user是不是第一次聊天 02.22 更新老師與學生互相都可能第一次發訊息給對方
     # ...學生跟老師和系統間也可能是第一次互相發msg給對方? 啊不會因為system2user的通道一開始就建立了!
     # 如果是, 查詢他找的新老師與系統的聊天室id資訊並回傳
-    def check_if_users_chat_first_time(self, senderID):
-        #if self.chatroom_type == 'system2user':
-        #    if self.user_type == 'system': # 客服是sender的時候
-        #        total = chat_history_mr_q2user.objects.filter(chatroom_info_system2user_id = self.chatroom_id)
-        #        if len(total) != 2 : # 不等於2就不是第一次聊天, 不用特別處理
-        #            return('0')
-                # 第一筆是系統在聊天室建立時自動發送的訊息
-                # 第二筆是學生剛發送的訊息, 所以=2 筆的話表示是第一次聊天
-        #        else:
-                    #print('self.teacher_id:')
-                    #print(self.teacher_id)
-                    #find_layer = layer_info_maneger.show_channel_layer_info(self.teacher_id)
-        #            chatroomID = chatroom_info_Mr_Q2user.objects.filter(user_auth_id =  self.teacher_id).first()
-        #            self.system_chatroomID = 'system'+ str(chatroomID.id)
-        #            return(self.system_chatroomID)
-                
-        #    else: 
-        #        return(0)    
-        if self.chatroom_type == 'user2user': # user2user
-            if self.user_type == 'student':
-                total = chat_history_user2user.objects.filter(Q(student_auth_id=self.student_id)&Q(teacher_auth_id=self.teacher_id))
-                if len(total) != 2 : 
-                    # 當user跟系統聊天的時候才會發生<2,因為system_authID不會在user2user出現
-                    # 02.22 看不懂上面的意思,如果哪天理解再補qq
-                    return(0)
-                # 第一筆是系統在聊天室建立時自動發送的訊息
-                # 第二筆是學生剛發送的訊息, 所以=2 筆的話表示是新老師
-                else: 
-                    chatroomID = chatroom_info_Mr_Q2user.objects.filter(user_auth_id =  self.teacher_id).first()
-                    self.system_chatroomID = 'system'+ str(chatroomID.id)
-                    return(self.system_chatroomID)
-              
-            else: # 此時 self.user_type == 'teacher'
-                total = chat_history_user2user.objects.filter(Q(student_auth_id=self.student_id)&Q(teacher_auth_id=self.teacher_id))
-                if len(total) != 2 : 
-                    return(0)
-                # 第一筆是系統在聊天室建立時自動發送的訊息
-                # 第二筆是老師剛發送的訊息, 所以=2 筆的話表示是新學生
-                else: 
-                    chatroomID = chatroom_info_Mr_Q2user.objects.filter(user_auth_id = self.student_id).first()
-                    self.system_chatroomID = 'system'+ str(chatroomID.id)
-                    return(self.system_chatroomID)
-                   
+    def check_if_users_chat_first_time(self, **kwargs):
+        
+        chatroom_id = kwargs['chatroomID']
+        senderID = kwargs['senderID'] # 發訊息者
+        user_type = self.check_authID_type(senderID) # 發訊息者的身分
+
+        #senderID = kwargs[]
+        #chat_userID = 
+        logging.info("chatroom/chat_tools:check if users are chating first time", exc_info=True)
+        
+        
+        if user_type == 'student':
+            total_chat_history = chat_history_user2user.objects.filter\
+                (Q(student_auth_id= senderID)&Q(chatroom_info_user2user_id = chatroom_id))
+            if len(total) != 2 : 
+                return(total_chat_history)
+            # 第一筆是系統在聊天室建立時自動發送的訊息
+            # 第二筆是學生剛發送的訊息, 所以=2 筆的話表示是新老師
+            else: 
+                teacher_id = total_chat_history.first().teacher_auth_id
+                logging.info(f"chatroom/chat_tools:check teacher_id is :{teacher_id}", exc_info=True)
+                # 備註:理論上system_chatroom只會有一個
+                system_chatroom = chatroom_info_Mr_Q2user.objects.filter(user_auth_id = teacher_id).first()
+                system_chatroomID = 'system'+ str(system_chatroom.id)
+                return(system_chatroomID)
+            
+        else: # 此時 self.user_type == 'teacher'
+            total_chat_history = chat_history_user2user.objects.filter\
+                (Q(chatroom_info_user2user_id = chatroom_id)&Q(teacher_auth_id = senderID))
+            if len(total_chat_history) != 2 : 
+                return(0)
+            # 第一筆是系統在聊天室建立時自動發送的訊息
+            # 第二筆是老師剛發送的訊息, 所以=2 筆的話表示是新學生
+            else: 
+                student_id = total_chat_history.first().student_auth_id
+                logging.info(f"chatroom/chat_tools:check student_id is : {student_id}", exc_info=True)
+                # 備註:理論上system_chatroom只會有一個
+                system_chatroom = chatroom_info_Mr_Q2user.objects.filter(user_auth_id = student_id).first()
+                system_chatroomID = 'system'+ str(system_chatroom.id)
+                return(system_chatroomID)
+
+        logging.info("chatroom/chat_tools:check done (if users are chating first time)", exc_info=True)     
 
     # 特殊情況1, 當user彼此第一次聊天的系統訊息
     def system_auto_msg_when_user_first_chat(self, chatroomID):
