@@ -110,7 +110,7 @@ class auth_check_manager:
                 return('student')
             else:
                 return(0)
-    # gate.1 url種類如果是public一律有權限
+    # gate.1 url種類如果是public, 如果有token還是會比對是否一致,沒token會直接放行
     def check_url_is_public(self):
         for info_key,auth_info in self.auth_page.items():
             # if any(_ == 'public' for _ in auth_info)
