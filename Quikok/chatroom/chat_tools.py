@@ -453,8 +453,8 @@ class websocket_manager:
                         message_type= messageType,
                         who_is_sender= self.user_type,
                         sender_auth_id = self.sender,
-                        teacher_is_read= False,
-                        student_is_read = True
+                        teacher_is_read= True,
+                        student_is_read = False
                         )
                     new_msg.save()
 
@@ -508,7 +508,8 @@ class websocket_manager:
         self.user_type = self.check_authID_type(userID)
         msg_status_update_dict = kwargs['msg_status_update'] # 這邊也會是dict
         update_msgID_list = msg_status_update_dict['messageID'] 
-
+        logging.info(f"chatroom/consumer:\n\n update chat msg is read status IDs:{update_msgID_list}", exc_info=True)
+                
         if chatroom_type == 'user2user':
             if self.user_type == 'student':
                 chat_history_user2user.objects.filter(id__in = update_msgID_list).update(student_is_read=True)
