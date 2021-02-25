@@ -184,13 +184,13 @@ class chat_room_manager:
                         chatUserType = 'student'                  
                         #chatUnreadMessageQty 未讀訊息計算分為老師跟學生      
                         chat_history_set = chat_history_user2user.objects.filter\
-                            (Q(chatroom_info_user2user_id=chatroomID)&Q(teacher_is_read = 0))
+                            (Q(chatroom_info_user2user_id=chatroomID)&Q(teacher_is_read = False))
                     elif user_type == 'student':
                         chatUserID = a_chatroom.teacher_auth_id
                         chat_user = teacher_profile.objects.filter(auth_id = chatUserID).first()
                         chatUserType = 'teacher'
                         chat_history_set = chat_history_user2user.objects.filter\
-                            (Q(chatroom_info_user2user_id=chatroomID)&Q(student_is_read = 0))
+                            (Q(chatroom_info_user2user_id=chatroomID)&Q(student_is_read = False))
                     else: # 將來可能有其他類別
                         pass
                     chatUnreadMessageQty = chat_history_set.count()
@@ -304,14 +304,14 @@ class chat_room_manager:
                             chat_user = student_profile.objects.filter(auth_id = chatUserID).first()
                         # 下面的chatUnreadMessageQty 未讀訊息計算分為user未讀或system未讀,所以一起在這邊做      
                         chat_history_set = chat_history_Mr_Q2user.objects.filter\
-                            (Q(chatroom_info_system2user_id=chatroomID)&Q(system_is_read = 0))
+                            (Q(chatroom_info_system2user_id = chatroomID)&Q(system_is_read = False))
                     else: # user type = 老師或學生, 那聊天對象就是 system, system目前是老師
                         chatUserID = a_chatroom.system_user_auth_id
                         chat_user = teacher_profile.objects.filter(auth_id = chatUserID).first()
                         chatUserType = 'system'
                         # 下面的chatUnreadMessageQty 未讀訊息計算分為user或system,所以一起在這邊做
                         chat_history_set = chat_history_Mr_Q2user.objects.filter\
-                            (Q(chatroom_info_system2user_id=chatroomID)&Q(user_is_read = 0))
+                            (Q(chatroom_info_system2user_id=chatroomID)&Q(user_is_read = False))
                     
                     chatUnreadMessageQty = chat_history_set.count()
                     
@@ -347,9 +347,16 @@ class chat_room_manager:
                             # 這個system code目前暫時只是讓前端區分是系統訊息還是一般而已
                             # 前端預想之後可能依照這個號碼來做不同動作,可能會需要改成新增model來記錄
                             if user_type == 'system':
-                                temp_info['messageStatus'] = a_message.system_is_read
+                                if a_message.system_is_read == True:
+                                    temp_info['messageStatus'] = 'read'
+                                else:
+                                    temp_info['messageStatus'] = 'unread'
                             else:
-                                temp_info['messageStatus'] = a_message.user_is_read
+                                if a_message.user_is_read == True:
+                                    temp_info['messageStatus'] = 'read'
+                                else:
+                                    temp_info['messageStatus'] = 'unread'
+
                             if a_message.message_type == 'auto_system_msg':
                                 temp_info['systemCode'] = 'no_action' 
                             else:
