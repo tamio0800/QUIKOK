@@ -31,10 +31,10 @@ class ChatConsumer(WebsocketConsumer):
             print(type(self.room_group_name))
         else: #以後聊天室如果有更多種類可以加這
             pass
-        print('channel name:')
-        print(self.channel_name)
-        print('room_group_name')
-        print(self.room_group_name)
+
+        logging.info(f"chatroom/consuners:確認聊天室種類:{self.chatroom_type}")
+        logging.info(f"chatroom/consuners:room_group_name:{self.room_group_name}")
+        logging.info(f"chatroom/consuners:channel name:{self.channel_name}")
         
         # Join room group
         async_to_sync(self.channel_layer.group_add)(

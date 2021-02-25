@@ -97,7 +97,7 @@ class auth_check_manager:
     # 這是個很常用到的功能, 但權限檢查用不到
     def check_user_type(self, userID):
 
-        if userID == 1:
+        if userID == 1 or userID == '1':
             return('system')        
             # 目前的systemID就只有1,將來可能會有很多組
             # 但如果要新增很多組system要注意身分問題,system auth_id=1是老師, 

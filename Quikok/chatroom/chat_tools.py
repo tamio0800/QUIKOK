@@ -211,6 +211,7 @@ class chat_room_manager:
                     'chatUserID' : chatUserID, 'chatUserType': chatUserType ,'chatUsergender':chatUsergender,
                                 'chatUserName' : chatUserName, 'chatUserPath' : chatUserPath}
                     a_chatroom_info.update(update_response_msg)
+
                 # messageInfo 每一則訊息的資訊
                 # messageType: 訊息類別(0:一般文字, 1:系統訊息, 2:預約方塊)
                     all_messages = chat_history_user2user.objects.filter(chatroom_info_user2user_id=chatroomID).order_by("created_time")
@@ -272,7 +273,8 @@ class chat_room_manager:
             # 首先確認查詢歷史msg的user身分
             check_tool = auth_check_manager()
             user_type = check_tool.check_user_type(user_authID)
-            
+            logging.info(f'chat_tools system user_authID is:{user_authID}')
+            logging.info(f'chat_tools system user_type is:{user_type}')
             if user_type == 0:
                 # 找不到user類別
                 self.status = 'failed'
@@ -300,11 +302,14 @@ class chat_room_manager:
                         # 聊天對象可能是學生or老師
                         if chat_user_type == "teacher":
                             chat_user = teacher_profile.objects.filter(auth_id = chatUserID).first()
+                            chatUserType = "teacher"
                         elif chat_user_type == "student":
                             chat_user = student_profile.objects.filter(auth_id = chatUserID).first()
+                            chatUserType = "student"
                         # 下面的chatUnreadMessageQty 未讀訊息計算分為user未讀或system未讀,所以一起在這邊做      
                         chat_history_set = chat_history_Mr_Q2user.objects.filter\
                             (Q(chatroom_info_system2user_id = chatroomID)&Q(system_is_read = False))
+                        logging.info(f'chat_tools system chatuser type is:{chatUserType}')
                     else: # user type = 老師或學生, 那聊天對象就是 system, system目前是老師
                         chatUserID = a_chatroom.system_user_auth_id
                         chat_user = teacher_profile.objects.filter(auth_id = chatUserID).first()
@@ -313,6 +318,8 @@ class chat_room_manager:
                         chat_history_set = chat_history_Mr_Q2user.objects.filter\
                             (Q(chatroom_info_system2user_id=chatroomID)&Q(user_is_read = False))
                     
+                        logging.info(f'chat_tools system chatuser type is:{chatUserType}')
+                
                     chatUnreadMessageQty = chat_history_set.count()
                     
                     # 對方可能會沒有大頭貼
@@ -333,7 +340,8 @@ class chat_room_manager:
                     a_chatroom_info.update(update_response_msg)
                 # messageInfo 每一則訊息的資訊
                 # messageType: 訊息類別(0:一般文字, 1:系統訊息, 2:預約方塊)
-                    all_messages = chat_history_Mr_Q2user.objects.filter(chatroom_info_system2user_id=chatroomID).order_by("created_time")
+                    all_messages = chat_history_Mr_Q2user.objects.filter\
+                        (chatroom_info_system2user_id=chatroomID).order_by("created_time")
                     # Query 該聊天室的全部訊息
                     if all_messages is not None:
                         message_info_group = list()
@@ -471,7 +479,7 @@ class websocket_manager:
                 return(new_msg.id, new_msg.created_time)
             
             else: # chatroom_type == 'system2user'
-                chatroom_info = chatroom_info_mr_q2user.objects.filter(id = self.chatroom_id).first()
+                chatroom_info = chatroom_info_Mr_Q2user.objects.filter(id = self.chatroom_id).first()
                 
                 logging.info("chatroom/consumer:\n\nstorge system2user message.{chatroom_info}", exc_info=True)
                 
@@ -489,7 +497,7 @@ class websocket_manager:
                             )
                     new_msg.save()
                 else:
-                    new_msg = chat_history_mr_q2user.objects.create(
+                    new_msg = chat_history_Mr_Q2user.objects.create(
                             chatroom_info_system2user_id= self.chatroom_id,
                             user_auth_id = chatroom_info.user_auth_id,
                             system_user_auth_id = chatroom_info.system_user_auth_id,
@@ -505,7 +513,7 @@ class websocket_manager:
                 return(new_msg.id, new_msg.created_time)
 
         except Exception as e:
-            logging.error("chatroom/chat_tools:\n\nstorge error message.{e}", exc_info=True)
+            logging.error(f"chatroom/chat_tools:\n\nstorge error message.{e}", exc_info=True)
 
     
     def update_chat_msg_is_read_status(self, **kwargs):
@@ -526,10 +534,10 @@ class websocket_manager:
                 
         else:
             if self.user_type == 'system':
-                chat_history_user2user.objects.filter(id__in = update_msgID_list).update(system_is_read=True)
+                chat_history_Mr_Q2user.objects.filter(id__in = update_msgID_list).update(system_is_read=True)
             
             else: # 老師或學生
-                chat_history_user2user.objects.filter(id__in = update_msgID_list).update(user_is_read=True)
+                chat_history_Mr_Q2user.objects.filter(id__in = update_msgID_list).update(user_is_read=True)
                 
 
     # 特殊情況: 找尋user和user是不是第一次聊天 02.22 更新老師與學生互相都可能第一次發訊息給對方
