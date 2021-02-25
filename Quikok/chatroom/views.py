@@ -129,7 +129,7 @@ def system_chatroom_content(request):
     pass_data_to_chat_tools['token'] = token
     logging.info(f"chatroom/views:chatroom_content.聊天室收到的token:{token}")
     
-    
+
     if False in [userID, token]:    
         response['status'] = 'failed'
         response['errCode'] = '0'
@@ -141,7 +141,7 @@ def system_chatroom_content(request):
     else:        
         chat_manager = chat_room_manager()
         response['status'], response['errCode'], response['errMsg'], response['data'] =\
-        chat_manager.chat_main_content(userID = userID)
+        chat_manager.system_chat_main_content(userID)
         
         return JsonResponse(response)
 

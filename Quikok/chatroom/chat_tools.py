@@ -267,13 +267,13 @@ class chat_room_manager:
             if user_type == 0:
                 # 找不到user類別
                 self.status = 'failed'
-                self.errCode = '1'
+                self.errCode = '2'
                 self.errMsg = 'Querying Data Failed.'
                 return (self.status, self.errCode, self.errMsg, self.data)
             else:
                 # 篩選出所有這個人的聊天室,目前理論上user只會有唯一一個與系統的聊天室,但系統對user會有很多個
-                room_queryset= chatroom_info_mr_q2user.objects.filter(
-                    Q(user_auth_id=kwargs['userID'])|Q(system_auth_id=kwargs['userID'])).order_by("created_time")
+                room_queryset= chatroom_info_Mr_Q2user.objects.filter(
+                    Q(user_auth_id= user_authID)|Q(system_user_auth_id=user_authID)).order_by("created_time")
                 
                 logging.info(f'chat_tools room_queryset info:使用者有這些系統聊天室{room_queryset}')
                 
@@ -294,15 +294,15 @@ class chat_room_manager:
                         elif chat_user_type == "student":
                             chat_user = student_profile.objects.filter(auth_id = chatUserID).first()
                         # 下面的chatUnreadMessageQty 未讀訊息計算分為user未讀或system未讀,所以一起在這邊做      
-                        chat_history_set = chat_history_mr_q2user.objects.filter\
-                            (Q(chatroom_info_user2user_id=chatroomID)&Q(system_is_read = 0))
+                        chat_history_set = chat_history_Mr_Q2user.objects.filter\
+                            (Q(chatroom_info_system2user_id=chatroomID)&Q(system_is_read = 0))
                     else: # user type = 老師或學生, 那聊天對象就是 system, system目前是老師
-                        chatUserID = a_chatroom.system_auth_id
+                        chatUserID = a_chatroom.system_user_auth_id
                         chat_user = teacher_profile.objects.filter(auth_id = chatUserID).first()
                         chatUserType = 'system'
                         # 下面的chatUnreadMessageQty 未讀訊息計算分為user或system,所以一起在這邊做
-                        chat_history_set = chat_history_mr_q2user.objects.filter\
-                            (Q(chatroom_info_user2user_id=chatroomID)&Q(user_is_read = 0))
+                        chat_history_set = chat_history_Mr_Q2user.objects.filter\
+                            (Q(chatroom_info_system2user_id=chatroomID)&Q(user_is_read = 0))
                     
                     chatUnreadMessageQty = chat_history_set.count()
                     
@@ -324,7 +324,7 @@ class chat_room_manager:
                     a_chatroom_info.update(update_response_msg)
                 # messageInfo 每一則訊息的資訊
                 # messageType: 訊息類別(0:一般文字, 1:系統訊息, 2:預約方塊)
-                    all_messages = chat_history_user2user.objects.filter(chatroom_info_user2user_id=chatroomID).order_by("created_time")
+                    all_messages = chat_history_Mr_Q2user.objects.filter(chatroom_info_system2user_id=chatroomID).order_by("created_time")
                     # Query 該聊天室的全部訊息
                     if all_messages is not None:
                         message_info_group = list()
@@ -358,7 +358,7 @@ class chat_room_manager:
             else: # 沒有任何聊天室,理論上不存在這個情況
                 logging.error("chatroom/chat_tools:system_chat_main_content error.找不到系統聊天室", exc_info=True)
                 self.status = 'failed'
-                self.errCode = '2'
+                self.errCode = '3'
                 self.errMsg = 'Querying Data Failed.如狀況持續麻煩透過e-mail或電話聯絡客服'
             
             return (self.status, self.errCode, self.errMsg, self.data)
@@ -482,7 +482,31 @@ class websocket_manager:
                 return(new_msg.id, new_msg.created_time)
 
         except Exception as e:
-            print(e)
+            logging.error("chatroom/consumer:\n\nstorge error message.{e}", exc_info=True)
+
+    
+    def update_chat_msg_is_read_status(self, **kwargs):
+        chatroom_id = kwargs['chatroomID']
+        userID = kwargs['senderID'] # 要改成已讀的ID
+        chatroom_type = kwargs['chatroom_type']
+        user_type = check_authID_type(userID)
+        msg_status_update_dict = kwargs['msg_status_update'] # 理解上這邊也會是dict
+        update_msgID_list =msg_status_update_dict['messageID'] 
+
+        if chatroom_type == 'user2user':
+            if user_type == 'student':
+                chat_history_user2user.objects.filter(id__in = update_msgID_list).update(student_is_read=True)
+                
+            else: # 理論上就是老師
+                chat_history_user2user.objects.filter(id__in = update_msgID_list).update(teacher_is_read=True)
+                
+        else:
+            if user_type == 'system':
+                chat_history_user2user.objects.filter(id__in = update_msgID_list).update(system_is_read=True)
+            
+            else: # 老師或學生
+                chat_history_user2user.objects.filter(id__in = update_msgID_list).update(user_is_read=True)
+                
 
     # 特殊情況: 找尋user和user是不是第一次聊天 02.22 更新老師與學生互相都可能第一次發訊息給對方
     # ...學生跟老師和系統間也可能是第一次互相發msg給對方? 啊不會因為system2user的通道一開始就建立了!

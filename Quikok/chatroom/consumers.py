@@ -62,6 +62,7 @@ class ChatConsumer(WebsocketConsumer):
 
     # Receive message from WebSocket
     def receive(self, text_data):
+        ws_manager = websocket_manager()
         text_data_json = json.loads(text_data)
         print('ws load jason收到的資料')
         print('\n\nreceive_data:\n'+str(text_data_json))
@@ -72,14 +73,16 @@ class ChatConsumer(WebsocketConsumer):
         'chatroomID' : text_data_json['chatroomID'],
         'messageType' : text_data_json['messageType'],
         'messageText' : text_data_json['messageText'],
-        'msg_status_update' : text_data_json['msg_status_update'],
+        'msg_status_update' : text_data_json['msg_status_update'], # 字典型態
         'chatroom_type': self.chatroom_type}
         #now_time = datetime.datetime.now().strftime('%H:%M')
-        # 儲存對話紀錄到db, 如果是前端用來更新已讀狀態的資料就不用存
+        # 儲存對話紀錄到db, 如果是前端用來更新已讀狀態的資料就不用存對話紀錄但是要更新已讀狀態
         if text_data_json['messageType'] == 'update_read_msg':
+            ws_manager.update_chat_msg_is_read_status(**pass_to_chat_tools)
             pass
-        else:
-            ws_manager = websocket_manager()
+        #elif len(text_data_json['msg_status_update']['messageID']) > 0:
+            # 要更新對話是否已讀的變數
+        else: # 一般對話,要儲存
             msgID, time = ws_manager.chat_storge(**pass_to_chat_tools)
             now_time = str(time)
         # systemCode 暫時沒有作用,統一給0
