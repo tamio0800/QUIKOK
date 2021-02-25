@@ -227,16 +227,23 @@ class chat_room_manager:
                             # 這個system code目前暫時只是讓前端區分是系統訊息還是一般而已
                             # 前端預想之後可能依照這個號碼來做不同動作,可能會需要改成新增model來記錄
                             if user_type == 'teacher':
-                                temp_info['messageStatus'] = a_message.teacher_is_read
+                                if a_message.teacher_is_read == True:
+                                    temp_info['messageStatus'] = 'read'
+                                else:
+                                    temp_info['messageStatus'] = 'unread'
                             else:
-                                temp_info['messageStatus'] = a_message.student_is_read
+                                if a_message.student_is_read == True:
+                                    temp_info['messageStatus'] = 'read'
+                                else:
+                                    temp_info['messageStatus'] = 'unread'
+
                             if a_message.message_type == 'auto_system_msg':
                                 temp_info['systemCode'] = 'no_action' 
                             else:
                                 temp_info['systemCode'] = 'user2user'
                             message_info_group.append(temp_info)
                         
-                            logging.info(f'chat_tools chat_history info:每一則訊息的資訊:{temp_info}')
+                            logging.info(f'chat_tools chat_history info:每一則歷史訊息的資訊:{temp_info}')
                     else:
                         message_info_group = list()
 
