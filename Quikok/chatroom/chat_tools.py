@@ -24,7 +24,7 @@ class chat_room_manager:
         # response_msg字典裏面又包含兩層字典
         # 因為感覺之後會直接叫裡面的字典來修改、再更新較外層的字典,
         # 因此先將這幾層字典都設 self 
-        self.response_msg_key = ['chatroomID','chatUnreadMessageQty', 'chatUserID', 'chatUserType',
+        self.response_msg_key = ['chatroomID','chatroom_type','chatUnreadMessageQty', 'chatUserID', 'chatUserType',
                         'chatUserName', 'chatUsergender','chatUserPath', 'messageInfo']
         
         self.response_msg = dict()
@@ -207,7 +207,7 @@ class chat_room_manager:
                     # chatUnreadMessageQty 歷史訊息的id = roomid,且發送者不是 user, 且未讀 = 0
                     #chat_history_set = chat_history_user2user.objects.filter(Q(chatroom_info_user2user_id=chatroomID)&Q(is_read = 0)& ~Q(who_is_sender = kwargs['userID']))
                     
-                    update_response_msg = {'chatroomID':chatroomID,'chatUnreadMessageQty':chatUnreadMessageQty,
+                    update_response_msg = {'chatroomID':chatroomID,'chatroom_type': 'user2user','chatUnreadMessageQty':chatUnreadMessageQty,
                     'chatUserID' : chatUserID, 'chatUserType': chatUserType ,'chatUsergender':chatUsergender,
                                 'chatUserName' : chatUserName, 'chatUserPath' : chatUserPath}
                     a_chatroom_info.update(update_response_msg)
@@ -334,7 +334,7 @@ class chat_room_manager:
                     # chatUnreadMessageQty 歷史訊息的id = roomid,且發送者不是 user, 且未讀 = 0
                     #chat_history_set = chat_history_user2user.objects.filter(Q(chatroom_info_user2user_id=chatroomID)&Q(is_read = 0)& ~Q(who_is_sender = kwargs['userID']))
                     
-                    update_response_msg = {'chatroomID':chatroomID,'chatUnreadMessageQty':chatUnreadMessageQty,
+                    update_response_msg = {'chatroomID':chatroomID, 'chatroom_type': 'system2user','chatUnreadMessageQty':chatUnreadMessageQty,
                     'chatUserID' : chatUserID, 'chatUserType': chatUserType ,'chatUsergender':chatUsergender,
                                 'chatUserName' : chatUserName, 'chatUserPath' : chatUserPath}
                     a_chatroom_info.update(update_response_msg)
