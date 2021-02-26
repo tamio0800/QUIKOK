@@ -8,7 +8,6 @@ from account.auth_tools import auth_check_manager
 from .system_2user_layer import layer_info_maneger
 import logging
 
-
 logging.basicConfig(level=logging.NOTSET) #DEBUG
 class chat_room_manager:
     def __init__(self):
@@ -65,18 +64,46 @@ class chat_room_manager:
     # user註冊時call來建立系統聊天室
         user_authID = kwargs['userID']
         user_type = kwargs['user_type']
-        systemID = 1 # 1 暫定為系統專用auth_id
+        #systemID = self.system_authID # 1 暫定為系統專用auth_id
+
         if user_type == 'student':
             chatroom_type = 'system2student'
         elif user_type == 'teacher':
             chatroom_type = 'system2teacher'
         else:
             pass
-        new_chatroom = chatroom_info_Mr_Q2user.objects.create(user_auth_id=user_authID,
-                user_type = user_type, system_user_auth_id = systemID,
-                chatroom_type = chatroom_type)
-        new_chatroom.save()   
+        new_chatroom = chatroom_info_Mr_Q2user.objects.create(
+            user_auth_id = user_authID,
+            user_type = user_type, 
+            system_user_auth_id = self.system_authID,
+            chatroom_type = chatroom_type)
+        new_chatroom.save()
         logging.info(f"chatroom/chat_tools:建立系統聊天室")
+
+        # 當聊天室建立時, 系統自動產生2筆訊息, 以便使前端排序不會出錯 + 讓user知道有客服
+        first_system_msg = chat_history_system2user.objects.create(    
+            chatroom_info_system2user_id = new_chatroom.id,    
+            system_user_auth_id = self.system_authID,    
+            user_auth_id = user_authID, 
+            message = '於'+ datetime.now().strftime('%H:%M') +'創立聊天室',
+            message_type = 'auto_system_msg' , #系統訊息
+            who_is_sender = 'system' ,   # teacher/student/parent/system
+            sender_auth_id = self.system_authID,
+            system_is_read = True,
+            user_is_read = False)
+        logging.info('create system2user 1st msg.')
+
+        welcom_system_msg = chat_history_system2user.objects.create(    
+            chatroom_info_system2user_id = new_chatroom.id,    
+            system_user_auth_id = self.system_authID,    
+            user_auth_id = user_authID, 
+            message = '嗨！我是Quikok！開課的客服專家QQ球雀，有建議或是網站問題回報都可以找我唷！啾啾～',
+            message_type = 'text_msg' , #系統訊息
+            who_is_sender = 'system' ,   # teacher/student/parent/system
+            sender_auth_id = self.system_authID,
+            system_is_read = True,
+            user_is_read = False)
+        logging.info('create system2user 2nd msg.')
         
 
     def check_and_create_chat_room(self,**kwargs):
@@ -107,11 +134,13 @@ class chat_room_manager:
 
             elif user_type == 'teacher':
             # 正常來說聊天室只會有唯一一個存在, 超過就有問題
-                chatroom = chatroom_info_user2user.objects.filter(Q(student_auth_id=chatuser_authID)&Q(teacher_auth_id=user_authID))
+                chatroom = chatroom_info_user2user.objects.filter(
+                    Q(student_auth_id=chatuser_authID)&Q(teacher_auth_id=user_authID))
                 student_authID = chatuser_authID
                 teacher_authID = user_authID
             elif user_type =='student':
-                chatroom = chatroom_info_user2user.objects.filter(Q(student_auth_id=chatuser_authID)&Q(teacher_auth_id=user_authID))
+                chatroom = chatroom_info_user2user.objects.filter(
+                    Q(student_auth_id=chatuser_authID)&Q(teacher_auth_id=user_authID))
                 student_authID = user_authID
                 teacher_authID = chatuser_authID
             
@@ -124,15 +153,15 @@ class chat_room_manager:
                 first_system_msg = chat_history_user2user.objects.create(    
                     chatroom_info_user2user_id = new_chatroom.id,    
                     teacher_auth_id = teacher_authID,    
-                    student_auth_id = student_authID, parent_auth_id = parent_authID,       # 現在parent_auth_id預設都是-1
+                    student_auth_id = student_authID, parent_auth_id = parent_authID, # 現在parent_auth_id預設都是-1
                     message = '於'+ datetime.now().strftime('%H:%M') +'創立聊天室',
                     message_type = 'auto_system_msg' , #系統訊息
                     who_is_sender = 'system' ,   # teacher/student/parent/system
                     sender_auth_id = self.system_authID,
                     teacher_is_read = True,
                     student_is_read = False)
-
-                print('create new chatroom')
+                logging.info('create new user2user chatroom')
+                
                 self.status = 'success'
                 self.errCode = None
                 self.errMsg = None
