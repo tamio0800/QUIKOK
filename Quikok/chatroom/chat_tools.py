@@ -82,7 +82,7 @@ class chat_room_manager:
         logging.info(f"chatroom/chat_tools:建立系統聊天室")
 
         # 當聊天室建立時, 系統自動產生2筆訊息, 以便使前端排序不會出錯 + 讓user知道有客服
-        first_system_msg = chat_history_system2user.objects.create(    
+        first_system_msg = chat_history_Mr_Q2user.objects.create(    
             chatroom_info_system2user_id = new_chatroom.id,    
             system_user_auth_id = self.system_authID,    
             user_auth_id = user_authID, 
@@ -94,7 +94,7 @@ class chat_room_manager:
             user_is_read = False)
         logging.info('create system2user 1st msg.')
 
-        welcom_system_msg = chat_history_system2user.objects.create(    
+        welcom_system_msg = chat_history_Mr_Q2user.objects.create(    
             chatroom_info_system2user_id = new_chatroom.id,    
             system_user_auth_id = self.system_authID,    
             user_auth_id = user_authID, 
@@ -600,7 +600,8 @@ class websocket_manager:
             total_chat_history = chat_history_user2user.objects.filter\
                 (Q(student_auth_id= senderID)&Q(chatroom_info_user2user_id = chatroom_id))
             logging.info(f"chatroom/chat_tools:check if users are chating first time, chat_history len:{total_chat_history}")
-            if len(total_chat_history) != 2 : 
+            if len(total_chat_history) != 2 :
+                logging.info("chatroom/chat_tools:check done:no (if users are chating first time)", exc_info=True)     
                 return(0)
                 #return(total_chat_history)
             # 第一筆是系統在聊天室建立時自動發送的訊息
@@ -611,12 +612,14 @@ class websocket_manager:
                 # 備註:理論上system_chatroom只會有一個
                 system_chatroom = chatroom_info_Mr_Q2user.objects.filter(user_auth_id = teacher_id).first()
                 system_chatroomID = 'system'+ str(system_chatroom.id)
+                logging.info("chatroom/chat_tools:check done:yes (if users are chating first time)", exc_info=True)     
                 return(system_chatroomID)
             
         else: # 此時 self.user_type == 'teacher'
             total_chat_history = chat_history_user2user.objects.filter\
                 (Q(chatroom_info_user2user_id = chatroom_id)&Q(teacher_auth_id = senderID))
             if len(total_chat_history) != 2 : 
+                logging.info("chatroom/chat_tools:check done: no (if users are chating first time)", exc_info=True)     
                 return(0)
             # 第一筆是系統在聊天室建立時自動發送的訊息
             # 第二筆是老師剛發送的訊息, 所以=2 筆的話表示是新學生
@@ -626,16 +629,17 @@ class websocket_manager:
                 # 備註:理論上system_chatroom只會有一個
                 system_chatroom = chatroom_info_Mr_Q2user.objects.filter(user_auth_id = student_id).first()
                 system_chatroomID = 'system'+ str(system_chatroom.id)
+                logging.info("chatroom/chat_tools:check done: yes (if users are chating first time)", exc_info=True)     
                 return(system_chatroomID)
 
-        logging.info("chatroom/chat_tools:check done (if users are chating first time)", exc_info=True)     
-
+        
     # 特殊情況1, 當user彼此第一次聊天的系統訊息
     def system_auto_msg_when_user_first_chat(self, chatroomID):
 
         send_to_ws = {
             'type' : "chat.message",
-            'chatroomID':'system'+ str(chatroomID), # user與系統聊天室
+            #'chatroomID':'system'+ str(chatroomID), # user與系統聊天室
+            'chatroomID': chatroomID,
             'senderID': self.system_authID, # 系統的auth_id
             'messageText':'',
             'messageType': 'notice_first_msg', # 系統方塊
