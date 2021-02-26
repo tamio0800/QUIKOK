@@ -92,11 +92,7 @@ class ChatConsumer(WebsocketConsumer):
         else:
             systemCode = None
         logging.info("chatroom/consumer:\n\nstorge message.", exc_info=True)
-        
-
-        
-        
-
+    
         # Send message to room group
         # 會發到下面的def chat_message (雖然不曉得怎麼發的)
         #print('this is self.channel_layer.group_send')

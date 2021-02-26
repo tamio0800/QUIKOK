@@ -793,7 +793,7 @@ def signin(request):
     response = {}
     username = request.POST.get('userName', False) # 當前端值有錯誤傳 null 就會是false 
     password = request.POST.get('userPwd', False)
-    system_authID = 1
+    #system_authID = 1
         
     if False not in (username, password):
         user_obj = User.objects.filter(username=username).first()
@@ -843,10 +843,10 @@ def signin(request):
                 for group_obj in _user_group_set:
                     user_group.append(group_obj.name)
                 # 與系統的聊天室id
-                if user_obj.id == system_authID :
-                    system_chatrooID = ''
-                else:
-                    system_chatrooID = chatroom_info_Mr_Q2user.objects.filter(user_auth_id=user_obj.id).first().id
+                #if user_obj.id == system_authID :
+                #    system_chatrooID = ''
+                #else:
+                #    system_chatrooID = chatroom_info_Mr_Q2user.objects.filter(user_auth_id=user_obj.id).first().id
 
                 response['status'] = 'success'
                 response['errCode'] = None
@@ -861,7 +861,7 @@ def signin(request):
                     'user_token': token,
                     'deposit': balance,
                     'message': '', # 是否有未讀聊天室訊息, 這邊等聊天室做了再補
-                    'system_chatrooID' :system_chatrooID,
+                    #'system_chatrooID' :system_chatrooID,
                     'user_group': user_group
                     }
                 print('成功登入', response)
