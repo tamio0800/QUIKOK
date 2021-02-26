@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth.models import User
 from django.shortcuts import render
 from django.db.models import Q
-from .models import Messages, chat_room
+from .models import (Messages, chat_room, chatroom_info_Mr_Q2user,chat_history_Mr_Q2user)
 from .chat_tools import chat_room_manager
 from account.models import student_profile, teacher_profile
 from django.utils.decorators import method_decorator
@@ -15,6 +15,7 @@ import json
 from django.middleware.csrf import get_token
 from datetime import datetime, timedelta
 import shutil
+
 
 import logging
 logging.basicConfig(level=logging.NOTSET) #DEBUG
@@ -79,7 +80,7 @@ def check_system_chatroom(request):
                 response['status'] = 'success'
                 response['errCode'] = None
                 response['errMsg'] = None
-                response['data'] = {'chatroomID':system_chatroom_query.id}
+                response['data'] = {'chatroomID':system_chatroom_query.first().id}
                 return JsonResponse(response)
         except:
             logging.error("chatroom/views:check_system_chatroom except error.", exc_info=True)
