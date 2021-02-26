@@ -453,7 +453,11 @@ class websocket_manager:
                 # 1224由於當初架構只分老師和學生,目前系統身分是'老師',
                 # 所以系統的身分先給老師, unknown先保留做為沒資料時避免程式壞掉用
                 self.user_type = 'unknown'
-        print(self.user_type)
+        
+        logging.info(f"chatroom/chat_tools:check_authID_type,  authID is:{authID}")
+        logging.info(f"chatroom/chat_tools:check_authID_type,  authID type is:{type(authID)}")
+        logging.info(f"chatroom/chat_tools:check_authID_type, user type is:{self.user_type}")
+        
         
 
 
@@ -585,18 +589,20 @@ class websocket_manager:
         
         chatroom_id = kwargs['chatroomID']
         senderID = kwargs['senderID'] # 發訊息者
-        user_type = self.check_authID_type(senderID) # 發訊息者的身分
+        self.check_authID_type(senderID) # 發訊息者的身分
 
         #senderID = kwargs[]
         #chat_userID = 
-        logging.info("chatroom/chat_tools:check if users are chating first time", exc_info=True)
-        
-        
-        if user_type == 'student':
+        logging.info("chatroom/chat_tools:check if users are chating first time")
+        logging.info(f"chatroom/chat_tools:check if users are chating first time, user ID is:{senderID}")
+        logging.info(f"chatroom/chat_tools:check if users are chating first time, user type is:{self.user_type}")
+        if self.user_type == 'student':
             total_chat_history = chat_history_user2user.objects.filter\
                 (Q(student_auth_id= senderID)&Q(chatroom_info_user2user_id = chatroom_id))
-            if len(total) != 2 : 
-                return(total_chat_history)
+            logging.info(f"chatroom/chat_tools:check if users are chating first time, chat_history len:{total_chat_history}")
+            if len(total_chat_history) != 2 : 
+                return(0)
+                #return(total_chat_history)
             # 第一筆是系統在聊天室建立時自動發送的訊息
             # 第二筆是學生剛發送的訊息, 所以=2 筆的話表示是新老師
             else: 
@@ -629,7 +635,7 @@ class websocket_manager:
 
         send_to_ws = {
             'type' : "chat.message",
-            'chatroomID':self.system_chatroomID, # user與系統聊天室
+            'chatroomID':'system'+ str(chatroomID), # user與系統聊天室
             'senderID': self.system_authID, # 系統的auth_id
             'messageText':'',
             'messageType': 'notice_first_msg', # 系統方塊
