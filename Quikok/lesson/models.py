@@ -65,7 +65,7 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     # 販售狀態 >>
     #   草稿: draft, 上架: selling, 沒上架: notSelling, 刪除: donotShow
     def __str__(self):
-        return self.lesson_title
+        return f"課程({self.id}): {self.lesson_title}, 由{self.teacher.username}老師({self.teacher.auth_id})所創立"
 
     class Meta:
         verbose_name = '課程詳細資訊'
@@ -240,7 +240,7 @@ class lesson_booking_info(models.Model):
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
-        return f"ID({str(self.id)}): 學生({str(self.student_auth_id)})預約老師({str(self.teacher_auth_id)})的課程({str(self.lesson_id)})的方案({str(self.booking_set_id)})。 目前狀態:{self.booking_status}; 最後更改時間:{self.last_changed_time.strftime('%Y-%m-%d %H:%M:%S')}"
+        return f"課程({self.lesson_id})的預約({self.id})：學生({self.student_auth_id})預約老師({self.teacher_auth_id})的課程({self.lesson_id})的方案({self.booking_set_id})。 目前狀態:{self.booking_status}; 最後更改時間:{self.last_changed_time.strftime('%Y-%m-%d %H:%M:%S')}"
 
     def get_booking_date(self):
         # 回傳這次的預約日期
@@ -251,8 +251,8 @@ class lesson_booking_info(models.Model):
         return int(len(self.booking_date_and_time[:-1].split(':')[1].split(','))) * 30
 
     class Meta:
-        verbose_name = '課程預約資訊'
-        verbose_name_plural = '課程預約資訊'
+        verbose_name = '預約-課程預約資訊'
+        verbose_name_plural = '預約-課程預約資訊'
         ordering = ['-created_time']
 
 
@@ -289,22 +289,12 @@ class lesson_completed_record(models.Model):
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
-        return f"預約({str(self.lesson_booking_info_id)})已被老師({str(self.teacher_auth_id)})通報完課。 學生({str(self.student_auth_id)})是否同意: {str(self.is_student_confirmed)}、是否(曾)申訴: {str(self.is_student_disagree_with_teacher_s_declared_time)}。 是否由Quikok自動確認: {str(self.confirmed_by_quikok)}"
-        '''if self.is_student_confirmed == True:
-            # 學生已經確認
-            return f"預約({str(self.lesson_booking_info_id)})已被老師({str(self.teacher_auth_id)})通報完課，學生({str(self.student_auth_id)})已確認。"
-        elif self.is_student_confirmed == False and self.is_student_disagree_with_teacher_s_declared_time == True:
-            # 學生反對且Quikok尚未處理完成
-            return f"預約({str(self.lesson_booking_info_id)})已被老師({str(self.teacher_auth_id)})通報完課，學生({str(self.student_auth_id)})不同意，Quikok處理中..."
-        elif self.is_student_confirmed == True and self.is_student_disagree_with_teacher_s_declared_time == True:
-            # 學生反對且Quikok處理完畢
-            return f"預約({str(self.lesson_booking_info_id)})已被老師({str(self.teacher_auth_id)})通報完課，學生({str(self.student_auth_id)})一開始不同意，最後由Quikok協調完畢。"
-        elif self.confirmed_by_quikok == True:
-            return f"預約({str(self.lesson_booking_info_id)})已被老師({str(self.teacher_auth_id)})通報完課，學生({str(self.student_auth_id)})未確認，超過期限後自動同意。"'''
-
+        lesson_id = lesson_booking_info.objects.get(id=self.lesson_booking_info_id).lesson_id
+        return f"課程({lesson_id})的預約({self.lesson_booking_info_id})已被老師({self.teacher_auth_id})通報完課。 學生({self.student_auth_id})是否同意: {self.is_student_confirmed}、是否(曾)申訴: {self.is_student_disagree_with_teacher_s_declared_time}。 是否由Quikok自動確認: {self.confirmed_by_quikok}"
+        # return f"課程的預約({self.lesson_booking_info_id})已被老師({self.teacher_auth_id})通報完課。 學生({self.student_auth_id})是否同意: {self.is_student_confirmed}、是否(曾)申訴: {self.is_student_disagree_with_teacher_s_declared_time}。 是否由Quikok自動確認: {self.confirmed_by_quikok}"
     class Meta:
-        verbose_name = '(預約)完課紀錄'
-        verbose_name_plural = '(預約)完課紀錄'
+        verbose_name = '預約-完課紀錄'
+        verbose_name_plural = '預約-完課紀錄'
         ordering = ['-created_time']
         
 
@@ -337,7 +327,7 @@ class lesson_sales_sets(models.Model):
     is_open = models.BooleanField(default=True)  
     #是否為目前使用中的方案, 是的話才可選
     def __str__(self):
-        return str(self.id)
+        return f"課程({self.lesson_id})：{self.sales_set} 方案，總價{self.total_amount_of_the_sales_set}元。 啟用中：{self.is_open}"
     
     class Meta:
         verbose_name = '課程方案資訊'
