@@ -771,6 +771,7 @@ def return_teacher_s_profile_for_public_viewing(request):
     response = dict()
     teacher_auth_id = request.GET.get('userID', False)
     the_teacher_manager = teacher_manager()
+    
 
     if teacher_auth_id == False:
         response['status'] = 'failed'
@@ -792,6 +793,7 @@ def signin(request):
     response = {}
     username = request.POST.get('userName', False) # 當前端值有錯誤傳 null 就會是false 
     password = request.POST.get('userPwd', False)
+    system_authID = 1
         
     if False not in (username, password):
         user_obj = User.objects.filter(username=username).first()
@@ -841,7 +843,10 @@ def signin(request):
                 for group_obj in _user_group_set:
                     user_group.append(group_obj.name)
                 # 與系統的聊天室id
-                system_chatrooID = chatroom_info_Mr_Q2user.objects.filter(user_auth_id=user_obj.id).first().id
+                if user_obj.id == system_authID :
+                    system_chatrooID = ''
+                else:
+                    system_chatrooID = chatroom_info_Mr_Q2user.objects.filter(user_auth_id=user_obj.id).first().id
 
                 response['status'] = 'success'
                 response['errCode'] = None
