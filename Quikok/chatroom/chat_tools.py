@@ -9,6 +9,7 @@ from .system_2user_layer import layer_info_maneger
 import logging
 
 logging.basicConfig(level=logging.NOTSET) #DEBUG
+
 class chat_room_manager:
     def __init__(self):
         self.parent_auth_id = -1 # 目前尚未定義,因此全部都給-1
@@ -436,9 +437,10 @@ class websocket_manager:
 
     def check_authID_type(self, authID):
         # 判斷某個ID的身分
+        if type(authID) == str:
+            authID = int(authID)
         if authID == self.system_authID: # 目前1是system的auth_id
             self.user_type = 'system'
-            
         else:
             _find_teacher = teacher_profile.objects.filter(auth_id=authID)
             _find_student = student_profile.objects.filter(auth_id=authID)
@@ -452,6 +454,9 @@ class websocket_manager:
                 # 所以系統的身分先給老師, unknown先保留做為沒資料時避免程式壞掉用
                 self.user_type = 'unknown'
         print(self.user_type)
+        
+
+
     # 儲存聊天訊息到 db
     # user_2_user & system2user
     def chat_storge(self, **kwargs):
@@ -513,7 +518,7 @@ class websocket_manager:
                 logging.info("chatroom/consumer:\n\nstorge system2user message.{chatroom_info}", exc_info=True)
                 
                 if self.sender == chatroom_info.system_user_auth_id : # 發言者是系統
-                    new_msg = chat_history_mr_q2user.objects.create(
+                    new_msg = chat_history_Mr_Q2user.objects.create(
                             chatroom_info_system2user_id= self.chatroom_id,
                             user_auth_id = chatroom_info.user_auth_id,
                             system_user_auth_id = chatroom_info.system_user_auth_id,
@@ -549,11 +554,15 @@ class websocket_manager:
         #chatroom_id = kwargs['chatroomID']
         userID = kwargs['senderID'] # 要改成已讀的ID
         chatroom_type = kwargs['chatroom_type']
-        self.user_type = self.check_authID_type(userID)
+        self.check_authID_type(userID)
         msg_status_update_dict = kwargs['msg_status_update'] # 這邊也會是dict
         update_msgID_list = msg_status_update_dict['messageID'] 
         logging.info(f"chatroom/consumer:\n\n update chat msg is read status IDs:{update_msgID_list}", exc_info=True)
-                
+        logging.info(f"chatroom/consumer:\n\n update chat msg is read chatroom_type:{chatroom_type}", exc_info=True)
+        logging.info(f"chatroom/consumer:\n\n update chat msg is read userID:{userID}", exc_info=True)
+        logging.info(f"chatroom/consumer:\n\n update chat msg is read userID data type:{type(userID)}", exc_info=True)
+        logging.info(f"chatroom/consumer:\n\n update chat msg is read user_type:{self.user_type}", exc_info=True)
+ 
         if chatroom_type == 'user2user':
             if self.user_type == 'student':
                 chat_history_user2user.objects.filter(id__in = update_msgID_list).update(student_is_read=True)
