@@ -2295,7 +2295,7 @@ def get_teacher_s_booking_history(request):
                     # 這個老師 非 什麼預約歷史都沒有
                     response['data'] = list()
                     
-                    if settings.ASYNC_TO_SYNC:
+                    if settings.DEV_MODE:
                         for each_booking_info_object in teacher_s_lesson_booking_info_queryset:
                             fetch_data_synchronously(each_booking_info_object)
                     else:
@@ -2353,7 +2353,7 @@ def get_teacher_s_booking_history(request):
                     # 這個老師 非 什麼預約歷史都沒有
                     response['data'] = list()
                     
-                    if settings.ASYNC_TO_SYNC:
+                    if settings.DEV_MODE:
                         for each_booking_info_object in teacher_s_lesson_booking_info_queryset:
                             fetch_data_synchronously(each_booking_info_object)
                     else:
@@ -2688,7 +2688,7 @@ def get_student_s_booking_history(request):
                     print(teacher_profile.objects.values())
                     print(lesson_booking_info.objects.values())
                     
-                    if settings.ASYNC_TO_SYNC:
+                    if settings.DEV_MODE:
                         for each_booking_info_object in student_s_lesson_booking_info_queryset:
                             fetch_data_synchronously(each_booking_info_object)
                     else:                            
@@ -2744,7 +2744,7 @@ def get_student_s_booking_history(request):
                     # 這個學生 非 什麼預約歷史都沒有
                     response['data'] = list()
                     
-                    if settings.ASYNC_TO_SYNC:
+                    if settings.DEV_MODE:
                         for each_booking_info_object in student_s_lesson_booking_info_queryset:
                             fetch_data_synchronously(each_booking_info_object)
                     else:

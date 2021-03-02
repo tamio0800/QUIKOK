@@ -619,7 +619,7 @@ def student_order_history(request):
             query_purchased_records_tasks = \
                 [fetch_data_asynchronously(record) for record in this_student_s_all_purchased_record]
             
-            if settings.ASYNC_TO_SYNC:
+            if settings.DEV_MODE:
                 # 同步執行
                 for record in this_student_s_all_purchased_record:
                     fetch_data_synchronously(record)

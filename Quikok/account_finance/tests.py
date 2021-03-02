@@ -940,7 +940,7 @@ class test_student_purchase_payment_status(TestCase):
         self.assertIn('success', str(response.content))
         # 檢查是否有回傳退款金額資訊
         self.assertIn('refunded_price', str(response.content),
-            '使用異步執行不會回傳data，將ASYNC_TO_SYNC=true設為環境變數即可正常pass。')
+            '使用異步執行不會回傳data，將DEV_MODE=true設為環境變數即可正常pass。')
         # 這個在異步化api後會失敗 >>
         #   Exception is: database table is locked: account_student_profile
         # 原因是sqlite不支援同時query。
