@@ -16,8 +16,8 @@ from datetime import datetime, timedelta, date as date_function
 import math
 from django.conf import settings
 
-# 設定環境變數ASYNC_TO_SYNC為true >>  export ASYNC_TO_SYNC=true
-# 取消環境變數ASYNC_TO_SYNC >> unset ASYNC_TO_SYNC
+# 設定環境變數 DEV_MODE 為true >>  export DEV_MODE=true
+# 取消環境變數 DEV_MODE >> unset DEV_MODE
 # python3 manage.py test account_finance/ --settings=Quikok.settings_for_test
 
 class test_finance_functions(TestCase):
