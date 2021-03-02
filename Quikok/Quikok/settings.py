@@ -2,9 +2,12 @@ import os
 import socket
 
 DISABLED_EMAIL = os.environ.get('DISABLED_EMAIL', False) == 'true'
-ASYNC_TO_SYNC = os.environ.get('ASYNC_TO_SYNC', False) == 'true'
 # 將 DISABLED_EMAIL 設做環境變數，假使這個值為真，則不與 gmail 連線進行 email 的「寄送」，
 # 主要是為了解決開發/除錯時必定要有網路的問題。
+
+DEV_MODE = os.environ.get('DEV_MODE', False) == 'true'
+# 用它來取代 DEV_MODE 變數，當 DEV_MODE 為 True 時代表是開發環境，
+# 除了會將異步改成同步執行以外，也會調整通知寄信的對象（不寄給老師、只寄給自己）。
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
