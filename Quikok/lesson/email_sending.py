@@ -48,7 +48,7 @@ class lesson_email_manager:
                 
                 if settings.DISABLED_EMAIL == False:
                     email = EmailMessage(
-                        subject = 'Quikok!開課通知：老師請你確認上課時數囉!',  # 電子郵件標題
+                        subject = '[副本]Quikok!開課通知：老師請你確認上課時數囉!',  # 電子郵件標題
                         body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
                         from_email= settings.EMAIL_HOST_USER,  # 寄件者
                         to =  ['quikok.taiwan@quikok.com']#,'colorfulday0123@gmail.com','w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
@@ -56,6 +56,19 @@ class lesson_email_manager:
                     email.fail_silently = False
                     email.content_subtype = 'html'
                     email.send()
+
+                    if settings.DEV_MODE == False:
+                        # 生產環境要寄送email給用戶
+                        email = EmailMessage(
+                            subject = 'Quikok!開課通知：老師請你確認上課時數囉!',  # 電子郵件標題
+                            body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
+                            from_email= settings.EMAIL_HOST_USER,  # 寄件者
+                            to =  [student_email]#,'colorfulday0123@gmail.com','w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
+                        ) # 正式發布時要改為 to student_email
+                        email.fail_silently = False
+                        email.content_subtype = 'html'
+                        email.send()
+
 
                 return True
 
@@ -86,7 +99,7 @@ class lesson_email_manager:
                 
                 if settings.DISABLED_EMAIL == False:
                     email = EmailMessage(
-                        subject = 'Quikok!開課通知：給學生的評價填了嗎~',  # 電子郵件標題
+                        subject = '[副本]Quikok!開課通知：給學生的評價填了嗎~',  # 電子郵件標題
                         body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
                         from_email= settings.EMAIL_HOST_USER,  # 寄件者
                         to =  ['quikok.taiwan@quikok.com']#,'colorfulday0123@gmail.com','w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
@@ -94,6 +107,17 @@ class lesson_email_manager:
                     email.fail_silently = False
                     email.content_subtype = 'html'
                     email.send()
+
+                    if settings.DEV_MODE == False:
+                        email = EmailMessage(
+                            subject = 'Quikok!開課通知：給學生的評價填了嗎~',  # 電子郵件標題
+                            body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
+                            from_email= settings.EMAIL_HOST_USER,  # 寄件者
+                            to =  [teacher_email]#,'colorfulday0123@gmail.com','w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
+                        ) # 正式發布時要改為 to teacher_email
+                        email.fail_silently = False
+                        email.content_subtype = 'html'
+                        email.send()
 
                 return True
 
@@ -128,21 +152,28 @@ class lesson_email_manager:
             
             if settings.DISABLED_EMAIL == False:
                 email = EmailMessage(
-                    subject = 'Quikok!開課提醒：明天要上課唷',  # 電子郵件標題
+                    subject = '[副本]Quikok!開課提醒：明天要上課唷',  # 電子郵件標題
                     body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
                     from_email= settings.EMAIL_HOST_USER,  # 寄件者
                     to =  ['quikok.taiwan@quikok.com']#,'colorfulday0123@gmail.com','w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
                 ) # 正式發布時要改為 to student_email
-                #print(f"lesson/email_sending, EmailMessage consumed time test: {time()-st}")
                 email.fail_silently = False
                 email.content_subtype = 'html'
                 email.send()
-            #print(f"lesson/email_sending, lesson class consumed time test: {time()-st}")
+
+                if settings.DEV_MODE == False:
+                    email = EmailMessage(
+                        subject = 'Quikok!開課提醒：明天要上課唷',  # 電子郵件標題
+                        body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
+                        from_email= settings.EMAIL_HOST_USER,  # 寄件者
+                        to =  [student_email]#,'colorfulday0123@gmail.com','w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
+                    ) # 正式發布時要改為 to student_email
+                    email.fail_silently = False
+                    email.content_subtype = 'html'
+                    email.send()
+
             return True
 
-            #except Exception as e:
-            #    print(f'send_student_remind_one_day_before_lesson Exception: {e}')
-            #    return False
         else:
             print('缺少參數')
             return False
@@ -171,7 +202,7 @@ class lesson_email_manager:
 
                 if settings.DISABLED_EMAIL == False:
                     email = EmailMessage(
-                        subject = 'Quikok!開課提醒：明天要上課唷',  # 電子郵件標題
+                        subject = '[副本]Quikok!開課提醒：明天要上課唷',  # 電子郵件標題
                         body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
                         from_email= settings.EMAIL_HOST_USER,  # 寄件者
                         to =  ['quikok.taiwan@quikok.com']#,'colorfulday0123@gmail.com','w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
@@ -179,6 +210,17 @@ class lesson_email_manager:
                     email.fail_silently = False
                     email.content_subtype = 'html'
                     email.send()
+
+                    if settings.DEV_MODE == False:
+                        email = EmailMessage(
+                            subject = 'Quikok!開課提醒：明天要上課唷',  # 電子郵件標題
+                            body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
+                            from_email= settings.EMAIL_HOST_USER,  # 寄件者
+                            to =  [teacher_email]#,'colorfulday0123@gmail.com','w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
+                        ) # 正式發布時要改為 to teacher_email
+                        email.fail_silently = False
+                        email.content_subtype = 'html'
+                        email.send()
 
                 return True
 
@@ -208,21 +250,29 @@ class lesson_email_manager:
             
             if settings.DISABLED_EMAIL == False:
                 email = EmailMessage(
-                    subject = 'Quikok!開課提醒：預約取消提醒！',  # 電子郵件標題
+                    subject = '[副本]Quikok!開課提醒：預約取消提醒！',  # 電子郵件標題
                     body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
                     from_email= settings.EMAIL_HOST_USER,  # 寄件者
                     to =  ['quikok.taiwan@quikok.com']#,'colorfulday0123@gmail.com','w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
                 ) # 正式發布時要改為 to user_email_address
-                #print(f"lesson/email_sending, EmailMessage consumed time test: {time()-st}")
                 email.fail_silently = False
                 email.content_subtype = 'html'
                 email.send()
-            #print(f"lesson/email_sending, lesson class consumed time test: {time()-st}")
+            
+                if settings.DEV_MODE == False:
+                    email = EmailMessage(
+                        subject = 'Quikok!開課提醒：預約取消提醒！',  # 電子郵件標題
+                        body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
+                        from_email= settings.EMAIL_HOST_USER,  # 寄件者
+                        to =  [user_email_address]#,'colorfulday0123@gmail.com','w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
+                    ) # 正式發布時要改為 to user_email_address
+                    email.fail_silently = False
+                    email.content_subtype = 'html'
+                    email.send()
+            
             return True
 
-            #except Exception as e:
-            #    print(f'send_student_remind_one_day_before_lesson Exception: {e}')
-            #    return False
+            
         else:
             print('缺少參數')
             return False
@@ -262,12 +312,20 @@ class lesson_email_manager:
                 email.fail_silently = False
                 email.content_subtype = 'html'
                 email.send()
-            #print(f"lesson/email_sending, lesson class consumed time test: {time()-st}")
-            return True
 
-            #except Exception as e:
-            #    print(f'send_student_remind_one_day_before_lesson Exception: {e}')
-            #    return False
+                if settings.DEV_MODE == False:
+                    email = EmailMessage(
+                        subject = 'Quikok!開課提醒：老師回覆預約邀請了！',  # 電子郵件標題
+                        body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
+                        from_email= settings.EMAIL_HOST_USER,  # 寄件者
+                        to =  [student_email]#,'colorfulday0123@gmail.com','w2003x3@gmail.com','mimigood411@gmail.com', 'tamio.chou@gmail.com'] #先用測試用的信箱[student_email_address]  # 收件者
+                    ) # 正式發布時要改為 to student_email
+                    #print(f"lesson/email_sending, EmailMessage consumed time test: {time()-st}")
+                    email.fail_silently = False
+                    email.content_subtype = 'html'
+                    email.send()
+            return True
+  
         else:
             print('缺少參數')
             return False

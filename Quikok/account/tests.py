@@ -257,7 +257,7 @@ class Teacher_Profile_Test(TestCase):
         self.assertIn('success', str(response.content))
         # 確認有寄出通知信
         if settings.DISABLED_EMAIL == False:
-            self.assertEqual(mail.outbox[0].subject, 'Quikok!開課 註冊成功通知')
+            self.assertEqual(mail.outbox[0].subject, '[副本]Quikok!開課 註冊成功通知')
 
     
     def test_teacher_available_and_specific_time_created_after_signing_up(self):

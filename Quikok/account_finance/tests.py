@@ -640,7 +640,7 @@ class test_finance_functions(TestCase):
         if settings.DISABLED_EMAIL == False:
             # 如果有設定要寄信的話，再執行測試
             self.assertEqual(len(mail.outbox), 1)
-            self.assertEqual(mail.outbox[0].subject, '訂課匯款提醒')
+            self.assertEqual(mail.outbox[0].subject, '[副本]訂課匯款提醒')
     
 
     def test_email_sending_to_student_receive_order_payment_and_reconciliation_turned_into_paid(self):

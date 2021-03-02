@@ -1506,7 +1506,7 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         if settings.DISABLED_EMAIL == False:
             # 如果有設定要寄信的話，再執行測試
             self.assertEqual(len(mail.outbox), 1)
-            self.assertEqual(mail.outbox[0].subject, 'Quikok!開課通知：有學生預約上課！')
+            self.assertEqual(mail.outbox[0].subject, '[副本]Quikok!開課通知：有學生預約上課！')
     
 
     def test_if_booking_trial_lessons_modified_remaining_minutes_after_booking_successfully(self):
