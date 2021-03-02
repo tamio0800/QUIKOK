@@ -454,8 +454,8 @@ class websocket_manager:
                 # 所以系統的身分先給老師, unknown先保留做為沒資料時避免程式壞掉用
                 self.user_type = 'unknown'
         
-        logging.info(f"chatroom/chat_tools:check_authID_type,  authID is:{authID}")
-        logging.info(f"chatroom/chat_tools:check_authID_type,  authID type is:{type(authID)}")
+        logging.info(f"chatroom/chat_tools:check_authID_type, authID is:{authID}")
+        logging.info(f"chatroom/chat_tools:check_authID_type, authID type is:{type(authID)}")
         logging.info(f"chatroom/chat_tools:check_authID_type, user type is:{self.user_type}")
         
         
@@ -611,8 +611,10 @@ class websocket_manager:
                 logging.info(f"chatroom/chat_tools:check teacher_id is :{teacher_id}", exc_info=True)
                 # 備註:理論上system_chatroom只會有一個
                 system_chatroom = chatroom_info_Mr_Q2user.objects.filter(user_auth_id = teacher_id).first()
-                system_chatroomID = 'system'+ str(system_chatroom.id)
+                system_chatroomID = system_chatroom.id
                 logging.info("chatroom/chat_tools:check done:yes (if users are chating first time)", exc_info=True)     
+                logging.info(f"chatroom/chat_tools:and need to send WS to system_chatroomID:{system_chatroomID}", exc_info=True)     
+                
                 return(system_chatroomID)
             
         else: # 此時 self.user_type == 'teacher'
@@ -628,7 +630,7 @@ class websocket_manager:
                 logging.info(f"chatroom/chat_tools:check student_id is : {student_id}", exc_info=True)
                 # 備註:理論上system_chatroom只會有一個
                 system_chatroom = chatroom_info_Mr_Q2user.objects.filter(user_auth_id = student_id).first()
-                system_chatroomID = 'system'+ str(system_chatroom.id)
+                system_chatroomID = system_chatroom.id
                 logging.info("chatroom/chat_tools:check done: yes (if users are chating first time)", exc_info=True)     
                 return(system_chatroomID)
 
