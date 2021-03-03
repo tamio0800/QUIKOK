@@ -68,7 +68,7 @@ scheduler = BackgroundScheduler()
 # st = time()
 
 scheduler.add_job(send_email_one_day_before_booking_date, 'interval',
-     hours = 1, start_date = '2021-02-02 18:41:00')
+     hours = 24, start_date = '2021-02-02 18:41:00')
    #,end_date = '2021-02-02 10:31:00' seconds, minutes, hours
 scheduler.start()
 # print(f"lesson/views email_sending, scheduler consumed time test: {time()-st}")

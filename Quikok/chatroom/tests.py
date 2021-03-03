@@ -11,7 +11,7 @@ from channels.layers import get_channel_layer
 import datetime
 from unittest import skip
 #python3 manage.py test chatroom/ --settings=Quikok.settings_for_test
-
+'''注意！第一個auth=1 在程式邏輯中會被用來當"system"聊天室！'''
 class test_chat_tools(TestCase):
     def setUp(self):
         self.client = Client()        
@@ -96,7 +96,10 @@ class test_chat_tools(TestCase):
         self.assertEqual(User.objects.all().count(),
             chatroom_info_Mr_Q2user.objects.all().count())
 
-
+    def test_check_when_student_chat_teacher_first_time_chatroom_created(self):
+        '''當學生第一次聯絡某個老師的時候、要自動建立學生與這個老師的聊天室。
+            由於1號老師是系統，所以用2號測試'''
+            
 
 @skip
 class test_websocket_consumer(TestCase):
