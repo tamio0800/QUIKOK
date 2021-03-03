@@ -24,11 +24,9 @@ from datetime import datetime
 from django.contrib.auth.models import User
 from chatroom.models import chatroom_info_Mr_Q2user, chat_history_Mr_Q2user
 # 產生目前所有user與系統聊天室的兩筆對話紀錄
-
 def batch_create_chatrooms_for_users():
     all_auth_user_ids = list(User.objects.values_list('id', flat=True))
     all_auth_user_ids.remove(1)
-
     for each_auth_user_id in all_auth_user_ids: # 1是系統本身所以不要產生與1的對話紀錄
         get_roomID = chatroom_info_Mr_Q2user.objects.get(user_auth_id=each_auth_user_id)
         first_system_msg = chat_history_Mr_Q2user.objects.create(
@@ -41,7 +39,7 @@ def batch_create_chatrooms_for_users():
             sender_auth_id = 1,
             system_is_read = True,
             user_is_read = False)
-        print('create system2user 1st msg.')
+        print(f'create system2user {each_auth_user_id} 1st msg.')
         welcom_system_msg = chat_history_Mr_Q2user.objects.create(  
             chatroom_info_system2user_id = get_roomID.id,
             system_user_auth_id = 1,
@@ -52,7 +50,7 @@ def batch_create_chatrooms_for_users():
             sender_auth_id = 1,
             system_is_read = True,
             user_is_read = False)
-        print('create system2user 2nd msg.')
+        print(f'create system2user {each_auth_user_id} 2nd msg.')
    
 
 # 這邊放的是 views.py 裡面 def chatroom_content(request):
