@@ -29,11 +29,11 @@ class auth_check_manager:
             #'上課live_house' : ('', 'member_only'), # 還沒做到
             #'聊天室主頁' : ('', 'member_only'), # 還沒做到
             '學生會員中心' : ('^/account/info/student', 1,4,5),
-            '商品結帳' :('^/store/checkout',1,5),
-            '帳務中心' :('^/account/finance',1,2,5),
-            '預約管理' :('^/account/reservation',2,5),
-            '課程預約' :('^/lesson/appointment',1,5),
-            '學習歷程' :('^/account/history',1,5),
+            '商品結帳' :('^/store/checkout',1,4,5),
+            '帳務中心' :('^/account/finance',1,2,3,4,5),
+            '預約管理' :('^/account/reservation',2,3,5),
+            '課程預約' :('^/lesson/appointment',1,4,5),
+            '學習歷程' :('^/account/study',1,4,5),
             # 以下為公開頁面
             '首頁' : ('/home', 'public'),
             '課程搜尋頁' : ('^/lesson/search|/lesson/search[?]q=.*', 'public'),
@@ -96,13 +96,21 @@ class auth_check_manager:
         return(response)
     # 這是個很常用到的功能, 但權限檢查用不到
     def check_user_type(self, userID):
-        if len(teacher_profile.objects.filter(auth_id=userID))> 0:
-            return('teacher')
-        elif len(student_profile.objects.filter(auth_id=userID)) > 0:
-            return('student')
+
+        if userID == 1 or userID == '1':
+            return('system')        
+            # 目前的systemID就只有1,將來可能會有很多組
+            # 但如果要新增很多組system要注意身分問題,system auth_id=1是老師, 
+            # 在例如回傳系統聊天室的時候為了拿大頭照跟nickname,
+            # 會去teacher_profile拿,如果將來的系統又有學生,那類似這種情況時會出錯
         else:
-            pass
-    # gate.1 url種類如果是public一律有權限
+            if teacher_profile.objects.filter(auth_id=userID).count()>0:
+                return('teacher')
+            elif student_profile.objects.filter(auth_id=userID).count()>0:
+                return('student')
+            else:
+                return(0)
+    # gate.1 url種類如果是public, 如果有token還是會比對是否一致,沒token會直接放行
     def check_url_is_public(self):
         for info_key,auth_info in self.auth_page.items():
             # if any(_ == 'public' for _ in auth_info)

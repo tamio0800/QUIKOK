@@ -1,5 +1,14 @@
 from django.db import models
 from account.models import teacher_profile, student_profile
+from datetime import timedelta, date as date_function
+from django.db.models.signals import pre_save, post_save
+from django.dispatch import receiver
+from handy_functions import get_lesson_s_best_sale, get_teacher_s_best_education_and_working_experience
+
+import logging
+FORMAT = '%(asctime)s %(levelname)s: %(message)s'
+logging.basicConfig(level=logging.DEBUG, format=FORMAT)
+        
 
 class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的東西填入
     # 每堂課程會有自己的unique id，我們用這個來辨識、串連課程 09/25 討論後認為先用內建的id就好
@@ -8,7 +17,7 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     big_title = models.CharField(max_length = 10)  # 背景圖片的大標題
     little_title = models.CharField(max_length = 10)  # 背景圖片的小標題
     title_color = models.CharField(max_length = 7) # 標題顏色 以色碼存入，  >> #\d{6}
-    background_picture_code = models.IntegerField() 
+    background_picture_code = models.IntegerField()
     # 這個用來儲存user選擇了什麼樣的上架背景圖，舉例來說99代表user自己上傳的圖，這時我們要找到對應的路徑回傳給前端；
     # 如果今天這個值是1、2、3之類的Quikok預設圖片，那我們直接回傳代號給前端即可。
     background_picture_path = models.TextField(blank=True) # 指向上傳圖的路徑
@@ -32,9 +41,10 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     # lesson_intro = models.CharField(blank=True, max_length=300)
     # 課程詳細介紹，不超過300長度
     how_does_lesson_go = models.TextField(blank=True, null=True)
-    # how_does_lesson_go = models.CharField(blank=True, max_length=200)
     # 課程方式/教學方式，舉例來說：「本堂課前十分鐘小考，測驗上次的內容吸收程度，
     # 接著正式上課兩小時，最後15分鐘溫習。」
+    is_this_lesson_online_or_offline = models.CharField(max_length=10, default='online')
+    # 是線上課程(online)或是實體課程(offline)
     target_students = models.TextField(blank=True, null=True) # 授課對象
     lesson_remarks = models.TextField(blank=True, null=True) # 備註，目前是用來儲存「給學生的注意事項」
     # lesson_background_folder = models.CharField(max_length = 80)# 該課程背景圖片指向的資料夾 可選預設或上傳
@@ -55,11 +65,12 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     # 販售狀態 >>
     #   草稿: draft, 上架: selling, 沒上架: notSelling, 刪除: donotShow
     def __str__(self):
-        return self.lesson_title
+        return f"課程({self.id}): {self.lesson_title}, 由{self.teacher.username}老師({self.teacher.auth_id})所創立"
 
     class Meta:
         verbose_name = '課程詳細資訊'
         verbose_name_plural = '課程詳細資訊'
+        ordering = ['-created_time']
 
 
 class lesson_card(models.Model):
@@ -67,24 +78,25 @@ class lesson_card(models.Model):
     # 要即時組合老師、課程、評價資訊會需要大量的運算，不如多建立一個table，
     # 之後直接query就好。
     corresponding_lesson_id = models.IntegerField()  # 所對應的課程id
-    teacher_thumbnail_path = models.TextField(blank=True)  # 老師的大頭照路徑
+    teacher_thumbnail_path = models.TextField(blank=True, null=True)  # 老師的大頭照路徑
     teacher_nickname = models.CharField(max_length = 40)
     teacher_auth_id = models.IntegerField()
     is_this_teacher_male = models.BooleanField(default=True)
+    is_this_lesson_online_or_offline = models.CharField(max_length=10, default='online') # 是線上課程(online)或是實體課程(offline)
     big_title = models.CharField(max_length = 10)  # 背景圖片的大標題
     little_title = models.CharField(max_length = 10)  # 背景圖片的小標題
     title_color = models.CharField(max_length = 7)    
     background_picture_code = models.IntegerField()
-    background_picture_path = models.TextField(blank=True) # 指向上傳圖的路徑
+    background_picture_path = models.TextField(blank=True, null=True) # 指向上傳圖的路徑
     lesson_title = models.CharField(max_length = 14) # 課程的名稱
     highlight_1 = models.CharField(max_length = 10)  # 亮點介紹1，不要超過10個字元長
     highlight_2 = models.CharField(max_length = 10)  # 亮點介紹2，不要超過10個字元長
     highlight_3 = models.CharField(max_length = 10)  # 亮點介紹3，不要超過10個字元長
     price_per_hour = models.IntegerField()  # 該門課程的鐘點費
     best_sale = models.CharField(max_length = 20) # 用來吸引人的最優惠折價標語
-    education = models.CharField(max_length = 60, blank=True)  # 最高學歷說明
+    education = models.CharField(max_length = 60, blank=True, null=True)  # 最高學歷說明
     education_is_approved = models.BooleanField()
-    working_experience = models.CharField(max_length = 100, blank=True)  # 經歷說明
+    working_experience = models.CharField(max_length = 100, blank=True, null=True)  # 經歷說明
     working_experience_is_approved = models.BooleanField()
     lesson_avg_score = models.FloatField(default = 0.0) # 這個是平均評分，每次評分表一更新這裡也會連動更新
     lesson_reviewed_times = models.IntegerField(default = 0) # 這個是課程被評分過幾次的統計
@@ -128,27 +140,80 @@ class lesson_card(models.Model):
         return self.lesson_id'''
         
 
-class lesson_reviews(models.Model):
+class lesson_reviews_from_students(models.Model):
+    '''
+    這個是讓學生在課後給老師/課程評價的 TABLE
+    '''
     corresponding_lesson_id = models.IntegerField()  # 所對應的課程id
-    student_auth_id = models.IntegerField()
-    teacher_auth_id = models.IntegerField()
-    score_given = models.IntegerField() # 評分介於1~5分
-    remark_given = models.TextField(blank=True, null=True)
-    picture_folder = models.TextField # 加上真的有上課的圖以資證明（學蝦皮
+    corresponding_lesson_booking_info_id = models.IntegerField()  # 所對應的課程預約id
+    corresponding_lesson_completed_record_id = models.IntegerField()  # 所對應的完課紀錄id
+    student_auth_id = models.IntegerField()  # 上課學生的auth_id，也是留下評論的人
+    teacher_auth_id = models.IntegerField()  # 上課老師的auth_id，是此次被評論的對象
+    score_given = models.IntegerField(blank=True, null=True) # 對於本次課程綜合的評分，介於1~5分之間
+    is_teacher_late_for_lesson = models.BooleanField(blank=True, null=True) # 老師是否有遲到
+    is_teacher_frivolous_in_lesson = models.BooleanField(blank=True, null=True) # 老師是否不認真教學
+    is_teacher_incapable = models.BooleanField(blank=True, null=True) # 老師是否不勝任這門課、教太廢
+    remark_given = models.TextField(blank=True, null=True)  # 這個是評語
+    # picture_folder = models.TextField() # 加上真的有上課的圖以資證明（學蝦皮
     created_time = models.DateTimeField(auto_now_add=True)
-    edited_time = models.DateTimeField(auto_now=True)
     def __str__(self):
-        return str(self.id)
+        return f"課程({str(self.corresponding_lesson_id)}), 預約({str(self.corresponding_lesson_booking_info_id)}), 完課({str(self.corresponding_lesson_completed_record_id)})\
+            學生({str(self.student_auth_id)})對老師({str(self.teacher_auth_id)})。"
 
     class Meta:
-        verbose_name = '課程評價'
-        verbose_name_plural = '課程評價'
+        verbose_name = '評價-學生對老師/課程'
+        verbose_name_plural = '評價-學生對老師/課程'
+        ordering = ['-created_time']
+
+
+class student_reviews_from_teachers(models.Model):
+    '''
+    這個是讓老師在課後給評價的 TABLE
+    '''
+    corresponding_lesson_id = models.IntegerField()  # 所對應的課程id
+    corresponding_lesson_booking_info_id = models.IntegerField()  # 所對應的課程預約id
+    corresponding_lesson_completed_record_id = models.IntegerField()  # 所對應的完課紀錄id
+    student_auth_id = models.IntegerField()  # 上課學生的auth_id，是此次被評論的對象
+    teacher_auth_id = models.IntegerField()  # 上課老師的auth_id，是留下評論的人
+    score_given = models.PositiveIntegerField(blank=True, null=True) # 對於本次課程的綜合評分，介於1~5分之間
+    is_student_late_for_lesson = models.BooleanField(blank=True, null=True) # 學生是否有遲到
+    is_student_frivolous_in_lesson = models.BooleanField(blank=True, null=True) # 學生是否不認真
+    is_student_or_parents_not_friendly = models.BooleanField(blank=True, null=True) # 學生或家長是否不友善
+    remark_given = models.TextField(blank=True, null=True)  # 這個是評語
+    # picture_folder = models.TextField() # 加上真的有上課的圖以資證明（學蝦皮
+    created_time = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return f"課程({str(self.corresponding_lesson_id)}), 預約({str(self.corresponding_lesson_booking_info_id)}), 完課({str(self.corresponding_lesson_completed_record_id)})\
+            老師({str(self.teacher_auth_id)})對學生({str(self.student_auth_id)})。"
+
+    class Meta:
+        verbose_name = '評價-老師對學生'
+        verbose_name_plural = '評價-老師對學生'
+        ordering = ['-created_time']
 
 
 class lesson_booking_info(models.Model): 
     '''課程的預約管理table，這個model是用來管理「每一則booking」的狀態與profile'''
-    
-    lesson_id = models.IntegerField()  # 所對應的課程id
+    # student_remaining_minutes_of_each_purchased_lesson_set_id= models.IntegerField()
+    # 對應的訂單所剩的時數
+    lesson_id = models.IntegerField()  # 對應的課程id
+    # student_remaining_minutes_of_each_purchased_lesson_set_ids = models.CharField(default='', max_length=20)
+    # 對應的 student_remaining_minutes_of_each_purchased_lesson_set id 們
+    # 之所以 default = '' ，因為這樣子在我先前寫的測試中(不會用到這個欄位)就不會有一大堆衝突了QQ
+    # 因為一則購買的方案可以用來做很多預約（多對一），
+    # 反之方案快用完的時候也可能兩三個購買方案才能用來做一次大量預約（一對多），
+    # 所以這裡使用 string 來做儲存，會長得類似： "9,10,11" or "3" 這樣子，
+    # 當要 query 對應的 queryset 時可以這樣做  
+    # student_remaining_minutes_of_each_purchased_lesson_set_ids 先簡寫為 srm_ids
+    #   1. 
+    #         for each_id in lesson_booking_info.objects.filter(id=1).srm_ids.split(','):
+    #            student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(id=each_id)
+    #            ...
+    #  <<<<<>>>>> OR <<<<<>>>>>
+    #   2.
+    #         student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+    #               id__in = lesson_booking_info.objects.filter(id=1).srm_ids.split(',')
+    #         )
     teacher_auth_id = models.IntegerField()
     student_auth_id = models.IntegerField()
     parent_auth_id = models.IntegerField(default=-1)
@@ -156,48 +221,81 @@ class lesson_booking_info(models.Model):
     last_changed_by = models.CharField(max_length = 20)  # teacher or student or parent
     booking_set_id = models.IntegerField()
     # 預約使用的是該課程的哪一個方案（ID），這個之後會另外建立一個「每個課程的方案table」來做串連。
-    remaining_minutes = models.IntegerField()  
+    remaining_minutes = models.IntegerField()
     # 這個指的是假設這門課準時上完，則學生還有多少時數，用意是讓老師知道萬一超時會不會多拿到錢
     booking_date_and_time = models.CharField(max_length=400)  
     # Example: 2020-08-21:1,2,3,4; 之類的
-    booking_status = models.CharField(max_length = 20)  # to_be_confirmed or confirmed or canceled
+    booking_start_datetime = models.DateTimeField()
+    
+    booking_status = models.CharField(max_length = 60)  
+    # to_be_confirmed  >>  發送預約，但是還未經對方確認 
+    # confirmed  >>  發送的預約已經被對方確認
+    # canceled  >>  預約被取消（無須對方同意）
+    # finished  >> 課程已經結束，並且雙方都確認時數，是真正的finished
+    #   下面還包含此兩者狀態
+    #       student_not_yet_confirmed >> 也包含在finished，代表學生尚未確認時數
+    #       quikok_dealing_for_student_disagreed >> 客服正在處理學生反應時數不正確
+    remark = models.CharField(max_length=40, default='')
+    # 把課程預約的註記擺在這邊好了，直接從這裡call，而不是在搜尋歷史資料時及時產出  
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
-        return str(self.id)
+        return f"課程({self.lesson_id})的預約({self.id})：學生({self.student_auth_id})預約老師({self.teacher_auth_id})的課程({self.lesson_id})的方案({self.booking_set_id})。 目前狀態:{self.booking_status}; 最後更改時間:{self.last_changed_time.strftime('%Y-%m-%d %H:%M:%S')}"
+
+    def get_booking_date(self):
+        # 回傳這次的預約日期
+        return date_function([int(_) for _ in self.booking_date_and_time.split(':')[0].split('-')])
+
+    def get_booking_time_in_minutes(self):
+        # 回傳這次的預約總計多少分鐘
+        return int(len(self.booking_date_and_time[:-1].split(':')[1].split(','))) * 30
 
     class Meta:
-        verbose_name = '課程預約資訊'
-        verbose_name_plural = '課程預約資訊'
+        verbose_name = '預約-課程預約資訊'
+        verbose_name_plural = '預約-課程預約資訊'
+        ordering = ['-created_time']
+
 
 # 上課與完課紀錄
-class lesson_complete_record(models.Model):
-    lesson_booking_info_id = models.IntegerField()  # 所對應的課程id
+class lesson_completed_record(models.Model):
+    lesson_booking_info_id = models.IntegerField()  # 對應的課程id
+    student_remaining_minutes_of_each_purchased_lesson_set_id= models.IntegerField()
+    # 對應的訂單所剩的時數
     teacher_auth_id = models.IntegerField()
     student_auth_id = models.IntegerField()
-    parent_auth_id = models.IntegerField(default=-1)
-    real_teaching_time = models.IntegerField()
-    # 實際開課時間
-    real_start_time = models.DateTimeField(auto_now_add=True)
-    # 實際下課時間
-    real_end_time = models.DateTimeField(auto_now_add=True)
-    # 實際上課時數, 1分鐘為單位, 10分鐘一跳
-    check_time = models.IntegerField()
-    # 實際應付老師金額
-    real_teaching_fee = models.IntegerField()
-    # # Example: 2020821:1,2,3,4;20200822:3,4,5,6 之類的
-    teaching_status = models.CharField(max_length = 20)  
-    # 還沒上課 unprocess, 已完課 over or canceled
-    is_student_confirm = models.BooleanField(default=0)
-    # default=0,當老師送出向學生確認後改為1, 萬一需要協調時數用
+    booking_time_in_minutes = models.IntegerField() # 預估上課時間時數,單位分鐘,是用預約的時間計算的
+    teacher_declared_start_time = models.DateTimeField()
+    # 老師號稱的上課時間,單位是分鐘,10分鐘一跳
+    teacher_declared_end_time = models.DateTimeField()
+    # 老師號稱的下課時數, 單位是分鐘, 10分鐘一跳
+    teacher_declared_time_in_minutes = models.IntegerField() 
+    # 老師號稱的開課時間總時數,可能課程實際時間會比原本預約時有所增減(單位是分鐘)
+    # teacher_declared_teaching_fee = models.IntegerField()
+    # 老師號稱的應付老師金額  << 這個有需要嗎??  反正只是扣時數而已說
+    # teaching_status = models.CharField(max_length = 20)  
+    # 這個欄位好像用不到還沒上課 unprocess, 已完課 over or canceled
+    is_student_disagree_with_teacher_s_declared_time = models.BooleanField(default= False)
+    # 學生是否反應老師宣稱的時數有問題
+    is_student_confirmed = models.BooleanField(default= False)
+    # default=False,當學生確認時數後改為True, 萬一需要協調時數用
+    student_confirmed_deadline = models.DateField()
+    # 這個的作用是，假設學生遲遲不確認，我們還是要在某個時段過後撥錢給老師，
+    # 目前先預設3天? 也就是說，當在老師發送確認訊息後的3天後，假設學生還沒確認也沒申訴，
+    # 則我們將直接撥款給老師
+    confirmed_by_quikok = models.BooleanField(default= False)
+    # 萬一學生遲遲不確認，要由我們自動確認的話，最好也做個註記
+    quikok_remarks = models.TextField(default="", blank=True, null=True)
+    # 萬一未來需要協調時，這個欄位可以讓我們做一些協調紀錄/處理經過
     created_time = models.DateTimeField(auto_now_add=True)
     last_changed_time = models.DateTimeField(auto_now=True)
     def __str__(self):
-        return str(self.id)
-
+        lesson_id = lesson_booking_info.objects.get(id=self.lesson_booking_info_id).lesson_id
+        return f"課程({lesson_id})的預約({self.lesson_booking_info_id})已被老師({self.teacher_auth_id})通報完課。 學生({self.student_auth_id})是否同意: {self.is_student_confirmed}、是否(曾)申訴: {self.is_student_disagree_with_teacher_s_declared_time}。 是否由Quikok自動確認: {self.confirmed_by_quikok}"
+        # return f"課程的預約({self.lesson_booking_info_id})已被老師({self.teacher_auth_id})通報完課。 學生({self.student_auth_id})是否同意: {self.is_student_confirmed}、是否(曾)申訴: {self.is_student_disagree_with_teacher_s_declared_time}。 是否由Quikok自動確認: {self.confirmed_by_quikok}"
     class Meta:
-        verbose_name = '完課紀錄'
-        verbose_name_plural = '完課紀錄'
+        verbose_name = '預約-完課紀錄'
+        verbose_name_plural = '預約-完課紀錄'
+        ordering = ['-created_time']
         
 
 class lesson_sales_sets(models.Model):
@@ -229,11 +327,13 @@ class lesson_sales_sets(models.Model):
     is_open = models.BooleanField(default=True)  
     #是否為目前使用中的方案, 是的話才可選
     def __str__(self):
-        return str(self.id)
+        return f"課程({self.lesson_id})：{self.sales_set} 方案，總價{self.total_amount_of_the_sales_set}元。 啟用中：{self.is_open}"
     
     class Meta:
         verbose_name = '課程方案資訊'
         verbose_name_plural = '課程方案資訊'
+        ordering = ['-created_time']
+
 
 class lesson_info_for_users_not_signed_up(models.Model): 
     # 因為有一個先期導入版本，我們利用一個暫存的lesson_info先存放這些資訊，
@@ -245,7 +345,7 @@ class lesson_info_for_users_not_signed_up(models.Model):
     big_title = models.CharField(max_length = 10)  # 背景圖片的大標題
     little_title = models.CharField(max_length = 10)  # 背景圖片的小標題
     title_color = models.CharField(max_length = 7) # 標題顏色 以色碼存入，  >> #\d{6}
-    background_picture_code = models.IntegerField() 
+    background_picture_code = models.IntegerField()
     # 這個用來儲存user選擇了什麼樣的上架背景圖，舉例來說99代表user自己上傳的圖，這時我們要找到對應的路徑回傳給前端；
     # 如果今天這個值是1、2、3之類的Quikok預設圖片，那我們直接回傳代號給前端即可。
     background_picture_path = models.TextField(blank=True) # 指向上傳圖的路徑
@@ -275,3 +375,395 @@ class lesson_info_for_users_not_signed_up(models.Model):
         # 理論上一個老師在這張table只會有一個row的資料，所以這樣寫比較好看
 
 
+'''
+下面用來寫signal監聽特定 TABLES 是否有改動，而進行對應動作的機制
+'''
+
+@receiver(post_save, sender=lesson_info)
+def when_lesson_info_changed_synchronize_lesson_card(sender, instance:lesson_info, created, **kwargs):
+    '''
+    當 lesson_info 這個 table 有新建課程或是編輯課程的動作時，要同步對課程小卡進行更新。
+    '''
+    first_exp, second_exp, is_first_exp_approved, is_second_exp_approved = \
+        get_teacher_s_best_education_and_working_experience(instance.teacher)
+
+    if created:
+        # 代表新建立了一門課程，此時要建立課程小卡的資料
+        lesson_card.objects.create(
+            corresponding_lesson_id = instance.id,
+            teacher_thumbnail_path = instance.teacher.thumbnail_dir,
+            teacher_nickname = instance.teacher.nickname,
+            teacher_auth_id = instance.teacher.auth_id,
+            is_this_teacher_male = instance.teacher.is_male,
+            is_this_lesson_online_or_offline = instance.is_this_lesson_online_or_offline,
+            big_title = instance.big_title,
+            little_title = instance.little_title,
+            title_color = instance.title_color,
+            background_picture_code = instance.background_picture_code,
+            background_picture_path = instance.background_picture_path,
+            lesson_title = instance.lesson_title,
+            highlight_1 = instance.highlight_1,
+            highlight_2 = instance.highlight_2,
+            highlight_3 = instance.highlight_3,
+            price_per_hour = instance.price_per_hour,
+            best_sale = get_lesson_s_best_sale(instance),
+            education = first_exp,
+            education_is_approved = is_first_exp_approved,
+            working_experience = second_exp,
+            working_experience_is_approved = is_second_exp_approved,
+            lesson_avg_score = 0.0,
+            lesson_reviewed_times = 0)
+        logging.info(f'Created lesson_card object after creating a lesson ({instance.lesson_title}).')
+    else:
+        # 代表編輯了一門課程，此時要同步更新課程小卡的資料，只要更新跟課程有關的即可
+        # 先找到對應的小卡物件
+        lesson_card_objects = lesson_card.objects.get(corresponding_lesson_id=instance.id)
+        
+        lesson_card_objects.is_this_lesson_online_or_offline = instance.is_this_lesson_online_or_offline
+        lesson_card_objects.big_title = instance.big_title
+        lesson_card_objects.little_title = instance.little_title
+        lesson_card_objects.title_color = instance.title_color
+        lesson_card_objects.background_picture_code = instance.background_picture_code
+        lesson_card_objects.background_picture_path = instance.background_picture_path
+        lesson_card_objects.lesson_title = instance.lesson_title
+        lesson_card_objects.highlight_1 = instance.highlight_1
+        lesson_card_objects.highlight_2 = instance.highlight_2
+        lesson_card_objects.highlight_3 = instance.highlight_3
+        lesson_card_objects.price_per_hour = instance.price_per_hour
+        lesson_card_objects.best_sale = get_lesson_s_best_sale(instance)
+        lesson_card_objects.education = first_exp
+        lesson_card_objects.education_is_approved = is_first_exp_approved
+        lesson_card_objects.working_experience = second_exp
+        lesson_card_objects.working_experience_is_approved = is_second_exp_approved
+
+        lesson_card_objects.save()
+        logging.info(f'Editted lesson_card object after editting a lesson ({instance.lesson_title}).')
+
+
+
+@receiver(post_save, sender=lesson_completed_record)
+def when_lesson_completed_notification_sent_by_teacher(sender, instance:lesson_completed_record, created, **kwargs):
+    '''
+    代表建立了新資料，此時必須要回去將對應的課程預約狀態 booked_status 改成等待學生確認中
+    '''
+    if created:
+        # 只有建立新資料才要進行這個動作
+        lesson_booking_object = lesson_booking_info.objects.get(id = instance.lesson_booking_info_id)
+
+        lesson_booking_object.booking_status = 'student_not_yet_confirmed'
+        lesson_booking_object.last_changed_by = 'teacher'  # 因為 因老師而改變此則預約的狀態
+        lesson_booking_object.save()
+
+        # email通知學生要進行完課時數確認
+        #from .email_sending import lesson_email_manager
+        #send_email = lesson_email_manager()
+        #send_email.send_student_confirm_time_when_teacher_completed_lesson(
+        #    student_authID = instance.student_auth_id)
+        # 提醒老師要評價學生
+        #send_email.send_teacher_rate_student_when_teacher_completed_lesson(
+        #    teacher_authID = instance.teacher_auth_id)
+            
+@receiver(pre_save, sender=lesson_booking_info)
+def update_receiving_review_lesson_minutes(sender, instance:lesson_booking_info, **kwargs):
+    '''
+    這裡要做的是，當狀態從 non-finished 變成 finished 時，要更新學生與老師的總上課時數；
+    但因為需要學生進行確認，所以 不可能有一開始就是 finished 的狀況
+    '''
+    
+    if instance.id is None:
+        pass  # 只有改動的時候才需要注意
+    else:
+        previous = lesson_booking_info.objects.get(id=instance.id)
+        if previous.booking_status != 'finished' and instance.booking_status == 'finished' :
+            from account.models import student_review_aggregated_info
+            from account.models import teacher_review_aggregated_info
+            # 代表經過這次更改後才變成完課狀態，此時可以將課程的時數更新至學生的評價紀錄裏了
+            
+            the_student_review_info_object = \
+                student_review_aggregated_info.objects.filter(student_auth_id=instance.student_auth_id).first()
+
+            the_teacher_review_info_object = \
+                teacher_review_aggregated_info.objects.filter(teacher_auth_id=instance.teacher_auth_id).first()
+
+            lesson_completed_object = \
+                lesson_completed_record.objects.get(lesson_booking_info_id=instance.id)
+            
+            # 先做學生的部份
+            if the_student_review_info_object is None:
+                # 代表沒有這筆記錄，可能是學生在QUIKOK PILOT時就已經註冊，才會沒有連動建立資料
+                # 所以我們幫他建立一下吧
+                student_review_aggregated_info.objects.create(
+                    student_auth_id = instance.student_auth_id,
+                    receiving_review_lesson_minutes_sum = \
+                        lesson_completed_object.teacher_declared_time_in_minutes, 
+                )
+            else:
+                # 已經有這筆資料了，更新就好
+                the_student_review_info_object.receiving_review_lesson_minutes_sum += \
+                    lesson_completed_object.teacher_declared_time_in_minutes
+                the_student_review_info_object.save()
+
+            # 開始更新老師的部份
+            if the_teacher_review_info_object is None:
+                # 代表沒有這筆記錄，可能是老師在QUIKOK PILOT時就已經註冊，才會沒有連動建立資料
+                # 所以我們幫他建立一下吧
+                teacher_review_aggregated_info.objects.create(
+                    teacher_auth_id = instance.teacher_auth_id,
+                    receiving_review_lesson_minutes_sum = \
+                        lesson_completed_object.teacher_declared_time_in_minutes, 
+                )
+            else:
+                # 已經有這筆資料了，更新就好
+                the_teacher_review_info_object.receiving_review_lesson_minutes_sum += \
+                    lesson_completed_object.teacher_declared_time_in_minutes
+                the_teacher_review_info_object.save()
+
+
+
+@receiver(post_save, sender=student_reviews_from_teachers)
+def update_student_review_aggregated_info(sender, instance:student_reviews_from_teachers, created, **kwargs):
+    '''
+    當有老師給予學生評價(創建新紀錄)時，必須要連帶的更新該學生的評價儀表板，
+    這邊要確認課程是否有完結(finished)，因為學生/老師會留存上過多長課程的資料，
+    若還沒有雙方確認的時數的話，則不進行上課總時數的更新。
+    '''
+    from account.models import student_review_aggregated_info
+
+    if created:
+        # 只有建立新資料才要進行這個動作，其實編輯也需要啦，但是先不管這件事
+        the_student_review_info_object = \
+            student_review_aggregated_info.objects.filter(student_auth_id=instance.student_auth_id).first()
+        
+        if the_student_review_info_object is None:
+            # 代表沒有這筆記錄，可能是學生在QUIKOK PILOT時就已經註冊，才會沒有連動建立資料
+            # 所以我們幫他建立一下吧
+            student_review_aggregated_info.objects.create(
+                student_auth_id = instance.student_auth_id,
+                score_given_sum = 0 if instance.score_given is None else instance.score_given,
+                reviewed_times = 1,
+                receiving_review_lesson_minutes_sum = 0,  # 這個值不在這邊進行更新
+                is_student_late_for_lesson_times = 1 if instance.is_student_late_for_lesson == True else 0,
+                is_student_frivolous_in_lesson_times = 1 if instance.is_student_frivolous_in_lesson == True else 0,
+                is_student_or_parents_not_friendly_times = 1 if instance.is_student_or_parents_not_friendly == True else 0
+            )
+        else:
+            # 代表已經有這筆紀錄，我們只要協助更新即可
+            the_student_review_info_object.score_given_sum += \
+                0 if instance.score_given is None else instance.score_given
+            the_student_review_info_object.reviewed_times += 1
+            # receiving_review_lesson_minutes_sum 不在這邊進行更新
+            the_student_review_info_object.is_student_late_for_lesson_times += \
+                1 if instance.is_student_late_for_lesson == True else 0
+            the_student_review_info_object.is_student_frivolous_in_lesson_times += \
+                1 if instance.is_student_frivolous_in_lesson == True else 0
+            the_student_review_info_object.is_student_or_parents_not_friendly_times += \
+                1 if instance.is_student_or_parents_not_friendly == True else 0
+            the_student_review_info_object.save()
+
+    else:
+        # 代表學生的評價被更新，雖然目前沒有這個機制，但有可能是 Quikok 後台改動的
+        # 因此這邊其實也需要做學生的評價更新，但我們先不管它
+        pass
+
+
+@receiver(post_save, sender=lesson_reviews_from_students)
+def update_teacher_review_aggregated_info(sender, instance:lesson_reviews_from_students, created, **kwargs):
+    '''
+    當有學生給予老師評價(創建新紀錄)時，必須要連帶的更新該老師的評價儀表板，
+    這邊要確認課程是否有完結(finished)，因為學生/老師會留存上過多長課程的資料，
+    若還沒有雙方確認的時數的話，則不進行上課總時數的更新。
+    '''
+    from account.models import teacher_review_aggregated_info
+
+    if created:
+        # 只有建立新資料才要進行這個動作，其實編輯也需要啦，但是先不管這件事
+        the_teacher_review_info_object = \
+            teacher_review_aggregated_info.objects.filter(teacher_auth_id=instance.teacher_auth_id).first()
+        
+        if the_teacher_review_info_object is None:
+            # 代表沒有這筆記錄，可能是學生在QUIKOK PILOT時就已經註冊，才會沒有連動建立資料
+            # 所以我們幫他建立一下吧
+            teacher_review_aggregated_info.objects.create(
+                teacher_auth_id = instance.teacher_auth_id,
+                score_given_sum = 0 if instance.score_given is None else instance.score_given,
+                reviewed_times = 1,
+                receiving_review_lesson_minutes_sum = 0,  # 這個值不在這邊進行更新
+                is_teacher_late_for_lesson_times = 1 if instance.is_teacher_late_for_lesson == True else 0,
+                is_teacher_frivolous_in_lesson_times = 1 if instance.is_teacher_frivolous_in_lesson == True else 0,
+                is_teacher_incapable_times = 1 if instance.is_teacher_incapable == True else 0
+            )
+        else:
+            # 代表已經有這筆紀錄，我們只要協助更新即可
+            the_teacher_review_info_object.score_given_sum += \
+                0 if instance.score_given is None else instance.score_given
+            the_teacher_review_info_object.reviewed_times += 1
+            # receiving_review_lesson_minutes_sum 不在這邊進行更新
+            the_teacher_review_info_object.is_teacher_late_for_lesson_times += \
+                1 if instance.is_teacher_late_for_lesson == True else 0
+            the_teacher_review_info_object.is_teacher_frivolous_in_lesson_times += \
+                1 if instance.is_teacher_frivolous_in_lesson == True else 0
+            the_teacher_review_info_object.is_teacher_incapable_times += \
+                1 if instance.is_teacher_incapable == True else 0
+            the_teacher_review_info_object.save()
+
+    else:
+        # 代表老師的評價被更新，雖然目前沒有這個機制，但有可能是 Quikok 後台改動的
+        # 因此這邊其實也需要做老師的評價更新，但我們先不管它
+        pass
+
+
+@receiver(pre_save, sender=lesson_info)
+def when_lesson_info_changed_synchronize_lesson_sales_sets(sender, instance:lesson_info, **kwargs):
+    '''
+    當 lesson_info 這個 table 有新建課程或是編輯課程的動作時，要同步對 lesson_sales_sets 進行更新。    
+    '''
+    #if instance.selling_status == 'selling':
+        # 先確定該門課程的狀態是販售中再做就好
+    if instance.id is None:
+        # 代表這個課程是全新建立的，因此不用比對舊資料，
+        # 也不需要新增方案，因為課程第一次建立時並沒有對應的id（pre_save），
+        # 並且目前的課程建立機制是兩段式，會先 create 一個幾乎完成的dummy record，
+        # 再補上正確的課程資料夾路徑後，才算是正式完成。
+        pass
+        
+    else:
+        # 課程進行編輯，這時候要先將舊的方案都 disabled 掉，再更新新的上去就好。
+        # 不過更新前先確定新舊是否一致，如果完全一致的話就不動，只要其中一個不一致就全動，
+        # 避免老師只是更改課程的其他內容而已。
+        previous = lesson_info.objects.get(id=instance.id)
+
+        from_selling_to_not_selling = \
+            previous.selling_status == 'selling' and instance.selling_status != 'selling'
+        from_selling_to_selling = \
+            previous.selling_status == 'selling' and instance.selling_status == 'selling'
+        from_not_selling_to_selling = \
+            previous.selling_status != 'selling' and instance.selling_status == 'selling'
+        from_not_selling_to_not_selling = \
+            previous.selling_status != 'selling' and instance.selling_status != 'selling'
+    
+        if from_not_selling_to_not_selling:
+            # 什麼事情都不用做
+            pass
+        elif from_selling_to_not_selling:
+            # 只要將所有的 is_open 方案變成 non-open 就好
+            old_sales_sets = \
+                lesson_sales_sets.objects.filter(lesson_id=instance.id, is_open=True)
+            old_sales_sets.update(is_open=False)
+            logging.info(f"Old lesson sales sets have been all disabled due to non-selling.")
+        else:
+            shared_columns = {
+                'lesson_id': instance.id,
+                'teacher_auth_id': instance.teacher.auth_id,
+                'price_per_hour': instance.price_per_hour,
+                'is_open': True}
+
+            if from_not_selling_to_selling:
+                # 全部都要新增，並且不用管舊的資料
+                if int(instance.trial_class_price) != -999:
+                    # 有試課方案
+                    shared_columns['sales_set'] = 'trial'
+                    shared_columns['total_hours_of_the_sales_set'] = 1
+                    shared_columns['price_per_hour_after_discount'] = instance.trial_class_price
+                    shared_columns['total_amount_of_the_sales_set'] = instance.trial_class_price
+                    
+                    lesson_sales_sets.objects.create(
+                        **shared_columns
+                    ).save()
+                                    
+                if instance.lesson_has_one_hour_package == True:
+                    # 有單堂方案
+                    shared_columns['sales_set'] = 'no_discount'
+                    shared_columns['total_hours_of_the_sales_set'] = 1
+                    shared_columns['price_per_hour_after_discount'] = instance.price_per_hour
+                    shared_columns['total_amount_of_the_sales_set'] = instance.price_per_hour
+
+                    lesson_sales_sets.objects.create(
+                        **shared_columns
+                    ).save()
+
+                if len(instance.discount_price) > 2:
+                    # 有其他方案
+                    for each_hours_discount_set in [_ for _ in instance.discount_price.split(';') if len(_) > 0]:
+                        
+                        hours, discount_price = each_hours_discount_set.split(':')
+                        shared_columns['sales_set'] = each_hours_discount_set
+                        shared_columns['total_hours_of_the_sales_set'] = int(hours)
+                        shared_columns['price_per_hour_after_discount'] = round(int(instance.price_per_hour) * int(discount_price) / 100)
+                        shared_columns['total_amount_of_the_sales_set'] = round(int(instance.price_per_hour) * int(hours) * int(discount_price) / 100)
+
+                        lesson_sales_sets.objects.create(
+                            **shared_columns
+                        ).save()
+
+            elif from_selling_to_selling:
+                # 先檢查跟舊的課程方案一不一樣，不一樣的話就 disabled 後新增
+                if lesson_sales_sets.objects.filter(lesson_id=instance.id).exists() == False:
+                    # 代表這是課程建立的那一次「編輯」
+                    sales_sets_not_changed = False
+                else:
+                    sales_sets_not_changed = \
+                        (
+                            int(instance.trial_class_price) == int(previous.trial_class_price) and
+                            instance.lesson_has_one_hour_package == previous.lesson_has_one_hour_package and
+                            instance.discount_price == previous.discount_price and
+                            int(instance.price_per_hour) == int(previous.price_per_hour)
+                        )  # 確認是否完全一致
+                
+                if sales_sets_not_changed == False:
+                    # 先把舊的方案都 disabled 掉
+                    old_sales_sets = \
+                        lesson_sales_sets.objects.filter(lesson_id=instance.id, is_open=True)
+                    old_sales_sets.update(is_open=False)
+
+                    logging.info(f"Old lesson sales sets have been disabled due to unmatched.")
+
+                    # 要先確定 1.是否有試課方案  2.是否有單堂方案  3.其他方案(\d*:\d*的格式)
+                    if int(instance.trial_class_price) != -999:
+                        # 有試課方案
+                        shared_columns['sales_set'] = 'trial'
+                        shared_columns['total_hours_of_the_sales_set'] = 1
+                        shared_columns['price_per_hour_after_discount'] = instance.trial_class_price
+                        shared_columns['total_amount_of_the_sales_set'] = instance.trial_class_price
+                        
+                        lesson_sales_sets.objects.create(
+                            **shared_columns
+                        ).save()
+                        
+                        logging.info(f"Trial sets have been established.")
+                    
+                    if instance.lesson_has_one_hour_package == True:
+                        # 有單堂方案
+                        shared_columns['sales_set'] = 'no_discount'
+                        shared_columns['total_hours_of_the_sales_set'] = 1
+                        shared_columns['price_per_hour_after_discount'] = instance.price_per_hour
+                        shared_columns['total_amount_of_the_sales_set'] = instance.price_per_hour
+
+                        lesson_sales_sets.objects.create(
+                            **shared_columns
+                        ).save()
+
+                        logging.info(f"No_discount sets have been established.")
+
+                    if len(instance.discount_price) > 2:
+                        # 有其他方案
+                        logging.info(f"instance.discount_price: {instance.discount_price}")
+                        for each_hours_discount_set in [_ for _ in instance.discount_price.split(';') if len(_) > 0]:
+                            
+                            hours, discount_price = each_hours_discount_set.split(':')
+                            shared_columns['sales_set'] = each_hours_discount_set
+                            shared_columns['total_hours_of_the_sales_set'] = int(hours)
+                            shared_columns['price_per_hour_after_discount'] = round(int(instance.price_per_hour) * int(discount_price) / 100)
+                            shared_columns['total_amount_of_the_sales_set'] = round(int(instance.price_per_hour) * int(hours) * int(discount_price) / 100)
+
+                            lesson_sales_sets.objects.create(
+                                **shared_columns
+                            )
+                            logging.info(f"sales set created: {shared_columns}")
+                            
+                        logging.info(f"Discount sets have been established.")
+
+        logging.info(f"Lesson sales sets have been updated after lesson editted ({instance.lesson_title}).")
+
+
+
+    

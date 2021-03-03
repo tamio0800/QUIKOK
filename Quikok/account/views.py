@@ -4,7 +4,12 @@ from django.contrib import auth
 from django.contrib.auth.hashers import make_password, check_password  # 這一行用來加密密碼的
 from .model_tools import user_db_manager, teacher_manager, student_manager, auth_manager_for_password
 from django.contrib.auth.models import User
-from account.models import user_token, student_profile, teacher_profile, specific_available_time, general_available_time, feedback
+from account.models import student_review_aggregated_info
+from account.models import teacher_review_aggregated_info
+from account.models import user_token
+from account.models import student_profile, teacher_profile
+from account.models import specific_available_time, general_available_time, feedback
+from account_finance.models import teacher_refund, student_refund
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.core.files.storage import FileSystemStorage
 from lesson.models import lesson_info_for_users_not_signed_up, lesson_info
@@ -16,7 +21,6 @@ import os
 from .auth_tools import auth_check_manager
 # FOR API
 from django.views.decorators.http import require_http_methods
-from django.core import serializers
 from django.http import JsonResponse
 import json
 from django.middleware.csrf import get_token
@@ -34,7 +38,12 @@ from handy_functions import date_string_2_dateformat
 from handy_functions import clean_files
 from analytics.signals import object_accessed_signal
 from analytics.utils import get_client_ip
-from blog.models import article_info
+from account.email_sending import email_manager
+from django.core.signals import request_finished
+from django.dispatch import receiver
+from threading import Thread
+
+account_email = email_manager()
 
 ## 0916改成api的版本,之前的另存成views_old, 之後依據該檔把已設計好的功能寫過來
 ##### 學生區 #####
@@ -144,7 +153,22 @@ def create_a_student_user(request):
                 update_someone_by_email = update_someone_by_email
             )
             new_student.save()
-            # print('student_profile建立')
+            # 寄發email通知學生註冊成功
+            #welcome_email = email_manager()
+            #welcome_email.send_welcome_email_new_signup_student(
+            #    student_authID = user_created_object.id,
+            #    student_nickname = nickname, 
+            #    student_email = username)
+
+
+            send_email_info = {
+                        'student_authID' : user_created_object.id,
+                        'student_nickname' : nickname,
+                        'student_email' : username }
+            send_welcom_email_thread = Thread(
+                        target = account_email.send_welcome_email_new_signup_student,
+                        kwargs = send_email_info)
+            send_welcom_email_thread.start()
 
             object_accessed_signal.send(
                 sender='create_a_student_user',
@@ -273,7 +297,6 @@ def edit_student_profile(request):
 def edit_teacher_profile(request):
 
     response = dict()
-    
     auth_id = request.POST.get('userID', False)
     nickname = request.POST.get('nickname', False)
     intro = request.POST.get('intro', False)
@@ -375,14 +398,15 @@ def edit_teacher_profile(request):
         the_teacher_info_object.save()  # 儲存資料
 
         # ================更新課程小卡================
-        the_lesson_card_manager = lesson_card_manager()
+        # 2021.02.09  >>  改用signal做
+        # the_lesson_card_manager = lesson_card_manager()
         
-        all_lesson_ids_of_the_teacher = list(lesson_info.objects.filter(teacher__auth_id=auth_id).values_list('id', flat=True))
-        for each_lesson_id in all_lesson_ids_of_the_teacher:
-            the_lesson_card_manager.setup_a_lesson_card(
-                teacher_auth_id=auth_id,
-                corresponding_lesson_id=each_lesson_id
-            )
+        # all_lesson_ids_of_the_teacher = list(lesson_info.objects.filter(teacher__auth_id=auth_id).values_list('id', flat=True))
+        # for each_lesson_id in all_lesson_ids_of_the_teacher:
+        #     the_lesson_card_manager.setup_a_lesson_card(
+        #         teacher_auth_id=auth_id,
+        #         corresponding_lesson_id=each_lesson_id
+        #     )
         # ================更新課程小卡================
 
     response['status'] = 'success'
@@ -648,6 +672,12 @@ def create_a_teacher_user(request):
             )
             teacher_created_object.save()
             print('成功建立 teacher_profile')
+            # 寄發email通知老師註冊成功
+            welcome_email = email_manager()
+            welcome_email.send_welcome_email_new_signup_teacher(
+                teacher_authID = user_created_object.id,
+                teacher_nickname = nickname, 
+                teacher_email = username)
 
             object_accessed_signal.send(
                 sender='create_a_teacher_user',
@@ -752,6 +782,7 @@ def return_teacher_s_profile_for_public_viewing(request):
     response = dict()
     teacher_auth_id = request.GET.get('userID', False)
     the_teacher_manager = teacher_manager()
+    
 
     if teacher_auth_id == False:
         response['status'] = 'failed'
@@ -773,6 +804,7 @@ def signin(request):
     response = {}
     username = request.POST.get('userName', False) # 當前端值有錯誤傳 null 就會是false 
     password = request.POST.get('userPwd', False)
+    #system_authID = 1
         
     if False not in (username, password):
         user_obj = User.objects.filter(username=username).first()
@@ -781,7 +813,7 @@ def signin(request):
             # 使用者不存在
             response['status'] = 'failed'
             response['errCode'] = '1'
-            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['errMsg'] = '不好意思，請再次確認您的帳號密碼是否正確，如果持續出現這個問題，請跟我們說一聲，謝謝您~'
             response['data'] = None
             print('使用者不存在')
         else: #使用者存在
@@ -822,7 +854,10 @@ def signin(request):
                 for group_obj in _user_group_set:
                     user_group.append(group_obj.name)
                 # 與系統的聊天室id
-                system_chatrooID = chatroom_info_Mr_Q2user.objects.filter(user_auth_id=user_obj.id).first().id
+                #if user_obj.id == system_authID :
+                #    system_chatrooID = ''
+                #else:
+                #    system_chatrooID = chatroom_info_Mr_Q2user.objects.filter(user_auth_id=user_obj.id).first().id
 
                 response['status'] = 'success'
                 response['errCode'] = None
@@ -837,7 +872,7 @@ def signin(request):
                     'user_token': token,
                     'deposit': balance,
                     'message': '', # 是否有未讀聊天室訊息, 這邊等聊天室做了再補
-                    'system_chatrooID' :system_chatrooID,
+                    #'system_chatrooID' :system_chatrooID,
                     'user_group': user_group
                     }
                 print('成功登入', response)
@@ -1401,13 +1436,7 @@ def create_batch_teacher_users():
                         week = every_week,
                         time = temp_time
                                     ).save()
-            print('老師成功建立 一般時間')
-
-def test_connect_time(request):
-    from time import time
-    s_time = time()
-    _ = teacher_profile.objects.all().count()
-    return HttpResponse(str(time() - s_time) + ' seconds,   for' + str(_) + ' teachers.')'''
+            print('老師成功建立 一般時間')'''
 
 
 @require_http_methods(['POST'])
@@ -1446,6 +1475,336 @@ def feedback_view_function(request):
     return JsonResponse(response)
 
 
+@require_http_methods(['POST'])
+def get_banking_information(request):
+    '''
+    用來傳遞給前端匯款的資訊，回傳參數有:
+        bank_code(銀行代碼): 808
+        bank_name(銀行名稱(選填)): 玉山銀行
+        bank_account_code(銀行帳號)
+        balance: 可用餘額(Q幣)
+        withholding_balance: 預扣額度(Q幣)
+        txn_fee: 提領手續費費用，若無則給0
+    '''
+    response = dict()
+    user_type = request.POST.get('type', False)
+    if check_if_all_variables_are_true(user_type):
+        if user_type == 'teacher':
+            # 用戶是老師
+            teacher_auth_id = request.POST.get('userID', False)
+            teacher_object = teacher_profile.objects.filter(auth_id=teacher_auth_id).first()
+
+            if teacher_object is None:
+                # 用戶不存在
+                response['status'] = 'failed'
+                response['errCode'] = '1'
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                response['data'] = None
+            else:
+                # 確認要不要跟該用戶收取手續費
+                try:
+                    last_record = teacher_refund.objects.filter(teacher_auth_id=teacher_auth_id).latest('created_time')
+                    if last_record.created_time.month == datetime.now().month:
+                        # 相同月份有過提領紀錄
+                        txn_fee = 30
+                    else:
+                        txn_fee = 0
+                except:
+                    txn_fee = 0
+
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = {
+                    'bank_code': teacher_object.bank_code,
+                    'bank_name': teacher_object.bank_name,
+                    'bank_account_code': teacher_object.bank_account_code,
+                    'balance': teacher_object.balance,
+                    'withholding_balance': teacher_object.withholding_balance,
+                    'txn_fee': txn_fee
+                    }
+        else:
+            # 用戶是學生
+            student_auth_id = request.POST.get('userID', False)
+            student_object = student_profile.objects.filter(auth_id=student_auth_id).first()
+
+            if student_object is None:
+                # 用戶不存在
+                response['status'] = 'failed'
+                response['errCode'] = '2'
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                response['data'] = None
+            else:
+                # 確認要不要跟該用戶收取手續費
+                try:
+                    last_record = student_refund.objects.filter(student_auth_id=student_auth_id).latest('created_time')
+                    if last_record.created_time.month == datetime.now().month:
+                        # 相同月份有過提領紀錄
+                        txn_fee = 30
+                    else:
+                        txn_fee = 0
+                except:
+                    txn_fee = 0
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = {
+                    'bank_code': student_object.bank_code,
+                    'bank_name': student_object.bank_name,
+                    'bank_account_code': student_object.bank_account_code,
+                    'balance': student_object.balance,
+                    'withholding_balance': student_object.withholding_balance,
+                    'txn_fee': txn_fee
+                    }
+
+    else:
+        # 傳輸有問題
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+
+    return JsonResponse(response)
+
+
+@require_http_methods(['GET'])
+def get_student_public_review(request):
+    '''
+    傳送學生的公開評價資訊
+    '''
+    response = dict()
+    student_auth_id = request.GET.get('userID', False)
+    if check_if_all_variables_are_true(student_auth_id):
+        student_object = student_profile.objects.filter(auth_id=student_auth_id).first()
+        if student_object is not None:
+            # 用戶存在，回傳其評價資訊
+            aggregated_review_object = \
+                student_review_aggregated_info.objects.filter(student_auth_id=student_auth_id).first()
+            
+            if aggregated_review_object is None:
+                # 找不到學生的評價資訊，雖然很不應該發生這種情況，但還是預做準備
+                response['status'] = 'failed'
+                response['errCode'] = '2'
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                response['data'] = None
+            
+            else:
+                # 有找到學生的評價資料
+                response['data'] = {
+                    'score_given_to_times_mean': aggregated_review_object.get_score_given_to_times_mean(),
+                    'reviewed_times': aggregated_review_object.reviewed_times,
+                    'receiving_review_lesson_minutes_sum': aggregated_review_object.receiving_review_lesson_minutes_sum,
+                    'on_time_index': aggregated_review_object.get_on_time_index(),
+                    'studious_index': aggregated_review_object.get_studious_index(),
+                    'friendly_index': aggregated_review_object.get_friendly_index(),
+                    'all_student_remarks': list()
+                }
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+        else: 
+            # 用戶不存在
+            response['status'] = 'failed'
+            response['errCode'] = '1'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['data'] = None
+    
+    else:
+        # 傳輸有問題
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+
+    return JsonResponse(response)
+
+
+@require_http_methods(['GET'])
+def get_teacher_public_review(request):
+    '''
+    傳送教師的公開評價資訊
+    '''
+    response = dict()
+    teacher_auth_id = request.GET.get('userID', False)
+    if check_if_all_variables_are_true(teacher_auth_id):
+        teacher_object = teacher_profile.objects.filter(auth_id=teacher_auth_id).first()
+        if teacher_object is not None:
+            # 用戶存在，回傳其評價資訊
+            aggregated_review_object = \
+                teacher_review_aggregated_info.objects.filter(teacher_auth_id=teacher_auth_id).first()
+            
+            if aggregated_review_object is None:
+                # 找不到教師的評價資訊，雖然很不應該發生這種情況，但還是預做準備
+                response['status'] = 'failed'
+                response['errCode'] = '2'
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                response['data'] = None
+            
+            else:
+                # 有找到教師的評價資料
+                response['data'] = {
+                    'score_given_to_times_mean': aggregated_review_object.get_score_given_to_times_mean(),
+                    'reviewed_times': aggregated_review_object.reviewed_times,
+                    'receiving_review_lesson_minutes_sum': aggregated_review_object.receiving_review_lesson_minutes_sum,
+                    'on_time_index': aggregated_review_object.get_on_time_index(),
+                    'diligent_index': aggregated_review_object.get_diligent_index(),
+                    'competent_index': aggregated_review_object.get_competent_index(),
+                    'all_teacher_remarks': list()
+                }
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+        else: 
+            # 用戶不存在
+            response['status'] = 'failed'
+            response['errCode'] = '1'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['data'] = None
+    
+    else:
+        # 傳輸有問題
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+
+    return JsonResponse(response)
+
+
+        
+@require_http_methods(['GET'])
+def return_student_profile_for_public_viewing(request):
+    '''
+    傳送學生的公開評價資訊
+    '''
+    response = dict()
+    student_auth_id = request.GET.get('userID', False)
+    if check_if_all_variables_are_true(student_auth_id):
+        student_object = student_profile.objects.filter(auth_id=student_auth_id).first()
+        if student_object is not None:
+            # 用戶存在，回傳其基本資訊： 暱稱、性別(是否為男生)、大頭照路徑
+            response['data'] = {
+                'nickname': student_object.nickname,
+                'is_male': student_object.is_male,
+                'upload_snapshot': student_object.thumbnail_dir
+            }
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+            
+        else: 
+            # 用戶不存在
+            response['status'] = 'failed'
+            response['errCode'] = '1'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['data'] = None
+    
+    else:
+        # 傳輸有問題
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+
+    return JsonResponse(response)
+
+
+@require_http_methods(['POST'])
+def member_change_password(request):
+    '''
+    會員修改密碼(登入狀態)
+    前端傳遞的資料:
+        userID    user's auth_id
+        oldUserPwd  //舊密碼(加密後)
+        newUserPwd  //新密碼(加密後)
+    '''
+    response = dict()
+    user_auth_id = request.POST.get('userID', False)
+    old_password = request.POST.get('oldUserPwd', False)
+    new_password = request.POST.get('newUserPwd', False)
+
+    if check_if_all_variables_are_true(user_auth_id, old_password, new_password):
+        teacher_object = teacher_profile.objects.filter(auth_id=user_auth_id).first()
+        student_object = student_profile.objects.filter(auth_id=user_auth_id).first()
+
+        if teacher_object is None and student_object is None:
+            # 代表兩個類別都沒有這個用戶
+                response['status'] = 'failed'
+                response['errCode'] = '1'
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                response['data'] = None
+
+        elif student_object is None:
+            # 代表用戶是老師
+            # 先確認舊密碼對不對
+            if old_password == teacher_object.password:
+                # 是對的
+                teacher_object.password = new_password
+                teacher_object.save()
+
+                # 接著做User的部份
+                the_user_object = User.objects.get(id=teacher_object.auth_id)
+                the_user_object.password = new_password
+                the_user_object.save()
+
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = None
+            else:
+                # 密碼不對
+                response['status'] = 'failed'
+                response['errCode'] = '2'
+                response['errMsg'] = '不好意思，您的(舊)密碼輸入錯誤，請再次確認唷，如果持續有這個問題請告訴我們，謝謝您。'
+                response['data'] = None
+        else:
+            # 代表用戶是學生
+            # 先確認舊密碼對不對
+            if old_password == student_object.password:
+                # 是對的
+                student_object.password = new_password
+                student_object.save()
+
+                # 接著做User的部份
+                the_user_object = User.objects.get(id=student_object.auth_id)
+                the_user_object.password = new_password
+                the_user_object.save()
+                
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = None
+            else:
+                # 密碼不對
+                response['status'] = 'failed'
+                response['errCode'] = '3'
+                response['errMsg'] = '不好意思，您的(舊)密碼輸入錯誤，請再次確認唷，如果持續有這個問題請告訴我們，謝謝您。'
+                response['data'] = None
+
+    else:
+        # 傳輸有問題
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+
+    return JsonResponse(response)
+    
+
+def test_connect_time(request):
+    return HttpResponse("THIS IS A DUMMY TEST FUNCTION.")
+
+
+
+'''# @receiver(request_finished, sender=test_connect_time)
+def my_callback(sender, **kwargs):
+    print("Request finished!")
+    print(f"xxxxx {kwargs.items()}")
+    print(f"kwargs['signal'] {kwargs['signal'].}")
+    print(f"sender {sender}")
+
+
+request_finished.connect(my_callback, dispatch_uid="my_unique_identifier")'''
 
 
     

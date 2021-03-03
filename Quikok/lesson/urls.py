@@ -1,5 +1,4 @@
-from django.conf.urls import include, url
-from .import views
+from lesson import views
 from django.urls import path
 
 urlpatterns = [
@@ -24,4 +23,9 @@ urlpatterns = [
     path('getStudentsAvailableRemainingMinutes/', views.get_student_s_available_remaining_minutes),
     path('getTeachersBookingHistory/', views.get_teacher_s_booking_history),
     path('getStudentsBookingHistory/', views.get_student_s_booking_history),
+    path('lessonCompletedNotificationFromTeacher/', views.lesson_completed_notification_from_teacher),
+    path('lessonCompletedConfirmationFromStudent/', views.lesson_completed_confirmation_from_student),
+    path('teacherWriteStudentReviews/', views.teacher_write_student_reviews),
+    path('studentWriteTeacherReviews/', views.student_write_teacher_reviews),
+    path('readReviewsOfCertainLessons/', views.read_reviews_of_certain_lessons)
 ]

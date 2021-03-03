@@ -15,45 +15,6 @@ from .system_2user_layer import layer_info_maneger
 
 
 class ChatConsumer(WebsocketConsumer):
-    def connect_2(self):
-        print('成功!')
-        print('\n\nconnect_info:\n'+str(self.scope)+'\n\n')
-        # 當用戶上線就建立所有它在info裡面的連線, 加入同一個group
-        # 這種作法需要前端丟變數來讓我知道是要建立連線還是只是聊
-        # add connection to existing groups
-        userID = self.scope["url_route"]["kwargs"]["room_url"].split('_')[0]
-        user_type = auth_ckeck.check_user_type(userID)
-        if user_type == 'teacher':
-            for friend_room in chatroom_info_user2user.objects.filter(teacher_auth_id=userID):
-                async_to_sync(self.channel_layer.group_add)(friend_room.id, self.channel_name)
-
-        # 接收格式 'kwargs': {'room_url': '204_chatroom_4_0'}
-        if self.scope["url_route"]["kwargs"]["room_url"].split('_')[3] == '0':
-            self.room_group_name = self.scope["url_route"]["kwargs"]["room_url"].split('_')[2]
-            self.chatroom_type = 'user2user'
-        # 系統與user接收格式 'kwargs': {'room_url': '204_chatroom_4_1'}
-        elif self.scope["url_route"]["kwargs"]["room_url"].split('_')[3] == '1':
-            self.room_group_name = self.scope["url_route"]["kwargs"]["room_url"].split('_')[2]
-            #self.room_group_name = 'system'+ str(self.scope["url_route"]["kwargs"]["room_url"].split('_')[2])
-            self.chatroom_type = 'system2user'
-            # 測試對一個使用者來說, self變數是否會留存,還是我得另存db
-            self.system_room_group_name = copy.deepcopy(self.room_group_name)
-            print(type(self.room_group_name))
-        else: #以後聊天室如果有更多種類可以加這
-            pass
-        print('channel name:')
-        print(self.channel_name)
-        print('room_group_name')
-        print(self.room_group_name)
-        
-        # Join room group
-        # 目前我不確定用for loop來做時,是否自是將各channel加入這個group
-        async_to_sync(self.channel_layer.group_add)(
-            self.room_group_name,
-            self.channel_name)
-        self.accept()
-        # 如果是系統連線,此時要存到記憶體中
-        print('websocket connect success')
     def connect(self):
         self.userID = self.scope["url_route"]["kwargs"]["room_url"].split('_')[0]
         print('\n\nconnect_info:\n'+str(self.scope)+'\n\n')
@@ -70,10 +31,10 @@ class ChatConsumer(WebsocketConsumer):
             print(type(self.room_group_name))
         else: #以後聊天室如果有更多種類可以加這
             pass
-        print('channel name:')
-        print(self.channel_name)
-        print('room_group_name')
-        print(self.room_group_name)
+
+        logging.info(f"chatroom/consuners:確認聊天室種類:{self.chatroom_type}")
+        logging.info(f"chatroom/consuners:room_group_name:{self.room_group_name}")
+        logging.info(f"chatroom/consuners:channel name:{self.channel_name}")
         
         # Join room group
         async_to_sync(self.channel_layer.group_add)(
@@ -101,6 +62,7 @@ class ChatConsumer(WebsocketConsumer):
 
     # Receive message from WebSocket
     def receive(self, text_data):
+        ws_manager = websocket_manager()
         text_data_json = json.loads(text_data)
         print('ws load jason收到的資料')
         print('\n\nreceive_data:\n'+str(text_data_json))
@@ -111,28 +73,30 @@ class ChatConsumer(WebsocketConsumer):
         'chatroomID' : text_data_json['chatroomID'],
         'messageType' : text_data_json['messageType'],
         'messageText' : text_data_json['messageText'],
+        'msg_status_update' : text_data_json['msg_status_update'], # 字典型態
         'chatroom_type': self.chatroom_type}
         #now_time = datetime.datetime.now().strftime('%H:%M')
-        # 儲存對話紀錄到db
-        ws_manager = websocket_manager()
-        msgID, time = ws_manager.chat_storge(**pass_to_chat_tools)
-        now_time = str(time)
+        # 儲存對話紀錄到db, 如果是前端用來更新已讀狀態的資料就不用存對話紀錄但是要更新已讀狀態
+        if text_data_json['messageType'] == 'update_read_msg':
+            ws_manager.update_chat_msg_is_read_status(**pass_to_chat_tools)
+            now_time = ''
+            msgID = ''
+        #elif len(text_data_json['msg_status_update']['messageID']) > 0:
+            # 要更新對話是否已讀的變數
+        else: # 一般對話,要儲存
+            msgID, time = ws_manager.chat_storge(**pass_to_chat_tools)
+            now_time = str(time)
         # systemCode 暫時沒有作用,統一給0
-        if text_data_json['messageType'] == 1:
-            systemCode = 0
+        if text_data_json['messageType'] ==  'text_msg' :
+            systemCode = 'no_action'
         else:
             systemCode = None
-
-        # 在學生第一次聯絡老師此一特殊情況下，才需要同步發送訊息
-        # 到第二個聊天室(也就是老師與系統的聊天室), 特殊形況的判斷寫在chat_tool
-        # 若條件有滿足, 回傳聊天室的id, 若沒有滿足則回傳0
-        system_chatroomID = ws_manager.query_chat_history(pass_to_chat_tools['senderID'])
-        
-        print('\n\nstorge message')
+        logging.info("chatroom/consumer:\n\nstorge message.", exc_info=True)
+    
         # Send message to room group
-        # 會發到下面的def chat_message (雖然不曉得怎麼發的)
-        print('this is self.channel_layer.group_send')
-        print(self.channel_layer.group_send)
+        # 會發到下面的def chat_message 
+        #print('this is self.channel_layer.group_send')
+        #print(self.channel_layer.group_send)
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name, 
             {   'type' : "chat.message", # channel要求必填,不填channel會收不到
@@ -140,19 +104,35 @@ class ChatConsumer(WebsocketConsumer):
                 'senderID': pass_to_chat_tools['senderID'],
                 'messageText': pass_to_chat_tools['messageText'],
                 'messageType': pass_to_chat_tools['messageType'],
-                'systemCode':systemCode,
-                'messageCreateTime': now_time
+                'systemCode': systemCode,
+                'messageCreateTime': now_time,
+                'messageID':msgID,
+                'messageTempID' : text_data_json['messageTempID'],
+                'messageStatus': 'unread'
             },)
-        print('send no.1 msg')
+        logging.info("chatroom/consumer:send no.1 msg.", exc_info=True)
+
+        # 在學生或老師彼此第一次聯絡對方此特殊情況下，才需要同步發送訊息\
+        # 到第二個聊天室(也就是老師與系統的聊天室或學生與系統的聊天室), 特殊形況的判斷寫在chat_tool \
+        # 若條件有滿足, 回傳聊天室的id, 若沒有滿足則回傳0
+        if self.chatroom_type == 'user2user':
+            is_first_time_system_chatroomID = ws_manager.check_if_users_chat_first_time(**pass_to_chat_tools)
+            # 回傳系統聊天室的ID
+        else: # 如果是系統聊天室不用檢查
+            is_first_time_system_chatroomID = 0
         # 若符合才會>1, 不符合會=0
         # 符合會在學生傳msg給老師時同步發到系統聊天室
-        # system_chatroomID 格式: system_1
-        if len(system_chatroomID) > 1:
-            # 傳給ws的內容
-            content = ws_manager.msg_maker1_system_2teacher(pass_to_chat_tools['chatroomID'])
+        # system_chatroomID 格式: ID ((若符合情況一定會>1)
+        if is_first_time_system_chatroomID != 0:
+            # 傳給ws的內容,給另一方聊天室收到有第一次聊天
+            #content = ws_manager.system_auto_msg_when_user_first_chat(pass_to_chat_tools['chatroomID'])
+            content = ws_manager.system_auto_msg_when_user_first_chat(is_first_time_system_chatroomID)
+            
+            # 發送
+            logging.info(f"chatroom/consumer:send no.2 msg to system_chatroomID:{'system'+ str(is_first_time_system_chatroomID)}", exc_info=True)
             async_to_sync(self.channel_layer.group_send)(
-                    system_chatroomID, content ,)
-            print('send no.2 msg')
+                    'system'+ str(is_first_time_system_chatroomID), content ,)
+            logging.info("chatroom/consumer:send no.2 msg.", exc_info=True)
         else:
             pass
 
@@ -163,8 +143,11 @@ class ChatConsumer(WebsocketConsumer):
         self.send(text_data=json.dumps(event))
         print('send to WebSocket')
     
+    
+    # 以下寫法失敗qq
     # 測試是否可以直接發到特定聊天室
     # 推測這方式沒寫儲存msg應該可收到
+'''
     def system_msg_new_order_payment_remind(self):
         # 這邊先固定寫死傳看看是否成功
         self.send(text_data=json.dumps(
@@ -174,10 +157,25 @@ class ChatConsumer(WebsocketConsumer):
                 'messageText': 'test',
                 'messageType': 3,
                 'systemCode':0,
-                'messageCreateTime': now_time
+                'messageCreateTime': str(datetime.datetime.now())
             }))
         print('system send to WebSocket')
 
+    #測試寫法2
+    #c = ChatConsumer(scope = {"url_route":{"kwargs":{"room_url": '204_chatroom_4_0'}}})
+    def test_send_ws_msg(self):
+        async_to_sync(self.channel_layer.group_send)(
+        self.room_group_name, 
+        {   'type' : "chat.message", # channel要求必填,不填channel會收不到
+            'chatroomID':pass_to_chat_tools['chatroomID'],
+            'senderID': pass_to_chat_tools['senderID'],
+            'messageText': pass_to_chat_tools['messageText'],
+            'messageType': pass_to_chat_tools['messageType'],
+            'systemCode':systemCode,
+            'messageCreateTime': now_time
+        },)
+        print('system2 send to WebSocket')
+'''
 
 #class ChatSystem(ChatConsumer):
 #    self.room_group_name =self.scope["url_route"]["kwargs"]["room_url"].split('_')[2]
@@ -234,3 +232,4 @@ asynchronous version
 #             'message': message
 #         }))
 #
+

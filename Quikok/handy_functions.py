@@ -5,8 +5,9 @@ def check_if_all_variables_are_true(*args):
     '''
     確認所有變數皆不為否
     '''
-    for each_arg in args:
-        if each_arg in [False, 'False', 'false']:
+    for i, each_arg in enumerate(args):
+        if each_arg == False:
+            print(f"{i}: {each_arg}")
             return False
     return True
 
@@ -145,6 +146,9 @@ def turn_current_time_into_time_interval():
     current_time = datetime.now()
     # 0 > 00:00 - 00:30
     # 1 > 00:30 - 01:00
+    # 2 > 01:00 - 01:30
+    # 3 > 01:30 - 02:00
+    # 4 > 02:00 - 02:30
     # .................
     # 46: 23:00 - 23:30
     # 47: 23:30 - 24:00
@@ -159,4 +163,124 @@ def turn_current_time_into_time_interval():
         return current_time.hour * 2 + 1
     else:
         return current_time.hour * 2
+
+
+def turn_first_datetime_string_into_time_format(datetime_string):
+    '''
+    這是為了將如 2020-01-01:1,2,3:
+         "2020-01-01:0,1,2;" 轉換成 >> 2020-01-01 00:00，
+         ""2020-01-01:3,4;" >> 2020-01-01 01:30，
+         ""2020-01-01:2;" >> 2020-01-01 01:00
+    的函式。
+    '''
+    datetime_string = datetime_string.replace(';', '')
+    date_string, time_string = datetime_string.split(':')
+
+    _year, _month, _day = [int(_) for _ in date_string.split('-')]
+    first_element = int(time_string.split(',')[0])
+
+    the_quotient = int(first_element / 2)
+    remainder = first_element % 2
+
+    if remainder == 0:
+        return datetime(_year, _month, _day, the_quotient, 0)
+    else:
+        return datetime(_year, _month, _day, the_quotient, 30)
+
+
+def bound_number_string(target_number_string, min=1, max=5):
+    '''
+    將超出範圍外的數值限定在不超過範圍的極端值，如果為空字串的話則回傳None.
+    '''
+    if len(target_number_string) == 0:
+        return None
+    elif int(target_number_string) > max:
+        return max
+    elif int(target_number_string) < min:
+        return min
+    else:
+        return int(target_number_string)
+
+
+def return_none_if_the_string_is_empty(target_string):
+    '''
+    若該變數為空字串，則回傳None，反之回傳原來的值
+    '''
+    if len(target_string.strip()) == 0:
+        return None
+    else:
+        return target_string
+
+
+def get_lesson_s_best_sale(lesson_object):
+    '''
+    用來取得該門課程最優惠/吸引人的標語
+    '''
+    # lesson_object = lesson_info.objects.filter(id=lesson_id).first()
+    trial_class_price = lesson_object.trial_class_price
+    price_per_hour = lesson_object.price_per_hour
+    if trial_class_price != -999 and trial_class_price < price_per_hour:
+        # 有試教優惠的話就直接回傳
+        return "試課優惠"
+    else:
+        discount_price = lesson_object.discount_price
+        discount_pairs = discount_price.split(';')
+        all_discounts = [int(_.split(':')[-1]) for _ in discount_pairs if len(_) > 0]
+        if len(all_discounts) == 0:
+            # 沒有折數
+            return ''
+        else:
+            best_discount = min(all_discounts)
+            return str(100 - best_discount) + '% off'
+            # 反之則回傳  xx% off
+
+
+def get_teacher_s_best_education_and_working_experience(teacher_object):
+    '''
+    這個用來取得最適合呈現的，老師的「學歷」與「經歷」，以及這兩者的認證情況。
+    '''
+    # teacher_object = teacher_profile.objects.get(auth_id=teacher_auth_id)
+    
+    first_exp, second_exp = '', ''  # 第一個與第二個要回傳的東西
+    is_first_one_approved, is_second_one_approved = False, False  # 第一個與第二個要回傳的東西是否有經過認證
+    
+    if teacher_object.education_1 != '':
+        # 老師的 education_1 有值，理論上應該要有啦!
+        first_exp = teacher_object.education_1
+        is_first_one_approved = teacher_object.education_approved
+    elif teacher_object.education_2 != '':
+        # 老師的 education_1 沒有值，檢查第二學歷
+        first_exp = teacher_object.education_2
+        is_first_one_approved = teacher_object.education_approved
+    elif teacher_object.education_3 != '':
+        # 老師的 education_2 沒有值，檢查第三學歷
+        first_exp = teacher_object.education_3
+        is_first_one_approved = teacher_object.education_approved
+    elif teacher_object.company != '':
+        first_exp = teacher_object.company
+        is_first_one_approved = teacher_object.work_approved
+    elif teacher_object.special_exp != '':
+        first_exp = teacher_object.special_exp
+        is_first_one_approved = teacher_object.other_approved
+
+    if first_exp != '':
+        # 已經找到第一欄位了
+        if teacher_object.company != '' and first_exp != teacher_object.company:
+            # 開始找第二欄位，先看原本的工作有沒有值
+            second_exp = teacher_object.company
+            is_second_one_approved = teacher_object.work_approved
+        elif teacher_object.education_2 != '' and first_exp != teacher_object.education_2:
+            # 工作沒有值，但是第二學歷有值，用第二學歷
+            second_exp = teacher_object.education_2
+            is_second_one_approved = teacher_object.education_approved
+        elif teacher_object.special_exp != '' and first_exp != teacher_object.special_exp:
+            # 第二學歷也沒有值，用特殊經歷作為工作
+            second_exp = teacher_object.special_exp
+            is_second_one_approved = teacher_object.other_approved
+        elif teacher_object.education_3 != '' and first_exp != teacher_object.education_3:
+            # 特殊經歷也沒有值，但是第三學歷有值，用第三學歷
+            second_exp = teacher_object.education_3
+            is_second_one_approved = teacher_object.education_approved
+
+    return (first_exp, second_exp, is_first_one_approved, is_second_one_approved)
 

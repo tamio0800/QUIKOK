@@ -1,5 +1,12 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import pre_save, post_save
+from django.dispatch import receiver
+from handy_functions import get_lesson_s_best_sale, get_teacher_s_best_education_and_working_experience
+
+import logging
+FORMAT = '%(asctime)s %(levelname)s: %(message)s'
+logging.basicConfig(level=logging.DEBUG, format=FORMAT)
 
 
 
@@ -9,6 +16,8 @@ class user_token(models.Model):
     logout_time = models.CharField(max_length=60) # 登入的時間+14天
     def __str__(self):
         return str(self.id)
+
+
 class auth_check(models.Model):
     url_auth_type = models.CharField(max_length = 30) 
     # teacher, student, member_only, public 
@@ -19,13 +28,14 @@ class auth_check(models.Model):
     # 正在瀏覽的網址,不含流水號
     #auth_approve = models.BooleanField()
 
+
 class student_profile(models.Model):
     # 這是for存放一般會員/學生的額外資訊
     auth_id = models.IntegerField()  # 將用戶的auth_id聯動過來，方便進行query
     username = models.CharField(max_length = 150)
     password = models.CharField(max_length = 128)
-    balance = models.IntegerField(default=0)  # 帳戶餘額, = Q幣 -預扣額度
-    withholding_balance = models.IntegerField(default=0)  # 帳戶預扣額度
+    balance = models.PositiveIntegerField(default=0)  # 可退款的帳戶餘額, = Q幣全額 -預扣額度
+    withholding_balance = models.PositiveIntegerField(default=0)  # 帳戶預扣額度
     name = models.CharField(max_length = 40)
     nickname = models.CharField(max_length = 40)
     birth_date = models.DateField(blank=True, null=True)
@@ -39,6 +49,9 @@ class student_profile(models.Model):
     info_folder = models.TextField(blank=True, null=True)  # 資料夾路徑，存放個人檔案（暫不使用）
     thumbnail_dir = models.TextField(blank=True, null=True)
     update_someone_by_email = models.CharField(max_length = 405, blank=True, null=True)
+    bank_account_code = models.CharField(max_length=30, default='')
+    bank_name = models.CharField(max_length=30, default='')
+    bank_code = models.CharField(max_length=5, default='')
     date_join = models.DateTimeField(auto_now_add=True)
     # 為了使回傳platform名稱而不是object
     def __str__(self):
@@ -49,15 +62,128 @@ class student_profile(models.Model):
         verbose_name = '學生個人資料'
         verbose_name_plural = '學生個人資料'
 
+
+class teacher_review_aggregated_info(models.Model):
+    '''
+    用來存放、呈現教師的個人評價資訊
+    '''
+    teacher_auth_id = models.IntegerField(default=-1)  # -1 的話代表還沒有設定
+    score_given_sum = models.PositiveIntegerField(default=0)  # 得到的評分加總總計
+    reviewed_times = models.PositiveIntegerField(default=0)  # 得到的評分次數累計
+    receiving_review_lesson_minutes_sum = models.PositiveIntegerField(default=0)  # 得到評分的那些課程的分鐘數總計
+    is_teacher_late_for_lesson_times = models.PositiveIntegerField(default=0)  # 老師遲到次數
+    is_teacher_frivolous_in_lesson_times = models.PositiveIntegerField(default=0)  # 老師不認真次數
+    is_teacher_incapable_times = models.PositiveIntegerField(default=0)  # 老師教課太廢次數
+    last_updated_time = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"老師({str(self.teacher_auth_id)})總共被評價{str(self.reviewed_times)}次，最後一次評價時間為{self.last_updated_time.strftime('%Y-%m-%d %H:%M:%S')}"
+
+    # 下面是一些計算的數值
+
+    def get_score_given_to_times_mean(self):
+    # 得到的平均評分  (總分/被評分次數)，回傳到小數點後第一個數字
+        if self.reviewed_times == 0:
+            return -1  # -1代表目前沒有可用的值
+        else:
+            return round(
+                self.score_given_sum / self.reviewed_times, 1)
+
+    def get_on_time_index(self):
+        '''準時到課指數，正常來說介於 0 - 100 之間'''
+        if self.reviewed_times == 0:
+            return -1  # -1代表目前沒有可用的值
+        else:
+            return 100.0 - round(
+                self.is_teacher_late_for_lesson_times / self.reviewed_times * 100, 0)
+
+    def get_diligent_index(self):
+        '''認真授課指數，正常來說介於 0 - 100 之間'''
+        if self.reviewed_times == 0:
+            return -1  # -1代表目前沒有可用的值
+        else:
+            return 100.0 - round(
+                self.is_teacher_frivolous_in_lesson_times / self.reviewed_times * 100, 0)
+
+    def get_competent_index(self):
+        '''教師適任指數，正常來說介於 0 - 100 之間'''
+        if self.reviewed_times == 0:
+            return -1  # -1代表目前沒有可用的值
+        else:
+            return 100.0 - round(
+                self.is_teacher_incapable_times / self.reviewed_times * 100, 0)
+
+    class Meta:
+        ordering= ['-last_updated_time']  # 越新的會被呈現在越上面
+        verbose_name = '評價-老師評價儀表板'
+        verbose_name_plural = '評價-老師評價儀表板'
+
+
+
+class student_review_aggregated_info(models.Model):
+    '''
+    用來存放、呈現學生的個人評價資訊
+    '''
+    student_auth_id = models.IntegerField(default=-1)  # -1 的話代表還沒有設定
+    score_given_sum = models.PositiveIntegerField(default=0)  # 得到的評分加總總計
+    reviewed_times = models.PositiveIntegerField(default=0)  # 得到的評分次數累計
+    receiving_review_lesson_minutes_sum = models.PositiveIntegerField(default=0)  # 得到評分的那些課程的分鐘數總計
+    is_student_late_for_lesson_times = models.PositiveIntegerField(default=0)  # 學生遲到次數
+    is_student_frivolous_in_lesson_times = models.PositiveIntegerField(default=0)  # 學生不認真次數
+    is_student_or_parents_not_friendly_times = models.PositiveIntegerField(default=0)  # 學生或家長不友善次數
+    last_updated_time = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"學生({str(self.student_auth_id)})總共被評價{str(self.reviewed_times)}次，最後一次評價時間為{self.last_updated_time.strftime('%Y-%m-%d %H:%M:%S')}"
+
+    # 下面是一些計算的數值
+
+    def get_score_given_to_times_mean(self):
+    # 得到的平均評分  (總分/被評分次數)，回傳到小數點後第一個數字
+        if self.reviewed_times == 0:
+            return -1  # -1代表目前沒有可用的值
+        else:
+            return round(
+                self.score_given_sum / self.reviewed_times, 1)
+
+    def get_on_time_index(self):
+        '''準時到課指數，正常來說介於 0 - 100 之間'''
+        if self.reviewed_times == 0:
+            return -1  # -1代表目前沒有可用的值
+        else:
+            return 100.0 - round(
+                self.is_student_late_for_lesson_times / self.reviewed_times * 100, 0)
+
+    def get_studious_index(self):
+        '''認真學習指數，正常來說介於 0 - 100 之間'''
+        if self.reviewed_times == 0:
+            return -1  # -1代表目前沒有可用的值
+        else:
+            return 100.0 - round(
+                self.is_student_frivolous_in_lesson_times / self.reviewed_times * 100, 0)
+
+    def get_friendly_index(self):
+        '''友善指數，正常來說介於 0 - 100 之間'''
+        if self.reviewed_times == 0:
+            return -1  # -1代表目前沒有可用的值
+        else:
+            return 100.0 - round(
+                self.is_student_or_parents_not_friendly_times / self.reviewed_times * 100, 0)
+
+    class Meta:
+        ordering= ['-last_updated_time']  # 越新的會被呈現在越上面
+        verbose_name = '評價-學生評價儀表板'
+        verbose_name_plural = '評價-學生評價儀表板'
+
 class teacher_profile(models.Model):
     # 這是for存放老師的額外資訊
     auth_id = models.IntegerField()  # 將用戶的auth_id聯動過來，方便進行query
     username = models.CharField(max_length = 150) # 帳號
     password = models.CharField(max_length = 128)
-    balance = models.IntegerField(default=0)  # 這個是帳戶餘額
-    withholding_balance = models.IntegerField(default=0)  # 這個是帳戶預扣額度
+    balance = models.PositiveIntegerField(default=0)  # 這個是帳戶餘額
+    withholding_balance = models.PositiveIntegerField(default=0)  # 這個是帳戶預扣額度
     # future_balance = models.IntegerField(default=0) # 帳戶預進帳金額
-    unearned_balance = models.IntegerField(default=0) # 帳戶預進帳金額，改成會計用語
+    unearned_balance = models.PositiveIntegerField(default=0) # 帳戶預進帳金額，改成會計用語
     name = models.CharField(max_length = 40) #名字
     nickname = models.CharField(max_length = 40)
     birth_date = models.DateField(null=True)
@@ -83,6 +209,9 @@ class teacher_profile(models.Model):
     #occupation = models.CharField(max_length = 60, blank=True)
     company = models.CharField(max_length = 100, blank=True, null=True) # 公司與職位 原本分兩個但設計時做在一起了所以只留這個
     is_approved = models.BooleanField(default = False)  # 要讓陳先生看過/審核過
+    bank_account_code = models.CharField(max_length=30, default='')
+    bank_name = models.CharField(max_length=30, default='')
+    bank_code = models.CharField(max_length=5, default='')
     date_join = models.DateTimeField(auto_now_add = True)
     special_exp = models.TextField(blank=True, null=True)  # 其他經歷或特殊專長
     all_lesson_score_mean = models.FloatField(default=0.0)  # 全部課程分數平均
@@ -196,4 +325,53 @@ class feedback(models.Model):
     def __str__(self):
         return str(self.id)
 
+'''
+下面用來寫signal監聽特定 TABLES 是否有改動，而進行對應動作的機制
+'''
+@receiver(post_save, sender=teacher_profile)
+def when_lesson_info_changed_synchronize_lesson_card(sender, instance:teacher_profile, created, **kwargs):
+    '''
+    當 teacher_profile 這個 table 有新建課程或是編輯課程的動作時，要同步對課程小卡進行更新。
+    '''
+    from lesson.models import lesson_card
+
+    if created:
+        # 一般只有註冊後才會開設課程，所以註冊暫時不用做任何事
+        logging.info(f"A teacher has registered ({instance.username}). ")
+        pass
+        
+    else:
+        # 先列出這個老師所有的課程(小卡)
+        lesson_card_objects = lesson_card.objects.filter(teacher_auth_id=instance.auth_id)
+        first_exp, second_exp, is_first_exp_approved, is_second_exp_approved = \
+            get_teacher_s_best_education_and_working_experience(instance)
+
+        lesson_card_objects.update(
+            teacher_thumbnail_path = instance.thumbnail_dir,
+            teacher_nickname = instance.nickname,
+            education = first_exp,
+            education_is_approved = is_first_exp_approved,
+            working_experience = second_exp,
+            working_experience_is_approved = is_second_exp_approved)
+        logging.info(f"A teacher has editted onself profile ({instance.username}), and has synchronized {str(lesson_card_objects.count())} lesson cards.")
+
     
+@receiver(post_save, sender=student_profile)
+def student_aggregated_review_record_created_after_signing_up(sender, instance:student_profile, created, **kwargs):
+    # 代表student_profile建立了新學生資料，這時候我們一起幫他建立對應的評價儀表板
+    if created:
+        # 代表是新建立
+        student_review_aggregated_info.objects.create(
+            student_auth_id = instance.auth_id,
+        ).save()
+
+
+@receiver(post_save, sender=teacher_profile)
+def teacher_aggregated_review_record_created_after_signing_up(sender, instance:teacher_profile, created, **kwargs):
+    # 代表teacher_profile建立了新老師資料，這時候我們一起幫他建立對應的評價儀表板
+    if created:
+        # 代表是新建立
+        teacher_review_aggregated_info.objects.create(
+            teacher_auth_id = instance.auth_id,
+        ).save()
+        

@@ -1,5 +1,5 @@
 from account.models import teacher_profile, favorite_lessons
-from lesson.models import lesson_info, lesson_reviews, lesson_card
+from lesson.models import lesson_info, lesson_card, lesson_reviews_from_students
 from django.contrib.auth.models import User
 from django.core.files.storage import FileSystemStorage
 from django.db.models import Avg, Sum
@@ -74,12 +74,15 @@ class lesson_manager:
         self.filtered_times = self.get_filtered_times()
         self.filtered_time_index = self.get_filtered_time_mapping_index()
         self.filtered_tutoring_experience = self.get_filtered_tutoring_experience()
+        self.filtered_lesson_type = self.get_filtered_lesson_type()
         # current打頭的是指目前的篩選條件
         self.current_filtered_subjects = None
         self.current_filtered_target_students = None
         self.current_filtered_times = None
         self.current_filtered_tutoring_experience = None
         self.current_filtered_price_per_hour = None
+        self.current_filtered_lesson_type = None
+
     def get_filtered_subjects(self):
         return {
             0: '英文',
@@ -126,6 +129,12 @@ class lesson_manager:
             4: '10年以上',
         }
 
+    def get_filtered_lesson_type(self):
+        return {
+            0: '線上1對1家教',  # online
+            1: '實體1對1家教',  # offline
+        }
+
     def parse_filtered_conditions(self, filtered_by_in_string):
         # API: filtered_by >>  
         #   filtered_subjects:0,2,3;filtered_target_students:0,1,2;filtered_tutoring_experience:0,2;'filtered_price_per_hour:200,400 
@@ -165,6 +174,23 @@ class lesson_manager:
                         self.current_filtered_tutoring_experience.append(
                             self.filtered_tutoring_experience[int(each_key_in_list)]
                         )
+                elif 'filtered_lesson_type' in each_filtering:
+                    # 用戶有輸入課程類型的篩選條件，
+                    # 因為0雖然指向「線上1對1家教」，但在資料庫其實是 "online"
+                    # 而1雖然指向「實體1對1家教」，但在資料庫其實是 "offline"
+                    # 所以這裡先人工給定這兩個 values
+                    keys_in_list = each_filtering.split(':')[-1].split(',')
+                    self.current_filtered_lesson_type = list()
+                    
+                    if '0' in keys_in_list:
+                        self.current_filtered_lesson_type.append('online')
+                    
+                    if '1' in keys_in_list:
+                        self.current_filtered_lesson_type.append('offline')
+                    # for each_key_in_list in keys_in_list:
+                    #     self.current_filtered_lesson_type.append(
+                    #         self.filtered_lesson_type[int(each_key_in_list)]
+                    #     )
                 elif 'filtered_price_per_hour' in each_filtering:
                     keys_in_list = each_filtering.split(':')[-1].split(',')
                     min_func = lambda x: 0 if x == '' else int(x)
@@ -196,11 +222,13 @@ class lesson_manager:
         self.errCode = None
         self.errMsg = None
         # 在下面定義API的回傳, 就是回傳資料加工區啦
+        self.data['lesson_type'] =  self.data['is_this_lesson_online_or_offline']
         exclude_columns = [
             'id', 'teacher_id', 'created_time', 'edited_time']      
         for each_col in _data.keys():
             if each_col not in exclude_columns:
                 self.data[each_col] = _data[each_col]
+
         # 課程的資料加工完畢，來點開課老師本身的資訊
         self.data['is_this_teacher_male'] = \
             teacher_profile.objects.filter(id=lesson_object.teacher_id).first().is_male
@@ -279,6 +307,8 @@ class lesson_manager:
                 if not os.path.isdir(lessons_folder_path):
                     os.mkdir(lessons_folder_path)
                 # 判斷老師是否有上傳圖片
+                
+                
                 has_teacher_uploaded_lesson_background_picture = \
                     int(_temp_lesson_info['background_picture_code']) == 99
                 _temp_lesson_info['background_picture_path'] = ''  # 因為還不知道lesson_id，故先給空字串
@@ -290,6 +320,7 @@ class lesson_manager:
                     lessons_folder_path + '/' + str(created_lesson.id)
                 if not os.path.isdir(lessons_folder_path):
                     os.mkdir(lessons_folder_path)
+                
                 if has_teacher_uploaded_lesson_background_picture:
                     # 有上傳圖片
                     uploaded_background_picture = a_request_object.FILES["background_picture_path"]
@@ -329,7 +360,7 @@ class lesson_manager:
                 self.data = None
                 return (self.status, self.errCode, self.errMsg, self.data)    
             try:
-                edited_lesson = lesson_info.objects.filter(teacher__auth_id=teacher_auth_id).filter(id=lesson_id).first()
+                edited_lesson = lesson_info.objects.filter(teacher__auth_id=teacher_auth_id, id=lesson_id).first()
                 if edited_lesson is None:
                     # 代表課程跟老師對應不起來
                     self.status = 'failed'
@@ -504,12 +535,12 @@ class lesson_card_manager:
         # 當課程建立或是修改時，同步編修課程小卡資料
         #print("Activate setup_a_lesson_card!!!!")
         from account.models import teacher_profile
-        from lesson.models import lesson_info, lesson_reviews, lesson_card
+        from lesson.models import lesson_info, lesson_reviews_from_students, lesson_card
         
         try:
             teacher_object = teacher_profile.objects.filter(auth_id = kwargs['teacher_auth_id']).first()
             lesson_object = lesson_info.objects.filter(id = kwargs['corresponding_lesson_id']).first()
-            review_objects = lesson_reviews.objects.filter(corresponding_lesson_id = kwargs['corresponding_lesson_id'])
+            review_objects = lesson_reviews_from_students.objects.filter(corresponding_lesson_id = kwargs['corresponding_lesson_id'])
             # 先取得課程本身的資訊
             self.lesson_card_info['corresponding_lesson_id'] =  kwargs['corresponding_lesson_id']
             self.lesson_card_info['big_title'] =  lesson_object.big_title
@@ -519,6 +550,7 @@ class lesson_card_manager:
             self.lesson_card_info['background_picture_path'] =  lesson_object.background_picture_path
             self.lesson_card_info['price_per_hour'] =  lesson_object.price_per_hour
             self.lesson_card_info['lesson_title'] =  lesson_object.lesson_title
+            self.lesson_card_info['is_this_lesson_online_or_offline'] =  lesson_object.is_this_lesson_online_or_offline
             self.lesson_card_info['highlight_1'] =  lesson_object.highlight_1
             self.lesson_card_info['highlight_2'] =  lesson_object.highlight_2
             self.lesson_card_info['highlight_3'] =  lesson_object.highlight_3

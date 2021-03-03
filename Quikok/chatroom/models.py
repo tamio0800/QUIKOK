@@ -86,10 +86,24 @@ class chat_history_user2user(models.Model):
     message_type = models.CharField(max_length=30) # 0:一般文字, 1:系統訊息, 2:預約方塊
     who_is_sender = models.CharField(max_length=20)    # teacher/student/parent/systemw
     sender_auth_id = models.IntegerField()
-    is_read = models.BooleanField()
+    student_is_read = models.BooleanField(default=False)
+    teacher_is_read = models.BooleanField(default=False)
     created_time = models.DateTimeField(auto_now_add=True)
     def __str__(self):
-        return str(self.id)
+        return f"{self.who_is_sender}: {self.message}"
+
+    def get_teacher_msg_read_status(self):
+        # 把已讀狀態從db的布林值回傳成str
+        if self.teacher_is_read:
+            return('read')
+        else:
+            return('unread')
+    def get_student_msg_read_status(self):
+        # 把已讀狀態從db的布林值回傳成str
+        if self.student_is_read:
+            return('read')
+        else:
+            return('unread')
 
     # 預約資訊message儲存格式如下:{'bookingID': 1;
                 #    'lesson_name': '好棒'
@@ -110,10 +124,11 @@ class chat_history_Mr_Q2user(models.Model):
     message_type = models.CharField(max_length=30)
     who_is_sender = models.CharField(max_length=20)  # teacher  or  student  or parent or system_user
     sender_auth_id = models.IntegerField()
-    is_read = models.BooleanField()
+    system_is_read = models.BooleanField(default=False)
+    user_is_read = models.BooleanField(default=False)
     created_time = models.DateTimeField(auto_now_add=True)
     def __str__(self):
-        return str(self.id)
+        return f"{self.who_is_sender}: {self.message}"
 
 
 class default_notifications_from_system(models.Model):

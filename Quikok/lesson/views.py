@@ -1,32 +1,78 @@
-from django.contrib.auth.hashers import PBKDF2SHA1PasswordHasher
+from django.contrib.auth.models import User
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
+from time import time
 import os, shutil
 from django.contrib.auth.models import User
-from account.models import student_profile, teacher_profile, specific_available_time, general_available_time
-from django.http import HttpResponse, HttpResponseRedirect, FileResponse
+from account.models import student_profile, teacher_profile, specific_available_time
+from django.http import HttpResponse
 from django.core.files.storage import FileSystemStorage
 import pandas as pd
 from account.models import teacher_profile, favorite_lessons
-from lesson.models import lesson_info, lesson_reviews, lesson_card, lesson_info_for_users_not_signed_up
-from lesson.models import lesson_sales_sets
 from lesson.lesson_tools import *
 from django.contrib.auth.decorators import login_required
 from account.model_tools import *
 from django.db.models import Q
-from handy_functions import check_if_all_variables_are_true, date_string_2_dateformat
-from handy_functions import sort_dictionaries_in_a_list_by_specific_key
-from lesson.models import lesson_booking_info
-from account_finance.models import student_remaining_minutes_of_each_purchased_lesson_set
+from threading import Thread
+from handy_functions import (check_if_all_variables_are_true, date_string_2_dateformat,
+                            sort_dictionaries_in_a_list_by_specific_key, 
+                            booking_date_time_to_minutes_and_cleansing,
+                            turn_date_string_into_date_format, 
+                            turn_first_datetime_string_into_time_format,
+                            return_none_if_the_string_is_empty, bound_number_string)
+from lesson.models import (lesson_info, lesson_card, lesson_info_for_users_not_signed_up,
+                            lesson_sales_sets, lesson_booking_info, lesson_completed_record,
+                            lesson_reviews_from_students, student_reviews_from_teachers)
+from account_finance.models import (student_remaining_minutes_of_each_purchased_lesson_set,
+                                    student_owing_teacher_time)
 from django.db.models import Sum
-from handy_functions import booking_date_time_to_minutes_and_cleansing
-from handy_functions import turn_date_string_into_date_format
 from analytics.signals import object_accessed_signal
 from analytics.utils import get_client_ip
-from handy_functions import turn_current_time_into_time_interval
-from datetime import date as date_function
+from datetime import datetime, timedelta, date as date_function
+from account_finance.email_sending import email_manager
+from apscheduler.schedulers.background import BackgroundScheduler
+from django.core.cache import cache
+from lesson.email_sending import lesson_email_manager
+import asyncio
+from asgiref.sync import sync_to_async
+from django.conf import settings
 
+
+lesson_email_notification = lesson_email_manager()
+
+ ##課前提醒排程功能分隔線##
+def send_email_one_day_before_booking_date():
+    email_info_dict = dict()
+    baseline_time = datetime.now()+timedelta(days=1) # 製作出明天的日期當基準
+    #baseline_time = datetime.now()+timedelta(days=5) # 測試用
+    # 篩選出年月日跟基準相同的課程
+    # st = time()
+    booking_lesson_queryset = lesson_booking_info.objects.filter(booking_status='confirmed', 
+                                                                booking_start_datetime__date = baseline_time)
+    # print(len(booking_lesson_queryset))
+    for each_class in booking_lesson_queryset:
+        class_time_datetime = each_class.booking_start_datetime
+        class_time_str = class_time_datetime.strftime('%Y-%m-%d %H:%M:%S')
+        email_info_dict['booking_date_and_time'] = class_time_str
+        lesson_obj = lesson_info.objects.get(id=each_class.lesson_id)
+        email_info_dict['lesson_title'] = lesson_obj.lesson_title
+        email_info_dict['teacher_authID'] =  each_class.teacher_auth_id
+        email_info_dict['student_authID'] =  each_class.student_auth_id
+        lesson_email_notification.send_student_remind_one_day_before_lesson(**email_info_dict)
+        lesson_email_notification.send_teacher_remind_one_day_before_lesson(**email_info_dict)
+    # print(f"lesson/views email_sending,booking_lesson_query consumed time test: {time()-st}")
+# 例項化
+scheduler = BackgroundScheduler()
+# 每間隔24小時執行一次, 只設定起始時間
+# st = time()
+
+scheduler.add_job(send_email_one_day_before_booking_date, 'interval',
+     hours = 24, start_date = '2021-02-02 18:41:00')
+   #,end_date = '2021-02-02 10:31:00' seconds, minutes, hours
+scheduler.start()
+# print(f"lesson/views email_sending, scheduler consumed time test: {time()-st}")
+##課前提醒排程功能分隔線##
 
 @login_required
 def lessons_main_page(request):
@@ -74,8 +120,7 @@ def get_lesson_cards_for_common_users(request):
     only_show_lessons_by_this_teacher_s_auth_id = \
         request.POST.get('only_show_lessons_by_this_teacher_s_auth_id', False)
     response = {}
-    if not check_if_all_variables_are_true(qty, user_auth_id,
-    keywords, filtered_by, ordered_by):
+    if not check_if_all_variables_are_true(qty, user_auth_id, keywords, filtered_by, ordered_by):
         # 之後等加入條件再改寫法 
         # 收取的資料不正確
         response['status'] = 'failed'
@@ -86,7 +131,7 @@ def get_lesson_cards_for_common_users(request):
     else:
         # 收取的資料正確，準備撈資料回傳
         # order_by 跟 filtered_by 暫時不寫
-        if int(qty) == -1:
+        if qty == '-1':
             # 不指定顯示數量，全部都要回傳
             qty = None
         else:
@@ -102,6 +147,7 @@ def get_lesson_cards_for_common_users(request):
         if if_there_was_any_filtering:
             # 代表user有輸入篩選資訊
             if the_lesson_manager.current_filtered_times is not None:
+                # 篩選老師可供預約的時段
                 # current_filtered_times >>
                 # [1, 2, 3, 4, 5, 10, 22, 35, 44....]
                 # 先看哪一些老師符合裡面的時段，然後列出這些老師所有的課程id即可
@@ -125,23 +171,30 @@ def get_lesson_cards_for_common_users(request):
                     lesson_info_selling_objects.filter(teacher__auth_id__in = matched_teacher_auth_ids)     
 
             if the_lesson_manager.current_filtered_price_per_hour is not None:
+                # 篩選課程的鐘點費用
                 lesson_info_selling_objects = lesson_info_selling_objects.filter(price_per_hour__gt=the_lesson_manager.current_filtered_price_per_hour[0]-1).filter(price_per_hour__lt=the_lesson_manager.current_filtered_price_per_hour[1]+1)
                 # 限制鐘點費需要介於(含)最高與最低之間
+
             if the_lesson_manager.current_filtered_subjects is not None:
+                # 篩選老師的課程主題/科目
                 for i, each_subject in enumerate(the_lesson_manager.current_filtered_subjects):
                     if i == 0:
                         query = Q(lesson_attributes__contains=each_subject)
                     else:
                         query.add(Q(lesson_attributes__contains=each_subject), Q.OR)
                 lesson_info_selling_objects = lesson_info_selling_objects.filter(query)
+
             if the_lesson_manager.current_filtered_target_students is not None:
+                # 篩選老師的家教學生對象
                 for i, each_target_student in enumerate(the_lesson_manager.current_filtered_target_students):
                     if i == 0:
                         query = Q(lesson_attributes__contains=each_target_student)
                     else:
                         query.add(Q(lesson_attributes__contains=each_target_student), Q.OR)
                 lesson_info_selling_objects = lesson_info_selling_objects.filter(query)
+
             if the_lesson_manager.current_filtered_tutoring_experience is not None:
+                # 篩選老師的家教經驗
                 for i, each_tutoring_experience in enumerate(the_lesson_manager.current_filtered_tutoring_experience):
                     if i == 0:
                         query = Q(tutor_experience=each_tutoring_experience)
@@ -149,16 +202,25 @@ def get_lesson_cards_for_common_users(request):
                         query.add(Q(tutor_experience=each_tutoring_experience), Q.OR)
                 matched_teacher_ids = teacher_profile.objects.filter(query).values_list('id', flat=True)
                 lesson_info_selling_objects = lesson_info_selling_objects.filter(teacher_id__in = matched_teacher_ids)
+
+            if the_lesson_manager.current_filtered_lesson_type is not None:
+                # 篩選該門課程的授課型態，線上或是實體
+                for i, each_lesson_type in enumerate(the_lesson_manager.current_filtered_lesson_type):
+                    if i == 0:
+                        query = Q(is_this_lesson_online_or_offline=each_lesson_type)
+                    else:
+                        query.add(Q(is_this_lesson_online_or_offline=each_lesson_type), Q.OR)
+                lesson_info_selling_objects = lesson_info_selling_objects.filter(query)
                 
         selling_lessons_ids = lesson_info_selling_objects.values_list('id', flat=True)
 
         user_s_all_favorite_lessons_ids = \
-            favorite_lessons.objects.filter(follower_auth_id = user_auth_id).values_list('lesson_id', flat=True)
-        if int(only_show_lessons_by_this_teacher_s_auth_id) == -1:
+            favorite_lessons.objects.values_list('lesson_id', flat=True).filter(follower_auth_id = user_auth_id)
+        if only_show_lessons_by_this_teacher_s_auth_id == '-1':
             # 所有老師的課程小卡都show出來
             if only_show_ones_favorites:
                 # 只show出用戶有收藏的上架中的課程小卡
-                ones_favorite_and_selling_lessons_set = lesson_card.objects.filter(id__in=user_s_all_favorite_lessons_ids).filter(corresponding_lesson_id__in=selling_lessons_ids)[:qty].values()
+                ones_favorite_and_selling_lessons_set = lesson_card.objects.values().filter(id__in=user_s_all_favorite_lessons_ids, corresponding_lesson_id__in=selling_lessons_ids)[:qty]
                 for each_lesson_card_object_values in ones_favorite_and_selling_lessons_set:
                     lesson_attributes = each_lesson_card_object_values
                     lesson_attributes['is_this_my_favorite_lesson'] = True
@@ -184,7 +246,7 @@ def get_lesson_cards_for_common_users(request):
             that_teacher_auth_id = int(only_show_lessons_by_this_teacher_s_auth_id)
             if only_show_ones_favorites:
                 # 只show出用戶有收藏的指定老師的上架中的課程小卡
-                ones_favorite_and_selling_lessons_set = lesson_card.objects.filter(teacher_auth_id=that_teacher_auth_id).filter(id__in=user_s_all_favorite_lessons_ids).filter(corresponding_lesson_id__in=selling_lessons_ids)[:qty].values()   
+                ones_favorite_and_selling_lessons_set = lesson_card.objects.values().filter(teacher_auth_id=that_teacher_auth_id, id__in=user_s_all_favorite_lessons_ids, corresponding_lesson_id__in=selling_lessons_ids)[:qty]
                 for each_lesson_card_object_values in ones_favorite_and_selling_lessons_set:
                     lesson_attributes = each_lesson_card_object_values
                     lesson_attributes['is_this_my_favorite_lesson'] = True
@@ -195,9 +257,9 @@ def get_lesson_cards_for_common_users(request):
                     _data.append(lesson_attributes)
             else:
                 # show出所有上架中的指定老師的課程小卡
-                lesson_card_objects_values_set = lesson_card.objects.filter(teacher_auth_id=that_teacher_auth_id).filter(corresponding_lesson_id__in = selling_lessons_ids)[:qty].values()
+                lesson_card_objects_values_set = lesson_card.objects.values().filter(teacher_auth_id=that_teacher_auth_id, corresponding_lesson_id__in = selling_lessons_ids)[:qty]
                 user_s_all_favorite_lessons_ids = \
-                    favorite_lessons.objects.filter(follower_auth_id = user_auth_id).values_list('lesson_id', flat=True)
+                    favorite_lessons.objects.values_list('lesson_id', flat=True).filter(follower_auth_id = user_auth_id)
                 
                 for each_lesson_card_object_values in lesson_card_objects_values_set:
                     lesson_attributes = each_lesson_card_object_values
@@ -366,14 +428,17 @@ def get_all_filtered_keys_and_values(request):
     filtered_target_students = the_lesson_manager.filtered_target_students
     filtered_times = the_lesson_manager.filtered_times
     filtered_tutoring_experience = the_lesson_manager.filtered_tutoring_experience
+    filtered_lesson_type = the_lesson_manager.filtered_lesson_type
+
     mapping_index = {
         0: 'filtered_subjects',
         1: 'filtered_target_students',
         2: 'filtered_times',
-        3: 'filtered_tutoring_experience'
+        3: 'filtered_tutoring_experience',
+        4: 'filtered_lesson_type',
     }
     for i, each_filtering in enumerate([filtered_subjects, filtered_target_students,
-    filtered_times, filtered_tutoring_experience]):
+    filtered_times, filtered_tutoring_experience, filtered_lesson_type]):
         # 'filtered_subjects': [
         #   {text:國文, value:0, select:False},
         #   {text:英文, value:1, select:False},
@@ -438,255 +503,421 @@ def import_lesson(request):
 
 @require_http_methods(['GET'])
 def return_lesson_details_for_teacher_who_created_it(request):
-    # http://127.0.0.1:8000/api/lesson/returnLessonDetailsForTeacherWhoCreatedIt/?action=editLesson&userID=2&lessonID=1
+    '''
+    回傳課程資訊讓老師進行編輯
+    '''
     response = dict()
     action = request.GET.get('action', False)
     teacher_auth_id = request.GET.get('userID', False)
     lesson_id = request.GET.get('lessonID', False)
-    the_lesson_manager = lesson_manager()
-    #print('action', action)
-    #print('teacher_auth_id', teacher_auth_id)
-    #print('lesson_id', lesson_id)
-
-    if action != 'editLesson':
-        response['status'] = 'failed'
-        response['errCode'] = 0
-        response['errMsg'] = 'Unknown Action'
-        response['data'] = None
-        return JsonResponse(response)
-    else:
-        # print('check1')
-        try:   
-            status, errCode, errMsg, _data = the_lesson_manager.return_lesson_details(
-                lesson_id=lesson_id,
-                user_auth_id = teacher_auth_id,
-                for_whom='teacher_who_created_it',
-            )
-           
-            response['status'] = status
-            response['errCode'] = errCode
-            response['errMsg'] = errMsg
-            response['data'] = _data
-            return JsonResponse(response)
-        except:
+    
+    if check_if_all_variables_are_true(action, teacher_auth_id, lesson_id):
+        # 有收到資料
+        
+        if action != 'editLesson':
+            # 不是編輯狀態
             response['status'] = 'failed'
-            response['errCode'] = 3
-            response['errMsg'] = 'Querying Failed.'
+            response['errCode'] = '5'
+            response['errMsg'] = '不好意思，系統出了一點問題，請您跟我們說一聲並且稍後試試看唷。'
             response['data'] = None
-            return JsonResponse(response)
+            
+        else:
+            try: 
+                # 開始回傳課程的資料
+                # 確認一下老師與該課程 match 與否
+                lesson_object = \
+                    lesson_info.objects.filter(id=lesson_id, teacher__auth_id=teacher_auth_id).first()
+                
+                if lesson_object is None:
+                    # 不 match
+                    response['status'] = 'failed'
+                    response['errCode'] = '1'
+                    response['errMsg'] = '不好意思，系統出了一點問題，請您跟我們說一聲並且稍後試試看唷。'
+                    response['data'] = None
+
+                else:
+                    # 是 match 的
+                     response['data'] = {
+                        'lessonID': lesson_id,
+                        'is_this_teacher_male': lesson_object.teacher.is_male,
+                        'big_title': lesson_object.big_title,
+                        'little_title': lesson_object.little_title,
+                        'title_color': lesson_object.title_color,
+                        'background_picture_code': lesson_object.background_picture_code,
+                        'background_picture_path': lesson_object.background_picture_path,
+                        'lesson_title': lesson_object.lesson_title,
+                        'price_per_hour': lesson_object.price_per_hour,
+                        'trial_class_price': lesson_object.trial_class_price,
+                        'discount_price': lesson_object.discount_price,
+                        'highlight_1': lesson_object.highlight_1,
+                        'highlight_2': lesson_object.highlight_2,
+                        'highlight_3': lesson_object.highlight_3,
+                        'lesson_intro': lesson_object.lesson_intro,
+                        'lesson_type': lesson_object.is_this_lesson_online_or_offline,  # 課程的型態
+                        'how_does_lesson_go': lesson_object.how_does_lesson_go,
+                        'target_students': lesson_object.target_students,
+                        'lesson_remarks': lesson_object.lesson_remarks,
+                        'syllabus': lesson_object.syllabus,
+                        'lesson_attributes': lesson_object.lesson_attributes,
+                        'lesson_avg_score': lesson_object.lesson_avg_score,
+                        'lesson_reviewed_times': lesson_object.lesson_reviewed_times,
+                        'selling_status': lesson_object.selling_status,
+                        'lesson_has_one_hour_package': lesson_object.lesson_has_one_hour_package,
+                        'best_sale': get_lesson_s_best_sale(lesson_id)
+                     }
+            
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+
+            except:
+                response['status'] = 'failed'
+                response['errCode'] = '2'
+                response['errMsg'] = '不好意思，系統出了一點問題，請您跟我們說一聲並且稍後試試看唷。'
+                response['data'] = None
+
+    else:
+        # 資料傳輸出錯
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統出了一點問題，請您跟我們說一聲並且稍後試試看唷。'
+        response['data'] = None
+    
+    return JsonResponse(response)
+
             
 
 @require_http_methods(['GET'])
 def return_lesson_details_for_browsing(request):
+    '''
+    要呈現給一般user看的課程詳細資料
+    '''
     response = dict()
-    the_lesson_manager = lesson_manager()
     action = request.GET.get('action', False)
-    teacher_auth_id = request.GET.get('userID', False)
+    user_auth_id = request.GET.get('userID', False)
     lesson_id = request.GET.get('lessonID', False)
+    
+    if check_if_all_variables_are_true(action, user_auth_id, lesson_id):
+        # 有收到資料
+        if action != 'browsing':
+            # 不是瀏覽
+            response['status'] = 'failed'
+            response['errCode'] = '5'
+            response['errMsg'] = '不好意思，系統出了一點問題，請您跟我們說一聲並且稍後試試看唷。'
+            response['data'] = None
+            
+        else:
+            try: 
+                # 開始回傳課程的資料
+                # 確認一下有沒有這門課
+                lesson_object = \
+                    lesson_info.objects.filter(id=lesson_id).first()
+                
+                if lesson_object is None:
+                    # 找不到該門課程
+                    response['status'] = 'failed'
+                    response['errCode'] = '1'
+                    response['errMsg'] = '不好意思，系統出了一點問題，請您跟我們說一聲並且稍後試試看唷。'
+                    response['data'] = None
 
-    if action != 'browsing':
+                else:
+                    # 有找到對應的課程
+                    # 找一下這個 user 收藏/最愛的課程
+                    if favorite_lessons.objects.filter(follower_auth_id=user_auth_id).exists() == False:
+                        # user 沒有任何 收藏/最愛的課程
+                        is_favorite = False
+                    else:
+                        # user 有收藏/最愛的課程
+                        this_user_favorite_lessons_s_ids = \
+                            favorite_lessons.objects.filter(follower_auth_id=user_auth_id).values_list('lesson_id', flat=True)
+                        is_favorite = int(lesson_id) in this_user_favorite_lessons_s_ids
+
+                    response['data'] = {
+                        'lessonID': lesson_id,
+                        'teacher_auth_id': lesson_object.teacher.auth_id,
+                        'is_this_my_favorite_lesson': is_favorite,
+                        'teacher_nickname': lesson_object.teacher.nickname,
+                        'is_this_teacher_male': lesson_object.teacher.is_male,
+                        'big_title': lesson_object.big_title,
+                        'little_title': lesson_object.little_title,
+                        'title_color': lesson_object.title_color,
+                        'background_picture_code': lesson_object.background_picture_code,
+                        'background_picture_path': lesson_object.background_picture_path,
+                        'lesson_title': lesson_object.lesson_title,
+                        'price_per_hour': lesson_object.price_per_hour,
+                        'trial_class_price': lesson_object.trial_class_price,
+                        'discount_price': lesson_object.discount_price,
+                        'highlight_1': lesson_object.highlight_1,
+                        'highlight_2': lesson_object.highlight_2,
+                        'highlight_3': lesson_object.highlight_3,
+                        'lesson_intro': lesson_object.lesson_intro,
+                        'lesson_type': lesson_object.is_this_lesson_online_or_offline,  # 課程的型態
+                        'how_does_lesson_go': lesson_object.how_does_lesson_go,
+                        'target_students': lesson_object.target_students,
+                        'lesson_remarks': lesson_object.lesson_remarks,
+                        'syllabus': lesson_object.syllabus,
+                        'lesson_attributes': lesson_object.lesson_attributes,
+                        'lesson_avg_score': lesson_object.lesson_avg_score,
+                        'lesson_reviewed_times': lesson_object.lesson_reviewed_times,
+                        'selling_status': lesson_object.selling_status,
+                        'lesson_has_one_hour_package': lesson_object.lesson_has_one_hour_package,
+                        'best_sale': get_lesson_s_best_sale(lesson_id)
+                     }
+            
+                    response['status'] = 'success'
+                    response['errCode'] = None
+                    response['errMsg'] = None
+
+            except:
+                response['status'] = 'failed'
+                response['errCode'] = '2'
+                response['errMsg'] = '不好意思，系統出了一點問題，請您跟我們說一聲並且稍後試試看唷。'
+                response['data'] = None
+    else:
+        # 資料傳輸出錯
         response['status'] = 'failed'
         response['errCode'] = '0'
-        response['errMsg'] = 'Unknown Action'
+        response['errMsg'] = '不好意思，系統出了一點問題，請您跟我們說一聲並且稍後試試看唷。'
         response['data'] = None
-        return JsonResponse(response)
-    else:
-        try:
-            status, errCode, errMsg, _data = the_lesson_manager.return_lesson_details(
-                lesson_id=int(lesson_id),
-                user_auth_id = teacher_auth_id,
-                for_whom='common_users',
-            )
-            response['status'] = status
-            response['errCode'] = errCode
-            response['errMsg'] = errMsg
-            response['data'] = _data
-            return JsonResponse(response)
-        except:
-            response['status'] = 'failed'
-            response['errCode'] = '3'
-            response['errMsg'] = 'Querying Failed.'
-            response['data'] = None
-            return JsonResponse(response)
+    
+    return JsonResponse(response)
 
 
 @require_http_methods(['POST'])
 def create_or_edit_a_lesson(request):
-
+    '''
+    用來建立課程或是修改課程的api。
+    '''
     response = dict()
     action = request.POST.get('action', False)
     teacher_auth_id = request.POST.get('userID', False)
-    lesson_id = request.POST.get('lessonID', False)  # 新增沒有, 修改才有
-    the_leeson_manager = lesson_manager()
+    lesson_id = request.POST.get('lessonID', False)  # 新增的話為空值, 修改才有
+    big_title = request.POST.get('big_title', False)
+    little_title = request.POST.get('little_title', False)
+    title_color = request.POST.get('title_color', False)
+    background_picture_code = request.POST.get('background_picture_code', False)
+    lesson_title = request.POST.get('lesson_title', False)
+    price_per_hour = request.POST.get('price_per_hour', False)
+    discount_price = request.POST.get('discount_price', False)
+    trial_class_price = request.POST.get('trial_class_price', False)
+    highlight_1 = request.POST.get('highlight_1', False)
+    highlight_2 = request.POST.get('highlight_2', False)
+    highlight_3 = request.POST.get('highlight_3', False)
+    lesson_intro = request.POST.get('lesson_intro', False)
+    how_does_lesson_go = request.POST.get('how_does_lesson_go', False)
+    target_students = request.POST.get('target_students', False)
+    lesson_remarks = request.POST.get('lesson_remarks', False)
+    syllabus = request.POST.get('syllabus', False)
+    lesson_attributes = request.POST.get('lesson_attributes', False)
+    selling_status = request.POST.get('selling_status', False)
+    lesson_has_one_hour_package = request.POST.get('lesson_has_one_hour_package', False)
+    is_this_lesson_online_or_offline = request.POST.get('lesson_type', False)
 
-    if not check_if_all_variables_are_true(action, teacher_auth_id):
-        # 萬一有變數沒有傳到後端來的話...
+    # the_leeson_manager = lesson_manager()
+
+    if check_if_all_variables_are_true(action, teacher_auth_id, big_title, little_title,
+    title_color, background_picture_code, lesson_title, price_per_hour, trial_class_price, discount_price,
+    highlight_1, highlight_2, highlight_3, lesson_intro, how_does_lesson_go, target_students, lesson_remarks,
+    syllabus, lesson_attributes, selling_status, lesson_has_one_hour_package, is_this_lesson_online_or_offline):
+        # 有成功收到所有資料
+        # 先確認該老師存不存在
+        teacher_object = teacher_profile.objects.filter(auth_id=teacher_auth_id).first()
+
+        if teacher_object is None:
+            # 該老師不存在
+            response['status'] = 'failed'
+            response['errCode'] = 1
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        else:
+            # 有找到該名老師
+            # 確認是要新建課程或是修改課程
+            if action == 'createLesson':
+                # 是新建課程
+                # 要同步建立老師的lessons資料夾, 下方的lesson_id資料夾，如
+                # user_uploaded/teachers/username/lessons/3(<< which is the lesson id)
+                lessons_folder_path = \
+                    f'user_upload/teachers/{teacher_object.username}/lessons'
+
+                if os.path.isdir(lessons_folder_path) == False:
+                    # 該資料夾尚未被建立
+                    os.mkdir(lessons_folder_path)
+                
+                new_lesson_object = \
+                    lesson_info.objects.create(
+                        teacher = teacher_object,
+                        big_title = big_title,
+                        little_title = little_title,
+                        title_color = title_color,
+                        background_picture_code = background_picture_code,
+                        background_picture_path = '',
+                        lesson_title = lesson_title,
+                        price_per_hour = price_per_hour,
+                        lesson_has_one_hour_package = lesson_has_one_hour_package=='true',
+                        trial_class_price = trial_class_price,
+                        discount_price = discount_price,
+                        highlight_1 = highlight_1,
+                        highlight_2 = highlight_2,
+                        highlight_3 = highlight_3,
+                        lesson_intro = lesson_intro,
+                        how_does_lesson_go = how_does_lesson_go,
+                        is_this_lesson_online_or_offline = is_this_lesson_online_or_offline,
+                        target_students = target_students,
+                        lesson_remarks = lesson_remarks,
+                        syllabus = syllabus,
+                        lesson_attributes = lesson_attributes,
+                        lesson_avg_score = 0.0,
+                        lesson_reviewed_times = 0,
+                        selling_status = selling_status
+                    )  # 課程建立完成(尚未儲存寫入)，接著要確認用戶有否上傳背景圖片
+
+                lesson_folder_path = \
+                    f"{lessons_folder_path}/{str(new_lesson_object.id)}"
+                if not os.path.isdir(lesson_folder_path):
+                    # 沒有該門課程專屬的資料夾
+                    os.mkdir(lesson_folder_path)
+
+                # 判斷老師是否有上傳圖片
+                has_teacher_uploaded_lesson_background_picture = \
+                    background_picture_code == '99'
+                if has_teacher_uploaded_lesson_background_picture:
+                    # 有上傳圖片
+                    uploaded_background_picture = request.FILES["background_picture_path"]
+                    fs = FileSystemStorage(location=lesson_folder_path)
+                    file_extension = uploaded_background_picture.name.split('.')[-1]
+                    fs.save(f"customized_lesson_background.{file_extension}" , uploaded_background_picture) # 檔名統一改成thumbnail開頭
+                    new_lesson_object.background_picture_path = \
+                        f"/{lesson_folder_path}/customized_lesson_background.{file_extension}"
+                
+                new_lesson_object.save()
+                # 成功建立課程
+                # 接下來還有 「課程小卡更新」 以及 「課程方案更新」兩件事情要做
+                # 是不是應該移到 models 改用 signal 來做呢 ><
+
+                object_accessed_signal.send(
+                    sender='create_or_edit_a_lesson',
+                    auth_id=teacher_auth_id,
+                    ip_address=get_client_ip(request),
+                    url_path=request.META.get('PATH_INFO'),
+                    model_name='lesson_info',
+                    object_name=request.POST.get('lesson_title'),
+                    object_id=new_lesson_object.id,
+                    user_agent=request.META.get('HTTP_USER_AGENT'),
+                    action_type='create lesson after signup',
+                    remark=None) # 傳送訊號到用戶行為TABLE
+
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = new_lesson_object.id
+
+            elif action == 'editLesson':
+                # 是編輯課程
+                # 先確認一下有沒有該門課程
+                lesson_object = lesson_info.objects.filter(id=lesson_id).first()
+
+                if lesson_object is None:
+                    # 找不到該門課程
+                    response['status'] = 'failed'
+                    response['errCode'] = 2
+                    response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                    response['data'] = lesson_id
+                
+                else:
+                    # 該門課程存在
+                    # 確認一下老師與課程能不能對應
+                    if lesson_object.teacher.auth_id != teacher_object.auth_id:
+                        # 不對應
+                        response['status'] = 'failed'
+                        response['errCode'] = 3
+                        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                        response['data'] = lesson_object.teacher.auth_id
+
+                    else:
+                        # 是對應的，可以開始進行內容改動了
+                        lessons_folder_path = \
+                            f'user_upload/teachers/{teacher_object.username}/lessons'
+                        lesson_folder_path = \
+                            f"{lessons_folder_path}/{str(lesson_object.id)}"
+
+                        if os.path.isdir(lessons_folder_path) == False:
+                            # 該資料夾尚未被建立
+                            os.mkdir(lessons_folder_path)
+
+                        if not os.path.isdir(lesson_folder_path):
+                            # 沒有該門課程專屬的資料夾
+                            os.mkdir(lesson_folder_path)
+
+                        # 判斷老師是否有上傳圖片
+                        has_teacher_uploaded_lesson_background_picture = \
+                            background_picture_code == '99'
+
+                        if has_teacher_uploaded_lesson_background_picture:
+                            # 有上傳圖片
+                            uploaded_background_picture = request.FILES["background_picture_path"]
+                            fs = FileSystemStorage(location=lesson_folder_path)
+                            file_extension = uploaded_background_picture.name.split('.')[-1]
+                            fs.save(f"customized_lesson_background.{file_extension}" , uploaded_background_picture) # 檔名統一改成thumbnail開頭
+                            lesson_object.background_picture_path = \
+                                f"/{lesson_folder_path}/customized_lesson_background.{file_extension}"
+
+                        lesson_object.big_title = big_title
+                        lesson_object.little_title = little_title
+                        lesson_object.title_color = title_color
+                        lesson_object.background_picture_code = background_picture_code
+                        # lesson_object.background_picture_path = background_picture_path
+                        lesson_object.lesson_title = lesson_title
+                        lesson_object.price_per_hour = price_per_hour
+                        lesson_object.lesson_has_one_hour_package = lesson_has_one_hour_package=='true'
+                        lesson_object.trial_class_price = trial_class_price
+                        lesson_object.discount_price = discount_price
+                        lesson_object.highlight_1 = highlight_1
+                        lesson_object.highlight_2 = highlight_2
+                        lesson_object.highlight_3 = highlight_3
+                        lesson_object.lesson_intro = lesson_intro
+                        lesson_object.how_does_lesson_go = how_does_lesson_go
+                        lesson_object.is_this_lesson_online_or_offline = is_this_lesson_online_or_offline
+                        lesson_object.target_students = target_students
+                        lesson_object.lesson_remarks = lesson_remarks
+                        lesson_object.syllabus = syllabus
+                        lesson_object.lesson_attributes = lesson_attributes
+                        lesson_object.selling_status = selling_status
+
+                        lesson_object.save()
+                        # 成功編輯課程
+                        # 接下來還有 「課程小卡更新」 以及 「課程方案更新」兩件事情要做
+                        # 是不是應該移到 models 改用 signal 來做呢 ><
+
+                        object_accessed_signal.send(
+                            sender='create_or_edit_a_lesson',
+                            auth_id=teacher_auth_id,
+                            ip_address=get_client_ip(request),
+                            url_path=request.META.get('PATH_INFO'),
+                            model_name='lesson_info',
+                            object_name=request.POST.get('lesson_title'),
+                            object_id=lesson_object.id,
+                            user_agent=request.META.get('HTTP_USER_AGENT'),
+                            action_type='edit lesson',
+                            remark=None) # 傳送訊號到用戶行為TABLE
+
+                        response['status'] = 'success'
+                        response['errCode'] = None
+                        response['errMsg'] = None
+                        response['data'] = lesson_object.id
+
+            else:
+                # 接收到不知道幹嘛的action
+                response['status'] = 'failed'
+                response['errCode'] = 4
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                response['data'] = action
+                        
+    else:
+        # 資料傳輸錯誤
         response['status'] = 'failed'
         response['errCode'] = 0
         response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
-        return JsonResponse(response)
-
-    if action == 'createLesson':
-        # 課程新增
-        response['status'], response['errCode'], response['errMsg'], response['data']= \
-            the_leeson_manager.setup_a_lesson(
-                teacher_auth_id, request, None, action)
-
-        object_accessed_signal.send(
-            sender='create_or_edit_a_lesson',
-            auth_id=teacher_auth_id,
-            ip_address=get_client_ip(request),
-            url_path=request.META.get('PATH_INFO'),
-            model_name='lesson_info',
-            object_name=request.POST.get('lesson_title'),
-            object_id=response.get('data'),
-            user_agent=request.META.get('HTTP_USER_AGENT'),
-            action_type='create lesson after signup',
-            remark=None) # 傳送訊號
-
-        if response['status'] == 'success':
-            try:
-                # 確定成功再來更新 sales_sets
-                # 先把一些共同的欄位合併在一個list內
-                the_lesson_info_object = lesson_info.objects.filter(id=response['data']).first()
-                shared_columns = {
-                    'lesson_id': response['data'],
-                    'teacher_auth_id': the_lesson_info_object.teacher.auth_id,
-                    'price_per_hour': the_lesson_info_object.price_per_hour 
-                }
-                
-                if the_lesson_info_object.selling_status == 'selling':
-                    # 假設是 status: selling 再來進行，反之則不必
-                    # 即使非 selling ，也不需要 inactivate old sales_sets ，因為是新建立的課程
-
-                    # 要先確定 1.是否有試課方案  2.是否有單堂方案  3.其他方案(\d*:\d*的格式) 
-                    if the_lesson_info_object.trial_class_price != -999:
-                        # 有試課方案
-                        shared_columns['sales_set'] = 'trial'
-                        shared_columns['total_hours_of_the_sales_set'] = 1
-                        shared_columns['price_per_hour_after_discount'] = the_lesson_info_object.trial_class_price
-                        shared_columns['total_amount_of_the_sales_set'] = the_lesson_info_object.trial_class_price
-                        
-                        lesson_sales_sets.objects.create(
-                            **shared_columns
-                        ).save()
-                    
-                    if the_lesson_info_object.lesson_has_one_hour_package == True:
-                        # 有單堂方案
-                        shared_columns['sales_set'] = 'no_discount'
-                        shared_columns['total_hours_of_the_sales_set'] = 1
-                        shared_columns['price_per_hour_after_discount'] = the_lesson_info_object.price_per_hour
-                        shared_columns['total_amount_of_the_sales_set'] = the_lesson_info_object.price_per_hour
-
-                        lesson_sales_sets.objects.create(
-                            **shared_columns
-                        ).save()
-
-                    if len(the_lesson_info_object.discount_price) > 2:
-                        # 有其他方案
-                        for each_hours_discount_set in [_ for _ in the_lesson_info_object.discount_price.split(';') if len(_) > 0]:
-                            
-                            hours, discount_price = each_hours_discount_set.split(':')
-                            shared_columns['sales_set'] = each_hours_discount_set
-                            shared_columns['total_hours_of_the_sales_set'] = int(hours)
-                            shared_columns['price_per_hour_after_discount'] = round(the_lesson_info_object.price_per_hour * int(discount_price) / 100)
-                            shared_columns['total_amount_of_the_sales_set'] = round(the_lesson_info_object.price_per_hour * int(hours) * int(discount_price) / 100)
-
-                            lesson_sales_sets.objects.create(
-                                **shared_columns
-                            ).save()
-            except Exception as e:
-                print(f'Exception: {e}')
-                response['status'] = 'failed'
-                response['errCode'] = '5'
-                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
-                response['data'] = None
-
-        return JsonResponse(response)
-
-    elif action == 'editLesson':
-        response['status'], response['errCode'], response['errMsg'], response['data']= \
-            the_leeson_manager.setup_a_lesson(
-                teacher_auth_id, request, lesson_id, action)
-
-        if response['status'] == 'success':
-            # 確定成功再來更新 sales_sets
-            try:    
-                # 先把一些共同的欄位合併在一個list內
-                the_lesson_info_object = lesson_info.objects.filter(id=response['data']).first()
-                shared_columns = {
-                    'lesson_id': response['data'],
-                    'teacher_auth_id': the_lesson_info_object.teacher.auth_id,
-                    'price_per_hour': the_lesson_info_object.price_per_hour 
-                }
-                # 要先將舊版的 sales_sets 狀態設成 closed >> is_open: False
-                # 但如果只是修改 selling_status 呢? >>
-                #   這樣好了，只有當 selling_status 為 "selling" 時才紀錄 lesson_sales_sets，
-                #   其他時候只要把存在的 sales_sets 改為 is_open: False 就好了
-                if the_lesson_info_object.selling_status == 'selling':
-                    
-                    # 先將舊的 sales_sets inactivate
-                    for each_sales_set in lesson_sales_sets.objects.filter(lesson_id=response['data']).filter(is_open=True):
-                        setattr(each_sales_set, 'is_open', False)
-                        each_sales_set.save()
-
-                    # 要確定 1.是否有試課方案  2.是否有單堂方案  3.其他方案(\d*:\d*的格式)
-                    if the_lesson_info_object.trial_class_price != -999:
-                        # 有試課方案
-                        shared_columns['sales_set'] = 'trial'
-                        shared_columns['total_hours_of_the_sales_set'] = 1
-                        shared_columns['price_per_hour_after_discount'] = the_lesson_info_object.trial_class_price
-                        shared_columns['total_amount_of_the_sales_set'] = the_lesson_info_object.trial_class_price
-                        
-                        lesson_sales_sets.objects.create(
-                            **shared_columns
-                        ).save()
-                    
-                    if the_lesson_info_object.lesson_has_one_hour_package == True:
-                        # 有單堂方案
-                        shared_columns['sales_set'] = 'no_discount'
-                        shared_columns['total_hours_of_the_sales_set'] = 1
-                        shared_columns['price_per_hour_after_discount'] = the_lesson_info_object.price_per_hour
-                        shared_columns['total_amount_of_the_sales_set'] = the_lesson_info_object.price_per_hour
-
-                        lesson_sales_sets.objects.create(
-                            **shared_columns
-                        ).save()
-
-                    if len(the_lesson_info_object.discount_price) > 2:
-                        # 有其他方案
-                        for each_hours_discount_set in [_ for _ in the_lesson_info_object.discount_price.split(';') if len(_) > 0]:
-                            
-                            hours, discount_price = each_hours_discount_set.split(':')
-                            shared_columns['sales_set'] = each_hours_discount_set
-                            shared_columns['total_hours_of_the_sales_set'] = int(hours)
-                            shared_columns['price_per_hour_after_discount'] = round(the_lesson_info_object.price_per_hour * int(discount_price) / 100)
-                            shared_columns['total_amount_of_the_sales_set'] = round(the_lesson_info_object.price_per_hour * int(hours) * int(discount_price) / 100)
-
-                            lesson_sales_sets.objects.create(
-                                **shared_columns
-                            ).save()
-                else:
-                    # 因為最新的課程狀態不是 selling ，因此把 sales_sets 取消 active 就好了
-                    for each_sales_set in lesson_sales_sets.objects.filter(lesson_id=response['data']).filter(is_open=True):
-                        setattr(each_sales_set, 'is_open', False)
-                        each_sales_set.save()
-                            
-            except Exception as e:
-                print(f'Exception: {e}')
-                response['status'] = 'failed'
-                response['errCode'] = '5'
-                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
-                response['data'] = None  
-                
-        return JsonResponse(response)
-
-    else:
-        response['status'] = 'failed'
-        response['errCode'] = 1
-        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
-        response['data'] = None
-        return JsonResponse(response)
+    
+    return JsonResponse(response)
 
 
 @require_http_methods(['POST'])
@@ -695,7 +926,6 @@ def set_lesson_s_status(request):
     action = request.POST.get('selling_status', False)
     teacher_auth_id = request.POST.get('userID', False)
     lesson_id = request.POST.get('lessonID', False) 
-    #print(action, teacher_auth_id, lesson_id)
 
     if not check_if_all_variables_are_true(action, teacher_auth_id, lesson_id):
         response['status'] = 'failed'
@@ -1217,7 +1447,7 @@ def booking_lessons(request):
                 # 先確認一下該用戶目前有沒有可用的 "試教" 預約
                 student_available_lesson_sets_ids = \
                     list(student_remaining_minutes_of_each_purchased_lesson_set.objects.values_list(
-                        'lesson_set_id', flat=True).filter(
+                        'lesson_sales_set_id', flat=True).filter(
                         student_auth_id=student_auth_id, lesson_id=lesson_id, 
                     ).exclude(available_remaining_minutes=0))
                 available_purchased_trial_lesson_sales_sets = \
@@ -1260,8 +1490,9 @@ def booking_lessons(request):
                                 student_auth_id=student_auth_id
                             ).exclude(
                                 available_remaining_minutes=0
-                            ).order_by('available_remaining_minutes')
-                        # 按照剩餘時數，由小到大排序，因為比較少的要先用掉
+                            ).order_by('created_time')
+                        # 按照剩餘時數，由小到大排序，因為比較少的要先用掉  >> WRONG 2021.01.21
+                        # 要按照時間排序，先進先出才對
 
                         how_many_does_this_booking_minutes_leave = this_booking_minutes
 
@@ -1291,17 +1522,26 @@ def booking_lessons(request):
                                 new_booking_info_list.append(
                                     lesson_booking_info(
                                         lesson_id = lesson_id,
-                                        teacher_auth_id = student_availbale_purchased_lesson_sets.first().teacher_auth_id,
+                                        teacher_auth_id = each_set.teacher_auth_id,
                                         student_auth_id = student_auth_id,
                                         booked_by = 'student',
                                         last_changed_by = 'student',
-                                        booking_set_id = student_availbale_purchased_lesson_sets.first().lesson_set_id,
+                                        booking_set_id = each_set.lesson_sales_set_id,
                                         remaining_minutes = (available_remaining_minutes - this_booking_minutes),
                                         booking_date_and_time = f'{each_date}:{each_continuous_time};',
+                                        booking_start_datetime = turn_first_datetime_string_into_time_format(f'{each_date}:{each_continuous_time};'),
                                         booking_status = 'to_be_confirmed'
                                     ))
                         lesson_booking_info.objects.bulk_create(new_booking_info_list)
                         
+                        # 寄出一封通知信給老師,提醒老師要來確認時間
+                        email_notification = email_manager()
+                        email_notification.send_teacher_when_student_booking_his_lesson(
+                            teacher_authID = each_set.teacher_auth_id,
+                            student_authID = student_auth_id,
+                            lesson_id = lesson_id)
+
+
                         response['status'] = 'success'
                         response['errCode'] = None
                         response['errMsg'] = None
@@ -1322,10 +1562,10 @@ def booking_lessons(request):
                         # 先找到試教方案set的id!!!!!!
                         # 將學生的該方案先預扣預約時數，因為是試教，故全部扣除
                         the_target_student_set_of_available_remaining_minutes_of_each_purchased_lesson_set = \
-                            student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
-                                lesson_set_id=available_purchased_trial_lesson_sales_sets.id,
+                            student_remaining_minutes_of_each_purchased_lesson_set.objects.get(
+                                lesson_sales_set_id=available_purchased_trial_lesson_sales_sets.id,
                                 student_auth_id=student_auth_id,
-                                lesson_id=lesson_id).first()
+                                lesson_id=lesson_id)
                         
                         the_target_student_set_of_available_remaining_minutes_of_each_purchased_lesson_set.available_remaining_minutes = 0
                         the_target_student_set_of_available_remaining_minutes_of_each_purchased_lesson_set.withholding_minutes = 30
@@ -1343,10 +1583,20 @@ def booking_lessons(request):
                             booking_set_id = available_purchased_trial_lesson_sales_sets.id,
                             remaining_minutes = 0,  # 因為是試教
                             booking_date_and_time = f'{[*booking_date_times_dict][0]}:{[*booking_date_times_dict.values()][0][0]};',
+                            booking_start_datetime = turn_first_datetime_string_into_time_format(
+                                f'{[*booking_date_times_dict][0]}:{[*booking_date_times_dict.values()][0][0]};'
+                                ),
                             booking_status = 'to_be_confirmed'
                         )
                         new_booking_info.save()
                         
+                        # 寄出一封通知信給老師,提醒老師要來確認時間
+                        email_notification = email_manager()
+                        email_notification.send_teacher_when_student_booking_his_lesson(
+                            teacher_authID = the_target_student_set_of_available_remaining_minutes_of_each_purchased_lesson_set.teacher_auth_id,
+                            student_authID = student_auth_id,
+                            lesson_id = lesson_id)
+
                         response['status'] = 'success'
                         response['errCode'] = None
                         response['errMsg'] = None
@@ -1372,6 +1622,7 @@ def changing_lesson_booking_status(request):
     user_auth_id = request.POST.get('userID', False)
     lesson_booking_info_id = request.POST.get('bookingID', False)
     lesson_booking_info_status = request.POST.get('bookingStatus', False)
+
     
     if check_if_all_variables_are_true(user_auth_id, lesson_booking_info_id, lesson_booking_info_status):
         # 檢查一下這個 user_auth_id 應該要屬於老師或是學生，兩者其一
@@ -1401,6 +1652,8 @@ def changing_lesson_booking_status(request):
             else:
                 # 有該預約紀錄
                 which_one_changes_it = 'student' if the_teacher is None else 'teacher'
+                character_to_mandarin = lambda x: '老師' if x=='teacher' else '學生'
+                # 為了將上面的英文角色轉成中文
                 if lesson_booking_info_status == 'confirmed':
                     # 要怎麼讓 lesson_sets 那邊 +1 呢 > <
 
@@ -1440,6 +1693,9 @@ def changing_lesson_booking_status(request):
                                 each_booking_info_object.booking_date_and_time[:-1].split(':')[1].split(',')
                             if any(_ in each_booking_info_object_s_time_splited_as_list for _ in the_time_string_splited_as_list):
                                 # 有重疊到，需要拒絕，並返還那些人的預扣時數
+                                # 這裡應該要在remark寫上系統婉拒的而非老師婉拒
+                                each_booking_info_object.remark = \
+                                    f'{date_function.today()} 系統自動取消與預定課程衝突的預約'
                                 each_booking_info_object.last_changed_by = 'teacher'
                                 each_booking_info_object.booking_status = 'canceled'
                                 each_booking_info_object.save()
@@ -1452,7 +1708,7 @@ def changing_lesson_booking_status(request):
                                     student_remaining_minutes_trial_object = \
                                         student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
                                             lesson_id=each_booking_info_object.lesson_id,
-                                            lesson_set_id=each_booking_info_object.booking_set_id,
+                                            lesson_sales_set_id=each_booking_info_object.booking_set_id,
                                             available_remaining_minutes=0
                                         ).first()  # 因為理論上一門課只會有一門試教，所以可以直接拿 first，且其 available_remaining_minutes 必為 0
 
@@ -1471,7 +1727,7 @@ def changing_lesson_booking_status(request):
                                     student_remaining_minutes_non_trial_objects = \
                                         student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
                                             lesson_id=each_booking_info_object.lesson_id,
-                                            lesson_set_id__in=non_trial_this_lesson_sales_set_ids,
+                                            lesson_sales_set_id__in=non_trial_this_lesson_sales_set_ids,
                                         ).exclude(withholding_minutes=0).order_by('-last_changed_time')
 
                                     this_booked_times_in_minutes = booking_date_time_to_minutes_and_cleansing(
@@ -1499,8 +1755,20 @@ def changing_lesson_booking_status(request):
                                                 each_student_remaining_minutes_non_trial_object.withholding_minutes
                                             each_student_remaining_minutes_non_trial_object.withholding_minutes = 0
                                             each_student_remaining_minutes_non_trial_object.save()
-                                
 
+                    # 寄通知信給學生,通知他老師接受了預約,目前理論上只有老師會回覆主動發起的學生這種情況
+                    student_obj = student_profile.objects.filter(auth_id = that_lesson_booking_info.student_auth_id).first()
+                    teacher_obj = teacher_profile.objects.filter(auth_id = that_lesson_booking_info.teacher_auth_id).first()
+                    send_email_info = {
+                        'student_authID' : student_obj.auth_id,
+                        'teacher_nickname' : teacher_obj.nickname,
+                        'lesson_title' : lesson_info.objects.get(id = that_lesson_booking_info.lesson_id).lesson_title}
+                    send_email_teacher_accept_thread = Thread(
+                        target = lesson_email_notification.send_student_remind_teacher_responded_the_booking,
+                        kwargs = send_email_info)
+                    send_email_teacher_accept_thread.start()
+                    
+                                
                     response['status'] = 'success'
                     response['errCode'] = None
                     response['errMsg'] = None
@@ -1510,6 +1778,53 @@ def changing_lesson_booking_status(request):
                     # 除了更改狀態以外，也要記得將預扣時數返還
                     # 除此之外，也需要將老師原本已經確認預約的時段取消、變成空閒時段
 
+                    # 這裡要確認一下在 canceled 之前，究竟是雙方都確認預約了 >> 此時是取消預約  
+                    # 或是其中一方發送預約邀請  >>  此時是婉拒預約
+
+                    if that_lesson_booking_info.booking_status == 'confirmed':
+                        that_lesson_booking_info.remark = \
+                            f'{date_function.today()} {character_to_mandarin(which_one_changes_it)}取消預定課程'
+                        student_obj = student_profile.objects.filter(auth_id = that_lesson_booking_info.student_auth_id).first()
+                        teacher_obj = teacher_profile.objects.filter(auth_id = that_lesson_booking_info.teacher_auth_id).first()
+                        # 寄信通知雙方有人取消課程
+                        send_student_email_info = {
+                            'user_email_address':student_obj.username,
+                            'user_nickname' : student_obj.nickname,
+                            'lesson_title' : lesson_info.objects.get(id = that_lesson_booking_info.lesson_id).lesson_title
+                            }
+                        
+                        send_teacher_email_info = {
+                            'user_email_address':teacher_obj.username,
+                            'user_nickname' : teacher_obj.nickname,
+                            'lesson_title' : lesson_info.objects.get(id = that_lesson_booking_info.lesson_id).lesson_title
+                            }
+                       
+                        send_email_studnet_someone_canceld_the_booking = Thread(
+                            target = lesson_email_notification.send_student_and_teacher_someone_canceld_the_booking,
+                            kwargs = send_student_email_info
+                            )
+                        send_email_studnet_someone_canceld_the_booking.start()  
+
+                        send_email_teacher_someone_canceld_the_booking = Thread(
+                            target = lesson_email_notification.send_student_and_teacher_someone_canceld_the_booking,
+                            kwargs = send_teacher_email_info
+                            )
+                        send_email_teacher_someone_canceld_the_booking.start()
+
+                    elif that_lesson_booking_info.booking_status == 'to_be_confirmed':
+                        that_lesson_booking_info.remark = \
+                            f'{date_function.today()} {character_to_mandarin(which_one_changes_it)}婉拒預約'
+                        # 寄通知信給學生,通知他老師婉拒預約,目前理論上只有老師會婉拒主動發起的學生這種情況
+                        student_obj = student_profile.objects.filter(auth_id = that_lesson_booking_info.student_auth_id).first()
+                        teacher_obj = teacher_profile.objects.filter(auth_id = that_lesson_booking_info.teacher_auth_id).first()
+                        send_email_info = {'student_authID' : student_obj.auth_id,
+                            'teacher_nickname' : teacher_obj.nickname,
+                            'lesson_title' : lesson_info.objects.get(id = that_lesson_booking_info.lesson_id).lesson_title}
+                        send_email_teacher_declined_thread = Thread(
+                            target = lesson_email_notification.send_student_remind_teacher_responded_the_booking,
+                            kwargs = send_email_info)
+                        send_email_teacher_declined_thread.start()
+                    
                     that_lesson_booking_info.last_changed_by = which_one_changes_it
                     that_lesson_booking_info.booking_status = lesson_booking_info_status
                     that_lesson_booking_info.save()
@@ -1523,7 +1838,7 @@ def changing_lesson_booking_status(request):
                         student_remaining_minutes_trial_object = \
                             student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
                                 lesson_id=that_lesson_booking_info.lesson_id,
-                                lesson_set_id=that_lesson_booking_info.booking_set_id,
+                                lesson_sales_set_id=that_lesson_booking_info.booking_set_id,
                                 available_remaining_minutes=0
                             ).first()  # 因為理論上一門課只會有一門試教，所以可以直接拿 first，且其 available_remaining_minutes 必為 0
 
@@ -1548,7 +1863,7 @@ def changing_lesson_booking_status(request):
                         student_remaining_minutes_non_trial_objects = \
                             student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
                                 lesson_id=that_lesson_booking_info.lesson_id,
-                                lesson_set_id__in=non_trial_this_lesson_sales_set_ids,
+                                lesson_sales_set_id__in=non_trial_this_lesson_sales_set_ids,
                             ).exclude(withholding_minutes=0).order_by('-last_changed_time')
 
                         this_booked_times_in_minutes = booking_date_time_to_minutes_and_cleansing(
@@ -1631,7 +1946,7 @@ def get_student_s_available_remaining_minutes(request):
                 lesson_id=lesson_id, sales_set='trial')
 
         student_all_available_set_ids = \
-            all_available_remaining_minutes_queryset.values_list('lesson_set_id', flat=True)
+            all_available_remaining_minutes_queryset.values_list('lesson_sales_set_id', flat=True)
         
         all_trial_set_ids_of_the_lesson = \
                 all_trial_sales_sets_of_this_lesson_query_set.values_list('id', flat=True)
@@ -1679,14 +1994,15 @@ def get_teacher_s_booking_history(request):
     接收：
     {
         userID (teacher_auth_id)
+        searched_by: string 只能搜尋學生姓名(暱稱)或課程title
         filtered_by: string // 依照什麼做篩選 _狀態
                 字串顯示：
                         /預約成功（confirmed）
                         /待回覆（to_be_confirmed）
                         /已完課（finished）
                         /已取消（canceled）
-        registered_from_date//起始日期2020-01-01  
-        registered_to_date//結束日期2050-01-01   預設
+        registered_from_date//起始日期2020-01-01  若為空字串，則預設左邊 
+        registered_to_date//結束日期2050-12-31   若為空字串，則預設左邊 
     }
     回傳：
     {
@@ -1701,30 +2017,208 @@ def get_teacher_s_booking_history(request):
                                         /預約成功（confirmed）
                                         /待回覆（to_be_confirmed）
                                         /已完課（finished）
+                                            加上下面兩個小分類 >>
+                                            / 學生確認時數中  student_not_yet_confirmed
+                                            / 學生反對該時數，客服處理中  quikok_dealing_for_student_disagreed
                                         /已取消（canceled）
                 lesson_title: 預約課程名稱,
+                student_auth_id: 學生的auth_id,
+                student_thumbnail_path: 學生的大頭貼路徑,
                 student_nickname: 學生暱稱,
                 discount_price:  課程方案，
                                     如:'trial'(試課優惠)
                                         /'no_discount'(單堂原價)
                                         /'HH:XX'(HH小時XX折)
                 remaining_time：學生購買剩餘時數
+
+                新增 >>
+                lesson_booking_info_id:  預約的id
+                teacher_declared_start_time: xx:xx    老師宣稱的上課起時始間
+                teacher_declared_end_time: xx:xx    老師宣稱的上課結束始間
+                teacher_declared_time_in_minutes:  xx 老師宣稱的上課時數(分鐘)
+                student_confirmed_deadline:  學生的確認截止日(當天可) "xxxx-xx-xx"
+                remark: 加上課程被取消的理由或原因，如：【xxxx-xx-xx xx:xx 老師1號取消】，若無取消則為null
+                is_teacher_given_feedback: (布林值: 老師送出時數後，老師是否有針對該課程給出評價；若未送出時數則為null)
+                is_student_given_feedback: (布林值: 老師送出時數後，學生是否有針對該課程給出評價；若未送出時數則為null)
             }
         ]
     }
+
+    異步化之前的執行速度：0.63、0.60、0.91、1.21
+    異步化後：1.52、1.18、2.19、1.80
+
+    >> 我猜是異步化時需要分派工作 & 輪詢任務，導致查詢數量較少時反而來得比同步執行慢
     '''
+    st = time()
+
+    def fetch_data_synchronously(booking_info_object):
+        '''
+        將原本要回傳給前端的資料改用函式的方式處理，便於在異步與同步之間進行轉換。
+        '''
+        corr_lesson_completed_record_object = \
+            lesson_completed_record.objects.filter(lesson_booking_info_id=booking_info_object.id).first()
+        
+        if corr_lesson_completed_record_object is None:
+            # 這門課還沒有完課的紀錄
+            teacher_declared_start_time = ''
+            teacher_declared_end_time = ''
+            teacher_declared_time_in_minutes = ''
+            student_confirmed_deadline = ''
+            is_teacher_given_feedback = None
+            is_student_given_feedback = None
+        else:
+            # 這門課已完課
+            # 所以評價狀態應該只有 True 或 False 兩種狀態
+            lesson_reviews_from_students_exists = \
+                lesson_reviews_from_students.objects.filter(
+                    corresponding_lesson_booking_info_id=booking_info_object.id
+                    ).exists()  # 學生對老師的評論紀錄存在
+
+            student_reviews_from_teachers_exists = \
+                student_reviews_from_teachers.objects.filter(
+                    corresponding_lesson_booking_info_id=booking_info_object.id
+                    ).exists()  # 老師對學生的評論紀錄存在
+
+            teacher_declared_start_time = \
+                corr_lesson_completed_record_object.teacher_declared_start_time.strftime("%H:%M")
+            teacher_declared_end_time = \
+                corr_lesson_completed_record_object.teacher_declared_end_time.strftime("%H:%M")
+            teacher_declared_time_in_minutes = \
+                corr_lesson_completed_record_object.teacher_declared_time_in_minutes
+            student_confirmed_deadline = \
+                    corr_lesson_completed_record_object.student_confirmed_deadline
+            is_teacher_given_feedback = student_reviews_from_teachers_exists
+            is_student_given_feedback = lesson_reviews_from_students_exists
+        
+        student_object = \
+            student_profile.objects.get(auth_id=booking_info_object.student_auth_id)
+        lesson_object = \
+            lesson_info.objects.get(id=booking_info_object.lesson_id)
+        lesson_sales_set_object = \
+            lesson_sales_sets.objects.get(id=booking_info_object.booking_set_id)
+
+        response['data'].append(
+            {
+                'lesson_id': lesson_object.id,
+                'booked_date': booking_info_object.booking_start_datetime.strftime('%Y-%m-%d'),
+                'booked_time': booking_info_object.booking_date_and_time.split(':')[1][:-1].split(','),
+                # [:-1]是為了去掉最後的 ';'
+                'booked_status': booking_info_object.booking_status,
+                'lesson_title': lesson_object.lesson_title,
+                'student_auth_id': booking_info_object.student_auth_id,
+                'student_is_male': student_object.is_male,
+                'student_s_user_type_for_double_check': 'student',
+                'student_nickname': student_object.nickname,
+                'student_thumbnail_path': student_object.thumbnail_dir,
+                'discount_price': lesson_sales_set_object.sales_set,
+                'remaining_time': booking_info_object.remaining_minutes,
+                'lesson_booking_info_id': booking_info_object.id,
+                'teacher_declared_start_time': teacher_declared_start_time,
+                'teacher_declared_end_time': teacher_declared_end_time,
+                'teacher_declared_time_in_minutes': teacher_declared_time_in_minutes,
+                'student_confirmed_deadline': student_confirmed_deadline,
+                'remark': booking_info_object.remark,
+                'is_teacher_given_feedback': is_teacher_given_feedback,
+                'is_student_given_feedback': is_student_given_feedback
+            }
+        )
+
+
+    async def fetch_data_asynchronously(booking_info_object):
+        '''
+        將原本要回傳給前端的資料改用異步的方式處理。
+        '''
+        corr_lesson_completed_record_object = \
+            await sync_to_async(lesson_completed_record.objects.filter(lesson_booking_info_id=booking_info_object.id).first)()
+        
+        if corr_lesson_completed_record_object is None:
+            # 這門課還沒有完課的紀錄
+            teacher_declared_start_time = ''
+            teacher_declared_end_time = ''
+            teacher_declared_time_in_minutes = ''
+            student_confirmed_deadline = ''
+            is_teacher_given_feedback = None
+            is_student_given_feedback = None
+        else:
+            # 這門課已完課
+            # 所以評價狀態應該只有 True 或 False 兩種狀態
+            lesson_reviews_from_students_exists = \
+                await sync_to_async(lesson_reviews_from_students.objects.filter(
+                    corresponding_lesson_booking_info_id=booking_info_object.id
+                    ).exists)()  # 學生對老師的評論紀錄存在
+
+            student_reviews_from_teachers_exists = \
+                await sync_to_async(student_reviews_from_teachers.objects.filter(
+                    corresponding_lesson_booking_info_id=booking_info_object.id
+                    ).exists)()  # 老師對學生的評論紀錄存在
+
+            teacher_declared_start_time = \
+                corr_lesson_completed_record_object.teacher_declared_start_time.strftime("%H:%M")
+            teacher_declared_end_time = \
+                corr_lesson_completed_record_object.teacher_declared_end_time.strftime("%H:%M")
+            teacher_declared_time_in_minutes = \
+                corr_lesson_completed_record_object.teacher_declared_time_in_minutes
+            student_confirmed_deadline = \
+                    corr_lesson_completed_record_object.student_confirmed_deadline
+            is_teacher_given_feedback = student_reviews_from_teachers_exists
+            is_student_given_feedback = lesson_reviews_from_students_exists
+        
+        student_object = \
+            await sync_to_async(student_profile.objects.get)(auth_id=booking_info_object.student_auth_id)
+        lesson_object = \
+            await sync_to_async(lesson_info.objects.get)(id=booking_info_object.lesson_id)
+        lesson_sales_set_object = \
+            await sync_to_async(lesson_sales_sets.objects.get)(id=booking_info_object.booking_set_id)
+
+        response['data'].append(
+            {
+                'lesson_id': lesson_object.id,
+                'booked_date': booking_info_object.booking_start_datetime.strftime('%Y-%m-%d'),
+                'booked_time': booking_info_object.booking_date_and_time.split(':')[1][:-1].split(','),
+                # [:-1]是為了去掉最後的 ';'
+                'booked_status': booking_info_object.booking_status,
+                'lesson_title': lesson_object.lesson_title,
+                'student_auth_id': booking_info_object.student_auth_id,
+                'student_is_male': student_object.is_male,
+                'student_s_user_type_for_double_check': 'student',
+                'student_nickname': student_object.nickname,
+                'student_thumbnail_path': student_object.thumbnail_dir,
+                'discount_price': lesson_sales_set_object.sales_set,
+                'remaining_time': booking_info_object.remaining_minutes,
+                'lesson_booking_info_id': booking_info_object.id,
+                'teacher_declared_start_time': teacher_declared_start_time,
+                'teacher_declared_end_time': teacher_declared_end_time,
+                'teacher_declared_time_in_minutes': teacher_declared_time_in_minutes,
+                'student_confirmed_deadline': student_confirmed_deadline,
+                'remark': booking_info_object.remark,
+                'is_teacher_given_feedback': is_teacher_given_feedback,
+                'is_student_given_feedback': is_student_given_feedback
+            }
+        )
+
     response = dict()
     teacher_auth_id = request.POST.get('userID', False)
     booking_status_filtered_by = request.POST.get('filtered_by', False)
-    registered_from_date = \
-        date_string_2_dateformat(request.POST.get('registered_from_date', False))
-    registered_to_date = \
-        date_string_2_dateformat(request.POST.get('registered_to_date', False))
+    searched_by = request.POST.get('searched_by', False)
+    registered_from_date = request.POST.get('registered_from_date', False)
+    registered_to_date = request.POST.get('registered_to_date', False)
 
-    if check_if_all_variables_are_true(teacher_auth_id, booking_status_filtered_by, 
+    if check_if_all_variables_are_true(teacher_auth_id, booking_status_filtered_by, searched_by,
         registered_from_date, registered_to_date):
         # 有正確收到資料
+        # 因為 registered_from_date 跟 registered_to_date 有可能是空字串，所以另外處理
+        if registered_from_date != '':
+            registered_from_date = date_string_2_dateformat(registered_from_date)
+        else:
+            registered_from_date = date_string_2_dateformat('2020-01-01')
+
+        if registered_to_date != '':
+            registered_to_date = date_string_2_dateformat(registered_to_date)
+        else:
+            registered_to_date = date_string_2_dateformat('2050-12-31')
+
         teacher_object = teacher_profile.objects.filter(auth_id=teacher_auth_id).first()
+        
         if teacher_object is None:
             # 這位老師不存在
             response['status'] = 'failed'
@@ -1735,76 +2229,141 @@ def get_teacher_s_booking_history(request):
         else:
             # 確實有找到這位老師
             # 先看看他的 lesson_booking_info，這裡先過濾篩選條件，避免每次都query一堆東西造成效能問題
-            if len(booking_status_filtered_by):
+            if booking_status_filtered_by != '':
                 # 代表 booking_status_filtered_by 有東西，user有輸入搜尋條件
-                teacher_s_lesson_booking_info_queryset = \
-                    lesson_booking_info.objects.filter(
-                        teacher_auth_id=teacher_auth_id, 
-                        booking_status=booking_status_filtered_by,
-                        created_time__gt=registered_from_date,
-                        last_changed_time__lt=registered_to_date).order_by('-last_changed_time')
+                # 輸入 finished 的話，需要另外抓出
+                #       1. student_not_yet_confirmed
+                #       2. quikok_dealing_for_student_disagreed
+                # 當作一樣是finished項目下的內容
+
+                # 檢查 user有沒有輸入 searched_by 條件搜尋學生姓名/暱稱 或是 課程名稱
+                if searched_by.strip() != '':
+                    searched_by = searched_by.strip()
+                    # 有輸入 searched_by
+                    correspodent_student_auth_ids = \
+                        list(student_profile.objects.values_list('auth_id', flat=True).filter(
+                            Q(name__contains=searched_by) | Q(nickname__contains=searched_by)
+                        ))
+                    correspodent_lesson_ids = \
+                        list(lesson_info.objects.values_list('id', flat=True).filter(
+                            lesson_title__contains=searched_by))
+                    
+                    if booking_status_filtered_by != 'finished':
+                        teacher_s_lesson_booking_info_queryset = \
+                            lesson_booking_info.objects.filter(
+                                Q(teacher_auth_id=teacher_auth_id) & 
+                                Q(booking_status=booking_status_filtered_by) & 
+                                Q(created_time__gt=registered_from_date) &
+                                Q(last_changed_time__lt=registered_to_date)).filter(
+                                    Q(student_auth_id__in=correspodent_student_auth_ids) |
+                                    Q(lesson_id__in=correspodent_lesson_ids)
+                                ).order_by('-last_changed_time')
+                    else:
+                        teacher_s_lesson_booking_info_queryset = \
+                            lesson_booking_info.objects.filter(
+                                Q(teacher_auth_id=teacher_auth_id) & 
+                                Q(booking_status__in=['finished', 'student_not_yet_confirmed', 'quikok_dealing_for_student_disagreed']) & 
+                                Q(created_time__gt=registered_from_date) &
+                                Q(last_changed_time__lt=registered_to_date)).filter(
+                                    Q(student_auth_id__in=correspodent_student_auth_ids) |
+                                    Q(lesson_id__in=correspodent_lesson_ids)
+                                ).order_by('-last_changed_time')
+                else:
+                    # 沒有輸入 searched_by
+                    if booking_status_filtered_by != 'finished':
+                        teacher_s_lesson_booking_info_queryset = \
+                            lesson_booking_info.objects.filter(
+                                Q(teacher_auth_id=teacher_auth_id) & 
+                                Q(booking_status=booking_status_filtered_by) & 
+                                Q(created_time__gt=registered_from_date) &
+                                Q(last_changed_time__lt=registered_to_date)).order_by('-last_changed_time')
+                    else:
+                        teacher_s_lesson_booking_info_queryset = \
+                            lesson_booking_info.objects.filter(
+                                Q(teacher_auth_id=teacher_auth_id) & 
+                                Q(booking_status__in=['finished', 'student_not_yet_confirmed', 'quikok_dealing_for_student_disagreed']) & 
+                                Q(created_time__gt=registered_from_date) &
+                                Q(last_changed_time__lt=registered_to_date)).order_by('-last_changed_time')
                 
-                if teacher_s_lesson_booking_info_queryset.count() == 0:
+                if teacher_s_lesson_booking_info_queryset.exists() == False:
                     # 這個老師什麼預約歷史都沒有
                     response['status'] = 'success'
                     response['errCode'] = None
                     response['errMsg'] = None
-                    response['data'] = None
+                    response['data'] = list()
                 else:
                     # 這個老師 非 什麼預約歷史都沒有
                     response['data'] = list()
-                    for each_booking_info_object in teacher_s_lesson_booking_info_queryset:
-                        response['data'].append(
-                            {
-                                'booked_date': each_booking_info_object.booking_date_and_time.split(':')[0],
-                                'booked_time': each_booking_info_object.booking_date_and_time.split(':')[1][:-1],
-                                # 去掉最後的 ';'
-                                'booked_status': each_booking_info_object.booking_status,
-                                'lesson_title': \
-                                    lesson_info.objects.get(id=each_booking_info_object.lesson_id).lesson_title,
-                                'student_nickname': \
-                                    student_profile.objects.get(auth_id=each_booking_info_object.student_auth_id).nickname,
-                                'discount_price': \
-                                    lesson_sales_sets.objects.get(id=each_booking_info_object.booking_set_id).sales_set,
-                                'remaining_time': each_booking_info_object.remaining_minutes
-                            }
-                        )
+                    
+                    if settings.DEV_MODE:
+                        for each_booking_info_object in teacher_s_lesson_booking_info_queryset:
+                            fetch_data_synchronously(each_booking_info_object)
+                    else:
+                        tasks = \
+                            [
+                                fetch_data_asynchronously(each_booking_info_object) 
+                                for each_booking_info_object in teacher_s_lesson_booking_info_queryset
+                            ]
+                        asyncio.run(asyncio.wait(tasks))
+
                     response['status'] = 'success'
                     response['errCode'] = None
                     response['errMsg'] = None
 
             else:
-                teacher_s_lesson_booking_info_queryset = \
-                    lesson_booking_info.objects.filter(
-                        teacher_auth_id=teacher_auth_id, 
-                        created_time__gt=registered_from_date,
-                        last_changed_time__lt=registered_to_date).order_by('-last_changed_time')
                 # 代表 booking_status_filtered_by 沒東西，user無輸入搜尋條件，傳回所有資訊
-                if teacher_s_lesson_booking_info_queryset.count() == 0:
+
+                # 檢查 user有沒有輸入 searched_by 條件搜尋學生姓名/暱稱 或是 課程名稱
+                if searched_by.strip() != '':
+                    searched_by = searched_by.strip()
+                    # 有輸入 searched_by
+                    correspodent_student_auth_ids = \
+                        list(student_profile.objects.values_list('auth_id', flat=True).filter(
+                            Q(name__contains=searched_by) | Q(nickname__contains=searched_by)
+                        ))
+                    correspodent_lesson_ids = \
+                        list(lesson_info.objects.values_list('id', flat=True).filter(
+                            lesson_title__contains=searched_by
+                        ))
+
+                    teacher_s_lesson_booking_info_queryset = \
+                        lesson_booking_info.objects.filter(
+                            Q(teacher_auth_id=teacher_auth_id) & 
+                            Q(created_time__gt=registered_from_date) &
+                            Q(last_changed_time__lt=registered_to_date)).filter(
+                                Q(student_auth_id__in=correspodent_student_auth_ids) |
+                                Q(lesson_id__in=correspodent_lesson_ids)
+                            ).order_by('-last_changed_time')
+                else:
+                    # 有輸入 searched_by
+                    teacher_s_lesson_booking_info_queryset = \
+                        lesson_booking_info.objects.filter(
+                            teacher_auth_id=teacher_auth_id, 
+                            created_time__gt=registered_from_date,
+                            last_changed_time__lt=registered_to_date).order_by('-last_changed_time')
+                
+                
+                if teacher_s_lesson_booking_info_queryset.exists() == False:
                     # 這個老師什麼預約歷史都沒有
                     response['status'] = 'success'
                     response['errCode'] = None
                     response['errMsg'] = None
-                    response['data'] = None
+                    response['data'] = list()
                 else:
                     # 這個老師 非 什麼預約歷史都沒有
                     response['data'] = list()
-                    for each_booking_info_object in teacher_s_lesson_booking_info_queryset:
-                        response['data'].append(
-                            {
-                                'booked_date': each_booking_info_object.booking_date_and_time.split(':')[0],
-                                'booked_time': each_booking_info_object.booking_date_and_time.split(':')[1][:-1],
-                                # 去掉最後的 ';'
-                                'booked_status': each_booking_info_object.booking_status,
-                                'lesson_title': \
-                                    lesson_info.objects.get(id=each_booking_info_object.lesson_id).lesson_title,
-                                'student_nickname': \
-                                    student_profile.objects.get(auth_id=each_booking_info_object.student_auth_id).nickname,
-                                'discount_price': \
-                                    lesson_sales_sets.objects.get(id=each_booking_info_object.booking_set_id).sales_set,
-                                'remaining_time': each_booking_info_object.remaining_minutes
-                            }
-                        )
+                    
+                    if settings.DEV_MODE:
+                        for each_booking_info_object in teacher_s_lesson_booking_info_queryset:
+                            fetch_data_synchronously(each_booking_info_object)
+                    else:
+                        tasks = \
+                            [
+                                fetch_data_asynchronously(each_booking_info_object) 
+                                for each_booking_info_object in teacher_s_lesson_booking_info_queryset
+                            ]
+                        asyncio.run(asyncio.wait(tasks))
+
                     response['status'] = 'success'
                     response['errCode'] = None
                     response['errMsg'] = None
@@ -1815,6 +2374,7 @@ def get_teacher_s_booking_history(request):
         response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
         response['data'] = None
     
+    print(f"get_teacher_s_booking_history takes {time() - st} seconds.")
     return JsonResponse(response)
     
 
@@ -1825,14 +2385,15 @@ def get_student_s_booking_history(request):
     接收：
     {
         userID (student_auth_id)
+        searched_by: string 只能搜尋老師姓名(暱稱)或課程title
         filtered_by: string // 依照什麼做篩選 _狀態
                 字串顯示：
                         /預約成功（confirmed）
                         /待回覆（to_be_confirmed）
                         /已完課（finished）
                         /已取消（canceled）
-        registered_from_date//起始日期2020-01-01  
-        registered_to_date//結束日期2050-01-01   預設
+        registered_from_date//起始日期2020-01-01  若為空字串，則預設左邊 
+        registered_to_date//結束日期2050-12-31   若為空字串，則預設左邊 
     }
     回傳：
     {
@@ -1847,30 +2408,206 @@ def get_student_s_booking_history(request):
                                         /預約成功（confirmed）
                                         /待回覆（to_be_confirmed）
                                         /已完課（finished）
+                                            加上下面兩個小分類 >>
+                                            / 學生確認時數中  student_not_yet_confirmed
+                                            / 學生反對該時數，客服處理中  quikok_dealing_for_student_disagreed
                                         /已取消（canceled）
                 lesson_title: 預約課程名稱,
+                teacher_auth_id: 老師的auth_id
                 teacher_nickname: 老師暱稱,
+                teacher_thumbnail_path: 老師大頭貼路徑,
                 discount_price:  課程方案，
                                     如:'trial'(試課優惠)
                                         /'no_discount'(單堂原價)
                                         /'HH:XX'(HH小時XX折)
                 remaining_time：學生購買剩餘時數
+
+                新增 >>
+                lesson_booking_info_id:  預約的id
+                teacher_declared_start_time: xx:xx    老師宣稱的上課起時始間
+                teacher_declared_end_time: xx:xx    老師宣稱的上課結束始間
+                teacher_declared_time_in_minutes:  xx 老師宣稱的上課時數(分鐘)
+                student_confirmed_deadline:  學生的確認截止日(當天可) "xxxx-xx-xx"
+                remark: 加上課程被取消的理由或原因，如：【xxxx-xx-xx xx:xx 老師1號取消】，若無取消則為null
+                is_teacher_given_feedback: (布林值: 老師送出時數後，老師是否有針對該課程給出評價；若未送出時數則為null)
+                is_student_given_feedback: (布林值: 老師送出時數後，學生是否有針對該課程給出評價；若未送出時數則為null)
             }
         ]
     }
+
+    未改成異步前，取消/完課的執行時間在 3.5 - 4 秒間;
+    改成異步後，取消/完課的執行時間在 1 - 1.5 秒間。
     '''
+    st = time()
+
+    def fetch_data_synchronously(booking_info_object):
+        '''
+        將原本要回傳給前端的資料函式化，以便在異步與同步間轉換。
+        '''
+        corr_lesson_completed_record_object = \
+            lesson_completed_record.objects.filter(lesson_booking_info_id=booking_info_object.id).first()
+
+        if corr_lesson_completed_record_object is None:
+            # 這門課還沒有完課的紀錄
+            teacher_declared_start_time = ''
+            teacher_declared_end_time = ''
+            teacher_declared_time_in_minutes = ''
+            student_confirmed_deadline = ''
+            is_teacher_given_feedback = None
+            is_student_given_feedback = None
+        else:
+            # 這門課已完課
+            # 所以評價狀態應該只有 True 或 False 兩種狀態
+            lesson_reviews_from_students_exists = \
+                lesson_reviews_from_students.objects.filter(corresponding_lesson_booking_info_id=booking_info_object.id).exists()
+                # 學生對老師的評論紀錄
+
+            student_reviews_from_teachers_exists = \
+                student_reviews_from_teachers.objects.filter(corresponding_lesson_booking_info_id=booking_info_object.id).exists()
+                # 老師對學生的評論紀錄
+
+            teacher_declared_start_time = \
+                corr_lesson_completed_record_object.teacher_declared_start_time.strftime("%H:%M")
+            teacher_declared_end_time = \
+                corr_lesson_completed_record_object.teacher_declared_end_time.strftime("%H:%M")
+            teacher_declared_time_in_minutes = \
+                corr_lesson_completed_record_object.teacher_declared_time_in_minutes
+            student_confirmed_deadline = \
+                    corr_lesson_completed_record_object.student_confirmed_deadline
+            is_teacher_given_feedback = student_reviews_from_teachers_exists
+            is_student_given_feedback = lesson_reviews_from_students_exists
+        
+        teacher_object = \
+            teacher_profile.objects.get(auth_id=booking_info_object.teacher_auth_id)
+        lesson_object = \
+            lesson_info.objects.get(id=booking_info_object.lesson_id)
+        lesson_sales_sets_object = \
+            lesson_sales_sets.objects.get(id=booking_info_object.booking_set_id)
+
+        response['data'].append(
+            {
+                'lesson_id': lesson_object.id,
+                'booked_date': booking_info_object.booking_start_datetime.strftime("%Y-%m-%d"),
+                'booked_time': booking_info_object.booking_date_and_time.split(':')[1][:-1].split(','),
+                # [:-1]是為了去掉最後的 ';'
+                'booked_status': booking_info_object.booking_status,
+                'lesson_title': lesson_object.lesson_title,
+                'teacher_auth_id': booking_info_object.teacher_auth_id,
+                'teacher_is_male': teacher_object.is_male,
+                'teacher_s_user_type_for_double_check': 'teacher',
+                'teacher_nickname': teacher_object.nickname,
+                'teacher_thumbnail_path': teacher_object.thumbnail_dir,
+                'discount_price': lesson_sales_sets_object.sales_set,
+                'remaining_time': booking_info_object.remaining_minutes,
+                'lesson_booking_info_id': booking_info_object.id,
+                'teacher_declared_start_time': teacher_declared_start_time,
+                'teacher_declared_end_time': teacher_declared_end_time,
+                'teacher_declared_time_in_minutes': teacher_declared_time_in_minutes,
+                'student_confirmed_deadline': student_confirmed_deadline,
+                'remark': booking_info_object.remark,
+                'is_teacher_given_feedback': is_teacher_given_feedback,
+                'is_student_given_feedback': is_student_given_feedback
+            }
+        )
+
+
+    async def fetch_data_asynchronously(booking_info_object):
+        '''
+        將原本要回傳給前端的資料改用異步的方式處理。
+        '''
+        print(f"booking_info_object_teacher_auth_id: {booking_info_object.teacher_auth_id}")
+        corr_lesson_completed_record_object = \
+            await sync_to_async(lesson_completed_record.objects.filter(lesson_booking_info_id=booking_info_object.id).first)()
+
+        if corr_lesson_completed_record_object is None:
+            # 這門課還沒有完課的紀錄
+            teacher_declared_start_time = ''
+            teacher_declared_end_time = ''
+            teacher_declared_time_in_minutes = ''
+            student_confirmed_deadline = ''
+            is_teacher_given_feedback = None
+            is_student_given_feedback = None
+        else:
+            # 這門課已完課
+            # 所以評價狀態應該只有 True 或 False 兩種狀態
+            lesson_reviews_from_students_exists = \
+                await sync_to_async(
+                    lesson_reviews_from_students.objects.filter(corresponding_lesson_booking_info_id=booking_info_object.id).exists
+                )()  # 學生對老師的評論紀錄
+
+            student_reviews_from_teachers_exists = \
+                await sync_to_async(
+                    student_reviews_from_teachers.objects.filter(corresponding_lesson_booking_info_id=booking_info_object.id).exists
+                )()  # 老師對學生的評論紀錄
+
+            teacher_declared_start_time = \
+                corr_lesson_completed_record_object.teacher_declared_start_time.strftime("%H:%M")
+            teacher_declared_end_time = \
+                corr_lesson_completed_record_object.teacher_declared_end_time.strftime("%H:%M")
+            teacher_declared_time_in_minutes = \
+                corr_lesson_completed_record_object.teacher_declared_time_in_minutes
+            student_confirmed_deadline = \
+                    corr_lesson_completed_record_object.student_confirmed_deadline
+            is_teacher_given_feedback = student_reviews_from_teachers_exists
+            is_student_given_feedback = lesson_reviews_from_students_exists
+        
+        teacher_object = \
+            await sync_to_async(teacher_profile.objects.get)(auth_id=booking_info_object.teacher_auth_id)
+        lesson_object = \
+            await sync_to_async(lesson_info.objects.get)(id=booking_info_object.lesson_id)
+        lesson_sales_sets_object = \
+            await sync_to_async(lesson_sales_sets.objects.get)(id=booking_info_object.booking_set_id)
+
+        response['data'].append(
+            {
+                'lesson_id': lesson_object.id,
+                'booked_date': booking_info_object.booking_start_datetime.strftime("%Y-%m-%d"),
+                'booked_time': booking_info_object.booking_date_and_time.split(':')[1][:-1].split(','),
+                # [:-1]是為了去掉最後的 ';'
+                'booked_status': booking_info_object.booking_status,
+                'lesson_title': lesson_object.lesson_title,
+                'teacher_auth_id': booking_info_object.teacher_auth_id,
+                'teacher_is_male': teacher_object.is_male,
+                'teacher_s_user_type_for_double_check': 'teacher',
+                'teacher_nickname': teacher_object.nickname,
+                'teacher_thumbnail_path': teacher_object.thumbnail_dir,
+                'discount_price': lesson_sales_sets_object.sales_set,
+                'remaining_time': booking_info_object.remaining_minutes,
+                'lesson_booking_info_id': booking_info_object.id,
+                'teacher_declared_start_time': teacher_declared_start_time,
+                'teacher_declared_end_time': teacher_declared_end_time,
+                'teacher_declared_time_in_minutes': teacher_declared_time_in_minutes,
+                'student_confirmed_deadline': student_confirmed_deadline,
+                'remark': booking_info_object.remark,
+                'is_teacher_given_feedback': is_teacher_given_feedback,
+                'is_student_given_feedback': is_student_given_feedback
+            }
+        )
+
     response = dict()
     student_auth_id = request.POST.get('userID', False)
+    searched_by = request.POST.get('searched_by', False)
     booking_status_filtered_by = request.POST.get('filtered_by', False)
-    registered_from_date = \
-        date_string_2_dateformat(request.POST.get('registered_from_date', False))
-    registered_to_date = \
-        date_string_2_dateformat(request.POST.get('registered_to_date', False))
+    registered_from_date = request.POST.get('registered_from_date', False)
+    registered_to_date = request.POST.get('registered_to_date', False)
+    print(f"ARGS_FROM_FRONTEND: {student_auth_id}, {booking_status_filtered_by}")
 
     if check_if_all_variables_are_true(student_auth_id, booking_status_filtered_by, 
-        registered_from_date, registered_to_date):
+        registered_from_date, registered_to_date, searched_by):
         # 有正確收到資料
+        # 因為 registered_from_date 跟 registered_to_date 有可能是空字串，所以另外處理
+        if registered_from_date != '':
+            registered_from_date = date_string_2_dateformat(registered_from_date)
+        else:
+            registered_from_date = date_string_2_dateformat('2020-01-01')
+
+        if registered_to_date != '':
+            registered_to_date = date_string_2_dateformat(registered_to_date)
+        else:
+            registered_to_date = date_string_2_dateformat('2050-12-31')
+
         student_object = student_profile.objects.filter(auth_id=student_auth_id).first()
+        
         if student_object is None:
             # 這位學生不存在
             response['status'] = 'failed'
@@ -1881,85 +2618,1020 @@ def get_student_s_booking_history(request):
         else:
             # 確實有找到這位學生
             # 先看看他的 lesson_booking_info，這裡先過濾篩選條件，避免每次都query一堆東西造成效能問題
-            if len(booking_status_filtered_by):
+            if booking_status_filtered_by != '':
                 # 代表 booking_status_filtered_by 有東西，user有輸入搜尋條件
-                student_s_lesson_booking_info_queryset = \
-                    lesson_booking_info.objects.filter(
-                        student_auth_id=student_auth_id, 
-                        booking_status=booking_status_filtered_by,
-                        created_time__gt=registered_from_date,
-                        last_changed_time__lt=registered_to_date).order_by('-last_changed_time')
-                
-                if student_s_lesson_booking_info_queryset.count() == 0:
+
+                # 檢查 user有沒有輸入 searched_by 條件搜尋老師姓名/暱稱 或是 課程名稱
+                if searched_by.strip() != '':
+                    searched_by = searched_by.strip()
+                    # 有輸入 searched_by
+                    correspodent_teacher_auth_ids = \
+                        list(teacher_profile.objects.values_list('auth_id', flat=True).filter(
+                            Q(name__contains=searched_by) | Q(nickname__contains=searched_by)
+                        ))
+                    correspodent_lesson_ids = \
+                        list(lesson_info.objects.values_list('id', flat=True).filter(
+                            lesson_title__contains=searched_by
+                        ))
+
+                    if booking_status_filtered_by != 'finished':
+                        student_s_lesson_booking_info_queryset = \
+                            lesson_booking_info.objects.filter(
+                                Q(student_auth_id=student_auth_id) & 
+                                Q(booking_status=booking_status_filtered_by) & 
+                                Q(created_time__gt=registered_from_date) &
+                                Q(last_changed_time__lt=registered_to_date)).filter(
+                                    Q(teacher_auth_id__in=correspodent_teacher_auth_ids) |
+                                    Q(lesson_id__in=correspodent_lesson_ids)
+                                ).order_by('-last_changed_time')
+
+                    else:
+                        student_s_lesson_booking_info_queryset = \
+                            lesson_booking_info.objects.filter(
+                                Q(student_auth_id=student_auth_id) & 
+                                Q(booking_status__in=['finished', 'student_not_yet_confirmed', 'quikok_dealing_for_student_disagreed']) & 
+                                Q(created_time__gt=registered_from_date) &
+                                Q(last_changed_time__lt=registered_to_date)).filter(
+                                    Q(teacher_auth_id__in=correspodent_teacher_auth_ids) |
+                                    Q(lesson_id__in=correspodent_lesson_ids)
+                                ).order_by('-last_changed_time')
+
+                else:
+                    # 沒有輸入 searched_by
+                    if booking_status_filtered_by != 'finished':
+                        student_s_lesson_booking_info_queryset = \
+                            lesson_booking_info.objects.filter(
+                                Q(student_auth_id=student_auth_id) & 
+                                Q(booking_status=booking_status_filtered_by) & 
+                                Q(created_time__gt=registered_from_date) &
+                                Q(last_changed_time__lt=registered_to_date)).order_by('-last_changed_time')
+                    else:
+                        student_s_lesson_booking_info_queryset = \
+                            lesson_booking_info.objects.filter(
+                                Q(student_auth_id=student_auth_id) & 
+                                Q(booking_status__in=['finished', 'student_not_yet_confirmed', 'quikok_dealing_for_student_disagreed']) & 
+                                Q(created_time__gt=registered_from_date) &
+                                Q(last_changed_time__lt=registered_to_date)).order_by('-last_changed_time')
+
+                if student_s_lesson_booking_info_queryset.exists() == False:
                     # 這個學生什麼預約歷史都沒有
                     response['status'] = 'success'
                     response['errCode'] = None
                     response['errMsg'] = None
-                    response['data'] = None
+                    response['data'] = list()
                 else:
                     # 這個學生 非 什麼預約歷史都沒有
                     response['data'] = list()
-                    for each_booking_info_object in student_s_lesson_booking_info_queryset:
-                        response['data'].append(
-                            {
-                                'booked_date': each_booking_info_object.booking_date_and_time.split(':')[0],
-                                'booked_time': each_booking_info_object.booking_date_and_time.split(':')[1][:-1],
-                                # 去掉最後的 ';'
-                                'booked_status': each_booking_info_object.booking_status,
-                                'lesson_title': \
-                                    lesson_info.objects.get(id=each_booking_info_object.lesson_id).lesson_title,
-                                'teacher_nickname': \
-                                    teacher_profile.objects.get(auth_id=each_booking_info_object.teacher_auth_id).nickname,
-                                'discount_price': \
-                                    lesson_sales_sets.objects.get(id=each_booking_info_object.booking_set_id).sales_set,
-                                'remaining_time': each_booking_info_object.remaining_minutes
-                            }
-                        )
+
+                    for _ in student_s_lesson_booking_info_queryset:
+                        print(f"student_s_lesson_booking_info_queryset: {_.teacher_auth_id}")
+                    print(teacher_profile.objects.values())
+                    print(lesson_booking_info.objects.values())
+                    
+                    if settings.DEV_MODE:
+                        for each_booking_info_object in student_s_lesson_booking_info_queryset:
+                            fetch_data_synchronously(each_booking_info_object)
+                    else:                            
+                        tasks = \
+                            [
+                                fetch_data_asynchronously(each_booking_info_object) 
+                                for each_booking_info_object in student_s_lesson_booking_info_queryset
+                            ]
+                        asyncio.run(asyncio.wait(tasks))
+                        
                     response['status'] = 'success'
                     response['errCode'] = None
                     response['errMsg'] = None
 
             else:
-                student_s_lesson_booking_info_queryset = \
-                    lesson_booking_info.objects.filter(
-                        student_auth_id=student_auth_id, 
-                        created_time__gt=registered_from_date,
-                        last_changed_time__lt=registered_to_date).order_by('-last_changed_time')
                 # 代表 booking_status_filtered_by 沒東西，user無輸入搜尋條件，傳回所有資訊
-                if student_s_lesson_booking_info_queryset.count() == 0:
+                # 檢查 user有沒有輸入 searched_by 條件搜尋老師姓名/暱稱 或是 課程名稱
+                if searched_by.strip() != '':
+                    searched_by = searched_by.strip()
+                    # 有輸入 searched_by
+                    correspodent_teacher_auth_ids = \
+                        list(teacher_profile.objects.values_list('auth_id', flat=True).filter(
+                            Q(name__contains=searched_by) | Q(nickname__contains=searched_by)
+                        ))
+                    correspodent_lesson_ids = \
+                        list(lesson_info.objects.values_list('id', flat=True).filter(
+                            lesson_title__contains=searched_by
+                        ))
+
+                    student_s_lesson_booking_info_queryset = \
+                        lesson_booking_info.objects.filter(
+                            Q(student_auth_id=student_auth_id) & 
+                            Q(created_time__gt=registered_from_date) &
+                            Q(last_changed_time__lt=registered_to_date)).filter(
+                                Q(teacher_auth_id__in=correspodent_teacher_auth_ids) |
+                                Q(lesson_id__in=correspodent_lesson_ids)
+                            ).order_by('-last_changed_time')
+                else:
+                    # 沒有輸入 searched_by
+                    student_s_lesson_booking_info_queryset = \
+                        lesson_booking_info.objects.filter(
+                            student_auth_id=student_auth_id, 
+                            created_time__gt=registered_from_date,
+                            last_changed_time__lt=registered_to_date).order_by('-last_changed_time')
+                
+                if student_s_lesson_booking_info_queryset.exists() == False:
                     # 這個學生什麼預約歷史都沒有
                     response['status'] = 'success'
                     response['errCode'] = None
                     response['errMsg'] = None
-                    response['data'] = None
+                    response['data'] = list()
                 else:
                     # 這個學生 非 什麼預約歷史都沒有
                     response['data'] = list()
-                    for each_booking_info_object in student_s_lesson_booking_info_queryset:
-                        response['data'].append(
-                            {
-                                'booked_date': each_booking_info_object.booking_date_and_time.split(':')[0],
-                                'booked_time': each_booking_info_object.booking_date_and_time.split(':')[1][:-1],
-                                # 去掉最後的 ';'
-                                'booked_status': each_booking_info_object.booking_status,
-                                'lesson_title': \
-                                    lesson_info.objects.get(id=each_booking_info_object.lesson_id).lesson_title,
-                                'teacher_nickname': \
-                                    teacher_profile.objects.get(auth_id=each_booking_info_object.teacher_auth_id).nickname,
-                                'discount_price': \
-                                    lesson_sales_sets.objects.get(id=each_booking_info_object.booking_set_id).sales_set,
-                                'remaining_time': each_booking_info_object.remaining_minutes
-                            }
-                        )
+                    
+                    if settings.DEV_MODE:
+                        for each_booking_info_object in student_s_lesson_booking_info_queryset:
+                            fetch_data_synchronously(each_booking_info_object)
+                    else:
+                        tasks = \
+                            [
+                                fetch_data_asynchronously(each_booking_info_object) 
+                                for each_booking_info_object in student_s_lesson_booking_info_queryset
+                            ]
+                        asyncio.run(asyncio.wait(tasks))
+
                     response['status'] = 'success'
                     response['errCode'] = None
                     response['errMsg'] = None
 
     else:
+        # 資料傳輸出現問題
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+
+    print(f"get_students_s_booking_history takes {time() - st} seconds.")
+    
+    return JsonResponse(response)
+ 
+
+@require_http_methods(['POST'])
+def lesson_completed_notification_from_teacher(request):
+    '''
+    完課後，老師應該主動向學生發起確認課程時數的要求，以便計算時數；
+    這個API會連帶的建立 lesson_completed_record 資料，並且發送通知給學生(這段還沒做)。
+    接收：{
+        token,
+        userID: 老師的auth_id
+        lesson_booking_info_id: 哪一門預約的ID
+        lesson_date: 上課的日期  如 2021-01-01
+        start_time: 開始的時間 xx:xx  每十分鐘一跳
+        end_time: 結束的時間 xx:xx  每十分鐘一跳 
+        time_interval_in_minutes: 時段有多少分鐘
+    }
+    回傳：{
+        status: “success“ / “failed“ 
+        errCode: None 
+        errMsg: None
+        data: None
+    }
+    '''
+    response = dict()
+    teacher_auth_id = request.POST.get('userID', False)
+    lesson_booking_info_id = request.POST.get('lesson_booking_info_id', False)
+    lesson_date = request.POST.get('lesson_date', False)
+    start_time = request.POST.get('start_time', False)
+    end_time = request.POST.get('end_time', False)
+    time_interval_in_minutes = request.POST.get('time_interval_in_minutes', False)
+
+
+    if check_if_all_variables_are_true(teacher_auth_id, lesson_booking_info_id, 
+        lesson_date, start_time, end_time, time_interval_in_minutes):
+        # 資料有正確收取
+        # 確認一下 teacher 、 booking_info 、 與對應的 student 存不存在
+        teacher_object = teacher_profile.objects.filter(auth_id=teacher_auth_id).first()
+        booking_object = lesson_booking_info.objects.filter(id=lesson_booking_info_id).first()
+
+        if booking_object is None or teacher_object is None:
+            # 沒有抓到對應的預約或是老師的紀錄
+            response['status'] = 'failed'
+            response['errCode'] = '1'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['data'] = None
+        elif teacher_object.auth_id != booking_object.teacher_auth_id:
+            # 預約的老師 auth_id 跟前端回傳的老師 auth_id 不 match
+            response['status'] = 'failed'
+            response['errCode'] = '2'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['data'] = None
+        elif booking_object.booking_status != 'confirmed':
+            # 該預約狀態不為confirmed，因此老師不能完成授課
+            response['status'] = 'failed'
+            response['errCode'] = '3'
+            response['errMsg'] = '不好意思，只有經過雙方確認的預約課程才可以進行完課動作唷，如果持續遇到這個問題請您告訴我們一聲。'
+            response['data'] = None
+        else:
+            # 有抓到對應的預約以及老師的紀錄
+            # 產生對應的 lesson_completed_record 紀錄
+            _year, _month, _day = [int(_) for _ in lesson_date.split('-')]
+            start_hour, start_minute = [int(_) for _ in start_time.split(':')]
+            end_hour, end_minute = [int(_) for _ in end_time.split(':')]
+
+            teacher_declared_start_time = \
+                datetime(_year, _month, _day, start_hour, start_minute)
+            teacher_declared_end_time = \
+                datetime(_year, _month, _day, end_hour, end_minute)
+            
+            if not (start_minute % 10 == 0 and end_minute % 10 == 0 and 
+                teacher_declared_end_time > teacher_declared_start_time):
+                # 不是以每十分鐘為一個單位，或結束時間未大過起始時間
+                response['status'] = 'failed'
+                response['errCode'] = '4'
+                response['errMsg'] = '不好意思，課程確認時間以每十分鐘為一個單位，而且結束時間要大於起始時間，如果持續遇到這個問題請您告訴我們一聲。'
+                response['data'] = None
+            
+            else:
+                # 格式都正確
+                # 先確認該課程完課紀錄是否已經存在，沒有的話才建立，避免重複紀錄
+                if not lesson_completed_record.objects.filter(
+                    lesson_booking_info_id = booking_object.id,
+                    teacher_auth_id = teacher_auth_id,
+                    student_auth_id = booking_object.student_auth_id
+                ).exists():
+                
+                    teacher_declared_time_in_minutes = \
+                        int((teacher_declared_end_time - teacher_declared_start_time).seconds / 60)
+
+                    new_added_record = lesson_completed_record.objects.create(
+                        lesson_booking_info_id = booking_object.id,
+                        student_remaining_minutes_of_each_purchased_lesson_set_id = \
+                            booking_object.remaining_minutes,  # 對應的訂單所剩的時數
+                        teacher_auth_id = teacher_auth_id,
+                        student_auth_id = booking_object.student_auth_id, 
+                        booking_time_in_minutes = booking_object.get_booking_time_in_minutes(),
+                        # 預估上課時間時數,單位分鐘,是用預約的時間計算的
+                        teacher_declared_start_time = teacher_declared_start_time,
+                        teacher_declared_end_time = teacher_declared_end_time,
+                        teacher_declared_time_in_minutes = teacher_declared_time_in_minutes,
+                        # 老師號稱的開課時間總時數,可能課程實際時間會比原本預約時有所增減(單位是分鐘)
+                        student_confirmed_deadline = \
+                            date_function.today() + timedelta(days=3),
+                        # 這個的作用是，假設學生遲遲不確認，我們還是要在某個時段過後撥錢給老師，
+                        # 目前先預設3天? 也就是說，當在老師發送確認訊息後的3天後，假設學生還沒確認也沒申訴，
+                        # 則我們將直接撥款給老師
+                        # 萬一學生遲遲不確認，要由我們自動確認的話，最好也做個註記
+                    )
+                    new_added_record.save()
+                    
+                    # email通知學生要進行完課時數確認
+                    when_lesson_completed_email_kwargs = {
+                        'student_authID':booking_object.student_auth_id,
+                        'teacher_authID':teacher_auth_id
+                    }
+                    student_email_thread = Thread(
+                        target = lesson_email_notification.send_student_confirm_time_when_teacher_completed_lesson,
+                        kwargs = when_lesson_completed_email_kwargs)
+                    student_email_thread.start()
+                    # 提醒老師要評價學生
+                    teacher_email_thread = Thread(
+                        target = lesson_email_notification.send_teacher_rate_student_when_teacher_completed_lesson,
+                        kwargs = when_lesson_completed_email_kwargs)
+                    teacher_email_thread.start()
+                    
+                    response['status'] = 'success'
+                    response['errCode'] = None
+                    response['errMsg'] = None
+                    response['data'] = new_added_record.id
+                
+                else:
+                    # 已經有紀錄存在了，拒絕建立新紀錄
+                    response['status'] = 'failed'
+                    response['errCode'] = '4'
+                    response['errMsg'] = '您已經確認完課囉，如果持續遇到這個問題請您告訴我們一聲。'
+                    response['data'] = None
+    else:
+        # 資料傳輸出現問題
         response['status'] = 'failed'
         response['errCode'] = '0'
         response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
         response['data'] = None
     
     return JsonResponse(response)
- 
+
+
+
+@require_http_methods(['POST'])
+def lesson_completed_confirmation_from_student(request):
+    '''
+    完課後老師會寄送完課通知給學生，請學生確認；
+    這個API能讓學生進行完課通知的同意或是申訴(時數有爭議)。
+    接收：{
+        token,
+        userID: 學生的auth_id
+        lesson_booking_info_id: 哪一門預約的ID
+        action: "agree" or "disagree"  學生的動作 
+    }
+    回傳：{
+        status: “success“ / “failed“ 
+        errCode: None 
+        errMsg: None
+        data: None
+    }'''
+    response = dict()
+    student_auth_id = request.POST.get('userID', False)
+    lesson_booking_info_id = request.POST.get('lesson_booking_info_id', False)
+    action = request.POST.get('action', False)
+
+    if check_if_all_variables_are_true(student_auth_id, lesson_booking_info_id, action):
+        # 資料有正確收取
+        # 確認一下 student 、 booking_info 存不存在
+        student_object = student_profile.objects.filter(auth_id=student_auth_id).first()
+        booking_object = lesson_booking_info.objects.filter(id=lesson_booking_info_id).first()
+
+        if booking_object is None or student_object is None:
+            # 沒有抓到對應的預約或是學生的紀錄
+            response['status'] = 'failed'
+            response['errCode'] = '1'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['data'] = None
+        elif student_object.auth_id != booking_object.student_auth_id:
+            # 預約的學生 auth_id 跟前端回傳的學生 auth_id 不 match
+            response['status'] = 'failed'
+            response['errCode'] = '2'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['data'] = None
+        else:
+            # 看來一切正常，接下來要來更新對應的 預約 & 課程完結 兩張 TABLE 的對應資料了
+            lesson_completed_object = lesson_completed_record.objects.get(
+                lesson_booking_info_id = lesson_booking_info_id
+            )  # 因為一定有資料，所以可以用get
+            
+            if action == 'agree':
+                # 學生確認老師聲稱的時數無誤，先 update 預約 TABLE
+                booking_object.last_changed_by = 'student'  # 因為是學生最後確認的
+                booking_object.booking_status = 'finished'  # 課程完結囉~
+                booking_object.save()
+                # 再來 update 完結 TABLE
+                lesson_completed_object.is_student_confirmed = True
+                lesson_completed_object.save()
+                # 之後還有時數要從remaining那邊扣掉的環節，暫時先不管  >>  現在要來處理了!
+
+                # 先依照是不是試教，來進行開發，因為試教比較簡單，不管時數剛好、超過、或過少，都直接扣掉就是了
+                if lesson_sales_sets.objects.get(id=booking_object.booking_set_id).sales_set == 'trial':
+                    # 是試教
+                    student_remaining_object = \
+                        student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                            student_auth_id = student_auth_id,
+                            teacher_auth_id = booking_object.teacher_auth_id,
+                            lesson_sales_set_id = booking_object.booking_set_id).first()
+                    
+                    if not student_remaining_object is None:
+                        # 有找到對應的 student_remaining_object ，理論上不該找不到
+                        student_remaining_object.withholding_minutes -= 30
+                        student_remaining_object.confirmed_consumed_minutes += 30
+                        student_remaining_object.save()
+                        response['status'] = 'success'
+                        response['errCode'] = None
+                        response['errMsg'] = None
+                        response['data'] = None
+                    
+                    else:
+                        # 找不到對應的 student_remaining_object ，雖然不知道為甚麼會這樣
+                        response['status'] = 'failed'
+                        response['errCode'] = '3'
+                        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                        response['data'] = None
+
+                else:
+                    # 接下來做 非試教 的部份，因為像 10:90、20:80 這種跟 no_discount 的處理方式是一樣的，
+                    # 所以就傪在一起處理了
+                    # 要排除 試教 購買方案，所以必須要抓出該門課所有的試教 sets 加以排除
+                    # 另外也要排除 available == 0 AND withholding == 0 的購買方案們，
+                    # 因為也沒有辦法從它們身上扣東西
+                    
+                    all_trial_set_ids_of_the_lesson = \
+                        lesson_sales_sets.objects.values_list('id', flat=True).filter(
+                            lesson_id = booking_object.lesson_id,
+                            sales_set = 'trial')
+
+                    student_remaining_objects = \
+                        student_remaining_minutes_of_each_purchased_lesson_set.objects.filter(
+                            student_auth_id = student_auth_id,
+                            lesson_id = booking_object.lesson_id).exclude(
+                                Q(lesson_sales_set_id__in = all_trial_set_ids_of_the_lesson) |  # 排除試教方案
+                                (Q(available_remaining_minutes=0) & Q(withholding_minutes=0))  # 排除兩者皆為0
+                            ).order_by('created_time')  # 依照時間排序，先進先出
+                    
+                    # 先處理 老師宣稱的時數 == 當初預定的課堂時數
+                    if lesson_completed_object.teacher_declared_time_in_minutes == lesson_completed_object.booking_time_in_minutes:
+                        # 最簡單的情境，只要把對應的 remaining_object 中 對應的 withholding 移到 consumed 就好了
+                        # 究竟要扣多少時數 >> lesson_completed_object.teacher_declared_time_in_minutes
+                        how_many_minutes_does_it_left = lesson_completed_object.teacher_declared_time_in_minutes
+                        # 還需要扣多少時間
+                        
+                        for each_student_remaining_object in student_remaining_objects:
+                            if each_student_remaining_object.withholding_minutes >= how_many_minutes_does_it_left:
+                                # 目前這個購買方案的時數>=需要扣掉的時數，所以直接扣掉就好了
+                                each_student_remaining_object.withholding_minutes -= how_many_minutes_does_it_left
+                                each_student_remaining_object.confirmed_consumed_minutes += how_many_minutes_does_it_left
+                                each_student_remaining_object.save()
+                                how_many_minutes_does_it_left = 0
+                                break
+                            else:
+                                # 目前這個購買方案的時數不足以完全扣除需要扣除的時數
+                                how_many_minutes_does_it_left -= each_student_remaining_object.withholding_minutes
+                                # 先扣掉能扣掉的部份
+                                # 移動到 confirmed_consumed_minutes 去
+                                each_student_remaining_object.confirmed_consumed_minutes += each_student_remaining_object.withholding_minutes
+                                each_student_remaining_object.withholding_minutes = 0
+                                each_student_remaining_object.save()
+                                # withholding_minutes歸零
+
+                        # 迴圈跑完就自動大功告成了
+                        response['status'] = 'success'
+                        response['errCode'] = None
+                        response['errMsg'] = None
+                        response['data'] = None
+
+                    elif lesson_completed_object.teacher_declared_time_in_minutes > lesson_completed_object.booking_time_in_minutes:
+                        # 老師宣稱的時數 != 當初預定的課堂時數
+                        # 先來做超時的部份
+                        # 超時的話，先扣除原先 withholding 的部份，然後再趁機從多的 available 扣除
+                        # 若學生沒有多的 available 可以扣，則先儲存在 student_owing_teacher_time TABLE，留待日後處理
+                        how_many_withholding_minutes_does_it_left = lesson_completed_object.booking_time_in_minutes
+                        # withholding 的部份還需要扣多少時間
+                        how_many_extra_minutes_does_it_left = \
+                            lesson_completed_object.teacher_declared_time_in_minutes - lesson_completed_object.booking_time_in_minutes
+                        # 超出的部分還需要扣多少時間
+
+                        for each_student_remaining_object in student_remaining_objects:
+                            # 先處理有預扣的部份，這一塊不受學生有沒有足夠的 available minutes 影響，所以在這裡做
+                            if each_student_remaining_object.withholding_minutes >= how_many_withholding_minutes_does_it_left:
+                                # 目前這個購買方案的時數>=需要扣掉的時數，所以直接扣掉就好了
+                                each_student_remaining_object.withholding_minutes -= how_many_withholding_minutes_does_it_left
+                                each_student_remaining_object.confirmed_consumed_minutes += how_many_withholding_minutes_does_it_left
+                                each_student_remaining_object.save()
+                                how_many_withholding_minutes_does_it_left = 0
+                                break
+                            else:
+                                # 目前這個購買方案的時數不足以完全扣除需要扣除的時數
+                                how_many_withholding_minutes_does_it_left -= each_student_remaining_object.withholding_minutes
+                                # 先扣掉能扣掉的部份
+                                # 移動到 confirmed_consumed_minutes 去
+                                each_student_remaining_object.confirmed_consumed_minutes += each_student_remaining_object.withholding_minutes
+                                each_student_remaining_object.withholding_minutes = 0
+                                each_student_remaining_object.save()
+                                # withholding_minutes歸零
+
+                        # 再來確認該學生有沒有多餘的 available minutes 可供扣除
+                        # all_available_minutes_of_this_lesson = \
+                        #    student_remaining_objects.aggregate(Sum('available_remaining_minutes'))['available_remaining_minutes__sum']
+                        # 好像也不用特別確認，最後有剩下的 how_many_extra_minutes_does_it_left 就代表沒扣光了
+
+                        for each_student_remaining_object in student_remaining_objects:
+                            # 再來處理扣除 available minutes 的部份
+                            if each_student_remaining_object.available_remaining_minutes >= how_many_extra_minutes_does_it_left:
+                                # 目前這個購買方案的時數>=需要扣掉的時數，所以直接扣掉就好了
+                                each_student_remaining_object.available_remaining_minutes -= how_many_extra_minutes_does_it_left
+                                each_student_remaining_object.confirmed_consumed_minutes += how_many_extra_minutes_does_it_left
+                                each_student_remaining_object.save()
+                                how_many_extra_minutes_does_it_left = 0
+                                break
+                            else:
+                                # 目前這個購買方案的時數不足以完全扣除需要扣除的時數
+                                how_many_extra_minutes_does_it_left -= each_student_remaining_object.available_remaining_minutes
+                                # 先扣掉能扣掉的部份
+                                # 移動到 confirmed_consumed_minutes 去
+                                each_student_remaining_object.confirmed_consumed_minutes += each_student_remaining_object.available_remaining_minutes
+                                each_student_remaining_object.available_remaining_minutes = 0
+                                each_student_remaining_object.save()
+                                # available_remaining_minutes
+
+                        if how_many_extra_minutes_does_it_left:
+                            # 學生的 available minutes 不足以支付多出的時數
+                            # 超時的部份沒扣光，要存入 student_owing_teacher_time TABLE
+                            student_owing_teacher_time.objects.create(
+                                student_auth_id = student_auth_id,
+                                teacher_auth_id = booking_object.teacher_auth_id,
+                                lesson_id = booking_object.lesson_id,
+                                lesson_booking_info_id = booking_object.id,
+                                owing_minutes = how_many_extra_minutes_does_it_left
+                            )
+                        else:
+                            # 學生的 available minutes 可以支付多出的時數，已經扣乾淨了
+                            # 不用特別處理
+                            pass
+                            
+                        response['status'] = 'success'
+                        response['errCode'] = None
+                        response['errMsg'] = None
+                        response['data'] = None
+
+                    elif lesson_completed_object.teacher_declared_time_in_minutes < lesson_completed_object.booking_time_in_minutes:
+                        # 現在來做萬一老師實際上課的時間比預約的時間來得短
+                        # 其實算簡單，只要把 少的時間 ，從 withholding 移回去 available minutes 就好了
+                        how_many_withholding_minutes_does_it_left = lesson_completed_object.teacher_declared_time_in_minutes
+                        #  withholding 的部份要扣多少時間
+                        shortage_minutes = \
+                            lesson_completed_object.booking_time_in_minutes - lesson_completed_object.teacher_declared_time_in_minutes
+                        # 短少的，要補回的時間
+
+                        for each_student_remaining_object in student_remaining_objects:
+                            # 先處理扣除的部份
+                            if each_student_remaining_object.withholding_minutes >= how_many_withholding_minutes_does_it_left:
+                                # 目前這個購買方案的時數>=需要扣掉的時數，所以直接扣掉就好了
+                                each_student_remaining_object.withholding_minutes -= how_many_withholding_minutes_does_it_left
+                                each_student_remaining_object.confirmed_consumed_minutes += how_many_withholding_minutes_does_it_left
+                                each_student_remaining_object.save()
+                                how_many_withholding_minutes_does_it_left = 0
+                                break
+                            else:
+                                # 目前這個購買方案的時數不足以完全扣除需要扣除的時數
+                                how_many_withholding_minutes_does_it_left -= each_student_remaining_object.withholding_minutes
+                                # 先扣掉能扣掉的部份
+                                # 移動到 confirmed_consumed_minutes 去
+                                each_student_remaining_object.confirmed_consumed_minutes += each_student_remaining_object.withholding_minutes
+                                each_student_remaining_object.withholding_minutes = 0
+                                each_student_remaining_object.save()
+                                # withholding_minutes歸零
+
+                        # 接下來處理少上的時數，要補回去學生的 available minutes 部份
+                        # 因為已經有事先預扣了，所以一定要從預扣補回
+                        for each_student_remaining_object in student_remaining_objects:
+                            # 來處理時數補回的部份
+                            if each_student_remaining_object.withholding_minutes >= shortage_minutes:
+                                # 目前這個購買方案的時數>=需要補回的時數，所以直接補回就好了
+                                each_student_remaining_object.withholding_minutes -= shortage_minutes
+                                each_student_remaining_object.available_remaining_minutes += shortage_minutes
+                                each_student_remaining_object.save()
+                                shortage_minutes = 0
+                                break
+                            else:
+                                # 目前這個購買方案的時數不足以完全補回需要補回的時數
+                                shortage_minutes -= each_student_remaining_object.withholding_minutes
+                                # 先補回能補回的部份
+                                # 移動到 available_remaining_minutes 去
+                                each_student_remaining_object.available_remaining_minutes += each_student_remaining_object.withholding_minutes
+                                each_student_remaining_object.withholding_minutes = 0
+                                each_student_remaining_object.save()
+                                # withholding_minutes歸零
+
+                        response['status'] = 'success'
+                        response['errCode'] = None
+                        response['errMsg'] = None
+                        response['data'] = None
+
+            elif action == 'disagree':
+                # 學生對老師聲稱的時數有意見，先 update 預約 TABLE
+                booking_object.last_changed_by = 'student'  # 因為是學生最後確認的
+                booking_object.booking_status = 'quikok_dealing_for_student_disagreed'  # Quikok介入調查
+                booking_object.save()
+                # 再來 update 完結 TABLE
+                lesson_completed_object.is_student_disagree_with_teacher_s_declared_time = True
+                lesson_completed_object.save()
+
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = None
+
+    else:
+        # 資料傳輸出現問題
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+    
+    return JsonResponse(response)
+
+
+@require_http_methods(['POST'])
+def teacher_write_student_reviews(request):
+    '''
+    完課後老師與學生可以互評評價；
+    這個API能讓老師對學生評價。
+    接收：{
+        token,
+        userID: 老師的auth_id
+        score_given: 評分 1 - 5
+        remark_given: 評語
+        is_student_late_for_lesson: 學生是否遲到
+        is_student_frivolous_in_lesson: 學生是否不專心
+        is_student_or_parents_not_friendly: 學生是否不友善
+    }
+    回傳：{
+        status: “success“ / “failed“ 
+        errCode: None 
+        errMsg: None
+        data: None
+    }'''
+    response = dict()
+    teacher_auth_id = request.POST.get('userID', False)
+    score_given = request.POST.get('score_given', False)
+    lesson_booking_info_id = request.POST.get('lesson_booking_info_id', False)
+    remark_given = request.POST.get('remark_given', False)
+    is_student_late_for_lesson = request.POST.get('is_student_late_for_lesson', False)
+    is_student_frivolous_in_lesson = request.POST.get('is_student_frivolous_in_lesson', False)
+    is_student_or_parents_not_friendly = request.POST.get('is_student_or_parents_not_friendly', False)
+
+    if False not in (teacher_auth_id, score_given, remark_given, lesson_booking_info_id,
+        is_student_late_for_lesson, is_student_frivolous_in_lesson, is_student_or_parents_not_friendly):
+        # 資料有正確收取
+
+        lesson_booking_object = lesson_booking_info.objects.filter(id=lesson_booking_info_id).first()
+        if lesson_booking_object is not None:
+            # 該預約確實存在
+            student_object = student_profile.objects.filter(auth_id=lesson_booking_object.student_auth_id).first()
+
+            if (student_object is not None and lesson_booking_object.teacher_auth_id == int(teacher_auth_id)):
+                # 學生存在，且該老師匹配
+                if lesson_booking_object.booking_status in ('finished', 'student_not_yet_confirmed', 'quikok_dealing_for_student_disagreed'):
+                
+                    # 接著確認一下該門預約是否未經老師評價過
+                    if student_reviews_from_teachers.objects.filter(corresponding_lesson_booking_info_id=lesson_booking_object.id).first() is None:
+                        # 老師未評價過
+                        # 預約課程狀態符合老師送出時段後的條件
+                        # 將數值轉成符合我們的規範
+                        is_student_late_for_lesson = return_none_if_the_string_is_empty(is_student_late_for_lesson)
+                        is_student_frivolous_in_lesson = return_none_if_the_string_is_empty(is_student_frivolous_in_lesson)
+                        is_student_or_parents_not_friendly = return_none_if_the_string_is_empty(is_student_or_parents_not_friendly)
+                        remark_given = return_none_if_the_string_is_empty(remark_given)
+
+                        # 來寫入紀錄囉
+                        new_added_record = student_reviews_from_teachers.objects.create(
+                            corresponding_lesson_id = lesson_booking_object.lesson_id,
+                            corresponding_lesson_booking_info_id = lesson_booking_object.id,
+                            corresponding_lesson_completed_record_id = \
+                                lesson_completed_record.objects.get(lesson_booking_info_id=lesson_booking_object.id).id,
+                            student_auth_id = student_object.auth_id,
+                            teacher_auth_id = teacher_auth_id,
+                            score_given = bound_number_string(score_given),
+                            is_student_late_for_lesson = \
+                                is_student_late_for_lesson == 'true' if is_student_late_for_lesson is not None else None,
+                            is_student_frivolous_in_lesson = \
+                                is_student_frivolous_in_lesson == 'true' if is_student_frivolous_in_lesson is not None else None,
+                            is_student_or_parents_not_friendly = \
+                                is_student_or_parents_not_friendly == 'true' if is_student_or_parents_not_friendly is not None else None,
+                            remark_given = remark_given
+                        )
+                        new_added_record.save()
+
+                        response['status'] = 'success'
+                        response['errCode'] = None
+                        response['errMsg'] = None
+                        response['data'] = new_added_record.id
+                    else:
+                        # 老師已經有評價過這門預約了
+                        # 未來可以做成雙方可以在評價下方留言，讓外界也可以知道評價的原因與反駁
+                        response['status'] = 'failed'
+                        response['errCode'] = '4'
+                        response['errMsg'] = '謝謝您，您已經評價過囉Y(^___^)Y'
+                        response['data'] = student_reviews_from_teachers.objects.filter(corresponding_lesson_booking_info_id=lesson_booking_object.id).first().id
+                else:
+                    # 課程狀況不符合評價的前提
+                    response['status'] = 'failed'
+                    response['errCode'] = '2'
+                    response['errMsg'] = '不好意思，老師必須先進行完課確認，雙方才能夠進行評價唷。'
+                    response['data'] = lesson_booking_object.booking_status
+            else:
+                # 學生不存在，或老師不匹配
+                response['status'] = 'failed'
+                response['errCode'] = '1'
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                response['data'] = (student_object, lesson_booking_object.teacher_auth_id)
+
+        else:
+            # 沒有這樣子的一筆預約
+            response['status'] = 'failed'
+            response['errCode'] = '3'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['data'] = lesson_booking_object
+
+    else:
+        # 資料傳輸出現問題
+        # print(f'is_student_late_for_lesson {is_student_late_for_lesson} is_student_frivolous_in_lesson {is_student_frivolous_in_lesson} is_student_or_parents_not_friendly {is_student_or_parents_not_friendly}')
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+    
+    return JsonResponse(response)
+
+
+@require_http_methods(['POST'])
+def student_write_teacher_reviews(request):
+    '''
+    完課後老師與學生可以互評評價；
+    這個API能讓學生對老師評價。
+    接收：{
+        token,
+        userID: 學生的auth_id
+        score_given: 評分 1 - 5
+        remark_given: 評語
+        is_teacher_late_for_lesson: 老師是否遲到
+        is_teacher_frivolous_in_lesson: 老師是否不專心
+        is_teacher_incapable: 老師是否不勝任這門課、教太廢
+    }
+    回傳：{
+        status: “success“ / “failed“ 
+        errCode: None 
+        errMsg: None
+        data: None
+    }'''
+    response = dict()
+    student_auth_id = request.POST.get('userID', False)
+    score_given = request.POST.get('score_given', False)
+    lesson_booking_info_id = request.POST.get('lesson_booking_info_id', False)
+    remark_given = request.POST.get('remark_given', False)
+    is_teacher_late_for_lesson = request.POST.get('is_teacher_late_for_lesson', False)
+    is_teacher_frivolous_in_lesson = request.POST.get('is_teacher_frivolous_in_lesson', False)
+    is_teacher_incapable = request.POST.get('is_teacher_incapable', False)
+
+    if False not in (student_auth_id, score_given, remark_given, lesson_booking_info_id,
+        is_teacher_late_for_lesson, is_teacher_frivolous_in_lesson, is_teacher_incapable):
+        # 資料有正確收取
+
+        lesson_booking_object = lesson_booking_info.objects.filter(id=lesson_booking_info_id).first()
+        if lesson_booking_object is not None:
+            # 該預約確實存在
+            teacher_object = teacher_profile.objects.filter(auth_id=lesson_booking_object.teacher_auth_id).first()
+
+            if (teacher_object is not None and lesson_booking_object.student_auth_id == int(student_auth_id)):
+                # 老師存在，且該學生匹配
+                if lesson_booking_object.booking_status in ('finished', 'student_not_yet_confirmed', 'quikok_dealing_for_student_disagreed'):
+                
+                    # 接著確認一下該門預約是否未經學生評價過
+                    if not lesson_reviews_from_students.objects.filter(corresponding_lesson_booking_info_id=lesson_booking_object.id).exists():
+                        # 學生未評價過
+                        # 預約課程狀態符合老師送出時段後的條件
+                        # 將數值轉成符合我們的規範
+                        is_teacher_late_for_lesson = return_none_if_the_string_is_empty(is_teacher_late_for_lesson)
+                        is_teacher_frivolous_in_lesson = return_none_if_the_string_is_empty(is_teacher_frivolous_in_lesson)
+                        is_teacher_incapable = return_none_if_the_string_is_empty(is_teacher_incapable)
+                        remark_given = return_none_if_the_string_is_empty(remark_given)
+
+                        # 來寫入紀錄囉
+                        new_added_record = lesson_reviews_from_students.objects.create(
+                            corresponding_lesson_id = lesson_booking_object.lesson_id,
+                            corresponding_lesson_booking_info_id = lesson_booking_object.id,
+                            corresponding_lesson_completed_record_id = \
+                                lesson_completed_record.objects.get(lesson_booking_info_id=lesson_booking_object.id).id,
+                            student_auth_id = student_auth_id,
+                            teacher_auth_id = teacher_object.auth_id,
+                            score_given = bound_number_string(score_given),
+                            is_teacher_late_for_lesson = \
+                                is_teacher_late_for_lesson == 'true' if is_teacher_late_for_lesson is not None else None,
+                            is_teacher_frivolous_in_lesson = \
+                                is_teacher_frivolous_in_lesson == 'true' if is_teacher_frivolous_in_lesson is not None else None,
+                            is_teacher_incapable = \
+                                is_teacher_incapable == 'true' if is_teacher_incapable is not None else None,
+                            remark_given = remark_given
+                        )
+                        new_added_record.save()
+
+                        response['status'] = 'success'
+                        response['errCode'] = None
+                        response['errMsg'] = None
+                        response['data'] = new_added_record.id
+                    else:
+                        # 學生已經有評價過這門預約了
+                        # 未來可以做成雙方可以在評價下方留言，讓外界也可以知道評價的原因與反駁
+                        response['status'] = 'failed'
+                        response['errCode'] = '4'
+                        response['errMsg'] = '謝謝您，您已經評價過囉Y(^___^)Y'
+                        response['data'] = lesson_reviews_from_students.objects.filter(corresponding_lesson_booking_info_id=lesson_booking_object.id).first().id
+                else:
+                    # 課程狀況不符合評價的前提
+                    response['status'] = 'failed'
+                    response['errCode'] = '2'
+                    response['errMsg'] = '不好意思，老師必須先進行完課確認，雙方才能夠進行評價唷。'
+                    response['data'] = lesson_booking_object.booking_status
+            else:
+                # 學生不存在，或老師不匹配
+                response['status'] = 'failed'
+                response['errCode'] = '1'
+                response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+                response['data'] = (teacher_object, lesson_booking_object.student_auth_id)
+
+        else:
+            # 沒有這樣子的一筆預約
+            response['status'] = 'failed'
+            response['errCode'] = '3'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['data'] = lesson_booking_object
+
+    else:
+        # 資料傳輸出現問題
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+    
+    return JsonResponse(response)
+
+
+@require_http_methods(['POST'])
+def read_reviews_of_certain_lessons(request):
+    '''
+    讓師/生雙方可以看見彼此在某堂課上對彼此的評價
+    接收：{
+        lesson_booking_info_id: 哪一門預約的ID
+        userID: 用戶的auth_id,  // 用來確認這個user是不是有權力看這個評論
+        type: "student" or "teacher"
+    }
+    回傳：{
+        status: “success“ / “failed“ 
+        errCode: None 
+        errMsg: None
+        data: {
+            // 學生對老師
+            score_given_to_teacher: from 1 to 5
+            remark_given_to_teacher: 評語
+            is_teacher_late_for_lesson: Boolean,
+            is_teacher_frivolous_in_lesson: Boolean,
+            is_teacher_incapabale: Boolean,
+            // 老師對學生
+            score_given_to_student: from 1 to 5
+            remark_given_to_student: 評語
+            is_student_late_for_lesson: Boolean,
+            is_student_frivolous_in_lesson: Boolean,
+            is_student_or_parents_not_friendly: Boolean,
+        }
+    }'''
+    response = dict()
+    user_auth_id = request.POST.get('userID', False)
+    lesson_booking_info_id = request.POST.get('lesson_booking_info_id', False)
+    user_type = request.POST.get('type', False)
+
+    if check_if_all_variables_are_true(user_auth_id, lesson_booking_info_id, user_type):
+        # 資料有正確收取
+        # 接著確認有沒有此門預約課程
+        lesson_booking_object = lesson_booking_info.objects.filter(id=lesson_booking_info_id).first()
+        if lesson_booking_object is not None:
+            # 此門預約確實存在
+            # 接著確認此用戶是否存在於該預約的師生雙方中
+            if int(user_auth_id) in (lesson_booking_object.student_auth_id, lesson_booking_object.teacher_auth_id):
+                # 因為一次要回傳雙方的評價資訊，故不需要特別區分老師或是學生來做處理
+                # 確認該門課已經進入至少其中的階段之一
+                if lesson_booking_object.booking_status in ('finished', 'student_not_yet_confirmed', 'quikok_dealing_for_student_disagreed'):
+                    # 拿學生留的評價
+                    review_left_by_student = \
+                        lesson_reviews_from_students.objects.filter(
+                            corresponding_lesson_booking_info_id=lesson_booking_object.id).first()
+
+                    # 拿老師留的評價
+                    review_left_by_teacher = \
+                        student_reviews_from_teachers.objects.filter(
+                            corresponding_lesson_booking_info_id=lesson_booking_object.id).first()
+
+                    if review_left_by_student is None and review_left_by_teacher is None:
+                        # 學生與老師都沒有留下評論
+                        response['data'] = {
+                                    'score_given_to_teacher': -1,
+                                    'remark_given_to_teacher': '',
+                                    'is_teacher_late_for_lesson': None,
+                                    'is_teacher_frivolous_in_lesson': None,
+                                    'is_teacher_incapable': None,
+                                    'score_given_to_student': -1,
+                                    'remark_given_to_student': '',
+                                    'is_student_late_for_lesson': None,
+                                    'is_student_frivolous_in_lesson': None,
+                                    'is_student_or_parents_not_friendly': None
+                                }
+                    elif review_left_by_student is not None and review_left_by_teacher is None:
+                        # 學生有留評論，老師沒有
+                        response['data'] = {
+                                    'score_given_to_teacher': review_left_by_student.score_given,
+                                    'remark_given_to_teacher': review_left_by_student.remark_given,
+                                    'is_teacher_late_for_lesson': review_left_by_student.is_teacher_late_for_lesson,
+                                    'is_teacher_frivolous_in_lesson': review_left_by_student.is_teacher_frivolous_in_lesson,
+                                    'is_teacher_incapable': review_left_by_student.is_teacher_incapable,
+                                    'score_given_to_student': -1,
+                                    'remark_given_to_student': '',
+                                    'is_student_late_for_lesson': None,
+                                    'is_student_frivolous_in_lesson': None,
+                                    'is_student_or_parents_not_friendly': None
+                                }
+                    elif review_left_by_student is None and review_left_by_teacher is not None:
+                        # 老師有留評論，學生沒有
+                        response['data'] = {
+                                    'score_given_to_teacher': -1,
+                                    'remark_given_to_teacher': '',
+                                    'is_teacher_late_for_lesson': None,
+                                    'is_teacher_frivolous_in_lesson': None,
+                                    'is_teacher_incapable': None,
+                                    'score_given_to_student': review_left_by_teacher.score_given,
+                                    'remark_given_to_student': review_left_by_teacher.remark_given,
+                                    'is_student_late_for_lesson': review_left_by_teacher.is_student_late_for_lesson,
+                                    'is_student_frivolous_in_lesson': review_left_by_teacher.is_student_frivolous_in_lesson,
+                                    'is_student_or_parents_not_friendly': review_left_by_teacher.is_student_or_parents_not_friendly
+                                }
+                    else:
+                        # 雙方都有留下評論
+                        response['data'] = {
+                                    'score_given_to_teacher': review_left_by_student.score_given,
+                                    'remark_given_to_teacher': review_left_by_student.remark_given,
+                                    'is_teacher_late_for_lesson': review_left_by_student.is_teacher_late_for_lesson,
+                                    'is_teacher_frivolous_in_lesson': review_left_by_student.is_teacher_frivolous_in_lesson,
+                                    'is_teacher_incapable': review_left_by_student.is_teacher_incapable,
+                                    'score_given_to_student': review_left_by_teacher.score_given,
+                                    'remark_given_to_student': review_left_by_teacher.remark_given,
+                                    'is_student_late_for_lesson': review_left_by_teacher.is_student_late_for_lesson,
+                                    'is_student_frivolous_in_lesson': review_left_by_teacher.is_student_frivolous_in_lesson,
+                                    'is_student_or_parents_not_friendly': review_left_by_teacher.is_student_or_parents_not_friendly
+                                }
+                    response['status'] = 'success'
+                    response['errCode'] = None
+                    response['errMsg'] = None
+
+            else:
+                # 此用戶並不是授課雙方之一
+                response['status'] = 'failed'
+                response['errCode'] = '2'
+                response['errMsg'] = '不好意思，只有上課雙方才能閱讀特定課程的評價唷> <'
+                response['data'] = None
+        else:
+            # 此門預約不存在
+            response['status'] = 'failed'
+            response['errCode'] = '1'
+            response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+            response['data'] = None
+                   
+    else:
+        # 資料傳輸出現問題
+        response['status'] = 'failed'
+        response['errCode'] = '0'
+        response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        response['data'] = None
+    
+    return JsonResponse(response)
+
+
+
+'''
+if user_type == 'teacher':
+# 先做用戶是老師的處理
+teacher_object = teacher_profile.objects.filter(auth_id=user_auth_id).first()
+if teacher_object is not None:
+    # 用戶存在
+    # 確認該門課已經進入至少其中的階段之一
+    if lesson_booking_object.booking_status in ('finished', 'student_not_yet_confirmed', 'quikok_dealing_for_student_disagreed'):
+        review_left_by_student = \
+            lesson_reviews_from_students.objects.filter(
+                corresponding_lesson_booking_info_id=lesson_booking_object.id).first()
+        if review_left_by_student is None:
+            # 學生尚未留下任何評論
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+            response['data'] = ''
+        else:
+            # 學生有留下評論
+            response['data'] = {
+                'score_given_to_teacher': review_left_by_student.score_given,
+                'remark_given_to_teacher': review_left_by_student.remark_given,
+                'is_teacher_late_for_lesson': review_left_by_student.is_teacher_late_for_lesson,
+                'is_teacher_frivolous_in_lesson': review_left_by_student.is_teacher_frivolous_in_lesson,
+                'is_teacher_incapable': review_left_by_student.is_teacher_incapable
+            }
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+else:
+    # 老師用戶不存在
+    response['status'] = 'failed'
+    response['errCode'] = '4'
+    response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+    response['data'] = None
+
+else:
+# 用戶是學生
+student_object = student_profile.objects.filter(auth_id=user_auth_id).first()
+if student_object is not None:
+    # 用戶存在
+    # 確認該門課已經進入至少其中的階段之一
+    if lesson_booking_object.booking_status in ('finished', 'student_not_yet_confirmed', 'quikok_dealing_for_student_disagreed'):
+        review_left_by_teacher = \
+            student_reviews_from_teachers.objects.filter(
+                corresponding_lesson_booking_info_id=lesson_booking_object.id).first()
+        if review_left_by_teacher is None:
+            # 老師尚未留下任何評論
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+            response['data'] = ''
+        else:
+            # 老師有留下評論
+            response['data'] = {
+                'score_given_to_student': review_left_by_teacher.score_given,
+                'remark_given_to_student': review_left_by_teacher.remark_given,
+                'is_student_late_for_lesson': review_left_by_teacher.is_student_late_for_lesson,
+                'is_student_frivolous_in_lesson': review_left_by_teacher.is_student_frivolous_in_lesson,
+                'is_student_or_parents_not_friendly': review_left_by_teacher.is_student_or_parents_not_friendly
+            }
+            response['status'] = 'success'
+            response['errCode'] = None
+            response['errMsg'] = None
+else:
+    # 用戶不存在
+    response['status'] = 'failed'
+    response['errCode'] = '3'
+    response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+    response['data'] = None
+'''

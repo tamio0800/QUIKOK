@@ -1,18 +1,101 @@
-from django.http import response
-from django.test import RequestFactory, TestCase
-from django.test import Client
-from django.contrib.auth.models import Permission, User, Group
-from account.models import student_profile, teacher_profile, user_token, feedback
-from account.models import general_available_time
-from account.models import specific_available_time
-from account.auth_tools import auth_check_manager
+from django.test import TestCase,Client
+from django.contrib.auth.models import Group
+from django.urls.conf import path
+from account.models import (student_profile, teacher_profile, feedback,
+                            general_available_time,specific_available_time)
 from datetime import datetime, timedelta, date as date_function
-from lesson.models import lesson_card
 import os, shutil
 from unittest import skip
-
+from django.core import mail
+from time import time, sleep
+from django.db.models import Q
+from django.conf import settings
+import asyncio
+import threading
+from threading import Thread
+# 設定環境變數 DEV_MODE 為true >>  export DEV_MODE=true
+# 取消環境變數 DEV_MODE >> unset DEV_MODE
 # python manage.py test account/ --settings=Quikok.settings_for_test
 class Auth_Related_Functions_Test(TestCase):
+
+    def setUp(self):
+        self.client = Client()        
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+        self.test_teacher_name1 = 'test_teacher1_user@test.com'
+        teacher_post_data = {
+            'regEmail': self.test_teacher_name1,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;'
+        }
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        
+        self.test_teacher_name2 = 'test_teacher2_user@test.com'
+        teacher_post_data['regEmail'] = self.test_teacher_name2
+        teacher_post_data['regPwd'] = '11111111'
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+
+        self.test_teacher_name3 = 'test_teacher3_user@test.com'
+        teacher_post_data['regEmail'] = self.test_teacher_name3
+        teacher_post_data['regPwd'] = '22222222'
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        # 建了3個老師
+        
+        self.test_student_name1 = 'test_student1@a.com'
+        student_post_data = {
+            'regEmail': self.test_student_name1,
+            'regPwd': '00000000',
+            'regName': 'test_student_name',
+            'regBirth': '1990-12-25',
+            'regGender': 1,
+            'regRole': 'oneself',
+            'regMobile': '0900-111111',
+            'regNotifiemail': ''
+        }
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        self.test_student_name2 = 'test_student2@a.com'
+        student_post_data['regEmail'] = self.test_student_name2
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        self.test_student_name3 = 'test_student3@a.com'
+        student_post_data['regEmail'] = self.test_student_name3
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        # 建了3個學生
+
+
+    def tearDown(self):
+        # 刪掉(如果有的話)產生的資料夾
+        try:
+            shutil.rmtree('user_upload/students/' + self.test_student_name1)
+            shutil.rmtree('user_upload/students/' + self.test_student_name2)
+            shutil.rmtree('user_upload/students/' + self.test_student_name3)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name1)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name2)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name2)
+        except:
+            pass
+
 
     def test_auth_check_exist(self):
         # 測試這個函式是否存在，並且應該回傳status='success', errCode=None, errMsg=None
@@ -20,6 +103,72 @@ class Auth_Related_Functions_Test(TestCase):
         self.client = Client()
         response = self.client.get(path='/authCheck/')
         self.assertEqual(response.status_code, 200)
+
+
+    def test_change_password_exist(self):
+        '''
+        測試更改密碼的api存在
+        '''
+        self.client = Client()
+        response = self.client.post(path='/api/account/memberChangePassword/')
+        self.assertEqual(response.status_code, 200)
+
+
+    def test_change_password_received_and_validated_arguments(self):
+        '''
+        測試修改密碼的這支api能不能正確收取到參數。
+        '''
+        chg_pwd_post_data = {
+            'userID': 3,
+            'oldUserPwd': 'dwedewikrj23oi5joiu4trjoufj432jt34i82043jiefwo',
+            'newUserPwd': 'djwiofdjewu89320894u2304jr23j980rhudnsaljrjfeas'}
+        response = \
+            self.client.post(path='/api/account/memberChangePassword/', data=chg_pwd_post_data)
+        # 因為是隨便輸入的，密碼不符合 （錯誤2或錯誤3）
+        self.assertIn('failed', str(response.content, "utf8"))
+        self.assertTrue('"errCode": "2"' in str(response.content, "utf8") or
+            '"errCode": "3"' in str(response.content, "utf8"))
+
+        #chg_pwd_post_data['newUserPwd'] = 'djwiofdjewu89320894u2304jr23j980rhudnsaljrjfeas'
+        #response = \
+        #    self.client.post(path='/api/account/memberChangePassword/', data=chg_pwd_post_data)
+        #self.assertIn('failed', str(response.content, "utf8"))
+        #self.assertIn('"errCode": "2"', str(response.content, "utf8"))
+        # 因為密碼不對
+
+    
+    def test_change_password_work_on_teachers(self):
+        '''
+        測試老師更改密碼可以成功
+        '''
+        teacher_1 = teacher_profile.objects.get(id=1)
+        # self.fail(teacher_1.password)
+        # 00000000
+        chg_pwd_post_data = {
+            'userID': teacher_1.auth_id,
+            'oldUserPwd': teacher_1.password,
+            'newUserPwd': '44444444'}
+        response = \
+            self.client.post(path='/api/account/memberChangePassword/', data=chg_pwd_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertEqual('44444444', teacher_profile.objects.get(id=1).password)
+
+
+    def test_change_password_work_on_students(self):
+        '''
+        測試學生更改密碼可以成功
+        '''
+        student_1 = student_profile.objects.get(id=1)
+        # self.fail(teacher_1.password)
+        chg_pwd_post_data = {
+            'userID': student_1.auth_id,
+            'oldUserPwd': student_1.password,
+            'newUserPwd': '99999999'}
+        response = \
+            self.client.post(path='/api/account/memberChangePassword/', data=chg_pwd_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertEqual('99999999', student_profile.objects.get(id=1).password)
+
 
 class Teacher_Profile_Test(TestCase):
 
@@ -70,6 +219,45 @@ class Teacher_Profile_Test(TestCase):
             shutil.rmtree(f'user_upload/teachers/{test_username}')
         except Exception as e:
             print(f'Error:  {e}')
+  
+    
+    
+    def test_send_welcom_email_when_create_teacher(self):
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+        client = Client()
+        test_username = 'test201218_teacher_user@test.com'
+        data = {
+            'regEmail': test_username,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;'
+        }
+        response = client.post(path='/api/account/signupTeacher/', data=data)
+        # 建立會員有成功
+        self.assertIn('success', str(response.content))
+        # 確認有寄出通知信
+        if settings.DISABLED_EMAIL == False:
+            self.assertEqual(mail.outbox[0].subject, '[副本]Quikok!開課 註冊成功通知')
 
     
     def test_teacher_available_and_specific_time_created_after_signing_up(self):
@@ -498,6 +686,7 @@ class Student_Test(TestCase):
 
     def setUp(self):
         self.test_username = 'test_student_username@test.com'
+        self.test_username2 = 'test_student_username2@test.com'
         self.client = Client()
         Group.objects.bulk_create([
                 Group(name='test_student'),
@@ -512,6 +701,7 @@ class Student_Test(TestCase):
         # 刪掉(如果有的話)產生的資料夾
         try:
             shutil.rmtree('user_upload/students/' + self.test_username)
+            shutil.rmtree('user_upload/students/' + self.test_username2)
         except:
             pass
 
@@ -542,6 +732,28 @@ class Student_Test(TestCase):
             os.path.isdir(f'user_upload/students/{self.test_username}')
         )
     
+    
+    @skip
+    def test_send_welcom_email_when_create_teacher(self):
+        client = Client()
+        test_username = 'test_student@test.com'
+        data = {
+            'regEmail': test_username,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'regRole': 'test',
+            'regMobile': '0912-345678',
+            'regNotifiemail': ''
+       }
+        response = client.post(path='/api/account/signupStudent/', data=data)
+        # 建立會員有成功
+        self.assertIn('success', str(response.content))
+        # 確認有寄出通知信
+        self.assertEqual(mail.outbox[0].subject, 'Quikok!開課 註冊成功通知')
+
 
     def test_if_student_editted_properly(self):
 
@@ -595,8 +807,57 @@ class Student_Test(TestCase):
         )
 
 
+    def test_return_student_profile_for_public_viewing_work(self):
+        student_post_data = {
+            'regEmail': self.test_username,
+            'regPwd': '00000000',
+            'regName': 'test_student_name',
+            'regNickname': 'test_student_nickname',
+            'regBirth': '1990-12-25',
+            'regGender': 1,
+            'regRole': 'oneself',
+            'regMobile': '0900-111111',
+            'regNotifiemail': ''
+        }
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
 
+        get_student_info_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id
+        }
+        response = \
+            self.client.get(path='/api/account/returnStudentProfileForPublicViewing/', data=get_student_info_post_data)
 
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertIn('"nickname": "test_student_nickname"', str(response.content, "utf8"))
+        self.assertIn('"is_male": true', str(response.content, "utf8"))
+        self.assertIn(f'"upload_snapshot": {student_profile.objects.get(id=1).thumbnail_dir}', str(response.content, "utf8"))
+
+        # 註冊第二個學生，增加snapshot
+        the_pic = open('user_upload/articles/default_main_picture.png', 'rb')
+        student_post_data = {
+            'regEmail': self.test_username2,
+            'regPwd': '00000000',
+            'regName': 'test_student_nam2e',
+            'regNickname': '',
+            'regBirth': '1990-12-25',
+            'regGender': 0,
+            'regRole': 'oneself',
+            'regMobile': '0900-111111',
+            'regNotifiemail': '',
+            'upload_snapshot': the_pic
+        }
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        get_student_info_post_data = {
+            'userID': student_profile.objects.get(id=2).auth_id
+        }
+        response = \
+            self.client.get(path='/api/account/returnStudentProfileForPublicViewing/', data=get_student_info_post_data)
+
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertIn('"nickname": "test_student_nam2e"', str(response.content, "utf8"))  # 因為沒輸入，所以是名字
+        self.assertIn('"is_male": false', str(response.content, "utf8"))
+        self.assertIn(f'"upload_snapshot": "{student_profile.objects.get(id=2).thumbnail_dir}"', str(response.content, "utf8"))
 
 
 class Feedback_Test(TestCase):
@@ -661,6 +922,416 @@ class Feedback_Test(TestCase):
         self.assertEqual(feedback.objects.first().is_signed_in, is_signed_in)
 
 
+class BANKING_INFO_TEST(TestCase):
+    '''
+    用來測試帳戶回傳資訊是否正確
+    '''
+    def setUp(self):
+        self.client = Client()        
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+        self.test_teacher_name1 = 'test_teacher1_user@test.com'
+        teacher_post_data = {
+            'regEmail': self.test_teacher_name1,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;'
+        }
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        
+        self.test_teacher_name2 = 'test_teacher2_user@test.com'
+        teacher_post_data['regEmail'] = self.test_teacher_name2,
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+
+        self.test_teacher_name3 = 'test_teacher3_user@test.com'
+        teacher_post_data['regEmail'] = self.test_teacher_name3,
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        # 建了3個老師
+        
+        self.test_student_name1 = 'test_student1@a.com'
+        student_post_data = {
+            'regEmail': self.test_student_name1,
+            'regPwd': '00000000',
+            'regName': 'test_student_name',
+            'regBirth': '1990-12-25',
+            'regGender': 1,
+            'regRole': 'oneself',
+            'regMobile': '0900-111111',
+            'regNotifiemail': ''
+        }
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        self.test_student_name2 = 'test_student2@a.com'
+        student_post_data['regEmail'] = self.test_student_name2
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        self.test_student_name3 = 'test_student3@a.com'
+        student_post_data['regEmail'] = self.test_student_name3
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        # 建了3個學生
 
 
+    def tearDown(self):
+        # 刪掉(如果有的話)產生的資料夾
+        try:
+            shutil.rmtree('user_upload/students/' + self.test_student_name1)
+            shutil.rmtree('user_upload/students/' + self.test_student_name2)
+            shutil.rmtree('user_upload/students/' + self.test_student_name3)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name1)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name2)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name2)
+        except:
+            pass
+
+
+    def test_get_banking_infomation_work(self):
+        # 先測試老師的資料是否回傳正確
+        query_post_data = {
+            'userID': teacher_profile.objects.get(id=2).auth_id,
+            'type': 'teacher'
+        }
+        response = \
+            self.client.post(path='/api/account/getBankingInfomation/', data=query_post_data)
+        self.assertEqual(200, response.status_code)
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertIn('"bank_name": ""', str(response.content, "utf8"))
+        self.assertEquals(1, str(response.content, "utf8").count('"balance": 0'),
+            str(response.content, "utf8"))
+
+        teacher_2 = teacher_profile.objects.get(id=2)
+        teacher_2.withholding_balance = 300
+        teacher_2.bank_code = '555'
+        teacher_2.save()
+        response = \
+            self.client.post(path='/api/account/getBankingInfomation/', data=query_post_data)
+        self.assertEquals(1, str(response.content, "utf8").count('"balance": 0'),
+            str(response.content, "utf8"))
+        self.assertEquals(1, str(response.content, "utf8").count('"bank_code": "555"'),
+            str(response.content, "utf8"))
+        self.assertEquals(1, str(response.content, "utf8").count('"withholding_balance": 300'),
+            str(response.content, "utf8"))
+
+        query_post_data = {
+            'userID': student_profile.objects.get(id=2).auth_id,
+            'type': 'teacher'
+        }
+        response = \
+            self.client.post(path='/api/account/getBankingInfomation/', data=query_post_data)
+        self.assertIn('failed', str(response.content, "utf8"))
+        self.assertIn('"errCode": "1"', str(response.content, "utf8"))
+
+        query_post_data['type'] = 'student'
+        response = \
+            self.client.post(path='/api/account/getBankingInfomation/', data=query_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertIn('"bank_account_code": ""', str(response.content, "utf8"))
+        self.assertEquals(1, str(response.content, "utf8").count('"withholding_balance": 0'),
+            str(response.content, "utf8"))
+
+        student_2 = student_profile.objects.get(id=2)
+        student_2.balance = 200
+        student_2.withholding_balance = 1300
+        student_2.bank_code = '55'
+        student_2.bank_account_code = '077'
+        student_2.bank_name = 'XXXXswss'
+        student_2.save()
+        response = \
+            self.client.post(path='/api/account/getBankingInfomation/', data=query_post_data)
+        self.assertEquals(1, str(response.content, "utf8").count('"balance": 200'),
+            str(response.content, "utf8"))
+        self.assertEquals(1, str(response.content, "utf8").count('"bank_code": "55"'),
+            str(response.content, "utf8"))
+        self.assertEquals(1, str(response.content, "utf8").count('"withholding_balance": 1300'),
+            str(response.content, "utf8"))
+        self.assertEquals(1, str(response.content, "utf8").count('"bank_code": "55"'),
+            str(response.content, "utf8"))
+        self.assertEquals(1, str(response.content, "utf8").count('"bank_account_code": "077"'),
+            str(response.content, "utf8"))
+        self.assertEquals(1, str(response.content, "utf8").count('"bank_name": "XXXXswss"'),
+            str(response.content, "utf8"))
+
+
+class SPEED_TESTS(TestCase):
+    '''
+    用來測試各式各樣的時間花費
+    '''
+    def setUp(self):
+        self.client = Client()        
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+        self.test_teacher_name1 = 'test_teacher1_user@test.com'
+        teacher_post_data = {
+            'regEmail': self.test_teacher_name1,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;'
+        }
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        
+        self.test_teacher_name2 = 'test_teacher2_user@test.com'
+        teacher_post_data['regEmail'] = self.test_teacher_name2,
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+
+        self.test_teacher_name3 = 'test_teacher3_user@test.com'
+        teacher_post_data['regEmail'] = self.test_teacher_name3,
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        # 建了3個老師
+        
+        self.test_student_name1 = 'test_student1@a.com'
+        student_post_data = {
+            'regEmail': self.test_student_name1,
+            'regPwd': '00000000',
+            'regName': 'test_student_name',
+            'regBirth': '1990-12-25',
+            'regGender': 1,
+            'regRole': 'oneself',
+            'regMobile': '0900-111111',
+            'regNotifiemail': ''
+        }
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        self.test_student_name2 = 'test_student2@a.com'
+        student_post_data['regEmail'] = self.test_student_name2
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+
+        self.test_student_name3 = 'test_student3@a.com'
+        student_post_data['regEmail'] = self.test_student_name3
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        # 建了3個學生
+
+
+    def tearDown(self):
+        # 刪掉(如果有的話)產生的資料夾
+        try:
+            shutil.rmtree('user_upload/students/' + self.test_student_name1)
+            shutil.rmtree('user_upload/students/' + self.test_student_name2)
+            shutil.rmtree('user_upload/students/' + self.test_student_name3)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name1)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name2)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name2)
+        except:
+            pass
+
+
+    @skip
+    def test_string_functions(self):
+        n = 5000000
+        x = 'dwerfwrfwefd'
+        st1 = time()
+        for _ in range(n):
+            len(x)
+        end1 = time()
+        for _ in range(n):
+            x == ''
+        end2 = time()
+        for _ in range(n):
+            x in ['',]
+        end3 = time()
+        for _ in range(n):
+            x != ''
+        end4 = time()
+        for _ in range(n):
+            not x == ''
+        end5 = time()
+
+        '''
+        len() takes 0.46376800537109375 seconds
+        =='' takes 0.34960293769836426 seconds
+        in takes 0.5897660255432129 seconds
+        !='' takes 1.100010871887207 seconds
+        not =='' takes 0.9897921085357666 seconds
+        '''
+
+        self.fail(f"\nlen() takes {end1-st1} seconds\n=='' takes {end2-end1} seconds\nin takes {end3-end2} seconds\n!='' takes {end4-end3} seconds\nnot =='' takes {end5-end4} seconds\n")
+
+
+    @skip
+    def test_comparasion_operators(self):
+        n = 5000000
+        x = True
+        st1 = time()
+        for _ in range(n):
+            x == True
+        end1 = time()
+        for _ in range(n):
+            x is True
+        end2 = time()
+        for _ in range(n):
+            x != True
+        end3 = time()
+        for _ in range(n):
+            x is not True
+        end4 = time()
+        '''
+        == True takes 0.28649282455444336 seconds
+        is True takes 0.24224424362182617 seconds
+        != True takes 0.27544379234313965 seconds
+        is not True takes 0.26437926292419434 seconds
+        '''
+        self.fail(f"\n== True takes {end1-st1} seconds\nis True takes {end2-end1} seconds\n!= True takes {end3-end2} seconds\nis not True takes {end4-end3} seconds\n")
+
+
+    @skip
+    def test_django_orm_query_speed(self):
+        n = 5000
+        end = time()
+        t = teacher_profile.objects.get(id=1)
+        for _ in range(n):
+            teacher_profile.objects.get(id=1)
+        end1 = time()
+        for _ in range(n):
+            teacher_profile.objects.filter(id=1).first()
+        end2 = time()
+        for _ in range(n):
+            teacher_profile.objects.filter(id=1).exists()
+        end3 = time()
+        for _ in range(n):
+            t.nickname
+        end4 = time()
+        for _ in range(n):
+            teacher_profile.objects.get(Q(id=1))
+        end5 = time()
+        disc = f"\nget: {end1-end}\nfilter.first(): {end2-end1}\nexists: {end3-end2}\nquery_from_obj: {end4-end3}\nget_with_Q: {end5-end4}\n\n"
+        
+        '''
+        get: 6.031943082809448
+        filter.first(): 16.3274347782135
+        exists: 4.141175985336304
+        query_from_obj: 0.0011720657348632812
+        get_with_Q: 7.71540904045105
+        '''
+        
+        self.fail(disc)
+
+
+    @skip
+    def test_if_asyncio_faster_than_sync_in_creating_record(self):
+        '''
+        測試使用異步方式建立資料會不會比同步快，理論上是一定會啦，
+        但我想知道異步function寫在同步的django views function中究竟會不會以異步來執行，
+        同時如果可以的話，速度又會快多少。
+        '''
+        from asgiref.sync import sync_to_async
+
+        # 使用異步寫入的方式，變成一筆都沒有進去，有沒有可能只是不能同時寫入，但可以同時讀取呢？
+        # 來試試看先同步寫入再比較同步讀取 & 異步讀取。
+
+        test_epochs = 50
+        # 先建立50個epochs就好，免得等半天
+        for i in range(test_epochs):
+            teacher_post_data = {
+                'regEmail': f"user_sync_test_{i}@gmail.com",
+                'regPwd': '00000000',
+                'regName': f'test_sync_name_{i}',
+                'regNickname': f'test_nickname_{i}',
+                'regBirth': '2000-01-01',
+                'regGender': '0',
+                'intro': 'test_intro',
+                'regMobile': '0912-345678',
+                'tutor_experience': '一年以下',
+                'subject_type': 'test_subject',
+                'education_1': 'education_1_test',
+                'education_2': 'education_2_test',
+                'education_3': 'education_3_test',
+                'company': 'test_company',
+                'special_exp': 'test_special_exp',
+                'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;'
+            }
+            self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        print(f"{test_epochs} records have been created.")
+
+        # 先嘗試同步讀取
+        sync_results = list()
+        sync_read_start_time = time()
+        for i in range(test_epochs):
+            teacher_object = \
+                teacher_profile.objects.get(username = f"user_sync_test_{i}@gmail.com")
+            sync_results.append(teacher_object.username)
+        
+        self.assertTrue(len(sync_results)==50, sync_results)
+        print(f"sync_read_end_time: {time() - sync_read_start_time}")
+        
+        # 嘗試看看能不能異步讀取 >>  不行，要改寫ORM API，不然到了ORM還是要一步一步來
+        # 嘗試看看能不能多線程讀取 >>  不行，sqlite不能同時讀取，但不曉得MySql可不可以
+        # 呈上，是可以的，使用方法如下：
+        '''
+        async def async_read(id):
+            teacher = \
+                 await sync_to_async(teacher_profile.objects.filter(id=id).first)()
+             print(f"Found teacher: {teacher is None} {id}.")
+        
+        tasks = [async_read(_) for _ in range(50)]
+        asyncio.run(asyncio.wait(tasks))
+        '''
+
+        '''async_results = list()
+        async def async_read(user_id):
+            await sync_to_async(list)(
+                teacher_profile.objects.get(username = f"user_async_test_{user_id}@gmail.com").username
+                )
+            teacher_object = \
+                teacher_profile.objects.get(username = f"user_async_test_{user_id}@gmail.com")
+            async_results.append(teacher_object.username)
+        
+        async_read_start_time = time()
+        tasks = [async_read(_) for _ in range(test_epochs)]
+        asyncio.run(asyncio.wait(tasks))
+        
+        self.assertTrue(len(async_results)==50, async_results)
+        print(f"async_read_end_time: {time() - async_read_start_time}")'''
+        
+        '''thread_read_start_time = time()
+        def thread_get_object(user_id):
+            print(f"Getting teacher:{user_id}...")
+            teacher_object = \
+                teacher_profile.objects.get(username = f"user_async_test_{user_id}@gmail.com")
+            print(f"Teacher\'s username: {teacher_object.username}...")
+
+        # 使用多線程讀取看看
+        for _ in range(50):
+            threading.Thread(target=thread_get_object, args=(_,)).start()
+
+        print(f"thread_read_end_time: {time() - thread_read_start_time}")'''
+
+
+        
+        
 
