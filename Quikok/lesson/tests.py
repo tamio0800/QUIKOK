@@ -108,6 +108,7 @@ class Lesson_Info_Related_Functions_Test(TestCase):
             'price_per_hour': 100,
             'lesson_has_one_hour_package': True,
             'trial_class_price': 99,
+            'discount_price': '10:90',
             'highlight_1': 'test',
             'highlight_2': 'test',
             'highlight_3': 'test',

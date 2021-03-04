@@ -1271,6 +1271,7 @@ def before_signing_up_create_or_edit_a_lesson(request):
             'highlight_1': request.POST.get('highlight_1', False),
             'highlight_2': request.POST.get('highlight_2', False),
             'highlight_3': request.POST.get('highlight_3', False),
+            'discount_price': request.POST.get('discount_price', False),
             'lesson_intro': request.POST.get('lesson_intro', False),
             'how_does_lesson_go': request.POST.get('how_does_lesson_go', False),
             'target_students': request.POST.get('target_students', False),
