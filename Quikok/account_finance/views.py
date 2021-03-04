@@ -832,9 +832,22 @@ def student_edit_order(request):
                         purchase_record_object.payment_status = 'reconciliation'
                         purchase_record_object.part_of_bank_account_code = user5_bank_code
                         purchase_record_object.save()
+                        # 寄信到edony的email
                         email_to_edony = email_for_edony()
-                        email_to_edony.send_email_reconciliation_reminder(student_authID=student_authID,
-                        user5_bank_code =user5_bank_code, total_price = purchase_record_object.purchased_with_money)
+                        #email_to_edony.send_email_reconciliation_reminder(student_authID=student_authID,
+                        #user5_bank_code =user5_bank_code, total_price = purchase_record_object.purchased_with_money)
+                        send_email_info = {
+                            'student_authID' : student_authID,
+                            'user5_bank_code' : user5_bank_code,
+                            'total_price' : purchase_record_object.purchased_with_money}
+                        send_email_to_edony = Thread(
+                            target = email_to_edony.send_email_reconciliation_reminder,
+                            kwargs = send_email_info)
+                        send_email_to_edony.start()
+                        
+                        
+                        
+                        
                         response = {'status':'success',
                             'errCode': None,
                             'errMsg': None,

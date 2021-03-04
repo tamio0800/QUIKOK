@@ -217,8 +217,8 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
             if previous.purchased_with_q_points != 0 :
                 update_student_balance = email_manager()
                 update_student_balance.edit_student_balance_after_receive_payment(
-                student_authID = previous.student_auth_id,
-                q_discount = previous.purchased_with_q_points)
+                    student_authID = previous.student_auth_id,
+                    q_discount = previous.purchased_with_q_points)
             
             else:
                 pass # db不需要更新
@@ -228,9 +228,9 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
             send_email_reminder = email_manager()
             send_email_data = {
                 'email_pattern_name':'收到款項提醒',
-                'total_lesson_set_price':previous.price,
-                'studentID':previous.student_auth_id,
-                'teacherID':previous.teacher_auth_id,
+                'total_lesson_set_price': previous.price,
+                'studentID': previous.student_auth_id,
+                'teacherID': previous.teacher_auth_id,
                 'lessonID': previous.lesson_id,
                 'lesson_set':lesson_set_name,
                 'q_discount':previous.purchased_with_q_points
@@ -240,13 +240,12 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
             # 寄信告訴老師有學生買他的課程
             #send_email = email_tools()
             send_email_reminder.send_teacher_when_student_buy_his_lesson(
-            teacher_authID= previous.teacher_auth_id,
-            student_authID = previous.student_auth_id,
-            lesson_set=lesson_set_name,
-            price = previous.price,
-            lesson_title=previous.lesson_title,
-            #teacher_nickname='TEST',
-            #teacher_email='TEST',
-            #student_nickname='TEST',
-            
+                teacher_authID= previous.teacher_auth_id,
+                student_authID = previous.student_auth_id,
+                lesson_set=lesson_set_name,
+                price = previous.price,
+                lesson_title=previous.lesson_title,
+                #teacher_nickname='TEST',
+                #teacher_email='TEST',
+                #student_nickname='TEST',
             )
