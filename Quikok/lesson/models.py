@@ -353,10 +353,10 @@ class lesson_info_for_users_not_signed_up(models.Model):
     price_per_hour = models.IntegerField()  # 該門課程的鐘點費
     lesson_has_one_hour_package = models.BooleanField()  # 該門課程是否可以單堂出售
     trial_class_price = models.IntegerField()  # 該門課程的試上鐘點費
-
     highlight_1 = models.CharField(max_length = 10)  # 亮點介紹1，不要超過10個字元長
     highlight_2 = models.CharField(max_length = 10)  # 亮點介紹2，不要超過10個字元長
     highlight_3 = models.CharField(max_length = 10)  # 亮點介紹3，不要超過10個字元長
+    discount_price = models.CharField(max_length = 30) # 優惠折數
     lesson_intro = models.TextField(blank=True, null=True)
     how_does_lesson_go = models.TextField(blank=True, null=True)
     # 課程方式/教學方式，舉例來說：「本堂課前十分鐘小考，測驗上次的內容吸收程度，
