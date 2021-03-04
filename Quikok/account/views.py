@@ -154,12 +154,6 @@ def create_a_student_user(request):
             )
             new_student.save()
             # 寄發email通知學生註冊成功
-            #welcome_email = email_manager()
-            #welcome_email.send_welcome_email_new_signup_student(
-            #    student_authID = user_created_object.id,
-            #    student_nickname = nickname, 
-            #    student_email = username)
-
 
             send_email_info = {
                         'student_authID' : user_created_object.id,
@@ -673,11 +667,17 @@ def create_a_teacher_user(request):
             teacher_created_object.save()
             print('成功建立 teacher_profile')
             # 寄發email通知老師註冊成功
-            welcome_email = email_manager()
-            welcome_email.send_welcome_email_new_signup_teacher(
-                teacher_authID = user_created_object.id,
-                teacher_nickname = nickname, 
-                teacher_email = username)
+
+            send_email_info = {
+                        'teacher_authID' : user_created_object.id,
+                        'teacher_nickname' : nickname,
+                        'teacher_email' : username }
+            send_welcom_email_thread = Thread(
+                        target = account_email.send_welcome_email_new_signup_teacher,
+                        kwargs = send_email_info)
+            send_welcom_email_thread.start()
+
+
 
             object_accessed_signal.send(
                 sender='create_a_teacher_user',
