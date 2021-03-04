@@ -597,7 +597,7 @@ class Teacher_Profile_Test(TestCase):
         )
 
         # 測試圖片也可以編輯
-        row_thumbnail_pic_path = 'user_upload/temp/before_signed_up/tamio0800111111/customized_lesson_background.jpg'
+        row_thumbnail_pic_path = 'user_upload/temp/before_signed_up/tamio0800111111/customized_lesson_background.png'
         picture_in_binary = open(row_thumbnail_pic_path, 'rb')
         teacher_post_data['upload_snapshot'] = picture_in_binary
 
@@ -774,7 +774,7 @@ class Student_Test(TestCase):
         student_post_data['nickname'] = '新的學生測試暱稱'
         student_post_data['intro'] = '新的學生測試自我介紹啦啦啦'
         student_post_data['upload_snapshot'] = \
-            open('user_upload/temp/before_signed_up/tamio0800111111/customized_lesson_background.jpg', 'rb')
+            open('user_upload/temp/before_signed_up/tamio0800111111/customized_lesson_background.png', 'rb')
         student_post_data['update_someone_by_email'] = 'updated1@test.com;updated2@test.com;'
 
         response = self.client.post(path='/api/account/editStudentProfile/', data=student_post_data)
@@ -790,7 +790,7 @@ class Student_Test(TestCase):
                 student_post_data['mobile'],
                 student_post_data['nickname'],
                 student_post_data['update_someone_by_email'],
-                f'/user_upload/students/{self.test_username}/thumbnail.jpg',
+                f'/user_upload/students/{self.test_username}/thumbnail.png',
                 student_post_data['intro']
             ),
             (

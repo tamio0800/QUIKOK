@@ -35,7 +35,6 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         self.assertEqual(response.status_code, 200)
         
 
-    # 2021.02.08 因為搶先開課成效不彰，先不維護了
     def test_before_signing_up_create_or_edit_a_lesson_received_argument(self):
         # 測試這個函式能不能接受到自訂的「dummy_teacher_id」參數
         self.client = Client()
@@ -55,7 +54,6 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         )
 
 
-    @skip  # 2021.02.08 因為搶先開課成效不彰，先不維護了
     def test_saving_and_retreiving_data_from_db(self):
         # 測試這個函式能不能將資料寫入資料庫
         new_added_lesson = \
@@ -69,6 +67,7 @@ class Lesson_Info_Related_Functions_Test(TestCase):
                 price_per_hour=300,
                 lesson_has_one_hour_package=True,
                 trial_class_price=100,
+                discount_price='10:90',
                 highlight_1='test',
                 highlight_2='test',
                 highlight_3='test',
@@ -80,17 +79,16 @@ class Lesson_Info_Related_Functions_Test(TestCase):
                 lesson_attributes='test',
                 dummy_teacher_id='tamio0800111111'
             )
-        # print(new_added_lesson.id)
         new_added_lesson.save()
 
         self.assertEqual(
             lesson_info_for_users_not_signed_up.objects.all().count(),
-            1,
-            lesson_info_for_users_not_signed_up.objects.values()
-        )
+            1, lesson_info_for_users_not_signed_up.objects.values())
+
+        self.assertEqual(lesson_info_for_users_not_signed_up.objects.first().discount_price, "10:90")
 
 
-    @skip  # 2021.02.08 因為搶先開課成效不彰，先不維護了
+
     def test_saving_data_through_before_signing_up_create_or_edit_a_lesson(self):
         # 測試這個函式能不能通過before_signing_up_create_or_edit_a_lesson函式，
         # 使用預設的背景圖，將資料寫入資料庫。
@@ -135,7 +133,6 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         )
 
 
-    @skip  # 2021.02.08 因為搶先開課成效不彰，先不維護了
     def test_saving_data_through_before_signing_up_create_or_edit_a_lesson_with_self_set_background_picture(self):
         # 測試這個函式能不能通過before_signing_up_create_or_edit_a_lesson函式，
         # 使用用戶自訂的背景圖，將資料寫入資料庫。
@@ -143,7 +140,7 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         arguments_dict = dict()
 
         dummy_teacher_id = 'tamio0800111111'
-        background_picture = open('user_upload/temp/before_signed_up/tamio0800111111/customized_lesson_background.jpg', 'rb')
+        background_picture = open('user_upload/temp/before_signed_up/tamio0800111111/customized_lesson_background.png', 'rb')
         arguments_dict = {
             'dummy_teacher_id': dummy_teacher_id,
             'big_title': 'big_title',
@@ -158,6 +155,7 @@ class Lesson_Info_Related_Functions_Test(TestCase):
             'lesson_type': 'online',
             'lesson_has_one_hour_package': True,
             'trial_class_price': 99,
+            'discount_price': "20:80",
             'highlight_1': 'test',
             'highlight_2': 'test',
             'highlight_3': 'test',
@@ -190,18 +188,18 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         )  # 確認該資料夾裡面有背景照片
 
         # 清理產出的測試檔案
-        #try:
-        #    shutil.rmtree(f'user_upload/temp/before_signed_up/{dummy_teacher_id}')
-        #except Exception as e:
-        #    print(f'Something went wrong:  {e}')
+        # try:
+        #     shutil.rmtree(f'user_upload/temp/before_signed_up/{dummy_teacher_id}')
+        # except Exception as e:
+        #     print(f'Something went wrong:  {e}')
         
         # print(lesson_info_for_users_not_signed_up.objects.values())
         
         self.assertEqual(
             lesson_info_for_users_not_signed_up.objects.filter().first().dummy_teacher_id,
-            dummy_teacher_id,
-            lesson_info_for_users_not_signed_up.objects.values()
-        )
+            dummy_teacher_id, lesson_info_for_users_not_signed_up.objects.values())
+
+        self.assertEqual(lesson_info_for_users_not_signed_up.objects.first().discount_price, "20:80")
 
         self.assertJSONEqual(
             str(response.content, encoding='utf8'),
