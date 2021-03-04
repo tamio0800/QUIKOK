@@ -35,7 +35,7 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         self.assertEqual(response.status_code, 200)
         
 
-    @skip  # 2021.02.08 因為搶先開課成效不彰，先不維護了
+    # 2021.02.08 因為搶先開課成效不彰，先不維護了
     def test_before_signing_up_create_or_edit_a_lesson_received_argument(self):
         # 測試這個函式能不能接受到自訂的「dummy_teacher_id」參數
         self.client = Client()

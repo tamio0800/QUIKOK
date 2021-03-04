@@ -429,9 +429,7 @@ def check_if_has_dummy_teacher_id_variable(create_a_teacher_view_func):
                 if each_key not in self.excluded_columns:
                     self.arguments_dict[each_key] = each_value
             
-            self.arguments_dict['teacher'] = teacher_profile.objects.filter(auth_id=teacher_auth_id).first()
-            # self.arguments_dict['teacher_id'] = self.arguments_dict['teacher'].id
-            self.arguments_dict['discount_price'] = ''
+            self.arguments_dict['teacher'] = teacher_profile.objects.get(auth_id=teacher_auth_id)
             self.arguments_dict['lesson_avg_score'] = 0.0
             self.arguments_dict['lesson_reviewed_times'] = 0
             self.arguments_dict['selling_status'] = 'selling'
