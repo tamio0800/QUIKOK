@@ -20,8 +20,8 @@ class lesson_email_manager:
     # 管理email標題以及要渲染的html
     def __init__(self):
         self.email_pattern = {
-            '通知學生要確認上課時數': 'student_send_complete_course.html',
-            '提醒老師要評價學生': 'teacher_send_complete_course.html',
+            '通知學生要確認上課時數': os.path.join(settings.BASE_DIR,'student_send_complete_course.html'),
+            '提醒老師要評價學生': os.path.join(settings.BASE_DIR,'teacher_send_complete_course.html'),
             '提醒老師明天要上課': os.path.join(settings.BASE_DIR, 'lesson/templates/lesson/send_remind_class.html'),
             '提醒學生明天要上課': os.path.join(settings.BASE_DIR,  'lesson/templates/lesson/send_remind_class.html'),
             '提醒學生老師對他的預約有回覆(婉拒或接受)': os.path.join(settings.BASE_DIR, 'lesson/templates/lesson/student_send_order_reply.html'),

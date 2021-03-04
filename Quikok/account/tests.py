@@ -12,7 +12,7 @@ from django.db.models import Q
 from django.conf import settings
 import asyncio
 import threading
-
+from threading import Thread
 # 設定環境變數 DEV_MODE 為true >>  export DEV_MODE=true
 # 取消環境變數 DEV_MODE >> unset DEV_MODE
 # python manage.py test account/ --settings=Quikok.settings_for_test
