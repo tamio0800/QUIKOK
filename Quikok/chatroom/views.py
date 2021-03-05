@@ -27,14 +27,14 @@ def check_if_chatroom_exist(request):
     pass_data_to_chat_tools = dict()
     key_from_request = ['userID', 'chatUserID']
     token_from_user_raw = request.headers.get('Authorization', False)
-    token = token_from_user_raw.split(' ')[1]
     
     for key_name in key_from_request:
         value = request.POST.get(key_name ,False)
         pass_data_to_chat_tools[key_name] = value
     
-    pass_data_to_chat_tools['token'] = token
-    print(pass_data_to_chat_tools)
+    pass_data_to_chat_tools['token'] = token_from_user_raw
+    logging.info(f"chatroom/views:回傳或建立系統聊天室:{pass_data_to_chat_tools}")
+    
     if False in pass_data_to_chat_tools.values():    
         response['status'] = 'failed'
         response['errCode'] = '0'
@@ -42,6 +42,9 @@ def check_if_chatroom_exist(request):
         response['data'] = None
         return JsonResponse(response)
     else:
+        token = token_from_user_raw.split(' ')[1]
+        pass_data_to_chat_tools['token'] = token
+
         chat_manager = chat_room_manager()
         response['status'], response['errCode'], response['errMsg'], response['data'] =\
         chat_manager.check_and_create_chat_room(**pass_data_to_chat_tools)
