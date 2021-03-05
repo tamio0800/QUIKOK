@@ -17,7 +17,7 @@ urlpatterns = [
     path('api/lesson/', include('lesson.urls')),
     path('api/account_finance/', include('account_finance.urls')),
     path('api/getBannerBar/', views.get_banner_bar),
-    path('chat/', include('chatroom.urls')),
+    path('ws/chat/', include('chatroom.urls')),
     path('articles/', include('blog.urls')),
     path('edony_linebot/', include('line_function.urls')),
     path('analytics/', include('analytics.urls')),
