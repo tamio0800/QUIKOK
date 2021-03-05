@@ -26,32 +26,38 @@ from chatroom.models import chatroom_info_Mr_Q2user, chat_history_Mr_Q2user
 # 產生目前所有user與系統聊天室的兩筆對話紀錄
 def batch_create_chatrooms_for_users():
     all_auth_user_ids = list(User.objects.values_list('id', flat=True))
+    authID_already_has_welcom_msg = list(chat_history_Mr_Q2user.objects.values_list('user_auth_id', flat=True))
     all_auth_user_ids.remove(1)
-    for each_auth_user_id in all_auth_user_ids: # 1是系統本身所以不要產生與1的對話紀錄
-        get_roomID = chatroom_info_Mr_Q2user.objects.get(user_auth_id=each_auth_user_id)
-        first_system_msg = chat_history_Mr_Q2user.objects.create(
-            chatroom_info_system2user_id = get_roomID.id,
-            system_user_auth_id = 1,
-            user_auth_id = each_auth_user_id,
-            message = '於'+ datetime.now().strftime('%H:%M') +'創立聊天室',
-            message_type = 'auto_system_msg', 
-            who_is_sender = 'system',
-            sender_auth_id = 1,
-            system_is_read = True,
-            user_is_read = False)
-        print(f'create system2user {each_auth_user_id} 1st msg.')
-        welcom_system_msg = chat_history_Mr_Q2user.objects.create(  
-            chatroom_info_system2user_id = get_roomID.id,
-            system_user_auth_id = 1,
-            user_auth_id = each_auth_user_id,
-            message = '嗨！我是Quikok！開課的客服專家QQ球雀，有建議或是網站問題回報都可以找我唷！啾啾～',
-            message_type = 'text_msg' ,
-            who_is_sender = 'system' ,
-            sender_auth_id = 1,
-            system_is_read = True,
-            user_is_read = False)
-        print(f'create system2user {each_auth_user_id} 2nd msg.')
+    all_auth_user_ids.remove(8)
+    try:
+        for each_auth_user_id in all_auth_user_ids: # 1是系統本身所以不要產生與1的對話紀錄
+            if each_auth_user_id not in authID_already_has_welcom_msg:
+                get_roomID = chatroom_info_Mr_Q2user.objects.get(user_auth_id=each_auth_user_id)
+                first_system_msg = chat_history_Mr_Q2user.objects.create(
+                    chatroom_info_system2user_id = get_roomID.id,
+                    system_user_auth_id = 1,
+                    user_auth_id = each_auth_user_id,
+                    message = '於'+ datetime.now().strftime('%H:%M') +'創立聊天室',
+                    message_type = 'auto_system_msg', 
+                    who_is_sender = 'system',
+                    sender_auth_id = 1,
+                    system_is_read = True,
+                    user_is_read = False)
+                print(f'create system2user {each_auth_user_id} 1st msg.')
+                welcom_system_msg = chat_history_Mr_Q2user.objects.create(  
+                    chatroom_info_system2user_id = get_roomID.id,
+                    system_user_auth_id = 1,
+                    user_auth_id = each_auth_user_id,
+                    message = '嗨！我是Quikok！開課的客服專家QQ球雀，有建議或是網站問題回報都可以找我唷！啾啾～',
+                    message_type = 'text_msg' ,
+                    who_is_sender = 'system' ,
+                    sender_auth_id = 1,
+                    system_is_read = True,
+                    user_is_read = False)
+                print(f'create system2user {each_auth_user_id} 2nd msg.')
    
+    except:
+        print(each_auth_user_id)
 
 # 這邊放的是 views.py 裡面 def chatroom_content(request):
 # 關於後端回傳聊天室歷史訊息給前端格式的範例
