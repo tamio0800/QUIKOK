@@ -9,7 +9,10 @@ import pytest
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.layers import get_channel_layer
 import datetime
+import json
 from unittest import skip
+from account.models import teacher_profile, student_profile
+from django.db.models import Q
 #python3 manage.py test chatroom/ --settings=Quikok.settings_for_test
 '''注意！第一個auth=1 在程式邏輯中會被用來當"system"聊天室！'''
 class test_chat_tools(TestCase):
@@ -56,7 +59,7 @@ class test_chat_tools(TestCase):
         teacher_post_data['regPwd'] = '22222222'
         self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
         
-        # 建了3個學生
+        # 建3個學生
         self.test_student_name1 = 'test_student1@a.com'
         student_post_data = {
             'regEmail': self.test_student_name1,
@@ -79,15 +82,15 @@ class test_chat_tools(TestCase):
         self.client.post(path='/api/account/signupStudent/', data=student_post_data)
         
         # 建立聊天室
-        chatroom_info_user2user.objects.create(
-            teacher_auth_id = 1,
-            student_auth_id = 7,
-            parent_auth_id = -1,
-            chatroom_type='teacher2student',
-            created_time= datetime.datetime.now()
-        ).save()
+        #chatroom_info_user2user.objects.create(
+        #    teacher_auth_id = 1,
+        #    student_auth_id = 7,
+        #    parent_auth_id = -1,
+        #    chatroom_type='teacher2student',
+        #    created_time= datetime.datetime.now()
+        #).save()
         
-        print('建立user2user 聊天室')
+        #print('建立user2user 聊天室')
 
     def test_check_when_create_teacher_create_a_system2user_chatroom(self):
         '''確認創建使用者時，都有順利建立使用者與系統(system的聊天室），
@@ -98,8 +101,41 @@ class test_chat_tools(TestCase):
 
     def test_check_when_student_chat_teacher_first_time_chatroom_created(self):
         '''當學生第一次聯絡某個老師的時候、要自動建立學生與這個老師的聊天室。
-            由於1號老師是系統，所以用2號測試'''
-            
+            由於1號老師是系統, 乾脆用最後一號老師跟學生測試。
+            這隻api的流程:檢查兩人是否有聊天室、有的話回傳聊天室ID，
+            沒有的話建立再回傳'''
+        studentID = student_profile.objects.last().auth_id
+        teacherID = teacher_profile.objects.last().auth_id
+        self.client = Client()
+        user2user_chatroom = chatroom_info_user2user.objects.filter(Q(teacher_auth_id=teacherID)&
+                    Q(student_auth_id=studentID))
+        # 確認這兩人沒有聊天室,目前也沒有任何聊天室
+        self.assertEqual(len(user2user_chatroom), 0)
+        self.assertEqual(len(chatroom_info_user2user.objects.all()), 0)
+
+        header = {'HTTP_Authorization':'test 1234'}
+        post_data = {'userID': studentID, 'chatUserID':teacherID}
+        response =  self.client.post(path='/api/chat/checkOrCreateChatroom/', 
+            data = post_data, **header)
+        # 確認這兩人建立了1個聊天室    
+        user2user_chatroom = chatroom_info_user2user.objects.filter(Q(teacher_auth_id=teacherID)&
+                    Q(student_auth_id=studentID))
+        self.assertEqual(len(user2user_chatroom), 1)
+        self.assertIn('success', str(response.content, "utf8"))
+        print(str(response.content, "utf8"))
+        self.assertEqual(json.loads(response.content)['data'], {"chatroomID": 1})
+
+    def tearDown(self):
+        # 刪掉(如果有的話)產生的資料夾
+        try:
+            shutil.rmtree('user_upload/students/' + self.test_student_name1)
+            shutil.rmtree('user_upload/students/' + self.test_student_name2)
+            shutil.rmtree('user_upload/students/' + self.test_student_name3)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name1)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name2)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name3)
+        except:
+            pass
 
 @skip
 class test_websocket_consumer(TestCase):
