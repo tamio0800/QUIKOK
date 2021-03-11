@@ -904,11 +904,14 @@ def auth_check(request):
         token_from_user_raw = request.headers.get('Authorization', False)
         print(token_from_user_raw) 
         # 當前端傳來空白token時(例如訪客), bearer後面會是空白的,這邊寫死來判斷
-        if len(token_from_user_raw) > len('bearer '):
-            # 從前端拿來的token格式: "bearer token", 為了只拿"token"因此用split切開拿後面
-            token_from_user = token_from_user_raw.split(' ')[1]  
+        if token_from_user_raw is False:
+            token_from_user = False  
         else:
-            token_from_user = ''
+            if len(token_from_user_raw) > len('bearer '): # 防止前端傳空白token來
+                # 從前端拿來的token格式: "bearer token", 為了只拿"token"因此用split切開拿後面
+                token_from_user = token_from_user_raw.split(' ')[1]
+            else:
+                token_from_user = ''
         
         if re.search(
             r'^/blog/post/.*|^/blog/main|^/landing|^/account/register/teacher.*|^/account/register/student.*|^/lesson/guestready|^/lesson/ready/add', 
