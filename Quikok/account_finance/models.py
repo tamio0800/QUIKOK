@@ -4,6 +4,29 @@ from django.dispatch import receiver
 from account_finance.email_sending import email_manager
 #from account_finance.email_machine import email_tools
 
+# 購買題庫的紀錄
+class user_purchase_exam_bank_record(models.Model):
+    user_authID = models.IntegerField() # 購買者的 authID
+    exam_bank_sales_set_id = models.IntegerField()
+    start_date =  models.DateTimeField()  # 可使用題庫的有效時間開始日期
+    end_date = models.DateTimeField() # 可使用題庫的有效時間開始日期
+    price = models.IntegerField() # total
+    purchased_with_money  = models.IntegerField() # 實際要支付的費用 total_price -purchased_with_q_points
+    purchased_with_q_points = models.IntegerField(default=0)  # 用多少Q幣支付,這版暫不會用到
+    part_of_bank_account_code = models.CharField(max_length=30, default='')
+    is_refunded = models.BooleanField(default=False) # 是否有退款,相關功能暫不開發
+    is_preorder = models.BooleanField(default=False) # 是否為預購期間購買
+    created_time = models.DateTimeField(auto_now_add=True) 
+    updated_time = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"題庫購買人auth_id: {str(self.user_authID)}, 方案:{str(self.exam_bank_sales_set_id)}" 
+
+    class Meta:
+        verbose_name = '題庫訂閱紀錄'
+        verbose_name_plural = '題庫訂閱紀錄'
+        ordering = ['-updated_time']
+
 # 學生購買紀錄
 class student_purchase_record(models.Model):
     student_auth_id = models.IntegerField()
