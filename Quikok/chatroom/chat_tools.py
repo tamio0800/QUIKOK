@@ -640,8 +640,8 @@ class websocket_manager:
 
         send_to_ws = {
             'type' : "chat.message",
-            #'chatroomID':'system'+ str(chatroomID), # user與系統聊天室
-            'chatroomID': chatroomID,
+            'chatroomID':'system'+ str(chatroomID), # user與系統聊天室
+            #'chatroomID': chatroomID,
             'senderID': self.system_authID, # 系統的auth_id
             'messageText':'',
             'messageType': 'notice_first_msg', # 系統方塊
