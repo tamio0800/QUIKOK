@@ -364,7 +364,7 @@ class chat_room_manager:
                     # chatUnreadMessageQty 歷史訊息的id = roomid,且發送者不是 user, 且未讀 = 0
                     #chat_history_set = chat_history_user2user.objects.filter(Q(chatroom_info_user2user_id=chatroomID)&Q(is_read = 0)& ~Q(who_is_sender = kwargs['userID']))
                     
-                    update_response_msg = {'chatroomID':chatroomID, 'chatroom_type': 'system2user','chatUnreadMessageQty':chatUnreadMessageQty,
+                    update_response_msg = {'chatroomID':'system'+str(chatroomID), 'chatroom_type': 'system2user','chatUnreadMessageQty':chatUnreadMessageQty,
                     'chatUserID' : chatUserID, 'chatUserType': chatUserType ,'chatUsergender':chatUsergender,
                                 'chatUserName' : chatUserName, 'chatUserPath' : chatUserPath}
                     a_chatroom_info.update(update_response_msg)
