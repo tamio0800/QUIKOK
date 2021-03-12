@@ -464,14 +464,16 @@ class websocket_manager:
     # 儲存聊天訊息到 db
     # user_2_user & system2user
     def chat_storge(self, **kwargs):
+        self.chatroom_type = kwargs['chatroom_type'] 
         self.chatroom_id = kwargs['chatroomID']
+            
         self.sender = kwargs['senderID'] # 發訊息者
         message = kwargs['messageText']
         messageType = kwargs['messageType']
-        self.chatroom_type = kwargs['chatroom_type']
         self.check_authID_type(self.sender) # 發訊息者的身分
-        logging.info(f"chatroom/consumer:\n\n storge check user_type:{self.user_type}", exc_info=True)
-                
+        logging.info(f"chatroom/chat_tool: storge check user_type:{self.user_type}")
+        logging.info(f"chatroom/chat_tool: storge self.chatroom_id:{self.chatroom_id}")
+       
         try:
             if self.chatroom_type == 'user2user':
                 chatroom_info = chatroom_info_user2user.objects.filter(id = self.chatroom_id).first()
@@ -519,7 +521,7 @@ class websocket_manager:
             else: # chatroom_type == 'system2user'
                 chatroom_info = chatroom_info_Mr_Q2user.objects.filter(id = self.chatroom_id).first()
                 
-                logging.info("chatroom/consumer:\n\nstorge system2user message.{chatroom_info}", exc_info=True)
+                logging.info(f"chatroom/consumer:storge system2user message.{chatroom_info}")
                 
                 if self.sender == chatroom_info.system_user_auth_id : # 發言者是系統
                     new_msg = chat_history_Mr_Q2user.objects.create(
@@ -551,7 +553,7 @@ class websocket_manager:
                 return(new_msg.id, new_msg.created_time)
 
         except Exception as e:
-            logging.error(f"chatroom/chat_tools:\n\nstorge error message.{e}", exc_info=True)
+            logging.error(f"chatroom/chat_tools:storge error message.{e}", exc_info=True)
 
     
     def update_chat_msg_is_read_status(self, **kwargs):
