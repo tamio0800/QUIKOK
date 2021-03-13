@@ -135,16 +135,17 @@ class chat_room_manager:
 
             elif user_type == 'teacher':
             # 正常來說聊天室只會有唯一一個存在, 超過就有問題
-                chatroom = chatroom_info_user2user.objects.filter(
-                    Q(student_auth_id=chatuser_authID)&Q(teacher_auth_id=user_authID))
+                chatroom = chatroom_info_user2user.objects.filter(Q(student_auth_id=chatuser_authID)&Q(teacher_auth_id=user_authID))
                 student_authID = chatuser_authID
                 teacher_authID = user_authID
             elif user_type =='student':
-                chatroom = chatroom_info_user2user.objects.filter(
-                    Q(student_auth_id=chatuser_authID)&Q(teacher_auth_id=user_authID))
+                chatroom = chatroom_info_user2user.objects.filter(Q(student_auth_id=user_authID)&Q(teacher_auth_id=chatuser_authID))
                 student_authID = user_authID
                 teacher_authID = chatuser_authID
-            
+            logging.info(f'chatroom/chat_tools:student_authID:{student_authID}')
+            logging.info(f'chatroom/chat_tools:teacher_authID:{teacher_authID}')
+            logging.info(f'chatroom/chat_tools:{user_type}')
+            logging.info(f'chatroom/chat_tools:{chatroom}')
             if len(chatroom) == 0 :
                 # 聊天室尚未存在,要新建立
                 new_chatroom = chatroom_info_user2user.objects.create(student_auth_id=student_authID,
@@ -161,7 +162,7 @@ class chat_room_manager:
                     sender_auth_id = self.system_authID,
                     teacher_is_read = True,
                     student_is_read = False)
-                logging.info('create new user2user chatroom')
+                logging.info('chatroom/chat_tools:create new user2user chatroom')
                 
                 self.status = 'success'
                 self.errCode = None
