@@ -12,8 +12,6 @@ from account.auth_tools import auth_check_manager
 from .system_2user_layer import layer_info_maneger
 
 # backend for websocket
-
-
 class ChatConsumer(WebsocketConsumer):
     def connect(self):
         self.userID = self.scope["url_route"]["kwargs"]["room_url"].split('_')[0]
@@ -84,65 +82,66 @@ class ChatConsumer(WebsocketConsumer):
         'msg_status_update' : text_data_json['msg_status_update'], # 字典型態
         'chatroom_type': self.chatroom_type}
         #now_time = datetime.datetime.now().strftime('%H:%M')
-        # 儲存對話紀錄到db, 如果是前端用來更新已讀狀態的資料就不用存對話紀錄但是要更新已讀狀態
+        
+        # 儲存對話紀錄到db, 如果是前端用來更新已讀狀態的資料只需更新已讀狀態其他都不做
         if text_data_json['messageType'] == 'update_read_msg':
             ws_manager.update_chat_msg_is_read_status(**pass_to_chat_tools)
-            now_time = ''
-            msgID = ''
+            #now_time = ''
+            #msgID = ''
         #elif len(text_data_json['msg_status_update']['messageID']) > 0:
             # 要更新對話是否已讀的變數
         else: # 一般對話,要儲存
             msgID, time = ws_manager.chat_storge(**pass_to_chat_tools)
             now_time = str(time)
-        # systemCode 暫時沒有作用,統一給0
-        if text_data_json['messageType'] ==  'text_msg' :
-            systemCode = 'no_action'
-        else:
-            systemCode = None
-        logging.info("chatroom/consumer:\n\nstorge message.", exc_info=True)
-    
-        # Send message to room group
-        # 會發到下面的def chat_message 
-        #print('this is self.channel_layer.group_send')
-        #print(self.channel_layer.group_send)
-        async_to_sync(self.channel_layer.group_send)(
-            self.room_group_name, 
-            {   'type' : "chat.message", # channel要求必填,不填channel會收不到
-                'chatroomID': text_data_json['chatroomID'], # system1 or 1
-                'senderID': pass_to_chat_tools['senderID'],
-                'messageText': pass_to_chat_tools['messageText'],
-                'messageType': pass_to_chat_tools['messageType'],
-                'systemCode': systemCode,
-                'messageCreateTime': now_time,
-                'messageID':msgID,
-                'messageTempID' : text_data_json['messageTempID'],
-                'messageStatus': 'unread'
-            },)
-        logging.info("chatroom/consumer:send no.1 msg.", exc_info=True)
-
-        # 在學生或老師彼此第一次聯絡對方此特殊情況下，才需要同步發送訊息\
-        # 到第二個聊天室(也就是老師與系統的聊天室或學生與系統的聊天室), 特殊形況的判斷寫在chat_tool \
-        # 若條件有滿足, 回傳聊天室的id, 若沒有滿足則回傳0
-        if self.chatroom_type == 'user2user':
-            is_first_time_system_chatroomID = ws_manager.check_if_users_chat_first_time(**pass_to_chat_tools)
-            # 回傳系統聊天室的ID
-        else: # 如果是系統聊天室不用檢查
-            is_first_time_system_chatroomID = 0
-        # 若符合才會>1, 不符合會=0
-        # 符合會在學生傳msg給老師時同步發到系統聊天室
-        # system_chatroomID 格式: ID ((若符合情況一定會>1)
-        if is_first_time_system_chatroomID != 0:
-            # 傳給ws的內容,給另一方聊天室收到有第一次聊天
-            #content = ws_manager.system_auto_msg_when_user_first_chat(pass_to_chat_tools['chatroomID'])
-            content = ws_manager.system_auto_msg_when_user_first_chat(is_first_time_system_chatroomID)
-            
-            # 發送
-            logging.info(f"chatroom/consumer:send no.2 msg to system_chatroomID:{'system'+ str(is_first_time_system_chatroomID)}", exc_info=True)
+            # systemCode 暫時沒有作用,統一給0
+            if text_data_json['messageType'] ==  'text_msg' :
+                systemCode = 'no_action'
+            else:
+                systemCode = None
+            logging.info("chatroom/consumer:\n\nstorge message.", exc_info=True)
+        
+            # Send message to room group
+            # 會發到下面的def chat_message 
+            #print('this is self.channel_layer.group_send')
+            #print(self.channel_layer.group_send)
             async_to_sync(self.channel_layer.group_send)(
-                    'system'+ str(is_first_time_system_chatroomID), content ,)
-            logging.info("chatroom/consumer:send no.2 msg.", exc_info=True)
-        else:
-            pass
+                self.room_group_name, 
+                {   'type' : "chat.message", # channel要求必填,不填channel會收不到
+                    'chatroomID': text_data_json['chatroomID'], # system1 or 1
+                    'senderID': pass_to_chat_tools['senderID'],
+                    'messageText': pass_to_chat_tools['messageText'],
+                    'messageType': pass_to_chat_tools['messageType'],
+                    'systemCode': systemCode,
+                    'messageCreateTime': now_time,
+                    'messageID':msgID,
+                    'messageTempID' : text_data_json['messageTempID'],
+                    'messageStatus': 'unread'
+                },)
+            logging.info("chatroom/consumer:send no.1 msg.", exc_info=True)
+
+            # 在學生或老師彼此第一次聯絡對方此特殊情況下，才需要同步發送訊息\
+            # 到第二個聊天室(也就是老師與系統的聊天室或學生與系統的聊天室), 特殊形況的判斷寫在chat_tool \
+            # 若條件有滿足, 回傳聊天室的id, 若沒有滿足則回傳0
+            if self.chatroom_type == 'user2user':
+                is_first_time_system_chatroomID = ws_manager.check_if_users_chat_first_time(**pass_to_chat_tools)
+                # 回傳系統聊天室的ID
+            else: # 如果是系統聊天室不用檢查
+                is_first_time_system_chatroomID = 0
+            # 若符合才會>1, 不符合會=0
+            # 符合會在學生傳msg給老師時同步發到系統聊天室
+            # system_chatroomID 格式: ID ((若符合情況一定會>1)
+            if is_first_time_system_chatroomID != 0:
+                # 傳給ws的內容,給另一方聊天室收到有第一次聊天
+                #content = ws_manager.system_auto_msg_when_user_first_chat(pass_to_chat_tools['chatroomID'])
+                content = ws_manager.system_auto_msg_when_user_first_chat(is_first_time_system_chatroomID)
+                
+                # 發送
+                logging.info(f"chatroom/consumer:send no.2 msg to system_chatroomID:{'system'+ str(is_first_time_system_chatroomID)}", exc_info=True)
+                async_to_sync(self.channel_layer.group_send)(
+                        'system'+ str(is_first_time_system_chatroomID), content ,)
+                logging.info("chatroom/consumer:send no.2 msg.", exc_info=True)
+            else:
+                pass
 
     # Receive message from room group
     # 收到的字典叫 "event",會回給前端
