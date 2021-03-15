@@ -135,16 +135,17 @@ class chat_room_manager:
 
             elif user_type == 'teacher':
             # 正常來說聊天室只會有唯一一個存在, 超過就有問題
-                chatroom = chatroom_info_user2user.objects.filter(
-                    Q(student_auth_id=chatuser_authID)&Q(teacher_auth_id=user_authID))
+                chatroom = chatroom_info_user2user.objects.filter(Q(student_auth_id=chatuser_authID)&Q(teacher_auth_id=user_authID))
                 student_authID = chatuser_authID
                 teacher_authID = user_authID
             elif user_type =='student':
-                chatroom = chatroom_info_user2user.objects.filter(
-                    Q(student_auth_id=chatuser_authID)&Q(teacher_auth_id=user_authID))
+                chatroom = chatroom_info_user2user.objects.filter(Q(student_auth_id=user_authID)&Q(teacher_auth_id=chatuser_authID))
                 student_authID = user_authID
                 teacher_authID = chatuser_authID
-            
+            logging.info(f'chatroom/chat_tools:student_authID:{student_authID}')
+            logging.info(f'chatroom/chat_tools:teacher_authID:{teacher_authID}')
+            logging.info(f'chatroom/chat_tools:{user_type}')
+            logging.info(f'chatroom/chat_tools:{chatroom}')
             if len(chatroom) == 0 :
                 # 聊天室尚未存在,要新建立
                 new_chatroom = chatroom_info_user2user.objects.create(student_auth_id=student_authID,
@@ -161,7 +162,7 @@ class chat_room_manager:
                     sender_auth_id = self.system_authID,
                     teacher_is_read = True,
                     student_is_read = False)
-                logging.info('create new user2user chatroom')
+                logging.info('chatroom/chat_tools:create new user2user chatroom')
                 
                 self.status = 'success'
                 self.errCode = None
@@ -364,7 +365,7 @@ class chat_room_manager:
                     # chatUnreadMessageQty 歷史訊息的id = roomid,且發送者不是 user, 且未讀 = 0
                     #chat_history_set = chat_history_user2user.objects.filter(Q(chatroom_info_user2user_id=chatroomID)&Q(is_read = 0)& ~Q(who_is_sender = kwargs['userID']))
                     
-                    update_response_msg = {'chatroomID':chatroomID, 'chatroom_type': 'system2user','chatUnreadMessageQty':chatUnreadMessageQty,
+                    update_response_msg = {'chatroomID':'system'+str(chatroomID), 'chatroom_type': 'system2user','chatUnreadMessageQty':chatUnreadMessageQty,
                     'chatUserID' : chatUserID, 'chatUserType': chatUserType ,'chatUsergender':chatUsergender,
                                 'chatUserName' : chatUserName, 'chatUserPath' : chatUserPath}
                     a_chatroom_info.update(update_response_msg)
@@ -464,14 +465,16 @@ class websocket_manager:
     # 儲存聊天訊息到 db
     # user_2_user & system2user
     def chat_storge(self, **kwargs):
+        self.chatroom_type = kwargs['chatroom_type'] 
         self.chatroom_id = kwargs['chatroomID']
+            
         self.sender = kwargs['senderID'] # 發訊息者
         message = kwargs['messageText']
         messageType = kwargs['messageType']
-        self.chatroom_type = kwargs['chatroom_type']
         self.check_authID_type(self.sender) # 發訊息者的身分
-        logging.info(f"chatroom/consumer:\n\n storge check user_type:{self.user_type}", exc_info=True)
-                
+        logging.info(f"chatroom/chat_tool: storge check user_type:{self.user_type}")
+        logging.info(f"chatroom/chat_tool: storge self.chatroom_id:{self.chatroom_id}")
+       
         try:
             if self.chatroom_type == 'user2user':
                 chatroom_info = chatroom_info_user2user.objects.filter(id = self.chatroom_id).first()
@@ -519,7 +522,7 @@ class websocket_manager:
             else: # chatroom_type == 'system2user'
                 chatroom_info = chatroom_info_Mr_Q2user.objects.filter(id = self.chatroom_id).first()
                 
-                logging.info("chatroom/consumer:\n\nstorge system2user message.{chatroom_info}", exc_info=True)
+                logging.info(f"chatroom/consumer:storge system2user message.{chatroom_info}")
                 
                 if self.sender == chatroom_info.system_user_auth_id : # 發言者是系統
                     new_msg = chat_history_Mr_Q2user.objects.create(
@@ -551,7 +554,7 @@ class websocket_manager:
                 return(new_msg.id, new_msg.created_time)
 
         except Exception as e:
-            logging.error(f"chatroom/chat_tools:\n\nstorge error message.{e}", exc_info=True)
+            logging.error(f"chatroom/chat_tools:storge error message.{e}", exc_info=True)
 
     
     def update_chat_msg_is_read_status(self, **kwargs):
@@ -640,8 +643,8 @@ class websocket_manager:
 
         send_to_ws = {
             'type' : "chat.message",
-            #'chatroomID':'system'+ str(chatroomID), # user與系統聊天室
-            'chatroomID': chatroomID,
+            'chatroomID':'system'+ str(chatroomID), # user與系統聊天室
+            #'chatroomID': chatroomID,
             'senderID': self.system_authID, # 系統的auth_id
             'messageText':'',
             'messageType': 'notice_first_msg', # 系統方塊

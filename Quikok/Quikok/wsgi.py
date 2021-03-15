@@ -8,12 +8,11 @@ https://docs.djangoproject.com/en/3.0/howto/deployment/wsgi/
 """
 from django.conf import settings
 import os
-
 from django.core.wsgi import get_wsgi_application
 
-if settings.DEV_MODE == False:
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Quikok.settings_for_production')
-else:
+if os.environ.get('DEV_MODE', False) == 'true':
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Quikok.settings')
-    
+else:
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Quikok.settings_for_production')
+# _for_production
 application = get_wsgi_application()

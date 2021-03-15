@@ -26,6 +26,7 @@ class ChatConsumer(WebsocketConsumer):
         # system2user接收格式 'kwargs': {'room_url': '204_chatroom_4_1'}
         elif self.scope["url_route"]["kwargs"]["room_url"].split('_')[3] == '1':
             #self.room_group_name = self.scope["url_route"]["kwargs"]["room_url"].split('_')[2]
+            
             self.room_group_name = 'system'+ str(self.scope["url_route"]["kwargs"]["room_url"].split('_')[2])
             self.chatroom_type = 'system2user'
             print(type(self.room_group_name))
@@ -67,10 +68,17 @@ class ChatConsumer(WebsocketConsumer):
         print('ws load jason收到的資料')
         print('\n\nreceive_data:\n'+str(text_data_json))
         
+        if self.chatroom_type == 'user2user':
+            chatroomID = text_data_json['chatroomID']
+            #send_back_chatroomID = 
+        else:
+            tempID = text_data_json['chatroomID']
+            chatroomID = tempID.split('system')[1]
+
         # print(self.system_room_group_name) 
         pass_to_chat_tools = {
         'senderID' : text_data_json['senderID'],
-        'chatroomID' : text_data_json['chatroomID'],
+        'chatroomID' : chatroomID,
         'messageType' : text_data_json['messageType'],
         'messageText' : text_data_json['messageText'],
         'msg_status_update' : text_data_json['msg_status_update'], # 字典型態
@@ -100,7 +108,7 @@ class ChatConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name, 
             {   'type' : "chat.message", # channel要求必填,不填channel會收不到
-                'chatroomID':pass_to_chat_tools['chatroomID'],
+                'chatroomID': text_data_json['chatroomID'], # system1 or 1
                 'senderID': pass_to_chat_tools['senderID'],
                 'messageText': pass_to_chat_tools['messageText'],
                 'messageType': pass_to_chat_tools['messageType'],
