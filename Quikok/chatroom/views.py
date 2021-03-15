@@ -83,7 +83,7 @@ def check_system_chatroom(request):
                 response['status'] = 'success'
                 response['errCode'] = None
                 response['errMsg'] = None
-                response['data'] = {'chatroomID':system_chatroom_query.first().id}
+                response['data'] = {'chatroomID':'system'+str(system_chatroom_query.first().id)}
                 return JsonResponse(response)
         except:
             logging.error("chatroom/views:check_system_chatroom except error.", exc_info=True)
