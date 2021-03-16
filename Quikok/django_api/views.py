@@ -359,6 +359,7 @@ def apply_new_lesson_bg_to_all_lessons(request):
             # 如果找不到該用戶就跳過
             continue
         else:
+            # 開始處理老師的個人資訊
             find_it = False
             for _ in os.listdir(f"{the_path}/{each_teacher}"):
                 if 'thumbnail' in _:
@@ -371,10 +372,53 @@ def apply_new_lesson_bg_to_all_lessons(request):
                     f"{the_path}/{each_teacher}/thumbnail_original.{pic_ext}",
                     (200, 200),
                     f"{the_path}/{each_teacher}/thumbnail.jpeg",)
-            print(f"Done {username}")
+
+            # 接著處理課程資訊
+            current_path = f"{the_path}/{each_teacher}"
+            if len(os.listdir(f"{current_path}/lessons")) < 3:
+                # 裡面有課程
+                for each_lesson in os.listdir(f"{current_path}/lessons"):
+                    deeper_path = f"{current_path}/lessons/{each_lesson}"
+                    if os.path.isdir(deeper_path) == False:
+                        continue
+                    find_it = False
+                    for _ in os.listdir(deeper_path):
+                        if 'customized_lesson_background' in _:
+                            find_it = True
+                            break
+                    if find_it:
+                        pic_ext = _.split('.')[-1]
+                        os.rename(
+                            f"{deeper_path}/customized_lesson_background.{pic_ext}",
+                            f"{deeper_path}/customized_lesson_background_original.{pic_ext}")
+
+                        turn_picture_into_jpeg_format(
+                            f"{deeper_path}/customized_lesson_background_original.{pic_ext}",
+                            (1110, 300),
+                            f"{deeper_path}/customized_lesson_background.jpeg")
+                        lesson_object = \
+                            lesson_info.objects.filter(id=each_lesson, teacher=teacher_object).first()
+                        if lesson_object is not None:
+                            lesson_object.background_picture_path = f"/{deeper_path}/customized_lesson_background.jpeg"
+                            lesson_object.save()
+                        # 這個是for課程詳細資訊頁的呈現
+
+                        turn_picture_into_jpeg_format(
+                            f"{deeper_path}/customized_lesson_background_original.{pic_ext}",
+                            (516, 240),
+                            f"{deeper_path}/customized_lesson_background_for_cards.jpeg", quality=60)
+                        #  customized_lesson_background_for_cards.jpeg
+                        lesson_card_object = \
+                            lesson_card.objects.filter(
+                                corresponding_lesson_id=each_lesson, 
+                                teacher_auth_id=teacher_object.auth_id).first()
+                        if lesson_card_object is not None:
+                            lesson_card_object.background_picture_path = f"/{deeper_path}/customized_lesson_background_for_cards.jpeg"
+                            lesson_card_object.save()
+                        # 這個是for課程小卡的呈現
+                print(f"Done {username}")
 
     return HttpResponse("DONE!")
-
 
 
         

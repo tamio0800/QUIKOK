@@ -326,7 +326,7 @@ def turn_picture_into_jpeg_format(picture_path, to_size, to_path, quality=70):
     new_pic.save(to_path, format='JPEG', quality=quality)
 
     origin_pic.close()
-    new_pic.close()
+    #new_pic.close()
 
 
 
