@@ -1327,3 +1327,10 @@ def get_q_points_wtihdrawal_history(request):
         response['data'] = None
 
     return JsonResponse(response)
+
+
+def exam_bank_edit_order(request):
+    pass
+
+def exam_bank_order_history(request):
+    pass
