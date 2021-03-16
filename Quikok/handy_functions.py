@@ -286,7 +286,7 @@ def get_teacher_s_best_education_and_working_experience(teacher_object):
     return (first_exp, second_exp, is_first_one_approved, is_second_one_approved)
 
 
-def turn_picture_into_jpeg_format(picture_path, to_size, to_path, bias=0.05):
+def turn_picture_into_jpeg_format(picture_path, to_size, to_path, bias=0.05, quality=70):
     '''
     將圖片轉成指定的大小 to_size:(height * width)，並存至指定的位置，大小如下：
         (*)課程背景圖
@@ -304,8 +304,21 @@ def turn_picture_into_jpeg_format(picture_path, to_size, to_path, bias=0.05):
     當用戶上傳的圖片不符合上述比例時，一律先填補到符合該比例，再縮小或放大，
     當比例誤差在5%以內時，都算符合比例好了。
     '''
+    origin_pic = Image.open(picture_path)
+    # 確認一下目前長寬比例與目標長寬比例的差距
+    #origin_w, origin_h = origin_pic.size
+    #target_w, target_h = to_size[0], to_size[1]
+    #if abs((origin_w/origin_h - target_w/target_h) / target_w/target_h) <= bias:
+        # 誤差小於給定值，直接resize就好了
+    #    new_pic = origin_pic.resize(to_size)
+    #else:
+        # 先不想補償機制好了，之後遇到再來
+    #    new_pic = origin_pic.resize(to_size)
+    new_pic = origin_pic.resize(to_size)
+    new_pic.save(to_path, format='JPEG', quality=quality)
 
-    pic = Image.open(picture_path)
-    pic.close()
+    origin_pic.close()
+    new_pic.close()
+
 
 

@@ -1,5 +1,6 @@
 import unittest
 from datetime import datetime
+from unittest.case import skip
 from handy_functions import turn_first_datetime_string_into_time_format
 from handy_functions import turn_picture_into_jpeg_format
 from PIL import Image
@@ -30,9 +31,10 @@ class TEST_HANDY(unittest.TestCase):
             datetime(2021, 2, 1, 22, 30))
 
     
+    @skip
     def test_turn_picture_into_jpeg_format_change_size(self):
         '''
-        測試是否可以成功將圖片轉為指定的大小
+        測試Image的一些性質
         '''
         the_path = \
             'user_upload/temp/before_signed_up/tamio0800111111/customized_lesson_background.png'
@@ -56,6 +58,25 @@ class TEST_HANDY(unittest.TestCase):
         origin_pic.close()
         modified_pic.close()
 
+
+    def test_turn_picture_into_jpeg_format_change_size(self):
+        '''
+        測試是否可以成功將圖片轉為指定的大小
+        '''
+        the_path = \
+            'user_upload/temp/before_signed_up/tamio0800111111/customized_lesson_background.png'
+        to_path = \
+            'user_upload/temp/before_signed_up/tamio0800111111/test.jpeg'
+        to_size = (450, 450)
+        turn_picture_into_jpeg_format(the_path, to_size, to_path)
+        # 理論上，to_path應該要有一個圖片才對，且大小為400*400
+        
+        self.assertTrue(os.path.isfile(to_path))  # 確認有該檔案
+        pic = Image.open(to_path)
+        self.assertEqual(pic.size, to_size)
+        pic.close()
+        os.unlink(to_path)
+        self.assertFalse(os.path.isfile(to_path))  # 確認刪除該檔案
 
 if __name__ == '__main__':
     unittest.main()
