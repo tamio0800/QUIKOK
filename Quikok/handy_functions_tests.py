@@ -78,6 +78,16 @@ class TEST_HANDY(unittest.TestCase):
         os.unlink(to_path)
         self.assertFalse(os.path.isfile(to_path))  # 確認刪除該檔案
 
+        to_size = (1500, 600)
+        turn_picture_into_jpeg_format(the_path, to_size, to_path)
+        self.assertTrue(os.path.isfile(to_path))  # 確認有該檔案
+        pic = Image.open(to_path)
+        self.assertEqual(pic.size, to_size)
+        pic.close()
+        os.unlink(to_path)
+        self.assertFalse(os.path.isfile(to_path))  # 確認刪除該檔案
+
+
 if __name__ == '__main__':
     unittest.main()
 

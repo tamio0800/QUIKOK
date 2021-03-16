@@ -286,7 +286,7 @@ def get_teacher_s_best_education_and_working_experience(teacher_object):
     return (first_exp, second_exp, is_first_one_approved, is_second_one_approved)
 
 
-def turn_picture_into_jpeg_format(picture_path, to_size, to_path, bias=0.05, quality=70):
+def turn_picture_into_jpeg_format(picture_path, to_size, to_path, quality=70):
     '''
     將圖片轉成指定的大小 to_size:(height * width)，並存至指定的位置，大小如下：
         (*)課程背景圖
@@ -306,15 +306,23 @@ def turn_picture_into_jpeg_format(picture_path, to_size, to_path, bias=0.05, qua
     '''
     origin_pic = Image.open(picture_path)
     # 確認一下目前長寬比例與目標長寬比例的差距
-    #origin_w, origin_h = origin_pic.size
-    #target_w, target_h = to_size[0], to_size[1]
-    #if abs((origin_w/origin_h - target_w/target_h) / target_w/target_h) <= bias:
-        # 誤差小於給定值，直接resize就好了
-    #    new_pic = origin_pic.resize(to_size)
-    #else:
-        # 先不想補償機制好了，之後遇到再來
-    #    new_pic = origin_pic.resize(to_size)
-    new_pic = origin_pic.resize(to_size)
+    origin_w, origin_h = origin_pic.size
+    target_w, target_h = to_size[0], to_size[1]
+    ratio_w = target_w / origin_w
+    ratio_h = target_h / origin_h
+    if ratio_w < ratio_h:
+        # It must be fixed by width
+        resize_width = target_w
+        resize_height = round(ratio_w * origin_h)
+    else:
+        # Fixed by height
+        resize_width = round(ratio_h * origin_w)
+        resize_height = target_h
+    image_resize = origin_pic.resize((resize_width, resize_height), Image.ANTIALIAS)
+    background = Image.new('RGBA', (target_w, target_h), (255, 255, 255, 255))
+    offset = (round((target_w - resize_width) / 2), round((target_h - resize_height) / 2))
+    background.paste(image_resize, offset)
+    new_pic = background.convert('RGB')
     new_pic.save(to_path, format='JPEG', quality=quality)
 
     origin_pic.close()
