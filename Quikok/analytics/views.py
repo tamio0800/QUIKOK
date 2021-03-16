@@ -23,7 +23,7 @@ def quikok_dashboard(request):
         day_delta = 0
         while start_date_as_datetime_format + timedelta(days=day_delta) < today + timedelta(days=1):
             _temp_date_range.append(
-                (start_date_as_datetime_format + timedelta(days=day_delta)).strftime("%Y.%m.%d")
+                (start_date_as_datetime_format + timedelta(days=day_delta)).strftime("%m%d")
                 )
             day_delta += 1
         return _temp_date_range

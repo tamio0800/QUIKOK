@@ -781,14 +781,23 @@ def return_teacher_s_profile_for_public_viewing(request):
     teacher_auth_id = request.GET.get('userID', False)
     the_teacher_manager = teacher_manager()
     
-
     if teacher_auth_id == False:
         response['status'] = 'failed'
         response['errCode'] = '0'
         response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
         response['data'] = None
         return JsonResponse(response)
-    
+    elif teacher_auth_id == '1':
+        teacher_object = teacher_profile.objects.filter(auth_id=1).first()
+        if teacher_object is None or '雀' in teacher_object.nickname:
+        # 不管是QQ球雀，或是找不到資料，都以錯誤回傳
+            response['status'] = 'failed'
+            response['errCode'] = '1'
+            response['errMsg'] = '此帳號是Quikok！客服專家唷~'
+            response['data'] = None
+
+            return JsonResponse(response)
+
     response['status'], response['errCode'], response['errMsg'], response['data'] = \
         the_teacher_manager.return_teacher_profile_for_public_viewing(teacher_auth_id)
     
