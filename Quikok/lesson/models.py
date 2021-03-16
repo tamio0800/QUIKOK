@@ -387,6 +387,15 @@ def when_lesson_info_changed_synchronize_lesson_card(sender, instance:lesson_inf
     first_exp, second_exp, is_first_exp_approved, is_second_exp_approved = \
         get_teacher_s_best_education_and_working_experience(instance.teacher)
 
+    if instance.background_picture_path != '':
+        # 用戶有上傳課程背景圖，需要儲存對應的小卡縮圖
+        background_picture_path_for_lesson_cards = \
+            instance.background_picture_path.replace(
+                'customized_lesson_background',
+                'customized_lesson_background_for_cards')
+    else:
+        background_picture_path_for_lesson_cards = ''
+
     if created:
         # 代表新建立了一門課程，此時要建立課程小卡的資料
         lesson_card.objects.create(
@@ -400,7 +409,7 @@ def when_lesson_info_changed_synchronize_lesson_card(sender, instance:lesson_inf
             little_title = instance.little_title,
             title_color = instance.title_color,
             background_picture_code = instance.background_picture_code,
-            background_picture_path = instance.background_picture_path,
+            background_picture_path = background_picture_path_for_lesson_cards,
             lesson_title = instance.lesson_title,
             highlight_1 = instance.highlight_1,
             highlight_2 = instance.highlight_2,
@@ -424,7 +433,7 @@ def when_lesson_info_changed_synchronize_lesson_card(sender, instance:lesson_inf
         lesson_card_objects.little_title = instance.little_title
         lesson_card_objects.title_color = instance.title_color
         lesson_card_objects.background_picture_code = instance.background_picture_code
-        lesson_card_objects.background_picture_path = instance.background_picture_path
+        lesson_card_objects.background_picture_path = background_picture_path_for_lesson_cards
         lesson_card_objects.lesson_title = instance.lesson_title
         lesson_card_objects.highlight_1 = instance.highlight_1
         lesson_card_objects.highlight_2 = instance.highlight_2
