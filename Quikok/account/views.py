@@ -383,6 +383,7 @@ def edit_teacher_profile(request):
         if user_thumbnail:
             # 老師有傳新大頭照
             folder_where_are_uploaded_files_be ='user_upload/teachers/' + the_teacher_info_object.username
+            clean_files(folder_where_are_uploaded_files_be, 'thumbnail')  # 刪除舊有的資料
             fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
             file_exten = user_thumbnail.name.split('.')[-1]
             fs.save('thumbnail_original'+'.'+ file_exten , user_thumbnail) # 儲存原始的大頭貼照片

@@ -865,6 +865,7 @@ def create_or_edit_a_lesson(request):
                             # 有上傳圖片
                             uploaded_background_picture = request.FILES["background_picture_path"]
                             fs = FileSystemStorage(location=lesson_folder_path)
+                            clean_files(lesson_folder_path, 'lesson_background')  # 刪除舊有的課程背景
                             file_extension = uploaded_background_picture.name.split('.')[-1]
                             fs.save(f"customized_lesson_background_original.{file_extension}" , uploaded_background_picture) 
                             turn_picture_into_jpeg_format(
