@@ -1,5 +1,6 @@
 from datetime import date, datetime
 import os
+from PIL import Image
 
 def check_if_all_variables_are_true(*args):
     '''
@@ -283,4 +284,28 @@ def get_teacher_s_best_education_and_working_experience(teacher_object):
             is_second_one_approved = teacher_object.education_approved
 
     return (first_exp, second_exp, is_first_one_approved, is_second_one_approved)
+
+
+def turn_picture_into_jpeg_format(picture_path, to_size, to_path, bias=0.05):
+    '''
+    將圖片轉成指定的大小 to_size:(height * width)，並存至指定的位置，大小如下：
+        (*)課程背景圖
+        尺寸：1110*300(PX)
+        容量：50KB
+
+        (*)課程小卡圖
+        尺寸；516*240(PX)
+        容量：因為會在首頁出現越小越好
+
+        (*)大頭照
+        尺寸：200*200(PX)
+        容量；45KB
+
+    當用戶上傳的圖片不符合上述比例時，一律先填補到符合該比例，再縮小或放大，
+    當比例誤差在5%以內時，都算符合比例好了。
+    '''
+
+    pic = Image.open(picture_path)
+    pic.close()
+
 
