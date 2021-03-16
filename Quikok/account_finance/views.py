@@ -19,6 +19,12 @@ import asyncio
 from asgiref.sync import sync_to_async
 from django.conf import settings
 
+def exam_bank_edit_order(request):
+    pass
+
+def exam_bank_order_history(request):
+    pass
+
 
 def view_email_new_order_remind(request):
     return render(request, 'send_new_order_remind.html')

@@ -8,13 +8,16 @@ from account_finance.email_sending import email_manager
 class user_purchase_exam_bank_record(models.Model):
     user_authID = models.IntegerField() # 購買者的 authID
     exam_bank_sales_set_id = models.IntegerField()
-    start_date =  models.DateTimeField()  # 可使用題庫的有效時間開始日期
-    end_date = models.DateTimeField() # 可使用題庫的有效時間開始日期
+    start_date =  models.DateTimeField()  # 可使用題庫的有效時間開始日期，應為確認付款日
+    end_date = models.DateTimeField() # 可使用題庫的有效時間結束日期
+    is_valid = models.BooleanField(default=False) 
+    #是否可使用題庫，在可使用題庫的有效期內即為有效，測試期間有效期開始日統一決定，
+    # 不做是否在有效期間判定
     price = models.IntegerField() # total
     purchased_with_money  = models.IntegerField() # 實際要支付的費用 total_price -purchased_with_q_points
     purchased_with_q_points = models.IntegerField(default=0)  # 用多少Q幣支付,這版暫不會用到
-    part_of_bank_account_code = models.CharField(max_length=30, default='')
-    is_refunded = models.BooleanField(default=False) # 是否有退款,相關功能暫不開發
+    part_of_bank_account_code = models.CharField(max_length=30, default='')#銀行末5碼
+    is_refunded = models.BooleanField(default=False) # 是否有退款,相關功能暫人工處理
     is_preorder = models.BooleanField(default=False) # 是否為預購期間購買
     created_time = models.DateTimeField(auto_now_add=True) 
     updated_time = models.DateTimeField(auto_now=True)
