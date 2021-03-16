@@ -607,12 +607,18 @@ class Teacher_Profile_Test(TestCase):
         )  # 在還沒有更新前，應該沒有大頭貼
 
         response = client.post(path='/api/account/editTeacherProfile/', data=teacher_post_data)
-
-        self.assertEqual(
+        
+        
+        #self.assertEqual(
+        #    os.path.getsize(row_thumbnail_pic_path),
+        #    os.path.getsize(teacher_profile.objects.filter(username=test_username).first().thumbnail_dir[1:]),
+        #    teacher_profile.objects.filter(username=test_username).first().thumbnail_dir[1:]
+        #)  #更新後，兩個大頭貼應該一樣了 >> 因為現在會縮圖，所以不能這樣看
+        self.assertGreaterEqual(
             os.path.getsize(row_thumbnail_pic_path),
             os.path.getsize(teacher_profile.objects.filter(username=test_username).first().thumbnail_dir[1:]),
             teacher_profile.objects.filter(username=test_username).first().thumbnail_dir[1:]
-        )  # 更新後，兩個大頭貼應該一樣了
+        )
         
         #print(
         #    f'os.path.getsize(teacher_profile.objects.filter(username=test_username).first().thumbnail_dir[1:]): \
@@ -790,7 +796,7 @@ class Student_Test(TestCase):
                 student_post_data['mobile'],
                 student_post_data['nickname'],
                 student_post_data['update_someone_by_email'],
-                f'/user_upload/students/{self.test_username}/thumbnail.png',
+                f'/user_upload/students/{self.test_username}/thumbnail.jpeg',  # 因為會縮圖
                 student_post_data['intro']
             ),
             (

@@ -120,7 +120,6 @@ def create_a_student_user(request):
                     f"{folder_where_are_uploaded_files_be}/thumbnail.jpeg",
                     )
                 # 檔名統一改成thumbnail開頭
-
                 thumbnail_dir = '/user_upload/students/' + username + '/thumbnail.jpeg'
             else:
                 thumbnail_dir = ''
@@ -264,10 +263,15 @@ def edit_student_profile(request):
                     clean_files(target_path, 'thumbnail')
                     #  清除原本的檔案
                     fs = FileSystemStorage(location=target_path)
-                    file_extension = upload_snapshot.name.split('.')[-1]    
-                    fs.save('thumbnail' + '.' + file_extension , upload_snapshot) # 檔名統一改成thumbnail開頭
+                    file_extension = upload_snapshot.name.split('.')[-1]
+                    fs.save('thumbnail_original'+'.'+ file_extension , upload_snapshot) # 儲存原始的大頭貼照片
+                    turn_picture_into_jpeg_format(
+                        f"{target_path}/thumbnail_original.{file_extension}",
+                        (200, 200),
+                        f"{target_path}/thumbnail.jpeg")
+                    # 檔名統一改成thumbnail開頭
                     the_student_info_object.thumbnail_dir = \
-                        f'/{target_path}/thumbnail.{file_extension}'
+                        f'/{target_path}/thumbnail.jpeg'
 
                 the_student_info_object.nickname = nickname
                 the_student_info_object.intro = intro
@@ -379,10 +383,17 @@ def edit_teacher_profile(request):
         if user_thumbnail:
             # 老師有傳新大頭照
             folder_where_are_uploaded_files_be ='user_upload/teachers/' + the_teacher_info_object.username
+            clean_files(folder_where_are_uploaded_files_be, 'thumbnail')  # 刪除舊有的資料
             fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
             file_exten = user_thumbnail.name.split('.')[-1]
-            fs.save('thumbnail.' + file_exten, user_thumbnail) # 檔名統一改成thumbnail開頭
-            the_teacher_info_object.thumbnail_dir = '/' + folder_where_are_uploaded_files_be + '/thumbnail.' + file_exten
+            fs.save('thumbnail_original'+'.'+ file_exten , user_thumbnail) # 儲存原始的大頭貼照片
+            turn_picture_into_jpeg_format(
+                f"{folder_where_are_uploaded_files_be}/thumbnail_original.{file_exten}",
+                (200, 200),
+                f"{folder_where_are_uploaded_files_be}/thumbnail.jpeg")
+            # 檔名統一改成thumbnail開頭
+            the_teacher_info_object.thumbnail_dir = \
+                f'/{folder_where_are_uploaded_files_be}/thumbnail.jpeg'
 
         is_new_certification_uploaded = False
         for each_file in user_certifications:
