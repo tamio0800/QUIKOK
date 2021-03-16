@@ -687,8 +687,6 @@ def create_a_teacher_user(request):
                         kwargs = send_email_info)
             send_welcom_email_thread.start()
 
-
-
             object_accessed_signal.send(
                 sender='create_a_teacher_user',
                 auth_id=user_created_object.id,
