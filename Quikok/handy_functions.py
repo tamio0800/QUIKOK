@@ -304,11 +304,31 @@ def turn_picture_into_jpeg_format(picture_path, to_size, to_path, quality=70):
     當用戶上傳的圖片不符合上述比例時，一律先填補到符合該比例，再縮小或放大，
     當比例誤差在5%以內時，都算符合比例好了。
     '''
-    origin_pic = Image.open(picture_path)
+    original_pic = Image.open(picture_path).convert("RGB")
     # 確認一下目前長寬比例與目標長寬比例的差距
-    origin_w, origin_h = origin_pic.size
+    origin_w, origin_h = original_pic.size
     target_w, target_h = to_size[0], to_size[1]
-    ratio_w = target_w / origin_w
+    
+    # 取的比原來要的還更大，這樣才不會邊緣留空不好看。
+    # 假設要將某圖resize成 200*200，若原圖為 400*300，則變成 267*200，
+    # 假設要將某圖resize成 200*100，若原圖為 400*300，則變成 >> 200*150；
+    # 假設要將 400*300 放大為 1100*600，此時則為 1100*825。
+    current_w_h_ratio = origin_w / origin_h
+    new_w_h_ratio = target_w / target_h
+
+    if new_w_h_ratio > current_w_h_ratio:
+        # 代表其 width 比例更高，應該以目前的 width 對準新比例的 width
+        new_w = target_w
+        new_h = round(origin_h * target_w / origin_w)
+    else:
+        new_w = round(origin_w * target_h / origin_h)
+        new_h = target_h
+
+    to_size = (new_w, new_h)
+    new_pic = original_pic.resize(to_size, Image.ANTIALIAS)
+    new_pic.save(to_path, format='JPEG', quality=quality)
+    original_pic.close()
+    '''ratio_w = target_w / origin_w
     ratio_h = target_h / origin_h
     if ratio_w < ratio_h:
         # It must be fixed by width
@@ -322,10 +342,10 @@ def turn_picture_into_jpeg_format(picture_path, to_size, to_path, quality=70):
     background = Image.new('RGBA', (target_w, target_h), (255, 255, 255, 255))
     offset = (round((target_w - resize_width) / 2), round((target_h - resize_height) / 2))
     background.paste(image_resize, offset)
-    new_pic = background.convert('RGB')
-    new_pic.save(to_path, format='JPEG', quality=quality)
+    new_pic = background.convert('RGB')'''
+    
 
-    origin_pic.close()
+    
     #new_pic.close()
 
 
