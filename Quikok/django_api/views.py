@@ -1,13 +1,15 @@
+from django.http.response import HttpResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 from django.core import serializers
 from django.http import JsonResponse
 import json, os
 from django.middleware.csrf import get_token
-
+from lesson.models import lesson_card, lesson_info
 from account.models import student_profile, teacher_profile
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password, check_password  # 這一行用來加密密碼的
+from handy_functions import turn_picture_into_jpeg_format
 
 
 def is_int(target):
@@ -111,20 +113,6 @@ def create_dev_db_user(request):
         response['data'] = None
         return JsonResponse(response)
         
-
-@require_http_methods(['GET'])
-def show_users(request):
-    all_users = dev_db.objects.all()
-    data = []
-    for each_user in all_users:
-        data.append({
-            'username': each_user.username,
-            'password': each_user.password,
-            'name': each_user.name,
-            'birth_date': each_user.birth_date,
-            'is_male': each_user.is_male
-        })
-    return JsonResponse(data, safe=False)
 
 
 @require_http_methods(['POST'])
@@ -337,3 +325,68 @@ def create_a_teacher_user(request):
         response['data'] = None
     
     return JsonResponse(response)
+
+
+
+def apply_new_lesson_bg_to_all_lessons(request):
+    the_path = 'user_upload/students'
+    for each_student in os.listdir(the_path):
+        username = each_student
+        student_object = student_profile.objects.filter(username=username).first()
+        if student_object is None:
+            # 如果找不到該用戶就跳過
+            continue
+        else:
+            find_it = False
+            for _ in os.listdir(f"{the_path}/{each_student}"):
+                if 'thumbnail' in _:
+                    find_it = True
+                    break
+            if find_it:
+                pic_ext = _.split('.')[-1]
+                os.rename(f"{the_path}/{each_student}/{_}", f"{the_path}/{each_student}/thumbnail_original.{pic_ext}")
+                turn_picture_into_jpeg_format(
+                    f"{the_path}/{each_student}/thumbnail_original.{pic_ext}",
+                    (200, 200),
+                    f"{the_path}/{each_student}/thumbnail.jpeg",)
+            print(f"Done {username}")
+
+    the_path = 'user_upload/teachers'
+    for each_teacher in os.listdir(the_path):
+        username = each_teacher
+        teacher_object = teacher_profile.objects.filter(username=username).first()
+        if teacher_object is None:
+            # 如果找不到該用戶就跳過
+            continue
+        else:
+            find_it = False
+            for _ in os.listdir(f"{the_path}/{each_teacher}"):
+                if 'thumbnail' in _:
+                    find_it = True
+                    break
+            if find_it:
+                pic_ext = _.split('.')[-1]
+                os.rename(f"{the_path}/{each_teacher}/{_}", f"{the_path}/{each_teacher}/thumbnail_original.{pic_ext}")
+                turn_picture_into_jpeg_format(
+                    f"{the_path}/{each_teacher}/thumbnail_original.{pic_ext}",
+                    (200, 200),
+                    f"{the_path}/{each_teacher}/thumbnail.jpeg",)
+            print(f"Done {username}")
+
+    return HttpResponse("DONE!")
+
+
+
+        
+'''thumbnail_dir = '/user_upload/teachers/' + user_folder + '/thumbnail.jpeg'
+
+    turn_picture_into_jpeg_format(
+        f"{lesson_folder_path}/customized_lesson_background_original.{file_extension}",
+        (1110, 300),
+        f"{lesson_folder_path}/customized_lesson_background.jpeg")
+    # 這個是for課程詳細資訊頁的呈現
+    turn_picture_into_jpeg_format(
+        f"{lesson_folder_path}/customized_lesson_background_original.{file_extension}",
+        (516, 240),
+        f"{lesson_folder_path}/customized_lesson_background_for_cards.jpeg", quality=60)
+    # 這個是for課程小卡的呈現'''
