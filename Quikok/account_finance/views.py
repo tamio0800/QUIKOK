@@ -2,17 +2,18 @@ import logging
 from django.shortcuts import render
 import math
 from account_finance.models import (student_purchase_record, 
-student_remaining_minutes_of_each_purchased_lesson_set, 
-student_remaining_minutes_when_request_refund_each_purchased_lesson_set)
+    student_remaining_minutes_of_each_purchased_lesson_set, 
+    student_remaining_minutes_when_request_refund_each_purchased_lesson_set,
+    student_refund, teacher_refund, user_purchase_exam_bank_record)
 from account_finance.email_sending import email_manager, email_for_edony
 from account.models import teacher_profile, student_profile
+from account.auth_tools import auth_check_manager
 from lesson.models import lesson_info, lesson_sales_sets, lesson_booking_info
 from django.http import JsonResponse
 from chatroom.consumers import ChatConsumer
 from datetime import datetime, timedelta, timezone, date as date_function
 from handy_functions import check_if_all_variables_are_true
 from django.views.decorators.http import require_http_methods
-from account_finance.models import student_refund, teacher_refund
 from time import time
 from threading import Thread
 import asyncio
@@ -20,15 +21,22 @@ from asgiref.sync import sync_to_async
 from django.conf import settings
 
 email_notification = email_manager()
-
+authID_type_check = auth_check_manager()
 
 def exam_bank_edit_order(request):
+    '''api58:給user編輯題庫的訂單狀態，可操作的選項有：付款完成(填入帳號末五碼)
+        申請退款、申請取消訂單(訂單已成立但user還未付款時)
+    '''
     try:
         userID = request.POST.get('userID', False)
-        user_type = request.POST.get('type', False)
         token_from_user_raw = request.headers.get('Authorization', False)
+        status_update = request.POST.get('status_update', False)
+        # 0-付款完成
+        # 1-申請退款  -->  這個指的是已經付款後(可能也已經預約或是上過課了)再取消的情況
+        # 2-申請取消  -->  這版先不做:這個指的是還沒有付錢的情況下取消購買
+        part_of_bank_account_code = request.POST.get('part_of_bank_account_code', False)
         
-        if False in [userID, user_type, token_from_user_raw]:
+        if False in [userID, user_type, token_from_user_raw,status_update,part_of_bank_account_code]:
             response = {'status':'failed',
             'errCode': 1,
             'errMsg': '資料傳輸失敗，如問題持續麻煩聯絡客服！',
@@ -41,6 +49,18 @@ def exam_bank_edit_order(request):
                 token_from_user = token_from_user_raw.split(' ')[1]
             else:
                 token_from_user = ''
+            
+            get_user = user_purchase_exam_bank_record.filter(user_auth_id=userID)
+            if get_user.count() == 0:
+                response = {'status':'failed',
+                'errCode': 2,
+                'errMsg': '訂單查詢失敗，如問題持續麻煩聯絡客服！',
+                'data': None}
+            else:
+                if status_update == '0':
+                    user_record = get_user.first() # 預購期間只會有一筆,之後若有多筆get_user要改用訂單編號找
+                    user_record.part_of_bank_account_code = part_of_bank_account_code
+                    user_record.save()
     
     except Exception as e:
         print(f'account_finance:exam_bank_edit_order Exception {e}')
@@ -60,9 +80,9 @@ def exam_bank_order_history(request):
         
         if False in [userID, user_type, token_from_user_raw]:
             response = {'status':'failed',
-            'errCode': 1,
-            'errMsg': '資料傳輸失敗，如問題持續麻煩聯絡客服！',
-            'data': None}
+                'errCode': 1,
+                'errMsg': '資料傳輸失敗，如問題持續麻煩聯絡客服！',
+                'data': None}
 
         # 當前端傳來空白token時(例如訪客), bearer後面會是空白的,這邊寫死來判斷
         else:

@@ -75,6 +75,27 @@ class test_exam_bank(TestCase):
             selling_price = 500
         )
         self.assertEqual(exam_bank_sales_set.objects.all().count(),1)
+    def test_edit_order_user_enter_bank_router(self):
+        ''' 測試路由有通'''
+        data = {
+         # exam_bank_sales_setID: 正式版才會有
+            userID: 2, #購買者id 
+            status_update : 0,
+            part_of_bank_account_code:11111
+            } 
+        header = {'HTTP_Authorization':'token 1234'}
+        response = self.client.post(path='/api/account_finance/examBankEditOrder/', 
+            data = data,  **header)
+        self.assertEqual(response.status_code, 200)
+
+    def test_edit_order_user_enter_bank_account_code(self):
+        '''測試當user發已付款、輸入銀行帳號可以成功寫入db'''
+        pass
+
+    def test_edit_order_user_enter_bank_account_code_send_email(self):
+        '''測試當user發已付款、輸入銀行帳號會寄出一封email提醒我們要對帳'''
+        pass
+
     @skip
     def test_storege_bank_order(self):
         # 測試單純建立題庫訂單,是否能順利寫入
