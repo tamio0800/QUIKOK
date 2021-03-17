@@ -10,6 +10,6 @@ urlpatterns = [
     path('create_dev_db_user/', views.create_dev_db_user),
     path('create_a_teacher_user/', views.create_a_teacher_user),
     path('create_a_student_user/', views.create_a_student_user),
-    path('show_users/', views.show_users),
-    #path('create_a_student_user/', views.create_a_student_user),
+    # path('apply_new_lesson_bg_to_all_lessons/', views.apply_new_lesson_bg_to_all_lessons),
+    # http://127.0.0.1:8000/api/apply_new_lesson_bg_to_all_lessons/
 ]

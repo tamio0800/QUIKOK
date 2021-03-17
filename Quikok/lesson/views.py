@@ -20,7 +20,8 @@ from handy_functions import (check_if_all_variables_are_true, date_string_2_date
                             booking_date_time_to_minutes_and_cleansing,
                             turn_date_string_into_date_format, 
                             turn_first_datetime_string_into_time_format,
-                            return_none_if_the_string_is_empty, bound_number_string)
+                            return_none_if_the_string_is_empty, bound_number_string,
+                            turn_picture_into_jpeg_format)
 from lesson.models import (lesson_info, lesson_card, lesson_info_for_users_not_signed_up,
                             lesson_sales_sets, lesson_booking_info, lesson_completed_record,
                             lesson_reviews_from_students, student_reviews_from_teachers)
@@ -92,9 +93,13 @@ def lessons_main_page(request):
 
 @require_http_methods(['POST'])
 def get_lesson_cards_for_common_users(request):
+    '''
+    用以回傳符合條件的課程小卡，呈現給一般的學生/老師瀏覽。
+    '''
     # 20200911 暫時不開發排序、篩選部分
     # 接收：需要多少小卡(int)、排序依據(string)、篩選依據(string)、觀看的用戶
     # 20201103 加入篩選機制，未來再重構此一api
+    # 20210317 加入排序機制
     def get_teacher_auth_ids_who_have_set_available_times():
             the_teacher_manager = teacher_manager()
             teacher_auth_ids_with_live_lessons = \
@@ -324,6 +329,9 @@ def get_lesson_cards_for_common_users(request):
                 'lessonID', 
                 sorted_lesson_ids,
                 _data)
+        else:
+            _data = \
+                sorted(_data, key=lambda x: x['lesson_ranking_score'], reverse=True)
         
         response['status'] = 'success'
         response['errCode'] = None
@@ -713,8 +721,6 @@ def create_or_edit_a_lesson(request):
     lesson_has_one_hour_package = request.POST.get('lesson_has_one_hour_package', False)
     is_this_lesson_online_or_offline = request.POST.get('lesson_type', False)
 
-    # the_leeson_manager = lesson_manager()
-
     if check_if_all_variables_are_true(action, teacher_auth_id, big_title, little_title,
     title_color, background_picture_code, lesson_title, price_per_hour, trial_class_price, discount_price,
     highlight_1, highlight_2, highlight_3, lesson_intro, how_does_lesson_go, target_students, lesson_remarks,
@@ -784,9 +790,20 @@ def create_or_edit_a_lesson(request):
                     uploaded_background_picture = request.FILES["background_picture_path"]
                     fs = FileSystemStorage(location=lesson_folder_path)
                     file_extension = uploaded_background_picture.name.split('.')[-1]
-                    fs.save(f"customized_lesson_background.{file_extension}" , uploaded_background_picture) # 檔名統一改成thumbnail開頭
+                    fs.save(f"customized_lesson_background_original.{file_extension}" , uploaded_background_picture) # 檔名統一改成thumbnail開頭
+                    turn_picture_into_jpeg_format(
+                        f"{lesson_folder_path}/customized_lesson_background_original.{file_extension}",
+                        (1110, 300),
+                        f"{lesson_folder_path}/customized_lesson_background.jpeg")
+                    # 這個是for課程詳細資訊頁的呈現
+                    turn_picture_into_jpeg_format(
+                        f"{lesson_folder_path}/customized_lesson_background_original.{file_extension}",
+                        (516, 240),
+                        f"{lesson_folder_path}/customized_lesson_background_for_cards.jpeg", quality=60)
+                    # 這個是for課程小卡的呈現
+
                     new_lesson_object.background_picture_path = \
-                        f"/{lesson_folder_path}/customized_lesson_background.{file_extension}"
+                        f"/{lesson_folder_path}/customized_lesson_background.jpeg"
                 
                 new_lesson_object.save()
                 # 成功建立課程
@@ -855,16 +872,27 @@ def create_or_edit_a_lesson(request):
                             # 有上傳圖片
                             uploaded_background_picture = request.FILES["background_picture_path"]
                             fs = FileSystemStorage(location=lesson_folder_path)
+                            clean_files(lesson_folder_path, 'lesson_background')  # 刪除舊有的課程背景
                             file_extension = uploaded_background_picture.name.split('.')[-1]
-                            fs.save(f"customized_lesson_background.{file_extension}" , uploaded_background_picture) # 檔名統一改成thumbnail開頭
+                            fs.save(f"customized_lesson_background_original.{file_extension}" , uploaded_background_picture) 
+                            turn_picture_into_jpeg_format(
+                                f"{lesson_folder_path}/customized_lesson_background_original.{file_extension}",
+                                (1110, 300),
+                                f"{lesson_folder_path}/customized_lesson_background.jpeg")
+                            # 這個是for課程詳細資訊頁的呈現
+                            turn_picture_into_jpeg_format(
+                                f"{lesson_folder_path}/customized_lesson_background_original.{file_extension}",
+                                (516, 240),
+                                f"{lesson_folder_path}/customized_lesson_background_for_cards.jpeg", quality=60)
+                            # 這個是for課程小卡的呈現
+                               
                             lesson_object.background_picture_path = \
-                                f"/{lesson_folder_path}/customized_lesson_background.{file_extension}"
+                                f"/{lesson_folder_path}/customized_lesson_background.jpeg"
 
                         lesson_object.big_title = big_title
                         lesson_object.little_title = little_title
                         lesson_object.title_color = title_color
                         lesson_object.background_picture_code = background_picture_code
-                        # lesson_object.background_picture_path = background_picture_path
                         lesson_object.lesson_title = lesson_title
                         lesson_object.price_per_hour = price_per_hour
                         lesson_object.lesson_has_one_hour_package = lesson_has_one_hour_package=='true'

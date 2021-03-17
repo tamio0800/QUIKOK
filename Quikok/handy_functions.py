@@ -1,5 +1,6 @@
 from datetime import date, datetime
 import os
+from PIL import Image
 
 def check_if_all_variables_are_true(*args):
     '''
@@ -25,6 +26,7 @@ def sort_dictionaries_in_a_list_by_specific_key(specific_key, followed_by_values
     _data = list()
     for each_value in followed_by_values_in_list:
         _data.append(_new_mapping_dict[each_value])
+    
     return _data
 
 
@@ -283,4 +285,69 @@ def get_teacher_s_best_education_and_working_experience(teacher_object):
             is_second_one_approved = teacher_object.education_approved
 
     return (first_exp, second_exp, is_first_one_approved, is_second_one_approved)
+
+
+def turn_picture_into_jpeg_format(picture_path, to_size, to_path, quality=70):
+    '''
+    將圖片轉成指定的大小 to_size:(height * width)，並存至指定的位置，大小如下：
+        (*)課程背景圖
+        尺寸：1110*300(PX)
+        容量：50KB
+
+        (*)課程小卡圖
+        尺寸；516*240(PX)
+        容量：因為會在首頁出現越小越好
+
+        (*)大頭照
+        尺寸：200*200(PX)
+        容量；45KB
+
+    當用戶上傳的圖片不符合上述比例時，一律先填補到符合該比例，再縮小或放大，
+    當比例誤差在5%以內時，都算符合比例好了。
+    '''
+    original_pic = Image.open(picture_path).convert("RGB")
+    # 確認一下目前長寬比例與目標長寬比例的差距
+    origin_w, origin_h = original_pic.size
+    target_w, target_h = to_size[0], to_size[1]
+    
+    # 取的比原來要的還更大，這樣才不會邊緣留空不好看。
+    # 假設要將某圖resize成 200*200，若原圖為 400*300，則變成 267*200，
+    # 假設要將某圖resize成 200*100，若原圖為 400*300，則變成 >> 200*150；
+    # 假設要將 400*300 放大為 1100*600，此時則為 1100*825。
+    current_w_h_ratio = origin_w / origin_h
+    new_w_h_ratio = target_w / target_h
+
+    if new_w_h_ratio > current_w_h_ratio:
+        # 代表其 width 比例更高，應該以目前的 width 對準新比例的 width
+        new_w = target_w
+        new_h = round(origin_h * target_w / origin_w)
+    else:
+        new_w = round(origin_w * target_h / origin_h)
+        new_h = target_h
+
+    to_size = (new_w, new_h)
+    new_pic = original_pic.resize(to_size, Image.ANTIALIAS)
+    new_pic.save(to_path, format='JPEG', quality=quality)
+    original_pic.close()
+    '''ratio_w = target_w / origin_w
+    ratio_h = target_h / origin_h
+    if ratio_w < ratio_h:
+        # It must be fixed by width
+        resize_width = target_w
+        resize_height = round(ratio_w * origin_h)
+    else:
+        # Fixed by height
+        resize_width = round(ratio_h * origin_w)
+        resize_height = target_h
+    image_resize = origin_pic.resize((resize_width, resize_height), Image.ANTIALIAS)
+    background = Image.new('RGBA', (target_w, target_h), (255, 255, 255, 255))
+    offset = (round((target_w - resize_width) / 2), round((target_h - resize_height) / 2))
+    background.paste(image_resize, offset)
+    new_pic = background.convert('RGB')'''
+    
+
+    
+    #new_pic.close()
+
+
 
