@@ -5,6 +5,7 @@ from account_finance.models import (student_remaining_minutes_of_each_purchased_
 from account_finance.models import teacher_refund, student_refund
 from account.models import student_profile, teacher_profile
 from lesson.models import lesson_info, lesson_sales_sets
+from amigo.models import exam_bank_sales_set
 from account_finance.email_sending import email_manager
 from django.contrib.auth.models import Group
 import os, shutil
@@ -19,6 +20,96 @@ from django.conf import settings
 # 設定環境變數 DEV_MODE 為true >>  export DEV_MODE=true
 # 取消環境變數 DEV_MODE >> unset DEV_MODE
 # python3 manage.py test account_finance/ --settings=Quikok.settings_for_test
+
+class test_exam_bank(TestCase):
+    def setUp(self):
+        self.client =  Client()        
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+        self.test_username = 'test_teacher_user@test.com'
+        teacher_post_data = {
+            'regEmail': self.test_username,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;1:11,13,15,17,19,21,22,25,33;4:1,9,27,28,41;'
+        }
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        
+        # 建立1個學生
+        student_post_data = {
+                'regEmail': 'test_student_name',
+                'regPwd': '00000000',
+                'regName': 'test_student_name',
+                'regBirth': '1990-12-25',
+                'regGender': 1,
+                'regRole': 'oneself',
+                'regMobile': '0900-111111',
+                'regNotifiemail': ''
+            }
+        self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        self.assertEqual(User.objects.all().count() , 2) # 確認目前產生了2個user
+        # 建立題庫銷售組合
+        self.duration ='365'
+        self.selling_price = 500
+        exam_bank_sales_set.objects.create(
+            duration =self.duration, # 販售的時間單位,暫時還未定預想會換算成day
+            selling_price = 500
+        )
+        self.assertEqual(exam_bank_sales_set.objects.all().count(),1)
+    @skip
+    def test_storege_bank_order(self):
+        # 測試單純建立題庫訂單,是否能順利寫入
+        # 要先建立題庫set才能測試
+        order_data = {
+         # exam_bank_sales_setID: 正式版才會有
+            order_type: 'exam_bank_order', #/題庫
+            userID: 2, #購買者id 
+            sales_set : self.duration, #選擇的題庫方案"時間"
+            total_amount_of_the_sales_set: self.selling_price,
+            q_discount: 0 #這版不會用到只是預留
+            } 
+
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(
+            str(response.content, encoding='utf8'),
+            {
+                'status': 'success',
+                'errCode': None,
+                'errMsg': None,
+                'data': 1 # 建立1號訂單
+            })
+
+    def tearDown(self):
+        # 刪掉(如果有的話)產生的資料夾
+        try:
+            shutil.rmtree('user_upload/students/' + self.test_student_name1)
+            shutil.rmtree('user_upload/students/' + self.test_student_name2)
+            shutil.rmtree('user_upload/students/' + self.test_student_name3)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name1)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name2)
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name3)
+        except:
+            pass
 
 class test_finance_functions(TestCase):
     

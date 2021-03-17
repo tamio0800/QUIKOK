@@ -19,18 +19,77 @@ import asyncio
 from asgiref.sync import sync_to_async
 from django.conf import settings
 
+email_notification = email_manager()
+
+
 def exam_bank_edit_order(request):
-    pass
+    try:
+        userID = request.POST.get('userID', False)
+        user_type = request.POST.get('type', False)
+        token_from_user_raw = request.headers.get('Authorization', False)
+        
+        if False in [userID, user_type, token_from_user_raw]:
+            response = {'status':'failed',
+            'errCode': 1,
+            'errMsg': '資料傳輸失敗，如問題持續麻煩聯絡客服！',
+            'data': None}
+
+        # 當前端傳來空白token時(例如訪客), bearer後面會是空白的,這邊寫死來判斷
+        if token_from_user_raw is not False:
+            if len(token_from_user_raw) > len('bearer '): # 防止前端傳空白token來, split會出錯
+                # 從前端拿來的token格式: "bearer token", 為了只拿"token"因此用split切開拿後面
+                token_from_user = token_from_user_raw.split(' ')[1]
+            else:
+                token_from_user = ''
+    
+    except Exception as e:
+        print(f'account_finance:exam_bank_edit_order Exception {e}')
+        response = {'status':'failed',
+            'errCode': 0,
+            'errMsg': '資料庫有問題，請稍後再試',
+            'data': None}
+
+        return JsonResponse(response)
 
 def exam_bank_order_history(request):
-    pass
+    response = dict()
+    try:
+        userID = request.POST.get('userID', False)
+        user_type = request.POST.get('type', False)
+        token_from_user_raw = request.headers.get('Authorization', False)
+        
+        if False in [userID, user_type, token_from_user_raw]:
+            response = {'status':'failed',
+            'errCode': 1,
+            'errMsg': '資料傳輸失敗，如問題持續麻煩聯絡客服！',
+            'data': None}
+
+        # 當前端傳來空白token時(例如訪客), bearer後面會是空白的,這邊寫死來判斷
+        if token_from_user_raw is not False:
+            if len(token_from_user_raw) > len('bearer '): # 防止前端傳空白token來, split會出錯
+                # 從前端拿來的token格式: "bearer token", 為了只拿"token"因此用split切開拿後面
+                token_from_user = token_from_user_raw.split(' ')[1]
+            else:
+                token_from_user = ''
+
+            response = {'status':'success',
+                'errCode': None,
+                'errMsg': None,
+                'data': None}
+    
+    except Exception as e:
+        print(f'account_finance:exam_bank_edit_order Exception {e}')
+        response = {'status':'failed',
+            'errCode': 0,
+            'errMsg': '資料庫有問題，請稍後再試',
+            'data': None}
+
+        return JsonResponse(response)
 
 
 def view_email_new_order_remind(request):
     return render(request, 'send_new_order_remind.html')
 
-
-email_notification = email_manager()
 
 def storage_order(request):
     # 訂單(方案)結帳
