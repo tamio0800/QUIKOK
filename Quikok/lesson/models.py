@@ -61,15 +61,16 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     lesson_reviewed_times = models.IntegerField(default = 0) # 這個是課程被評分過幾次的統計
     created_time = models.DateTimeField(auto_now_add=True)
     edited_time = models.DateTimeField(auto_now=True)
+    lesson_ranking_score = models.IntegerField(default = 0) # 這個是課程排序的依據分數
     selling_status = models.CharField(max_length = 20)
     # 販售狀態 >>
     #   草稿: draft, 上架: selling, 沒上架: notSelling, 刪除: donotShow
     def __str__(self):
-        return f"課程({self.id}): {self.lesson_title}, 由{self.teacher.username}老師({self.teacher.auth_id})所創立"
+        return f"課程({self.id}): {self.lesson_title}, 由{self.teacher.nickname}老師({self.teacher.auth_id})所創立"
 
     class Meta:
-        verbose_name = '課程詳細資訊'
-        verbose_name_plural = '課程詳細資訊'
+        verbose_name = '課程資訊-詳細'
+        verbose_name_plural = '課程資訊-詳細'
         ordering = ['-created_time']
 
 
@@ -100,45 +101,15 @@ class lesson_card(models.Model):
     working_experience_is_approved = models.BooleanField()
     lesson_avg_score = models.FloatField(default = 0.0) # 這個是平均評分，每次評分表一更新這裡也會連動更新
     lesson_reviewed_times = models.IntegerField(default = 0) # 這個是課程被評分過幾次的統計
+    lesson_ranking_score = models.IntegerField(default = 0) # 這個是課程排序的依據分數
   
     def __str__(self):
-        return self.lesson_title
+        return f"{self.teacher_nickname} 老師開設的 {self.lesson_title} 課程"
 
     class Meta:
-        verbose_name = '課程小卡資訊'
-        verbose_name_plural = '課程小卡資訊'
+        verbose_name = '課程資訊-小卡'
+        verbose_name_plural = '課程資訊-小卡'
 
-
-'''class lesson_info_snapshot(models.Model): 
-    # 加上課程更改的snapshot，其中價格的變更一定要留存
-    # 主要為了證明對方真的有更改過那個價格，而且也為了之後資料分析怎麼樣的設計有助於吸引顧客。
-    lesson_id = models.CharField(max_length=20) 
-    teacher = models.ForeignKey(teacher_profile, on_delete=models.CASCADE, related_name='teacher_of_the_lesson_snapshot')
-    lesson_title = models.CharField(max_length = 10) # 課程的名稱
-    price_per_hour = models.IntegerField()  # 該門課程的費用(時薪)
-    highlight_1 = models.CharField(max_length = 10)  # 亮點介紹1，不要超過10個字元長
-    highlight_2 = models.CharField(max_length = 10)  # 亮點介紹2，不要超過10個字元長
-    highlight_3 = models.CharField(max_length = 10)  # 亮點介紹3，不要超過10個字元長
-    lesson_intro = models.CharField(blank=True, max_length = 300)
-    # 課程詳細介紹，不超過300長度
-    how_does_lesson_go = models.CharField(blank=True, max_length=200)
-    # 課程方式/教學方式，舉例來說：「本堂課前十分鐘小考，測驗上次的內容吸收程度，
-    # 接著正式上課兩小時，最後15分鐘溫習。」
-    lesson_remark = models.CharField(blank=True, max_length=200)
-    # lesson_picture_folder = models.CharField(max_length=60)
-    # 課程snapshot應該不需要這個吧？  >>   如果課程有相關圖片，可以儲存在這個資料夾中
-    syllabus = models.CharField(max_length=400)
-    # 這個用來存放課程的綱要或架構，預計會以陣列的方式傳遞/儲存
-    # lesson_appendix_folder = models.CharField(max_length=60)
-    # 課程snapshot應該不需要這個吧？  >>   如果課程有相關附件，可以儲存在這個資料夾中
-    lesson_attributes = models.CharField(blank=True, max_length=50)
-    first_created_time = models.DateTimeField()
-    last_modified_time = models.DateTimeField(auto_created=True)
-    # 這裡還要記得把老師的有空時段連過來
-
-    def __str__(self):
-        return self.lesson_id'''
-        
 
 class lesson_reviews_from_students(models.Model):
     '''
@@ -421,7 +392,8 @@ def when_lesson_info_changed_synchronize_lesson_card(sender, instance:lesson_inf
             working_experience = second_exp,
             working_experience_is_approved = is_second_exp_approved,
             lesson_avg_score = 0.0,
-            lesson_reviewed_times = 0)
+            lesson_reviewed_times = 0,
+            lesson_ranking_score = instance.lesson_ranking_score)
         logging.info(f'Created lesson_card object after creating a lesson ({instance.lesson_title}).')
     else:
         # 代表編輯了一門課程，此時要同步更新課程小卡的資料，只要更新跟課程有關的即可
@@ -444,11 +416,9 @@ def when_lesson_info_changed_synchronize_lesson_card(sender, instance:lesson_inf
         lesson_card_objects.education_is_approved = is_first_exp_approved
         lesson_card_objects.working_experience = second_exp
         lesson_card_objects.working_experience_is_approved = is_second_exp_approved
-
+        lesson_card_objects.lesson_ranking_score = instance.lesson_ranking_score
         lesson_card_objects.save()
         logging.info(f'Editted lesson_card object after editting a lesson ({instance.lesson_title}).')
-
-
 
 @receiver(post_save, sender=lesson_completed_record)
 def when_lesson_completed_notification_sent_by_teacher(sender, instance:lesson_completed_record, created, **kwargs):

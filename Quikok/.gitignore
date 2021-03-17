@@ -1,6 +1,6 @@
 *.pyc
 quikok_env/
-/vscode/settings.json
+.vscode/settings.json
 /static/
 /user_upload/teachers/*
 /user_upload/students/*
