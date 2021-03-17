@@ -1,4 +1,4 @@
-nohup.out
+nohup*
 *.pyc
 quikok_env/
 .vscode/settings.json
