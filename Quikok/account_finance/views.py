@@ -35,7 +35,7 @@ def exam_bank_edit_order(request):
             'data': None}
 
         # 當前端傳來空白token時(例如訪客), bearer後面會是空白的,這邊寫死來判斷
-        if token_from_user_raw is not False:
+        else:
             if len(token_from_user_raw) > len('bearer '): # 防止前端傳空白token來, split會出錯
                 # 從前端拿來的token格式: "bearer token", 為了只拿"token"因此用split切開拿後面
                 token_from_user = token_from_user_raw.split(' ')[1]
@@ -65,7 +65,7 @@ def exam_bank_order_history(request):
             'data': None}
 
         # 當前端傳來空白token時(例如訪客), bearer後面會是空白的,這邊寫死來判斷
-        if token_from_user_raw is not False:
+        else:
             if len(token_from_user_raw) > len('bearer '): # 防止前端傳空白token來, split會出錯
                 # 從前端拿來的token格式: "bearer token", 為了只拿"token"因此用split切開拿後面
                 token_from_user = token_from_user_raw.split(' ')[1]
