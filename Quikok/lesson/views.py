@@ -93,9 +93,13 @@ def lessons_main_page(request):
 
 @require_http_methods(['POST'])
 def get_lesson_cards_for_common_users(request):
+    '''
+    用以回傳符合條件的課程小卡，呈現給一般的學生/老師瀏覽。
+    '''
     # 20200911 暫時不開發排序、篩選部分
     # 接收：需要多少小卡(int)、排序依據(string)、篩選依據(string)、觀看的用戶
     # 20201103 加入篩選機制，未來再重構此一api
+    # 20210317 加入排序機制
     def get_teacher_auth_ids_who_have_set_available_times():
             the_teacher_manager = teacher_manager()
             teacher_auth_ids_with_live_lessons = \
@@ -325,6 +329,9 @@ def get_lesson_cards_for_common_users(request):
                 'lessonID', 
                 sorted_lesson_ids,
                 _data)
+        else:
+            _data = \
+                sorted(_data, key=lambda x: x['lesson_ranking_score'], reverse=True)
         
         response['status'] = 'success'
         response['errCode'] = None
