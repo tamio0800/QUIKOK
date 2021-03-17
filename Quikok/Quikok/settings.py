@@ -45,7 +45,8 @@ INSTALLED_APPS = [
     'blog',  # quikok的文章專區
     'tinymce',
     'line_function',
-    'analytics'
+    'analytics',
+    'amigo'
     # 'logentry_admin',  # This is to show all LogEntry objects in the Django admin site.
 ]
 # 加入 logentry_admin 後，可能會遇到問題：
