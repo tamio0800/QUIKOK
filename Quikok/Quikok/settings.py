@@ -56,7 +56,7 @@ INSTALLED_APPS = [
 # 即使出現 Warning: Unable to load '/usr/share/zoneinfo/iso3166.tab' as time zone. Skipping it. 之類的句子也無須擔心，
 # 只是警告而已，應該還是有解決成功的。
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+#STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',

@@ -277,28 +277,28 @@ def get_lesson_cards_for_common_users(request):
                     _data.append(lesson_attributes)
         
 
-        # 刪掉沒有「設定空閒時間的老師」的課程
-        lesson_ids_with_teacher_setting_available_times = \
-            lesson_info.objects.filter(
-                teacher__auth_id__in = \
-                    get_teacher_auth_ids_who_have_set_available_times()
-                ).values_list('id', flat=True)
+        # 刪掉沒有「設定空閒時間的老師」的課程 >> 先不要 20210317
+        #lesson_ids_with_teacher_setting_available_times = \
+        #    lesson_info.objects.filter(
+        #        teacher__auth_id__in = \
+        #            get_teacher_auth_ids_who_have_set_available_times()
+        #        ).values_list('id', flat=True)
         #print('lesson_ids_with_teacher_setting_available_times',
-        lesson_ids_with_teacher_setting_available_times,
+        # lesson_ids_with_teacher_setting_available_times,
         #len(lesson_ids_with_teacher_setting_available_times))
 
-        if len(lesson_ids_with_teacher_setting_available_times) == 0:
-            # 萬一沒有老師有空，自然就不用show課程了
-            response['status'] = 'success'
-            response['errCode'] = None
-            response['errMsg'] = None
-            response['data'] = list()
-            return JsonResponse(response)
-        else:
-            _data = \
-                list(filter(
-                    lambda x: x['lessonID'] in lesson_ids_with_teacher_setting_available_times,
-                    _data))
+        #if len(lesson_ids_with_teacher_setting_available_times) == 0:
+        #    # 萬一沒有老師有空，自然就不用show課程了
+        #    response['status'] = 'success'
+        #    response['errCode'] = None
+        #    response['errMsg'] = None
+        #    response['data'] = list()
+        #    return JsonResponse(response)
+        #else:
+        #    _data = \
+        #        list(filter(
+        #            lambda x: x['lessonID'] in lesson_ids_with_teacher_setting_available_times,
+        #            _data))
         
         if len(keywords) > 0:
             seaman = sea_man()
