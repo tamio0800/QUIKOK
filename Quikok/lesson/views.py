@@ -225,7 +225,8 @@ def get_lesson_cards_for_common_users(request):
             # 所有老師的課程小卡都show出來
             if only_show_ones_favorites:
                 # 只show出用戶有收藏的上架中的課程小卡
-                ones_favorite_and_selling_lessons_set = lesson_card.objects.values().filter(id__in=user_s_all_favorite_lessons_ids, corresponding_lesson_id__in=selling_lessons_ids)[:qty]
+                ones_favorite_and_selling_lessons_set = \
+                    lesson_card.objects.values().filter(id__in=user_s_all_favorite_lessons_ids, corresponding_lesson_id__in=selling_lessons_ids).order_by('-lesson_ranking_score')[:qty]
                 for each_lesson_card_object_values in ones_favorite_and_selling_lessons_set:
                     lesson_attributes = each_lesson_card_object_values
                     lesson_attributes['is_this_my_favorite_lesson'] = True
@@ -236,7 +237,8 @@ def get_lesson_cards_for_common_users(request):
                     _data.append(lesson_attributes)
             else:
                 # show出所有上架中的課程小卡
-                lesson_card_objects_values_set = lesson_card.objects.filter(corresponding_lesson_id__in = selling_lessons_ids)[:qty].values()
+                lesson_card_objects_values_set = \
+                    lesson_card.objects.filter(corresponding_lesson_id__in = selling_lessons_ids).order_by('-lesson_ranking_score')[:qty].values()
                 for each_lesson_card_object_values in lesson_card_objects_values_set:
                     lesson_attributes = each_lesson_card_object_values
                     lesson_attributes['is_this_my_favorite_lesson'] = \
@@ -251,7 +253,8 @@ def get_lesson_cards_for_common_users(request):
             that_teacher_auth_id = int(only_show_lessons_by_this_teacher_s_auth_id)
             if only_show_ones_favorites:
                 # 只show出用戶有收藏的指定老師的上架中的課程小卡
-                ones_favorite_and_selling_lessons_set = lesson_card.objects.values().filter(teacher_auth_id=that_teacher_auth_id, id__in=user_s_all_favorite_lessons_ids, corresponding_lesson_id__in=selling_lessons_ids)[:qty]
+                ones_favorite_and_selling_lessons_set = \
+                    lesson_card.objects.values().filter(teacher_auth_id=that_teacher_auth_id, id__in=user_s_all_favorite_lessons_ids, corresponding_lesson_id__in=selling_lessons_ids).order_by('-lesson_ranking_score')[:qty]
                 for each_lesson_card_object_values in ones_favorite_and_selling_lessons_set:
                     lesson_attributes = each_lesson_card_object_values
                     lesson_attributes['is_this_my_favorite_lesson'] = True
@@ -262,7 +265,8 @@ def get_lesson_cards_for_common_users(request):
                     _data.append(lesson_attributes)
             else:
                 # show出所有上架中的指定老師的課程小卡
-                lesson_card_objects_values_set = lesson_card.objects.values().filter(teacher_auth_id=that_teacher_auth_id, corresponding_lesson_id__in = selling_lessons_ids)[:qty]
+                lesson_card_objects_values_set = \
+                    lesson_card.objects.values().filter(teacher_auth_id=that_teacher_auth_id, corresponding_lesson_id__in = selling_lessons_ids).order_by('-lesson_ranking_score')[:qty]
                 user_s_all_favorite_lessons_ids = \
                     favorite_lessons.objects.values_list('lesson_id', flat=True).filter(follower_auth_id = user_auth_id)
                 
@@ -277,28 +281,28 @@ def get_lesson_cards_for_common_users(request):
                     _data.append(lesson_attributes)
         
 
-        # 刪掉沒有「設定空閒時間的老師」的課程
-        lesson_ids_with_teacher_setting_available_times = \
-            lesson_info.objects.filter(
-                teacher__auth_id__in = \
-                    get_teacher_auth_ids_who_have_set_available_times()
-                ).values_list('id', flat=True)
+        # 刪掉沒有「設定空閒時間的老師」的課程 >> 先不要 20210317
+        #lesson_ids_with_teacher_setting_available_times = \
+        #    lesson_info.objects.filter(
+        #        teacher__auth_id__in = \
+        #            get_teacher_auth_ids_who_have_set_available_times()
+        #        ).values_list('id', flat=True)
         #print('lesson_ids_with_teacher_setting_available_times',
-        lesson_ids_with_teacher_setting_available_times,
+        # lesson_ids_with_teacher_setting_available_times,
         #len(lesson_ids_with_teacher_setting_available_times))
 
-        if len(lesson_ids_with_teacher_setting_available_times) == 0:
-            # 萬一沒有老師有空，自然就不用show課程了
-            response['status'] = 'success'
-            response['errCode'] = None
-            response['errMsg'] = None
-            response['data'] = list()
-            return JsonResponse(response)
-        else:
-            _data = \
-                list(filter(
-                    lambda x: x['lessonID'] in lesson_ids_with_teacher_setting_available_times,
-                    _data))
+        #if len(lesson_ids_with_teacher_setting_available_times) == 0:
+        #    # 萬一沒有老師有空，自然就不用show課程了
+        #    response['status'] = 'success'
+        #    response['errCode'] = None
+        #    response['errMsg'] = None
+        #    response['data'] = list()
+        #    return JsonResponse(response)
+        #else:
+        #    _data = \
+        #        list(filter(
+        #            lambda x: x['lessonID'] in lesson_ids_with_teacher_setting_available_times,
+        #            _data))
         
         if len(keywords) > 0:
             seaman = sea_man()
@@ -330,8 +334,9 @@ def get_lesson_cards_for_common_users(request):
                 sorted_lesson_ids,
                 _data)
         else:
-            _data = \
-                sorted(_data, key=lambda x: x['lesson_ranking_score'], reverse=True)
+            #_data = \
+            #    sorted(_data, key=lambda x: x['lesson_ranking_score'], reverse=True)
+            pass
         
         response['status'] = 'success'
         response['errCode'] = None
