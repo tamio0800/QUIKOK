@@ -18,7 +18,7 @@ class user_purchase_exam_bank_record(models.Model):
     purchased_with_q_points = models.IntegerField(default=0)  # 用多少Q幣支付,這版暫不會用到
     part_of_bank_account_code = models.CharField(max_length=30, default='')#銀行末5碼
     is_refunded = models.BooleanField(default=False) # 是否有退款,相關功能暫人工處理
-    is_preorder = models.BooleanField(default=False) # 是否為預購期間購買
+    is_preorder = models.BooleanField(default=True) # 是否為預購期間購買
     created_time = models.DateTimeField(auto_now_add=True) 
     updated_time = models.DateTimeField(auto_now=True)
 
