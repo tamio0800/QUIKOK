@@ -93,7 +93,11 @@ def exam_bank_edit_order(request):
                     if user_record.payment_status == 'paid':
                         user_record.payment_status = 'refunding'
                         user_record.save()
+
                         # 寄email提醒我們處理
+                        
+                        logging.info(f"account_finance/views:寄信通知使用者申請題庫退款")
+
                         send_email_info = {
                             'user_authID' : userID}
                         send_email_to_edony = Thread(
@@ -108,7 +112,7 @@ def exam_bank_edit_order(request):
                     else:
                         response = {'status':'failed',
                             'errCode': 3,
-                            'errMsg': '操作不存在，如問題持續麻煩聯絡客服！',
+                            'errMsg': '操作不存在，如問題持續麻煩聯絡客服',
                             'data': None}
                 else:
                     response = {'status':'failed',

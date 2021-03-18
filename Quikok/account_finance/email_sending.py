@@ -293,8 +293,6 @@ class email_for_edony:
     #提醒我們題庫有使用者申請退款,要處理
     def send_email_exam_bank_apply_refund_reminder(self, **kwargs):
         user_authID =  kwargs['user_authID']
-        user5_bank_code =  kwargs['user5_bank_code']
-        total_price =  kwargs['total_price']
 
         if settings.DISABLED_EMAIL == False:
             email = EmailMessage(

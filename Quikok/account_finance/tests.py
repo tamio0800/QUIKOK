@@ -204,8 +204,60 @@ class test_exam_bank(TestCase):
                 'errMsg': None,
                 'data': None
             })
+    @skip
+    # 這個測試寄信不曉得為何不能過, 但前半部在上面的def測試就可以..
+    def test_edit_order_user_apply_refund_payment_send_email_to_edony(self):
+        '''測試當user申請退款, 有寄信提醒我們處理
+            須先建立訂單並付款才能測試退款該訂單'''
+        
+        mail.outbox = []
+        # 建立訂單
+        user_purchase_exam_bank_record.objects.create(
+            user_auth_id=1,
+            exam_bank_sales_set_id = 1,
+            start_date = datetime.now(),
+            end_date = datetime.now(),
+            price = self.selling_price,
+            purchased_with_money = self.selling_price,
+            purchased_with_q_points = 0,
+            part_of_bank_account_code = '')
+        #假設該使用者編輯訂單、填入末五碼
+        data = {
+         # exam_bank_sales_setID: 正式版才會有
+            'userID': 1, #購買者id 
+            'status_update' : '0',
+            'part_of_bank_account_code':11111
+            } 
+        header = {'HTTP_Authorization':'token 1234'}
+        self.client.post(path='/api/account_finance/examBankEditOrder/',data = data, **header)
+        # 確認是否有收到信
+        self.assertEqual(mail.outbox[0].subject, '用戶購買題庫匯款通知信')
+        # 為了讓流程合理, 接著直接把這個訂單付款狀態直接改為 'paid'
+        new_record.payment_status = 'paid'
+        new_record.save()
+        self.assertEqual(new_record.payment_status ,'paid')
+        # 接著該使用者申請退款
+        data = {
+        # exam_bank_sales_setID: 正式版才會有
+            'userID': 1, #購買者id 
+            'status_update' : '1',
+            'part_of_bank_account_code': ''
+            } 
+        header = {'HTTP_Authorization':'token 1234'}
+        #mail.outbox = []
+        response = self.client.post(path='/api/account_finance/examBankEditOrder/',data = data, **header)
+        self.assertJSONEqual(
+            str(response.content, encoding='utf8'),
+            {
+                'status': 'success',
+                'errCode': None,
+                'errMsg': None,
+                'data': None
+            })
+        # 檢查有寄信
+        self.assertEqual(mail.outbox[0].subject, '用戶申請題庫退款通知信')
 
-    
+
 
     @skip
     def test_storege_bank_order(self):
