@@ -8,8 +8,8 @@ from account_finance.email_sending import email_manager
 class user_purchase_exam_bank_record(models.Model):
     user_auth_id = models.IntegerField() # 購買者的 authID
     exam_bank_sales_set_id = models.IntegerField()
-    start_date =  models.DateTimeField()  # 可使用題庫的有效時間開始日期，應為確認付款日
-    end_date = models.DateTimeField() # 可使用題庫的有效時間結束日期
+    start_date =  models.DateTimeField(blank=True, null=True)  # 可使用題庫的有效時間開始日期，應為確認付款日
+    end_date = models.DateTimeField(blank=True, null=True) # 可使用題庫的有效時間結束日期
     is_valid = models.BooleanField(default=False) 
     #是否可使用題庫，在可使用題庫的有效期內即為有效，測試期間有效期開始日統一決定，
     # 不做是否在有效期間判定
@@ -21,6 +21,9 @@ class user_purchase_exam_bank_record(models.Model):
     is_preorder = models.BooleanField(default=True) # 是否為預購期間購買
     created_time = models.DateTimeField(auto_now_add=True) 
     updated_time = models.DateTimeField(auto_now=True)
+    payment_status = models.CharField(max_length=30, default='unpaid')
+    when_is_remittance_confirmed_by_quikok = models.DateTimeField(blank=True, null=True)
+    # 確認用戶付款的日期 datetime 格式
 
     def __str__(self):
         return f"題庫購買人auth_id: {str(self.user_auth_id)}, 方案:{str(self.exam_bank_sales_set_id)}"
