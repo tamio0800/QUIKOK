@@ -8,6 +8,7 @@ from account_finance.models import (student_purchase_record,
 from account_finance.email_sending import email_manager, email_for_edony
 from account.models import teacher_profile, student_profile
 from account.auth_tools import auth_check_manager
+from amigo.models import exam_bank_sales_set
 from lesson.models import lesson_info, lesson_sales_sets, lesson_booking_info
 from django.http import JsonResponse
 from chatroom.consumers import ChatConsumer
@@ -20,17 +21,17 @@ import asyncio
 from asgiref.sync import sync_to_async
 from django.conf import settings
 
+# 寄信到edony的email
+email_to_edony = email_for_edony()
 email_notification = email_manager()
 authID_type_check = auth_check_manager()
 
 
-@require_http_methods(['POST'])
+
 def exam_bank_edit_order(request):
     '''api58:給user編輯題庫的訂單狀態，可操作的選項有：付款完成(填入帳號末五碼)
         申請退款、申請取消訂單(訂單已成立但user還未付款時)
     '''
-
-    response = dict()
     userID = request.POST.get('userID', False)
     token_from_user_raw = request.headers.get('Authorization', False)
     status_update = request.POST.get('status_update', False)
@@ -65,18 +66,54 @@ def exam_bank_edit_order(request):
                 'data': None}
                 return JsonResponse(response)
             else:
-                if status_update == '0': # user表示已付款、填入末五碼碼
-                    user_record = get_user.first() # 預購期間只會有一筆,之後若有多筆get_user要改用訂單編號找
+                user_record = get_user.first() # 預購期間只會有一筆,之後若有多筆get_user要改用訂單編號找
+                if status_update == '0': 
+                    # user更新成已付款、填入末五碼、狀態要改為對帳中、寄信通知我們對帳
                     user_record.part_of_bank_account_code = part_of_bank_account_code
+                    user_record.payment_status = 'reconciliation'
                     user_record.save()
+
+                    # 寄email提醒我們對帳
+                    send_email_info = {
+                        'user_authID' : userID,
+                        'user5_bank_code' : part_of_bank_account_code,
+                        'total_price' : user_record.purchased_with_money}
+                    send_email_to_edony = Thread(
+                        target = email_to_edony.send_email_exam_bank_reconciliation_reminder,
+                        kwargs = send_email_info)
+                    send_email_to_edony.start()
+
                     response = {'status':'success',
                         'errCode': None,
                         'errMsg':None,
                         'data': None}
+
+                elif status_update == '1': # 申請退款
+                    # 已付款才能退款
+                    if user_record.payment_status == 'paid':
+                        user_record.payment_status = 'refunding'
+                        user_record.save()
+                        # 寄email提醒我們處理
+                        send_email_info = {
+                            'user_authID' : userID}
+                        send_email_to_edony = Thread(
+                            target = email_to_edony.send_email_exam_bank_apply_refund_reminder,
+                            kwargs = send_email_info)
+                        send_email_to_edony.start()
+                        
+                        response = {'status':'success',
+                            'errCode': None,
+                            'errMsg':None,
+                            'data': None}
+                    else:
+                        response = {'status':'failed',
+                            'errCode': 3,
+                            'errMsg': '操作不存在，如問題持續麻煩聯絡客服！',
+                            'data': None}
                 else:
-                    response = {'status':'success',
-                        'errCode': None,
-                        'errMsg':None,
+                    response = {'status':'failed',
+                        'errCode': 4,
+                        'errMsg': '操作不存在，如問題持續麻煩聯絡客服！',
                         'data': None}
 
             return JsonResponse(response)
@@ -935,8 +972,7 @@ def student_edit_order(request):
                         purchase_record_object.payment_status = 'reconciliation'
                         purchase_record_object.part_of_bank_account_code = user5_bank_code
                         purchase_record_object.save()
-                        # 寄信到edony的email
-                        email_to_edony = email_for_edony()
+
                         #email_to_edony.send_email_reconciliation_reminder(student_authID=student_authID,
                         #user5_bank_code =user5_bank_code, total_price = purchase_record_object.purchased_with_money)
                         send_email_info = {

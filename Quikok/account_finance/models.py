@@ -22,6 +22,8 @@ class user_purchase_exam_bank_record(models.Model):
     created_time = models.DateTimeField(auto_now_add=True) 
     updated_time = models.DateTimeField(auto_now=True)
     payment_status = models.CharField(max_length=30, default='unpaid')
+    # unpaid, reconciliation, paid, refunding, refunded, cancel_after_paid , unpaid_cancel
+    # 0-待付款/1-對帳中/2-已付款/3-退款中/4-已退款/5-有付款_取消訂單 6. 未付款_取消訂單 
     when_is_remittance_confirmed_by_quikok = models.DateTimeField(blank=True, null=True)
     # 確認用戶付款的日期 datetime 格式
 
