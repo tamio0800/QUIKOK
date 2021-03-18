@@ -21,6 +21,7 @@ from django.conf import settings
 # 取消環境變數 DEV_MODE >> unset DEV_MODE
 # python3 manage.py test account_finance/ --settings=Quikok.settings_for_test
 
+#python3 manage.py test account_finance.tests.test_exam_bank --settings=Quikok.settings_for_test
 class test_exam_bank(TestCase):
     def setUp(self):
         self.client =  Client()        
@@ -79,13 +80,13 @@ class test_exam_bank(TestCase):
         ''' 測試路由有通'''
         data = {
          # exam_bank_sales_setID: 正式版才會有
-            userID: 2, #購買者id 
-            status_update : 0,
-            part_of_bank_account_code:11111
+            'userID': 2, #購買者id 
+            'status_update' : '0',
+            'part_of_bank_account_code':11111
             } 
         header = {'HTTP_Authorization':'token 1234'}
-        response = self.client.post(path='/api/account_finance/examBankEditOrder/', 
-            data = data,  **header)
+        response = self.client.post(path='/api/account_finance/examBankEditOrder/',data = data, **header)
+        print(f'response{response}')
         self.assertEqual(response.status_code, 200)
 
     def test_edit_order_user_enter_bank_account_code(self):
