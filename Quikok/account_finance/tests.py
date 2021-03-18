@@ -1,7 +1,8 @@
 from django.test import TestCase, Client
 from account_finance.models import student_purchase_record
 from account_finance.models import (student_remaining_minutes_of_each_purchased_lesson_set,
-                            student_remaining_minutes_when_request_refund_each_purchased_lesson_set)
+                            student_remaining_minutes_when_request_refund_each_purchased_lesson_set,
+                            user_purchase_exam_bank_record)
 from account_finance.models import teacher_refund, student_refund
 from account.models import student_profile, teacher_profile
 from lesson.models import lesson_info, lesson_sales_sets
@@ -16,6 +17,7 @@ from account.models import specific_available_time
 from datetime import datetime, timedelta, date as date_function
 import math
 from django.conf import settings
+from datetime import datetime
 
 # 設定環境變數 DEV_MODE 為true >>  export DEV_MODE=true
 # 取消環境變數 DEV_MODE >> unset DEV_MODE
@@ -76,6 +78,8 @@ class test_exam_bank(TestCase):
             selling_price = 500
         )
         self.assertEqual(exam_bank_sales_set.objects.all().count(),1)
+
+
     def test_edit_order_user_enter_bank_router(self):
         ''' 測試路由有通'''
         data = {
@@ -86,12 +90,34 @@ class test_exam_bank(TestCase):
             } 
         header = {'HTTP_Authorization':'token 1234'}
         response = self.client.post(path='/api/account_finance/examBankEditOrder/',data = data, **header)
-        print(f'response{response}')
+        
         self.assertEqual(response.status_code, 200)
 
     def test_edit_order_user_enter_bank_account_code(self):
-        '''測試當user發已付款、輸入銀行帳號可以成功寫入db'''
-        pass
+        '''測試當user發已付款、輸入銀行帳號可以成功寫入db
+            須先建立訂單才能測試編輯該訂單'''
+        # 建立訂單
+        user_purchase_exam_bank_record.objects.create(
+            user_auth_id=1,
+            exam_bank_sales_set_id = 1,
+            start_date = datetime.now(),
+            end_date = datetime.now(),
+            price = self.selling_price,
+            purchased_with_money = self.selling_price,
+            purchased_with_q_points = 0,
+            part_of_bank_account_code = '')
+        #假設該使用者編輯訂單
+        data = {
+         # exam_bank_sales_setID: 正式版才會有
+            'userID': 1, #購買者id 
+            'status_update' : '0',
+            'part_of_bank_account_code':11111
+            } 
+        header = {'HTTP_Authorization':'token 1234'}
+        self.client.post(path='/api/account_finance/examBankEditOrder/',data = data, **header)
+        record = user_purchase_exam_bank_record.objects.filter(user_auth_id=1).first()
+        self.assertEqual(record.part_of_bank_account_code ,'11111')
+        
 
     def test_edit_order_user_enter_bank_account_code_send_email(self):
         '''測試當user發已付款、輸入銀行帳號會寄出一封email提醒我們要對帳'''

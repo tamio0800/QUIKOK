@@ -50,11 +50,6 @@ def exam_bank_edit_order(request):
             return JsonResponse(response)
         # 當前端傳來空白token時(例如訪客), bearer後面會是空白的,這邊寫死來判斷
         else:
-            response = {'status':'success',
-                        'errCode': None,
-                        'errMsg':None,
-                        'data': None}
-            return JsonResponse(response)
 
             if len(token_from_user_raw) > len('bearer '): # 防止前端傳空白token來, split會出錯
                 # 從前端拿來的token格式: "bearer token", 為了只拿"token"因此用split切開拿後面
