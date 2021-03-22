@@ -15,7 +15,7 @@ from unittest import skip
 from django.contrib.auth.models import User
 from account.models import specific_available_time
 from datetime import datetime, timedelta, date as date_function
-import math
+import math, json
 from django.conf import settings
 from datetime import datetime
 
@@ -36,6 +36,7 @@ class test_exam_bank(TestCase):
                 Group(name='edony')
             ]
         )
+        # 建立1個老師
         self.test_username = 'test_teacher_user@test.com'
         teacher_post_data = {
             'regEmail': self.test_username,
@@ -78,6 +79,44 @@ class test_exam_bank(TestCase):
             selling_price = 500
         )
         self.assertEqual(exam_bank_sales_set.objects.all().count(),1)
+
+
+    def test_storege_order_one_exam_bank_order(self):
+        '''最基礎的訂單: 訂購題庫365天 ,路由是否有通'''
+        # 要建立課程才能測試
+        data = {
+            'userID': 2,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order':[
+                {
+                    'order_type':'exam_bank_order',
+                    'userID':2,
+                    'sales_set': self.duration,
+                    'total_amount_of_the_sales_set': self.selling_price,
+                    'q_discount': 0
+                    },
+                {
+                    'order_type':'exam_bank_order',
+                    'userID':2,
+                    'sales_set': self.duration,
+                    'total_amount_of_the_sales_set': self.selling_price,
+                    'q_discount': 0
+                    },
+                ]  
+            }
+        data = json.dumps(data)
+        json_data = {'shopping_cart_data':data}
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=json_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(
+            str(response.content, encoding='utf8'),
+            {
+                'status': 'success',
+                'errCode': None,
+                'errMsg': None,
+                'data': None # 建立1號訂單
+            })
 
 
     def test_edit_order_user_enter_bank_router(self):
@@ -389,16 +428,23 @@ class test_finance_functions(TestCase):
                 data=lesson_post_data)
 
     
-    def test_storege_order(self):
-        # 測試前端trial方案時,是否能順利寫入
+    def test_storege_order_one_lesson_order(self):
+        '''最基礎的訂單:一堂課程,是否順利寫入'''
         # 要建立課程才能測試
-        data = {'userID':2,
-        'teacherID':1,
-        'lessonID':1,
-        'sales_set': 'trial',#,'no_discount','30:70']
-        'total_amount_of_the_sales_set': self.lesson_post_data['trial_class_price'],
-        'q_discount': 0}
-
+        data = {
+            'userID':2,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order':[
+                {
+                'userID':2,
+                'teacherID':1,
+                'lessonID':1,
+                'sales_set': 'trial',#,'no_discount','30:70']
+                'total_amount_of_the_sales_set': self.lesson_post_data['trial_class_price'],
+                'q_discount': 0}
+            ]
+        }
         response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
         self.assertEqual(response.status_code, 200)
         self.assertJSONEqual(
@@ -407,7 +453,7 @@ class test_finance_functions(TestCase):
                 'status': 'success',
                 'errCode': None,
                 'errMsg': None,
-                'data': 1 # 建立1號訂單
+                'data': None # 建立1號訂單
             })
     
     
