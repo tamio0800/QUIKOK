@@ -82,32 +82,24 @@ class test_exam_bank(TestCase):
 
 
     def test_storege_order_one_exam_bank_order(self):
-        '''最基礎的訂單: 訂購題庫365天 ,路由是否有通'''
+        '''最基礎的訂單: 訂購預購的題庫365天 ,路由是否有通'''
         # 要建立課程才能測試
         data = {
             'userID': 2,
             'total_q_discount':0,
             'total_amount_of_orders':0,
-            'total_order':[
+            'total_order':json.dumps([#為了可以傳nested的結構所以包成json
                 {
                     'order_type':'exam_bank_order',
                     'userID':2,
                     'sales_set': self.duration,
                     'total_amount_of_the_sales_set': self.selling_price,
                     'q_discount': 0
-                    },
-                {
-                    'order_type':'exam_bank_order',
-                    'userID':2,
-                    'sales_set': self.duration,
-                    'total_amount_of_the_sales_set': self.selling_price,
-                    'q_discount': 0
-                    },
-                ]  
+                    }
+                ])  
             }
-        data = json.dumps(data)
-        json_data = {'shopping_cart_data':data}
-        response = self.client.post(path='/api/account_finance/storageOrder/', data=json_data)
+        record_amount = user_purchase_exam_bank_record.objects.all().count()
+        response = self.client.post(path='/api/account_finance/storageOrder/', data = data)
         self.assertEqual(response.status_code, 200)
         self.assertJSONEqual(
             str(response.content, encoding='utf8'),
@@ -115,9 +107,37 @@ class test_exam_bank(TestCase):
                 'status': 'success',
                 'errCode': None,
                 'errMsg': None,
-                'data': None # 建立1號訂單
+                'data': None 
             })
-
+        # 確認訂單有寫入
+        self.assertEqual(user_purchase_exam_bank_record.objects.all().count(),record_amount+1)
+    
+    def test_storege_order_two_exam_bank_order(self):
+        '''目前預購只能一筆，兩筆的話要失敗'''
+        # 要建立課程才能測試
+        data = {
+            'userID': 2,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order':json.dumps([#為了可以傳nested的結構所以包成json
+                {
+                    'order_type':'exam_bank_order',
+                    'userID':2,
+                    'sales_set': self.duration,
+                    'total_amount_of_the_sales_set': self.selling_price,
+                    'q_discount': 0
+                    },
+                {
+                    'order_type':'exam_bank_order',
+                    'userID':2,
+                    'sales_set': self.duration,
+                    'total_amount_of_the_sales_set': self.selling_price,
+                    'q_discount': 0
+                    },
+                ])  
+            }
+        response = self.client.post(path='/api/account_finance/storageOrder/', data = data)
+        self.assertIn('failed', str(response.content))
 
     def test_edit_order_user_enter_bank_router(self):
         ''' 測試路由有通'''
@@ -334,6 +354,7 @@ class test_exam_bank(TestCase):
         except:
             pass
 
+#python3 manage.py test account_finance.tests.test_finance_functions --settings=Quikok.settings_for_test
 class test_finance_functions(TestCase):
     
     def setUp(self):
@@ -427,25 +448,31 @@ class test_finance_functions(TestCase):
                 path='/api/lesson/createOrEditLesson/',
                 data=lesson_post_data)
 
-    
-    def test_storege_order_one_lesson_order(self):
-        '''最基礎的訂單:一堂課程,是否順利寫入'''
-        # 要建立課程才能測試
-        data = {
-            'userID':2,
+        # 定義一些基礎常用的測試資料
+        # 這是一個單純的試教課程訂單
+        self.one_basic_trail_order_data = {
+            'userID': 2,
             'total_q_discount':0,
             'total_amount_of_orders':0,
-            'total_order':[
+            'total_order':json.dumps([#為了可以傳nested的結構所以包成json
                 {
-                'userID':2,
-                'teacherID':1,
-                'lessonID':1,
-                'sales_set': 'trial',#,'no_discount','30:70']
-                'total_amount_of_the_sales_set': self.lesson_post_data['trial_class_price'],
-                'q_discount': 0}
-            ]
-        }
-        response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
+                    'order_type':'lesson_order',
+                    'userID': 2,
+                    'teacherID':1,
+                    'lessonID':1,
+                    'sales_set': 'trial',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': self.lesson_post_data['trial_class_price'],
+                    'q_discount': 0
+                    }
+                ])  
+            }
+    
+
+    def test_storege_order_one_lesson_order(self):
+        '''最基礎的訂單:一堂trail課程,是否順利寫入
+         注意要先有建立課程才能測試'''
+        
+        response = self.client.post(path='/api/account_finance/storageOrder/', data= self.one_basic_trail_order_data)
         self.assertEqual(response.status_code, 200)
         self.assertJSONEqual(
             str(response.content, encoding='utf8'),
@@ -462,18 +489,12 @@ class test_finance_functions(TestCase):
         他將不可以再把該堂課的試教方案放進購物車，
         他只能去帳務中心填入匯款資訊或取消該筆訂單。
         '''
-        data = {'userID':2,
-        'teacherID':1,
-        'lessonID':1,
-        'sales_set': 'trial',#,'no_discount','30:70']
-        'total_amount_of_the_sales_set': self.lesson_post_data['trial_class_price'],
-        'q_discount': 0}
 
-        response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=self.one_basic_trail_order_data)
         # 先買一次,確認有成功
         self.assertIn('success', str(response.content))
         # 對同一堂課再做一次購買,這時要回傳failed
-        response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=self.one_basic_trail_order_data)
         self.assertIn('failed', str(response.content))
 
 

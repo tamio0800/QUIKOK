@@ -186,14 +186,8 @@ def storage_order(request):
         user_ID = request.POST.get('userID', False)
         total_order_list = request.POST.get('total_order', False)
         total_q_discount = request.POST.get('total_q_discount', False)
-        print('total_order_list, total_q_discount, user_ID')
-        print(total_order_list, total_q_discount, user_ID)
-        for key, value in request.POST.items():
-            print(key)
-            print(json.loads(value))
-            a = json.loads(value)
-        print(type(a))
-        print(a['total_order'])
+
+        logging.info(f"account_finance/views/storage_order 收到參數user_ID:{user_ID}")
         if False in [total_order_list, total_q_discount, user_ID]:
             response = {'status':'failed',
                 'errCode': 1,
@@ -205,6 +199,7 @@ def storage_order(request):
             user_type = authID_type_check.check_user_type(user_ID)
             if user_type == 'student':
                 user_profile_obj = student_profile.objects.get(auth_id=user_ID)
+                #student_authID = user_ID
             elif user_type == 'teacher':
                 user_profile_obj = teacher_profile.objects.get(auth_id=user_ID)
             else:
@@ -224,16 +219,19 @@ def storage_order(request):
                 # 為了之後要從最高金額的訂單開始抵扣，要把每筆訂單的金額先暫存
                 amount_in_orders_list = list()
                 use_q_discount = True
-        
-        trial_check_list = list() # 用來暫存這次傳來的訂單們屬於試教的ID
-        print(total_order_list)
-        print(type(total_order_list))
-        total_order_list = eval(total_order_list)
-        print('total_order_list')
-        print(type(total_order_list))
+        else:
+            use_q_discount = False
+        trial_check_list = list() # 用來暫存這次傳來的訂單們屬於試教的ID，因為一堂課試教只能有一筆
+        order_has_checked_list = list() # 用來寄email用
+        #exam_bank_check_list = list() # 用來暫存訂購題庫的ID，預購期間只能有一筆
+        total_order_list = eval(total_order_list) # 由於json傳來的巢狀結構是str,這邊由str轉成list
+        logging.info(f"account_finance/views/storage_order total_order_list type:{type(total_order_list)}")
+        # 這邊的迴圈用來檢查每筆訂單
         for each_order in total_order_list:
+
             # 課程訂單
             if each_order['order_type'] == 'lesson_order':
+                logging.info(f"account_finance/views/storage_order check lesson_order ")
                 student_authID = each_order['userID']
                 teacher_authID = each_order['teacherID']
                 lesson_id = each_order['lessonID']
@@ -242,7 +240,7 @@ def storage_order(request):
                 
                 # 首先檢查都有收到東西
                 if check_if_all_variables_are_true(student_authID, teacher_authID,
-                    lesson_id, lesson_set, price, q_discount_amount):
+                    lesson_id, lesson_set, price):
                     # 確認db都有這些資訊  
                     teacher_obj = teacher_profile.objects.filter(auth_id=teacher_authID).first()
                     lesson_obj = lesson_info.objects.filter(id=lesson_id).first()
@@ -291,9 +289,11 @@ def storage_order(request):
                                                 lesson_id = lesson_id, 
                                                 student_auth_id = student_authID
                                                 ).order_by('-id').first()
+                                        logging.info(f"account_finance/views/storage_order student_purchase_object:{student_purchase_object}")
                                         # != none 表示已買過,要進一步檢查是否還可以買試教課程
                                         # 這邊用反面檢查, 如有通過就會繼續走到下面寫入的流程
                                         if student_purchase_object is not None:
+                                            logging.info(f"account_finance/views/storage_order student_purchase_object.payment_status:{student_purchase_object.payment_status}")
                                             # 如果買過且不是已經退款或未付款就取消訂單、不可以買
                                             if student_purchase_object.payment_status not in (refunded,unpaid_cancel):
                                                 response = {'status':'failed',
@@ -303,13 +303,83 @@ def storage_order(request):
                                                 return JsonResponse(response)
                                         else:
                                             trial_check_list.append(lesson_id)
+                                            if use_q_discount == True:
+                                                amount_in_orders_list.append(int(price))
+                
+            # 題庫訂單的檢查
             elif each_order['order_type'] == 'exam_bank_order':
-                sales_duration = each_order['sales_set'] # 時間
-                response = {'status':'success',
+                # 檢查該user是否已經買過,預購期間只能買一次
+                purchase_exam_bank_record = user_purchase_exam_bank_record.objects.filter(user_auth_id = user_ID).first()
+                # 預購期間日期及價格先用這邊寫死
+                exam_bank_set_obj = exam_bank_sales_set.objects.get(id=1)
+                # 之後不需要檢查只能買一次這段寫入可以統一往下移動...這邊則改成其他需要檢查的東西
+                # 在這個迴圈裡建立才能在這個迴圈中檢查
+                if purchase_exam_bank_record is None:
+                    sales_duration = each_order['sales_set'] # 時間
+                    user_purchase_exam_bank_record.objects.create(
+                        user_auth_id = user_ID,
+                        exam_bank_sales_set_id = exam_bank_set_obj.id,
+                        price = exam_bank_set_obj.selling_price,
+                        purchased_with_money = exam_bank_set_obj.selling_price
+                    )
+                   
+                else:
+                    response = {'status':'failed',
+                                'errCode': 8,
+                                'errMsg': '已經選購過題庫囉，請至帳務中心檢查，如有疑問可連絡客服，謝謝！',
+                                'data': None}
+                    return JsonResponse(response)         
+            else:
+                logging.error(f"account_finance/views/storage_order:收到不存在的訂單分類")
+                response = {'status':'failed',
+                            'errCode': 9,
+                            'errMsg': '不存在的訂單分類，如有疑問可連絡客服，謝謝！',
+                            'data': None}
+                return JsonResponse(response) 
+            
+        # 如果通過上面的迴圈沒有 return failed,    
+        # 進入這個迴圈用來把訂單寫入資料庫    
+        for index, each_order in enumerate(total_order_list):
+            #if use_q_discount == True:
+            #    find_highest_price_index = sorted(amount_in_orders_list)
+
+            if each_order['order_type'] == 'lesson_order':
+                student_authID = each_order['userID']
+                teacher_authID = each_order['teacherID']
+                lesson_id = each_order['lessonID']
+                lesson_set = each_order['sales_set']
+                price = int(each_order['total_amount_of_the_sales_set'])
+                teacher_obj = teacher_profile.objects.filter(auth_id=teacher_authID).first()
+                lesson_obj = lesson_info.objects.filter(id=lesson_id).first()
+                set_obj = lesson_sales_sets.objects.filter(id=lesson_id).first()
+
+                #purchase_date = datetime.now()
+                payment_deadline = datetime.now() + timedelta(days=6)
+
+                # 建立訂單
+                new_record = student_purchase_record.objects.create(
+                    student_auth_id= student_authID,
+                    teacher_auth_id= teacher_authID,
+                    teacher_nickname= teacher_obj.nickname,
+                    purchase_date = date_function.today(),
+                    payment_deadline = payment_deadline,
+                    lesson_id = lesson_id,
+                    lesson_title = lesson_obj.lesson_title,
+                    lesson_sales_set_id = set_obj.id,
+                    price = price,
+                    purchased_with_q_points = 0, #q_discount_amount,
+                    purchased_with_money=price #price-q_discount_amount
+                    )
+                new_record.save()
+            
+            elif each_order['order_type'] == 'exam_bank_order':
+                pass
+
+        response = {'status':'success',
                     'errCode': None,
                     'errMsg': None,
                     'data': None}
-                return JsonResponse(response)         
+        return JsonResponse(response) 
             #                               last_record_payment_status = 
             #                                     if student_purchase_object.payment_status == 'unpaid_cancel':
             #                                         real_price = int(price) - int(q_discount_amount)
@@ -320,26 +390,7 @@ def storage_order(request):
             #                                         student_obj.balance -= int(q_discount_amount)
             #                                         student_obj.save()
 
-            #                                         # teacher_obj = teacher_queryset.first()
-            #                                         # lesson_obj = lesson_queryset.first()
-            #                                         # purchase_date = datetime.now()
-            #                                         payment_deadline = datetime.now() + timedelta(days=6)
 
-            #                                         # 建立訂單
-            #                                         new_record = student_purchase_record.objects.create(
-            #                                             student_auth_id= student_authID,
-            #                                             teacher_auth_id= teacher_authID,
-            #                                             teacher_nickname= teacher_obj.nickname,
-            #                                             purchase_date = date_function.today(),
-            #                                             payment_deadline = payment_deadline,
-            #                                             lesson_id = lesson_id,
-            #                                             lesson_title = lesson_obj.lesson_title,
-            #                                             lesson_sales_set_id = set_obj.id,
-            #                                             price = price,
-            #                                             purchased_with_q_points = q_discount_amount,
-            #                                             purchased_with_money=real_price
-            #                                             )
-            #                                         new_record.save()
 
             #                                         # 寄通知
             #                                         notification = {
@@ -690,8 +741,7 @@ def storage_order(request):
                 #    logging.info(f"account_finance/views/storage_order:收到題庫訂單")
                 
             # 不存在的訂單分類
-            else:
-                logging.error(f"account_finance/views/storage_order:收到不存在的訂單分類")
+
                     
 
     
