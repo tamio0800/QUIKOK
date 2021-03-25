@@ -355,6 +355,7 @@ class test_exam_bank(TestCase):
             pass
 
 #python3 manage.py test account_finance.tests.test_finance_functions --settings=Quikok.settings_for_test
+# 測試購買訂單的各種情況
 class test_finance_functions(TestCase):
     
     def setUp(self):
@@ -448,14 +449,11 @@ class test_finance_functions(TestCase):
                 path='/api/lesson/createOrEditLesson/',
                 data=lesson_post_data)
 
-        # 定義一些基礎常用的測試資料
-        # 這是一個單純的試教課程訂單
-        self.one_basic_trail_order_data = {
-            'userID': 2,
-            'total_q_discount':0,
-            'total_amount_of_orders':0,
-            'total_order':json.dumps([#為了可以傳nested的結構所以包成json
-                {
+        ## 定義一些基礎常用的測試資料 ##
+        # 這樣在測試的時候可以更容易排列組合出各種測試
+
+        # 這是一個單純的試教課程訂單的內容
+        self.one_basic_trail_total_order_dict = {
                     'order_type':'lesson_order',
                     'userID': 2,
                     'teacherID':1,
@@ -464,9 +462,30 @@ class test_finance_functions(TestCase):
                     'total_amount_of_the_sales_set': self.lesson_post_data['trial_class_price'],
                     'q_discount': 0
                     }
+        # 定義一個單堂課的訂單資料
+        self.one_basic_lesson_total_order_dict = self.one_basic_trail_total_order_dict 
+        self.one_basic_lesson_total_order_dict['sales_set'] = 'no_discount'
+        self.one_basic_lesson_total_order_dict['total_amount_of_the_sales_set']= self.lesson_post_data['price_per_hour']
+        # 定義一個購買多堂優惠的資料
+        self.one_set_lesson_total_order_dict  = self.one_basic_trail_total_order_dict
+        self.one_set_lesson_total_order_dict['sales_set'] = '10:90'
+        self.one_set_lesson_total_order_dict['total_amount_of_the_sales_set']= int(self.lesson_post_data['price_per_hour'] * 10 * 0.9)
+
+        # 整個訂單: 一個單純的試教課程訂單範本
+        self.one_basic_trail_order_data = {
+            'userID': 2,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order':json.dumps([self.one_basic_trail_total_order_dict #為了可以傳nested的結構所以包成json
                 ])  
             }
-    
+        # 空白訂單結構
+        self.order_data = {
+            'userID': 2,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': []
+            }
 
     def test_storege_order_one_lesson_order(self):
         '''最基礎的訂單:一堂trail課程,是否順利寫入
@@ -504,14 +523,8 @@ class test_finance_functions(TestCase):
         他只能去帳務中心填入匯款資訊或取消該筆訂單。
         而假如第一次買的那筆試教他去取消了,那他第二次又想買的時候,要給他買，要回傳success
         '''
-        buy_data = {'userID':2,
-        'teacherID':1,
-        'lessonID':1,
-        'sales_set': 'trial',#,'no_discount','30:70']
-        'total_amount_of_the_sales_set': self.lesson_post_data['trial_class_price'],
-        'q_discount': 0}
 
-        response1 = self.client.post(path='/api/account_finance/storageOrder/', data=buy_data)
+        response1 = self.client.post(path='/api/account_finance/storageOrder/', data= self.one_basic_trail_order_data)
         # 先買一次,確認有成功
         self.assertIn('success', str(response1.content))
         # 取得剛剛買的這堂課的id的id
@@ -532,7 +545,7 @@ class test_finance_functions(TestCase):
         lesson_payment_status = student_purchase_record.objects.get(id = new_record_id).payment_status
         self.assertEqual(lesson_payment_status, 'unpaid_cancel',lesson_payment_status)
         # 對同一堂課再做一次購買,這時要回傳success
-        response = self.client.post(path='/api/account_finance/storageOrder/', data=buy_data)
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=self.one_basic_trail_order_data)
         self.assertIn('success', str(response.content))
 
 
@@ -781,20 +794,32 @@ class test_finance_functions(TestCase):
         '''
         lesson_set = '10:90'
         post_data = {
-            'userID':2,
-            'teacherID':1,
-            'lessonID':1,
-            'sales_set': lesson_set,
-            'total_amount_of_the_sales_set': int(self.lesson_post_data['price_per_hour'] * 10 * 0.9),
-            'q_discount':0
-        }  #先測試 10:90 看看是否成功
+            'userID': 2,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': 2,
+                    'teacherID':1,
+                    'lessonID':1,
+                    'sales_set': lesson_set,#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': int(self.lesson_post_data['price_per_hour'] * 10 * 0.9),
+                    'q_discount': 0
+                    }
+                ])
+            }
         self.client.post(path='/api/account_finance/storageOrder/', data=post_data)
 
+        self.assertEqual(
+            student_purchase_record.objects.all().count(),1)
         self.assertEqual(
             student_purchase_record.objects.get(id=1).payment_status,
             'unpaid',
             student_purchase_record.objects.values()
         )  # 目前應該是未付款的狀態
+
+        #print(f"XXXXX1 {student_purchase_record.objects.values()}")
+        #print(f"XXXXX2 {lesson_sales_sets.objects.values()}") # id =3
 
         student_edit_booking_status_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,
@@ -803,7 +828,7 @@ class test_finance_functions(TestCase):
             'purchase_recordID': student_purchase_record.objects.get(
                 student_auth_id = student_profile.objects.get(id=1).auth_id,
                 teacher_auth_id = teacher_profile.objects.get(id=1).auth_id,
-                lesson_id = lesson_info.objects.get(id=1).id,
+                lesson_id = 1,
                 lesson_sales_set_id = lesson_sales_sets.objects.get(
                     sales_set = lesson_set,
                     is_open = True,
@@ -994,16 +1019,10 @@ class test_finance_functions(TestCase):
         '''
         mail.outbox = []
         self.assertEqual(len(mail.outbox), 0)
-        lesson_set = '10:90'
-        post_data = {
-            'userID':2,
-            'teacherID':1,
-            'lessonID':1,
-            'sales_set': lesson_set,
-            'total_amount_of_the_sales_set': int(self.lesson_post_data['price_per_hour'] * 10 * 0.9),
-            'q_discount':0
-        }  #先測試 10:90 看看是否成功
-        self.client.post(path='/api/account_finance/storageOrder/', data=post_data)
+        post_data = self.order_data
+        post_data['total_order'] = json.dumps([self.one_set_lesson_total_order_dict])
+
+        self.client.post(path='/api/account_finance/storageOrder/', data = post_data)
         #time.sleep(10)
         #self.assertEqual(len(mail.outbox), 1) 
         self.assertEqual(
@@ -1039,15 +1058,9 @@ class test_finance_functions(TestCase):
         '''
         mail.outbox = []
         self.assertEqual(len(mail.outbox), 0)
-        lesson_set = '10:90'
-        post_data = {
-            'userID':2,
-            'teacherID':1,
-            'lessonID':1,
-            'sales_set': lesson_set,
-            'total_amount_of_the_sales_set': int(self.lesson_post_data['price_per_hour'] * 10 * 0.9),
-            'q_discount':0
-        }  #先測試 10:90 看看是否成功
+        post_data = self.order_data
+        post_data['total_order'] = json.dumps([self.one_set_lesson_total_order_dict])
+        
         self.client.post(path='/api/account_finance/storageOrder/', data=post_data)
         self.assertEqual(
             student_purchase_record.objects.get(id=1).payment_status,'unpaid',
