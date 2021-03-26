@@ -658,7 +658,7 @@ class test_finance_functions(TestCase):
                 'status': 'success',
                 'errCode': None,
                 'errMsg': None,
-                'data': 1 # 建立1號訂單
+                'data': None
             })
     
 
@@ -668,16 +668,29 @@ class test_finance_functions(TestCase):
         當他的預扣不為0的情況
         '''
         student_authID = student_profile.objects.get(id=2).auth_id
-        data = {'userID':student_authID,
-        'teacherID':1,
-        'lessonID':1,
-        'sales_set': 'trial',#,'no_discount','30:70']
-        'total_amount_of_the_sales_set': 69,
-        'q_discount':20} # 要用20q幣折抵
+        print(f'確認學生AUTHID資訊{student_profile.objects.values()}')
+        # 用2號做測試
+        data = {
+            'userID': student_authID,
+            'total_q_discount': 20,# 要用20q幣折抵
+            'total_amount_of_orders':self.lesson_post_data['price_per_hour'],
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_authID,
+                    'teacherID':1,
+                    'lessonID':1,
+                    'sales_set': 'no_discount',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': self.lesson_post_data['price_per_hour'],
+                    'q_discount': 0
+                    }
+                ])
+            }
+
+
         stu_withholding_balance = student_profile.objects.get(id=2).withholding_balance
-        self.assertEqual(stu_withholding_balance, 20)
+        self.assertEqual(stu_withholding_balance, 20) # 確認他原本就有預扣20元
         stu_balance = student_profile.objects.get(id=2).balance
-        self.assertEqual(stu_balance, 50)
+        self.assertEqual(stu_balance, 50) # 總共還有 50元的Q幣
         response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
         # 2號學生有q幣 50元, 另外預扣已有20元,新的預扣要加上去
         stu_withholding_balance = student_profile.objects.get(id=2).withholding_balance
@@ -689,7 +702,7 @@ class test_finance_functions(TestCase):
                 'status': 'success',
                 'errCode': None,
                 'errMsg': None,
-                'data': 1 # 建立1號訂單
+                'data': None
             })
 
 

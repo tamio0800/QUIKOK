@@ -381,6 +381,7 @@ def storage_order(request):
             student_obj.balance -= q_discount_can_use
             student_obj.save()
             logging.info(f"account_finance/views/storage_order 學生預扣與可使用額度已更新")
+            logging.info(f"account_finance/views/storage_order 預扣額度為:{student_obj.withholding_balance + q_discount_can_use},可使用額度:{student_obj.balance - q_discount_can_use}")
 
         
         for index, each_order in enumerate(total_order_list):
