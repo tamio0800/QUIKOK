@@ -21,6 +21,7 @@ urlpatterns = [
     path('articles/', include('blog.urls')),
     path('edony_linebot/', include('line_function.urls')),
     path('analytics/', include('analytics.urls')),
+    path('amigo/', include('amigo.urls')),
     re_path(r'^(?!.*?user_upload|.*?website_assets|.*?@\S+[.]com).*', TemplateView.as_view(template_name="index.html")),  # 新增的
 ]
 

@@ -79,7 +79,7 @@ ROOT_URLCONF = 'Quikok.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['frontend/dist'],
+        'DIRS': ['frontend/dist',],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -190,6 +190,7 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'account/templates/account'),
     os.path.join(BASE_DIR, 'account_finance/templates/account_finance'),
     os.path.join(BASE_DIR, 'lesson/templates/lesson'),
+    # os.path.join(BASE_DIR, 'static/amigo'),
     ]
 
 # Add for vuejs

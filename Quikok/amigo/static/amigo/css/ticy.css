@@ -1,0 +1,534 @@
+/* http://meyerweb.com/eric/tools/css/reset/ 
+v2.0 | 20110126
+License: none (public domain)
+*/
+
+html,
+body,
+div,
+applet,
+object,
+iframe,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span {
+    font-family: "Noto Sans TC", sans-serif, -apple-system, BlinkMacSystemFont, 微軟正黑體, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue" !important;
+}
+
+blockquote,
+pre,
+a,
+abbr,
+acronym,
+address,
+big,
+cite,
+code,
+del,
+dfn,
+em,
+img,
+ins,
+kbd,
+q,
+s,
+samp,
+small,
+strike,
+strong,
+sub,
+sup,
+tt,
+var,
+b,
+u,
+i,
+center,
+dl,
+dt,
+dd,
+ol,
+ul,
+li,
+fieldset,
+form,
+label,
+legend,
+table,
+caption,
+tbody,
+tfoot,
+thead,
+tr,
+th,
+td,
+article,
+aside,
+canvas,
+details,
+embed,
+figure,
+figcaption,
+footer,
+header,
+hgroup,
+menu,
+nav,
+output,
+ruby,
+section,
+summary,
+time,
+mark,
+audio,
+video {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+}
+
+/* HTML5 display-role reset for older browsers */
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+menu,
+nav,
+section {
+    display: block;
+}
+
+body {
+    line-height: 1;
+}
+
+ol,
+ul {
+    list-style: none;
+}
+
+blockquote,
+q {
+    quotes: none;
+}
+
+blockquote:before,
+blockquote:after,
+q:before,
+q:after {
+    content: '';
+    content: none;
+}
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+/*CSS Reset*/
+
+body {
+    overflow: hidden;
+}
+
+.application--wrap {
+    -webkit-box-flex: 1;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    max-width: 100%;
+    position: relative;
+}
+
+.container {
+    max-width: fit-content;
+    margin: auto;
+}
+
+.top {
+    position: relative;
+}
+
+.banner {
+    height: 100vh;
+    background-image: url(/static/amigo/img/banner_bk.jpg);
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: left bottom;
+    display: flex;
+    align-items: center;
+    padding-bottom: 20vh;
+}
+
+p {
+    font-size: 1rem;
+    line-height: 2rem;
+}
+
+.topbanner {
+    margin-right: auto;
+    margin-left: auto;
+    width: 100%;
+    padding-right: var(--bs-gutter-x, .75rem);
+}
+
+a {
+    color: white;
+    text-decoration: none;
+    font-size: 20px;
+}
+
+a:hover {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 25px;
+}
+
+.pay-order {
+    position: absolute;
+    right: 8%;
+    bottom: 3%;
+}
+
+button {
+    border: none;
+    background: #ffffff;
+    font-size: 25px;
+    padding: 10px;
+    border-radius: 10px;
+    color: #0062AB;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin: 10px 15px;
+    right: 0px;
+}
+
+span {
+    color: white;
+    font-weight: 900;
+    font-size: medium;
+}
+
+.row {
+    --bs-gutter-x: 1.5rem;
+    --bs-gutter-y: 0;
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: calc(var(--bs-gutter-y) * -1);
+    margin-right: calc(var(--bs-gutter-x)/ -2);
+    margin-left: calc(var(--bs-gutter-x)/ -2);
+}
+
+.button_container {
+    position: absolute;
+    bottom: 0px;
+    width: -webkit-fill-available;
+    background: #0575E6;
+    /* fallback for old browsers */
+    background: -webkit-linear-gradient(to right, #021B79, #0575E6);
+    background: linear-gradient(to right, #021B79, #0575E6);
+    height: 20vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card {
+    /* 設定父定位點 */
+    position: relative;
+    width: 200px;
+    float: left;
+    margin: 10px;
+    border: none !important;
+}
+
+.mbcards {
+    display: none;
+}
+
+.lastber img {
+    position: absolute;
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.info {
+    /*   display: none; */
+    opacity: 0.3;
+    position: absolute;
+    box-sizing: border-box;
+    background-color: rgba(0, 0, 0, .3);
+    top: 0;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    padding-top: 50px;
+    -webkit-transition: .5s ease-out;
+}
+
+.info p {
+    color: #fff;
+    line-height: 1rem;
+}
+
+.info:hover {
+    /*   -webkit-transition: 500ms; */
+    margin-top: 0;
+    opacity: 1;
+}
+
+.feature01 {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+}
+
+.feature02 {
+    background: #EAEAEA;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    flex-direction: row-reverse;
+}
+
+
+
+h2 {
+    color: #193866;
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 3rem;
+}
+
+.wd{
+    text-align: justify;
+}
+
+.lastber {
+    display: flex;
+    justify-content: center;
+}
+
+.lastber p {
+    position: absolute;
+    font-size: 1.5rem;
+    color: white;
+    font-weight: 700;
+    margin: 13% 0;
+    letter-spacing: 6px;
+}
+
+.lastber button {
+    border: none;
+    background: #ffffff;
+    font-size: 20px;
+    padding: 15px;
+    border-radius: 10px;
+    color: #0062AB;
+    font-weight: 700;
+    letter-spacing: 1px;
+    z-index: 1;
+    margin-top: 18%;
+}
+
+.footer {
+    background-color: #2ac5ff;
+    -webkit-box-pack: center;
+    z-index: 1;
+    padding: 10px 0px;
+}
+
+.footer p {
+    font-size: 14px;
+    color: white;
+    line-height: 2rem;
+    margin-bottom: 1.5px;
+    letter-spacing: 0.1rem;
+}
+
+p.title {
+    font-size: 22px;
+    font-weight: 500;
+}
+
+.banner_mb {
+    display: none;
+}
+
+.box {
+    position: fixed;
+    right: 10px;
+    bottom: 10px;
+    z-index: 99;
+    display: none;
+}
+
+.goTopBtn {
+    background-color: transparent;
+    border: none;
+    outline: none;
+    cursor: pointer;
+}
+
+/* Big Tablet to 1200px (width smaller than 1140px row */
+@media(min-width: 1200px) {
+    .container {
+        max-width: 1140px;
+        margin: 15px auto;
+    }
+
+    .lastber p {
+        font-size: 1.5rem;
+        margin: 14% 0;
+    }
+}
+
+/* Small Tablet to Big Tablet from 768 to 1023px */
+@media only screen and (max-width: 1030px) {
+    .lastber p {
+        font-size: 1rem;
+        margin: 13% 0;
+    }
+
+    .pay-order {
+        font-size: medium;
+    }
+
+    .pay-order button {
+        font-size: 15px;
+        margin: 0 auto;
+    }
+
+    .ftt {
+        display: flex;
+    }
+
+    .ftt p {
+        font-size: 14px;
+        margin: 0 10px;
+        line-height: 1.5rem;
+    }
+
+}
+
+@media only screen and (max-width: 940px) {
+
+    .banner_cp,
+    .banner_wd,
+    .cp_card {
+        display: none;
+    }
+
+    .banner_mb {
+        display: block;
+        text-align: center;
+    }
+
+    .banner_mb img {
+        max-width: 100vw;
+    }
+
+    .pay-order_mb {
+        margin: 0px;
+    }
+
+    .mbcards {
+        display: flex;
+        color: #fff;
+        flex-direction: column;
+    }
+
+    .mbcards p {
+        font-size: 1rem;
+        margin-bottom: 0px;
+        line-height: 35px;
+    }
+
+    .banner {
+        height: 100vh;
+    }
+
+    .button_container {
+        height: 22vh;
+    }
+}
+
+/* Small Phones to small Tablet 481-767px(Ipad) */
+@media only screen and (max-width: 767px) {
+    .lastber button {
+        font-size: 12px;
+        padding: 10px;
+        margin-top: 18%;
+    }
+
+    .banner_mb img {
+        max-width: 100vw;
+    }
+
+    span {
+        font-size: unset;
+    }
+
+    .lastber01 {
+        height: 30vh !important;
+    }
+
+    .ftt {
+        display: block;
+    }
+
+    .lastber p {
+        font-size: 0.8rem;
+        margin: 13% 0;
+    }
+}
+
+/* Small Phones 0 to 480px(Iphone) */
+@media only screen and (max-width: 640px) {
+    .lastber button {
+        font-size: 12px;
+        padding: 10px;
+        margin-top: 22%;
+    }
+
+    button {
+        font-size: 14px;
+    }
+
+    .banner_mb img {
+        max-width: 100vw;
+    }
+
+    span {
+        font-size: unset;
+    }
+
+    .ftt {
+        display: block;
+    }
+
+    .ftt p {
+        font-size: 12px;
+    }
+
+    .lastber p {
+        font-size: 0.8rem;
+    }
+}
