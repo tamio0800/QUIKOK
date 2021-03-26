@@ -222,7 +222,7 @@ def storage_order(request):
         else:
             use_q_discount = False
         trial_check_list = list() # 用來暫存這次傳來的訂單們屬於試教的ID，因為一堂課試教只能有一筆
-        order_has_checked_list = list() # 用來寄email用
+        order_has_checked_list = list() # 用來寄email用 這版先不理他(不合併寄信)
         #exam_bank_check_list = list() # 用來暫存訂購題庫的ID，預購期間只能有一筆
         total_order_list = eval(total_order_list) # 由於json傳來的巢狀結構是str,這邊由str轉成list
         logging.info(f"account_finance/views/storage_order total_order_list type:{type(total_order_list)}")
@@ -304,7 +304,18 @@ def storage_order(request):
                                             trial_check_list.append(lesson_id)
                                             if use_q_discount == True: # 記錄每堂課的費用
                                                 amount_in_orders_list.append(int(price))
-                
+                                                
+                                                logging.info(f"account_finance/views/storage_order 買trial有使用q幣, 金額:{price}")
+                                                logging.info(f"account_finance/views/storage_order 紀錄訂單金額:{amount_in_orders_list}")
+                                
+                                # 課程是單堂或多堂的情況不需檢查是否已買過
+                                else:
+                                    if use_q_discount == True: # 記錄每堂課的費用
+                                        amount_in_orders_list.append(int(price))
+                                                
+                                        logging.info(f"account_finance/views/storage_order 買taril以外的課程有使用q幣, 金額:{price}")
+                                        logging.info(f"account_finance/views/storage_order 紀錄訂單金額:{amount_in_orders_list}")
+                                
             # 題庫訂單的檢查
             elif each_order['order_type'] == 'exam_bank_order':
                 # 檢查該user是否已經買過,預購期間只能買一次
@@ -340,6 +351,7 @@ def storage_order(request):
         # 進入這個迴圈用來把訂單寫入資料庫
         # 首先處理如果有用q point的情況
         order_use_q_discount_index_list = list()# 如果沒有用q, 就是一個空list
+        q_discount_can_use = int(total_q_discount)
         if use_q_discount == True:
             # 得出一個依照價格高到低在原本list的位置的 list,稱為已排list
             #price_sorted_index_list = sorted(range(len(amount_in_orders_list)), key=lambda price: amount_in_orders_list[price], reverse=True)
@@ -348,8 +360,8 @@ def storage_order(request):
             be_minus_q_discount = int(total_q_discount)
             for index_num, price in enumerate(price_sorted_list):
                 # Q幣從最高金額開始減,如果< 0, 就不用再扣了,並且紀錄是扣到第幾筆
-                be_minus_q_discount -= price
-                if be_minus_q_discount < 0:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                - int(total_q_discount)> 0:
+                be_minus_q_discount -=  price
+                if be_minus_q_discount < 0:   
                     price_sorted_list_use_q_point_max_index = index_num # 只會扣到這筆
                     break
                 logging.info(f"account_finance/views/storage_order 使用q幣到金額:{price},位置{index_num}的時候抵扣完畢")
@@ -358,12 +370,19 @@ def storage_order(request):
             # 回推在未排list的index(會等於原訂單(order)的順序),紀錄第一個一樣的金額位置後就刪除,所以金額重複也沒關係
             #order_use_q_discount_index_list = list()    
             for num in range(price_sorted_list_use_q_point_max_index+1):
-                order_use_q_discount_index_list.append(amount_in_orders_list.pop(price_sorted_list[num]))
+                order_use_q_discount_index_list.append(amount_in_orders_list.index(price_sorted_list[num]))
+                amount_in_orders_list.remove(price_sorted_list[num])
                 #order_use_q_discount_price_list.append(price_sorted_list[num]) #紀錄回推的金額
 
             logging.info(f"account_finance/views/storage_order 需要折抵的訂單編號list:{order_use_q_discount_index_list}")
+            
+            # 預扣額度增加,可使用額度減少
+            student_obj.withholding_balance += q_discount_can_use
+            student_obj.balance -= q_discount_can_use
+            student_obj.save()
+            logging.info(f"account_finance/views/storage_order 學生預扣與可使用額度已更新")
 
-
+        
         for index, each_order in enumerate(total_order_list):
             if each_order['order_type'] == 'lesson_order':
                 student_authID = each_order['userID']
@@ -379,6 +398,9 @@ def storage_order(request):
 
                 #purchase_date = datetime.now()
                 payment_deadline = datetime.now() + timedelta(days=6)
+                
+                if index in order_use_q_discount_index_list:
+                    q_discount_can_use -= price
 
                 # 建立訂單
                 new_record = student_purchase_record.objects.create(
@@ -396,6 +418,8 @@ def storage_order(request):
                     )
                 new_record.save()
                 logging.info(f"account_finance/views/storage_order 新的課程訂單已儲存")
+
+
             
             elif each_order['order_type'] == 'exam_bank_order':
                 pass
@@ -404,6 +428,7 @@ def storage_order(request):
                     'errCode': None,
                     'errMsg': None,
                     'data': None}
+
         return JsonResponse(response) 
             #                               last_record_payment_status = 
             #                                     if student_purchase_object.payment_status == 'unpaid_cancel':

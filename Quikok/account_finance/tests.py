@@ -452,7 +452,7 @@ class test_finance_functions(TestCase):
         ## 定義一些基礎常用的測試資料 ##
         # 這樣在測試的時候可以更容易排列組合出各種測試
 
-        # 這是一個單純的試教課程訂單的內容
+        # 這是一個單純的試教課程小訂單的內容
         self.one_basic_trail_total_order_dict = {
                     'order_type':'lesson_order',
                     'userID': 2,
@@ -471,7 +471,7 @@ class test_finance_functions(TestCase):
         self.one_set_lesson_total_order_dict['sales_set'] = '10:90'
         self.one_set_lesson_total_order_dict['total_amount_of_the_sales_set']= int(self.lesson_post_data['price_per_hour'] * 10 * 0.9)
 
-        # 整個訂單: 一個單純的試教課程訂單範本
+        # 整個大訂單: 一個單純的試教課程訂單範本
         self.one_basic_trail_order_data = {
             'userID': 2,
             'total_q_discount':0,
@@ -479,7 +479,7 @@ class test_finance_functions(TestCase):
             'total_order':json.dumps([self.one_basic_trail_total_order_dict #為了可以傳nested的結構所以包成json
                 ])  
             }
-        # 空白訂單結構
+        # 空白大訂單結構
         self.order_data = {
             'userID': 2,
             'total_q_discount':0,
@@ -598,16 +598,26 @@ class test_finance_functions(TestCase):
 
 
     def test_storege_order_check_if_Q_point_is_enough(self):
-        '''如果學生使用q幣抵扣學費,要檢查他確實有該筆q幣'''
+        '''如果學生使用q幣抵扣學費,要檢查他確實有該筆金額內的q幣'''
         # 建立一筆訂單,使用超過該學生有的Q幣
         student_authID = student_profile.objects.get(id=2).auth_id
-        # 用2號訂單才做測試
-        data = {'userID': student_authID,
-        'teacherID':1,
-        'lessonID':1,
-        'sales_set': 'trial',#,'no_discount','30:70']
-        'total_amount_of_the_sales_set': 69,
-        'q_discount':69} 
+        # 用2號做測試
+        data = {
+            'userID': student_authID,
+            'total_q_discount': 100000,
+            'total_amount_of_orders':self.lesson_post_data['price_per_hour'],
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': 2,
+                    'teacherID':1,
+                    'lessonID':1,
+                    'sales_set': 'no_discount',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': self.lesson_post_data['price_per_hour'],
+                    'q_discount': 0
+                    }
+                ])
+            }
+
         # 選擇要用69q幣折抵, 但實際上他只有50q 
         response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
         self.assertIn('failed', str(response.content))
@@ -618,12 +628,24 @@ class test_finance_functions(TestCase):
         如果學生使用Q幣, 那送出訂單後使用的Q更新到他的profile中的withholding_balance_change.
         當他的預扣為0的情況
         '''
-        data = {'userID':2,
-        'teacherID':1,
-        'lessonID':1,
-        'sales_set': 'trial',#,'no_discount','30:70']
-        'total_amount_of_the_sales_set': 69,
-        'q_discount':20} # 要用20q幣折抵
+        # 建立一筆訂單,使用學生有的Q幣
+        student_authID = student_profile.objects.get(id=1).auth_id
+        # 用2號做測試
+        data = {
+            'userID': student_authID,
+            'total_q_discount': 20,# 要用20q幣折抵
+            'total_amount_of_orders':self.lesson_post_data['price_per_hour'],
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': 2,
+                    'teacherID':1,
+                    'lessonID':1,
+                    'sales_set': 'no_discount',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': self.lesson_post_data['price_per_hour'],
+                    'q_discount': 0
+                    }
+                ])
+            }
 
         response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
         # 1號學生有q幣 50元
