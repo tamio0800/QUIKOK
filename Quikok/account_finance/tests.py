@@ -471,7 +471,7 @@ class test_finance_functions(TestCase):
         self.one_set_lesson_total_order_dict['sales_set'] = '10:90'
         self.one_set_lesson_total_order_dict['total_amount_of_the_sales_set']= int(self.lesson_post_data['price_per_hour'] * 10 * 0.9)
 
-        print(f'確認一下:{self.one_basic_trail_total_order_dict}')
+        #print(f'確認一下:{self.one_basic_trail_total_order_dict}')
 
         # 整個大訂單: 一個單純的試教課程訂單範本
         self.one_basic_trail_order_data = {
@@ -530,8 +530,8 @@ class test_finance_functions(TestCase):
         response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
         # 先買一次,確認有成功
         self.assertIn('success', str(response.content))
-        print(f'全部的學生購課紀錄:{student_purchase_record.objects.values()}') # 'lesson_sales_set_id': 3
-        print(f'確認課程方案種類:{lesson_sales_sets.objects.get(id=1).sales_set}')
+        #print(f'全部的學生購課紀錄:{student_purchase_record.objects.values()}') # 'lesson_sales_set_id': 3
+        #print(f'確認課程方案種類:{lesson_sales_sets.objects.get(id=1).sales_set}')
 
         # 對同一堂課再做一次購買,這時要回傳failed
         response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
@@ -549,7 +549,11 @@ class test_finance_functions(TestCase):
         # 先買一次,確認有成功
         self.assertIn('success', str(response1.content))
         # 取得剛剛買的這堂課的id的id
-        new_record_id = student_purchase_record.objects.all().order_by('-id').first().id
+        new_record_id = student_purchase_record.objects.filter(
+            lesson_id = 1,
+            student_auth_id = 2
+            ).order_by('-id').first().id
+        print(f'全部的學生購課紀錄:{student_purchase_record.objects.values()}')
         # 接著,取消這筆訂單
         cancel_data = {
             'userID':'2',
@@ -562,6 +566,7 @@ class test_finance_functions(TestCase):
         response2 = self.client.post(
             path='/api/account_finance/studentEditOrder/', data=cancel_data)
         self.assertIn('success', str(response2.content))
+        print(f'取消後全部的學生購課紀錄:{student_purchase_record.objects.values()}')
         # 確認取消成功
         lesson_payment_status = student_purchase_record.objects.get(id = new_record_id).payment_status
         self.assertEqual(lesson_payment_status, 'unpaid_cancel',lesson_payment_status)
@@ -575,12 +580,31 @@ class test_finance_functions(TestCase):
         單堂或多堂的購買都沒有一次不能把多堂課放進購物車的限制，因此當一次買多堂課時，
         要回傳success
         '''
-        data = {'userID':2,
-        'teacherID':1,
-        'lessonID':1,
-        'sales_set': 'no_discount',#,'30:70']
-        'total_amount_of_the_sales_set': self.lesson_post_data['price_per_hour'],
-        'q_discount': 0}
+        data = {
+            'userID': 2,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([
+                {
+                    'order_type':'lesson_order',
+                    'userID': 2,
+                    'teacherID':1,
+                    'lessonID':1,
+                    'sales_set': 'no_discount',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': self.lesson_post_data['price_per_hour'],
+                    'q_discount': 0
+                },
+                {
+                    'order_type':'lesson_order',
+                    'userID': 2,
+                    'teacherID':1,
+                    'lessonID':1,
+                    'sales_set': 'no_discount',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': self.lesson_post_data['price_per_hour'],
+                    'q_discount': 0
+                },
+                ])
+            }
 
         response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
         # 先買一次,確認有成功
@@ -591,30 +615,38 @@ class test_finance_functions(TestCase):
 
 
     def test_storege_order_student_select_a_no_discount_and_a_trial_same_time(self):
-        '''除了試教課程以外，在同一個lesson的情況下，
+        '''測試一次買多糖課是否成功。除了試教課程以外，在同一個lesson的情況下，
         單堂或多堂的購買都沒有一次不能把多堂課放進購物車的限制，因此如果有買單堂又買了試教,
         當一次買多堂課時，要回傳success
         '''
-        # 先買一堂課
-        data1 = {'userID':2,
-        'teacherID':1,
-        'lessonID':1,
-        'sales_set': 'no_discount',#,'30:70']
-        'total_amount_of_the_sales_set': self.lesson_post_data['price_per_hour'],
-        'q_discount': 0}
+        data = {
+            'userID': 2,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([
+                {
+                    'order_type':'lesson_order',
+                    'userID': 2,
+                    'teacherID':1,
+                    'lessonID':1,
+                    'sales_set': 'no_discount',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': self.lesson_post_data['price_per_hour'],
+                    'q_discount': 0
+                },
+                {
+                    'order_type':'lesson_order',
+                    'userID': 2,
+                    'teacherID':1,
+                    'lessonID':1,
+                    'sales_set': 'trial',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set':self.lesson_post_data['trial_class_price'],
+                    'q_discount': 0
+                },
+                ])
+            }
 
-        response = self.client.post(path='/api/account_finance/storageOrder/', data=data1)
-        # 先買一次,確認有成功
-        self.assertIn('success', str(response.content))
-
-        data2 = {'userID':2,
-        'teacherID':1,
-        'lessonID':1,
-        'sales_set': 'trial',#,'no_discount','30:70']
-        'total_amount_of_the_sales_set': self.lesson_post_data['trial_class_price'],
-        'q_discount': 0}
         # 對同一堂課再購買一堂試教,這時要回傳success
-        response = self.client.post(path='/api/account_finance/storageOrder/', data=data2)
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
         self.assertIn('success', str(response.content))
 
 
@@ -769,26 +801,44 @@ class test_finance_functions(TestCase):
         '''
         lesson_set = '10:90' #測試 10:90 看看是否成功
         use_q_coin = 20  #使用q幣
+        student_obj = student_profile.objects.get(id=1)
         post_data = {
-            'userID':2,
-            'teacherID':1,
-            'lessonID':1,
-            'sales_set': lesson_set,
-            'total_amount_of_the_sales_set': int(self.lesson_post_data['price_per_hour'] * 10 * 0.9),
-            'q_discount': use_q_coin
-        } 
+            'userID': student_obj.auth_id,
+            'total_q_discount': use_q_coin,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([
+                {
+                    'order_type':'lesson_order',
+                    'userID': 2,
+                    'teacherID':1,
+                    'lessonID':1,
+                    'sales_set': lesson_set,
+                    'total_amount_of_the_sales_set': int(self.lesson_post_data['price_per_hour'] * 10 * 0.9),
+                    'q_discount': 0
+                },
+                ])
+            }
+        #print(f'檢查這筆訂單寫入')
         self.client.post(path='/api/account_finance/storageOrder/', data=post_data)
-        self.assertEqual(
-            student_purchase_record.objects.get(id=1).payment_status,'unpaid')  #目前應該是未付款的狀態
+        #print(f'查看全部訂單: {student_purchase_record.objects.values()}')
+        record = student_purchase_record.objects.get(student_auth_id=student_obj.auth_id)
+        self.assertEqual(record.payment_status,'unpaid')  #目前應該是未付款的狀態
+        #print(f'檢查這筆訂單是否有寫入要用q幣')
+        self.assertEqual(record.purchased_with_q_points,use_q_coin )
+        
         student_obj = student_profile.objects.get(id=1)
         # balance = 原本的q幣餘額-新買課程用掉的Q幣
-        self.assertEqual(student_obj.balance, self.dummy_q - use_q_coin) 
+        #print(f'確認一下學生身上的餘額:{student_obj.balance},  dummy_q:{self.dummy_q}')
+        self.assertEqual(student_obj.balance, self.dummy_q - use_q_coin)
+        #print(f'確認一下學生的預扣:{student_obj.balance}')
         self.assertEqual(student_obj.withholding_balance, use_q_coin)
+
         student_purchase_obj = student_purchase_record.objects.get(id=1)
         student_purchase_obj.payment_status = 'reconciliation' #模擬系統改為對帳中
         student_purchase_obj.save()
         student_purchase_obj.payment_status = 'paid'#接著模擬人工改為已經付款
         student_purchase_obj.save()
+
         self.assertEqual(
             student_purchase_record.objects.get(id=1).payment_status,'paid')  # 確認變成已付款
         
@@ -817,13 +867,24 @@ class test_finance_functions(TestCase):
         
         lesson_set = '10:90'
         post_data = {
-            'userID':2,
-            'teacherID':1,
-            'lessonID':1,
-            'sales_set': lesson_set,
-            'total_amount_of_the_sales_set': int(self.lesson_post_data['price_per_hour'] * 10 * 0.9),
-            'q_discount':0
-        }
+            'userID': 2,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([
+                {
+                    'order_type':'lesson_order',
+                    'userID': 2,
+                    'teacherID':1,
+                    'lessonID':1,
+                    'sales_set': lesson_set,
+                    'total_amount_of_the_sales_set': int(self.lesson_post_data['price_per_hour'] * 10 * 0.9),
+                    'q_discount': 0
+                },
+                ])
+            }
+
+
+
         response = self.client.post(path='/api/account_finance/storageOrder/', data=post_data)
         self.assertIn('success', str(response.content, 'utf8'), str(response.content, 'utf8'))
         # 確認狀態成功
@@ -926,13 +987,19 @@ class test_finance_functions(TestCase):
         '''
         lesson_set = 'trial'
         post_data = {
-            'userID':2,
-            'teacherID':1,
-            'lessonID':1,
-            'sales_set': lesson_set,
-            'total_amount_of_the_sales_set': int(self.lesson_post_data['trial_class_price']),
-            'q_discount':0
-        }  #測試 trial 看看是否成功
+            'userID': 2,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': 2,
+                    'teacherID':1,
+                    'lessonID':1,
+                    'sales_set': lesson_set,#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': self.lesson_post_data['trial_class_price'],
+                    'q_discount': 0
+                }])
+            }
         self.client.post(path='/api/account_finance/storageOrder/', data=post_data)
 
         self.assertEqual(
@@ -987,14 +1054,26 @@ class test_finance_functions(TestCase):
         學生的 student_remaining_minutes_of_each_purchased_lesson_set table 有沒有長出對應的資料。
         '''
         lesson_set = 'no_discount'
+        #use_q_coin = 20  #使用q幣
+        #student_obj = student_profile.objects.get(id=1)
         post_data = {
-            'userID':2,
-            'teacherID':1,
-            'lessonID':1,
-            'sales_set': lesson_set,
-            'total_amount_of_the_sales_set': int(self.lesson_post_data['price_per_hour']),
-            'q_discount':0
-        }  #測試 no_discount 看看是否成功
+            'userID': 2,
+            'total_q_discount': 0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([
+                {
+                    'order_type':'lesson_order',
+                    'userID': 2,
+                    'teacherID':1,
+                    'lessonID':1,
+                    'sales_set': lesson_set,
+                    'total_amount_of_the_sales_set': int(self.lesson_post_data['price_per_hour']),
+                    'q_discount': 0
+                },
+                ])
+            }
+        
+    
         self.client.post(path='/api/account_finance/storageOrder/', data=post_data)
 
         self.assertEqual(

@@ -219,8 +219,11 @@ def storage_order(request):
                 # 為了之後要從最高金額的訂單開始抵扣，要把每筆訂單的金額先暫存
                 amount_in_orders_list = list()
                 use_q_discount = True
+                print(f'通過q幣檢查')
+
         else:
             use_q_discount = False
+            amount_in_orders_list = list()
         trial_check_list = list() # 用來暫存這次傳來的訂單們屬於試教的ID，因為一堂課試教只能有一筆
         order_has_checked_list = list() # 用來寄email用 這版先不理他(不合併寄信)
         #exam_bank_check_list = list() # 用來暫存訂購題庫的ID，預購期間只能有一筆
@@ -366,7 +369,7 @@ def storage_order(request):
         # 進入這個迴圈用來把訂單寫入資料庫
         # 首先處理如果有用q point的情況
         order_use_q_discount_index_list = list()# 如果沒有用q, 就是一個空list
-        q_discount_can_use = int(total_q_discount)
+        q_discount_can_use = int(total_q_discount) # 可使用的q幣,會隨著每張訂單減少
         if use_q_discount == True:
             # 得出一個依照價格高到低在原本list的位置的 list,稱為已排list
             #price_sorted_index_list = sorted(range(len(amount_in_orders_list)), key=lambda price: amount_in_orders_list[price], reverse=True)
@@ -396,7 +399,7 @@ def storage_order(request):
             student_obj.balance -= q_discount_can_use
             student_obj.save()
             logging.info(f"account_finance/views/storage_order 學生預扣與可使用額度已更新")
-            logging.info(f"account_finance/views/storage_order 預扣額度為:{student_obj.withholding_balance + q_discount_can_use},可使用額度:{student_obj.balance - q_discount_can_use}")
+            logging.info(f"account_finance/views/storage_order 預扣額增為:{student_obj.withholding_balance + q_discount_can_use},可使用額度:{student_obj.balance - q_discount_can_use}")
 
         
         for index, each_order in enumerate(total_order_list):
@@ -415,9 +418,29 @@ def storage_order(request):
                 #purchase_date = datetime.now()
                 payment_deadline = datetime.now() + timedelta(days=6)
                 
+                purchased_with_money = int()
+                purchased_with_q_points = int()
+                # 假設我有60Q 要折抵800元的課
+                # 假設我有800Q 折抵 60 , 50的兩堂課
                 if index in order_use_q_discount_index_list:
-                    q_discount_can_use -= price
+                    logging.info(f"account_finance/views/storage_order 大訂單要使用的q幣目前還剩下:{q_discount_can_use}")
+                    if price > q_discount_can_use : # 要買的課程比擁有的Q幣貴
+                        purchased_with_money = price - q_discount_can_use
+                        purchased_with_q_points = q_discount_can_use
+                        logging.info(f"account_finance/views/storage_order 算好了:{purchased_with_money},{purchased_with_q_points}")
+                    elif q_discount_can_use >= price  : # Q幣大於或等於要買的課程,那就不用付現金
+                        purchased_with_money = 0
+                        purchased_with_q_points = price #最多折抵跟課程一樣的金額
+                    else:
+                        pass
+                    q_discount_can_use -= price # 可使用的q幣會隨著有用到的訂單減少
+                    #if q_discount_can_use <= 0: # 正常來說是不會走到這
+                    #    break
+                else:
+                    purchased_with_money = price
+                    purchased_with_q_points = 0
 
+                logging.info(f"account_finance/views/storage_order 建立訂單")
                 # 建立訂單
                 new_record = student_purchase_record.objects.create(
                     student_auth_id= student_authID,
@@ -429,8 +452,8 @@ def storage_order(request):
                     lesson_title = lesson_obj.lesson_title,
                     lesson_sales_set_id = set_obj.id,
                     price = price,
-                    purchased_with_q_points = 0, #q_discount_amount,
-                    purchased_with_money=price #price-q_discount_amount
+                    purchased_with_q_points = purchased_with_q_points, #q_discount_amount,
+                    purchased_with_money= purchased_with_money
                     )
                 new_record.save()
                 logging.info(f"account_finance/views/storage_order 新的課程訂單已儲存")
@@ -812,7 +835,7 @@ def storage_order(request):
 
     
     except Exception as e:
-        logging.error(f"account_finance/views/storage_order:{e}")
+        logging.error(f"account_finance/views/storage_order 錯誤:{e}")
         
         response = {'status':'failed',
         'errCode': 0,
