@@ -463,13 +463,15 @@ class test_finance_functions(TestCase):
                     'q_discount': 0
                     }
         # 定義一個單堂課的訂單資料
-        self.one_basic_lesson_total_order_dict = self.one_basic_trail_total_order_dict 
+        self.one_basic_lesson_total_order_dict = self.one_basic_trail_total_order_dict.copy()
         self.one_basic_lesson_total_order_dict['sales_set'] = 'no_discount'
         self.one_basic_lesson_total_order_dict['total_amount_of_the_sales_set']= self.lesson_post_data['price_per_hour']
         # 定義一個購買多堂優惠的資料
-        self.one_set_lesson_total_order_dict  = self.one_basic_trail_total_order_dict
+        self.one_set_lesson_total_order_dict  = self.one_basic_trail_total_order_dict.copy()
         self.one_set_lesson_total_order_dict['sales_set'] = '10:90'
         self.one_set_lesson_total_order_dict['total_amount_of_the_sales_set']= int(self.lesson_post_data['price_per_hour'] * 10 * 0.9)
+
+        print(f'確認一下:{self.one_basic_trail_total_order_dict}')
 
         # 整個大訂單: 一個單純的試教課程訂單範本
         self.one_basic_trail_order_data = {
@@ -490,8 +492,11 @@ class test_finance_functions(TestCase):
     def test_storege_order_one_lesson_order(self):
         '''最基礎的訂單:一堂trail課程,是否順利寫入
          注意要先有建立課程才能測試'''
-        
+        print(f'ssss')
         response = self.client.post(path='/api/account_finance/storageOrder/', data= self.one_basic_trail_order_data)
+        print(f'全部的學生購課紀錄:{student_purchase_record.objects.values()}') # 'lesson_sales_set_id': 3
+        print(f'確認課程方案種類:{lesson_sales_sets.objects.get(id=1).sales_set}')
+
         self.assertEqual(response.status_code, 200)
         self.assertJSONEqual(
             str(response.content, encoding='utf8'),
@@ -508,12 +513,28 @@ class test_finance_functions(TestCase):
         他將不可以再把該堂課的試教方案放進購物車，
         他只能去帳務中心填入匯款資訊或取消該筆訂單。
         '''
-
-        response = self.client.post(path='/api/account_finance/storageOrder/', data=self.one_basic_trail_order_data)
+        data = {
+            'userID': 2,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': 2,
+                    'teacherID':1,
+                    'lessonID':1,
+                    'sales_set': 'trial',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': self.lesson_post_data['trial_class_price'],
+                    'q_discount': 0
+                }])
+            }
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
         # 先買一次,確認有成功
         self.assertIn('success', str(response.content))
+        print(f'全部的學生購課紀錄:{student_purchase_record.objects.values()}') # 'lesson_sales_set_id': 3
+        print(f'確認課程方案種類:{lesson_sales_sets.objects.get(id=1).sales_set}')
+
         # 對同一堂課再做一次購買,這時要回傳failed
-        response = self.client.post(path='/api/account_finance/storageOrder/', data=self.one_basic_trail_order_data)
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
         self.assertIn('failed', str(response.content))
 
 

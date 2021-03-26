@@ -275,6 +275,8 @@ def storage_order(request):
                                 # 2.這整筆訂單裡是否有一筆以上同一個課程的試教
                                 
                                 if lesson_set == 'trial':
+                                    logging.info(f"account_finance/views/storage_order 購買試教課程")
+                                        
                                     # 這次傳來的訂單們有重複
                                     if lesson_id in trial_check_list:
                                         response = {'status':'failed',
@@ -283,12 +285,17 @@ def storage_order(request):
                                                     'data': None}
                                         return JsonResponse(response)
                                     else:
+                                        logging.info(f"account_finance/views/storage_order 購買試教在本次訂單中沒重複，查詢之前是否買過")
                                         student_purchase_object = \
                                             student_purchase_record.objects.filter(
                                                 lesson_id = lesson_id, 
-                                                student_auth_id = student_authID
+                                                student_auth_id = student_authID,
+                                                lesson_sales_set_id= set_obj.id
                                                 ).order_by('-id').first()
-                                        logging.info(f"account_finance/views/storage_order student_purchase_object:{student_purchase_object}")
+                                        
+                                        logging.info(f"account_finance/views/storage_order 查詢學生購課紀錄:{student_purchase_object}")
+                                        
+                                        
                                         # != none 表示已買過,要進一步檢查是否還可以買試教課程
                                         # 這邊用反面檢查, 如有通過就會繼續走到下面寫入的流程
                                         if student_purchase_object is not None:
@@ -300,6 +307,14 @@ def storage_order(request):
                                                     'errMsg': '試教每門課只能選購一次唷，之前已選購過該課程試教，如有疑問可連絡客服，謝謝！',
                                                     'data': None}
                                                 return JsonResponse(response)
+
+                                            else: # 如果有取消或退款過還是可以買
+                                                trial_check_list.append(lesson_id)
+                                                if use_q_discount == True: # 記錄每堂課的費用
+                                                    amount_in_orders_list.append(int(price))
+                                                
+                                                logging.info(f"account_finance/views/storage_order 買trial有使用q幣, 金額:{price}")
+                                                logging.info(f"account_finance/views/storage_order 紀錄訂單金額:{amount_in_orders_list}")
                                         else:
                                             trial_check_list.append(lesson_id)
                                             if use_q_discount == True: # 記錄每堂課的費用
