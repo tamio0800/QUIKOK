@@ -481,15 +481,15 @@ def storage_order(request):
                 # email_notification = email_manager()
                 # email_notification.system_email_new_order_and_payment_remind(**notification)
                 
-            elif each_order['order_type'] == 'exam_bank_order':
-                authID = each_order['userID']
-                user_purchase_exam_bank_record.objects.create(
-                    user_auth_id = authID,
-                    exam_bank_sales_set_id =1,
-                    price = price,
-                    purchased_with_money  = price,
-                    purchased_with_q_points =0)
-                logging.info(f"account_finance/views/storage_order 新的題庫訂單已儲存")
+            #elif each_order['order_type'] == 'exam_bank_order':
+            #    authID = each_order['userID']
+            #    user_purchase_exam_bank_record.objects.create(
+            #        user_auth_id = authID,
+            #        exam_bank_sales_set_id =1,
+            #        price = price,
+            #        purchased_with_money  = price,
+            #        purchased_with_q_points =0)
+            #    logging.info(f"account_finance/views/storage_order 新的題庫訂單已儲存")
 
 
         response = {'status':'success',
