@@ -193,7 +193,7 @@ a {
     font-size: 20px;
 }
 
-a:hover {
+a:hover p {
     color: white;
     text-decoration: none;
     font-weight: 600;
@@ -284,6 +284,7 @@ span {
 .info p {
     color: #fff;
     line-height: 1rem;
+    font-size: 20px;
 }
 
 .info:hover {
@@ -343,7 +344,7 @@ h2 {
     font-weight: 700;
     letter-spacing: 1px;
     z-index: 1;
-    margin-top: 18%;
+    margin-top: 17%;
 }
 
 .footer {
@@ -474,7 +475,7 @@ p.title {
     .lastber button {
         font-size: 12px;
         padding: 10px;
-        margin-top: 18%;
+        margin-top: 17%;
     }
 
     .banner_mb img {
@@ -486,7 +487,7 @@ p.title {
     }
 
     .lastber01 {
-        height: 30vh !important;
+        height: 23vh !important;
     }
 
     .ftt {
