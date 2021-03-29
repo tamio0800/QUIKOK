@@ -23,10 +23,10 @@ $(document).ready(function () {
         $("html,body").animate({ "scrollTop": $(".page" + (n-1)).offset().top }, function () { moving = 0 })
         // console.log(n)
     })
-})
+// })
 
-//Topgo//
-$(function () {
+// //Topgo//
+// $(function () {
     $(window).scroll(function () {
         if ($(this).scrollTop() > 240) {
             $("#gotop").fadeIn();
@@ -35,6 +35,7 @@ $(function () {
         }
     });
     $("#gotop").click(function () {
+        n = 1
         $('body, html').animate({
             scrollTop: 0
         }, 30);
