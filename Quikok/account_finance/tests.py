@@ -1229,6 +1229,7 @@ class test_finance_functions(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
+#python3 manage.py test account_finance.tests.test_student_purchase_payment_status --settings=Quikok.settings_for_test
 # 測試回傳訂單以及編輯訂單
 class test_student_purchase_payment_status(TestCase):
     #def query_order_info_status1_unpaid(self):
@@ -1407,22 +1408,30 @@ class test_student_purchase_payment_status(TestCase):
 
         obj_amount = student_purchase_record.objects.all().count()
         # 建立一個訂單
-        purchase_data = {
-            'userID': student_profile.objects.get(id=1).auth_id,
-            'teacherID': teacher_profile.objects.get(id=1).auth_id,
-            'lessonID': 1,
-            'sales_set': 'trial',#,'30:70''no_discount'
-            'total_amount_of_the_sales_set':self.lesson_post_data['trial_class_price'],
-            'q_discount': 0}
+        data = {
+            'userID': 2,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': 2,
+                    'teacherID':1,
+                    'lessonID':1,
+                    'sales_set': 'trial',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': self.lesson_post_data['trial_class_price'],
+                    'q_discount': 0
+                }])
+            }
+
+
         response = self.client.post(path= '/api/account_finance/storageOrder/', 
-                                    data= purchase_data)
+                                    data= data)
         # 確認有新建訂單
         self.assertEqual(student_purchase_record.objects.all().count(), obj_amount+1,
             student_purchase_record.objects.values())
         '''測試回傳指定userID的所有purchase這支api是否work'''
         data = {
             'userID': str(student_profile.objects.get(id=1).auth_id),
-            'token':'1',
             'type':'1'}
 
         response = \
@@ -1454,11 +1463,19 @@ class test_student_purchase_payment_status(TestCase):
         obj_amount = student_purchase_record.objects.all().count()
         # 建立訂單
         purchase_data = {
-            'userID':2,
-            'teacherID':1, 'lessonID':1,
-            'sales_set': 'trial',#,'30:70''no_discount'
-            'total_amount_of_the_sales_set':self.lesson_post_data['trial_class_price'],
-            'q_discount': 0}
+            'userID': 2,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': 2,
+                    'teacherID':1,
+                    'lessonID':1,
+                    'sales_set': 'trial',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': self.lesson_post_data['trial_class_price'],
+                    'q_discount': 0
+                }])
+            }
         response = self.client.post(path= '/api/account_finance/storageOrder/', 
                                     data= purchase_data)
         # 確認有新建訂單
@@ -1494,11 +1511,19 @@ class test_student_purchase_payment_status(TestCase):
         obj_amount = student_purchase_record.objects.all().count()
         # 建立訂單
         purchase_data = {
-            'userID':2,
-            'teacherID':1, 'lessonID':1,
-            'sales_set': 'trial',#,'30:70''no_discount'
-            'total_amount_of_the_sales_set':self.lesson_post_data['trial_class_price'],
-            'q_discount': 0}
+            'userID': 2,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': 2,
+                    'teacherID':1,
+                    'lessonID':1,
+                    'sales_set': 'trial',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': self.lesson_post_data['trial_class_price'],
+                    'q_discount': 0
+                }])
+            }
         response = self.client.post(path= '/api/account_finance/storageOrder/', 
                                     data= purchase_data)
         self.assertIn('success', str(response.content))
@@ -1572,11 +1597,19 @@ class test_student_purchase_payment_status(TestCase):
         obj_amount = student_purchase_record.objects.all().count()
         # 建立訂單
         purchase_data = {
-            'userID':2,
-            'teacherID':1, 'lessonID':1,
-            'sales_set': 'no_discount',#'trial','30:70'
-            'total_amount_of_the_sales_set':self.lesson_post_data['price_per_hour'],
-            'q_discount': 0}
+            'userID': 2,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': 2,
+                    'teacherID':1,
+                    'lessonID':1,
+                    'sales_set': 'no_discount',#,'','30:70']
+                    'total_amount_of_the_sales_set': self.lesson_post_data['price_per_hour'],
+                    'q_discount': 0
+                }])
+            }
         response = self.client.post(path= '/api/account_finance/storageOrder/', 
                                     data= purchase_data)
         # 確認有新建訂單
@@ -1739,14 +1772,23 @@ class test_student_purchase_payment_status(TestCase):
 
     def test_student_edit_order_cancel_before_paid(self):
         '''在付款前就取消訂單'''
-        buy_data = {'userID':2,
-            'teacherID':1,
-            'lessonID':1,
-            'sales_set': 'trial',#,'no_discount','30:70']
-            'total_amount_of_the_sales_set': self.lesson_post_data['trial_class_price'],
-            'q_discount': 0}
+        purchase_data = {
+            'userID': 2,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': 2,
+                    'teacherID':1,
+                    'lessonID':1,
+                    'sales_set': 'trial',#,'','30:70']
+                    'total_amount_of_the_sales_set': self.lesson_post_data['trial_class_price'],
+                    'q_discount': 0
+                }])
+            }
 
-        response1 = self.client.post(path='/api/account_finance/storageOrder/', data=buy_data)
+
+        response1 = self.client.post(path='/api/account_finance/storageOrder/', data=purchase_data)
         # 先買一次,確認有成功
         self.assertIn('success', str(response1.content))
         # 取得剛剛買的這堂課的id的id
