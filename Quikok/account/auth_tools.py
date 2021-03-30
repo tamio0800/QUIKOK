@@ -29,7 +29,7 @@ class auth_check_manager:
             #'上課live_house' : ('', 'member_only'), # 還沒做到
             #'聊天室主頁' : ('', 'member_only'), # 還沒做到
             '學生會員中心' : ('^/account/info/student', 1,4,5),
-            '商品結帳' :('^/store/checkout',1,4,5),
+            '商品結帳' :('^/store/checkout',1,2,4,5),
             '帳務中心' :('^/account/finance',1,2,3,4,5),
             '預約管理' :('^/account/reservation',2,3,5),
             '課程預約' :('^/lesson/appointment',1,4,5),
