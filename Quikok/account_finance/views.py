@@ -371,35 +371,20 @@ def storage_order(request):
         q_discount_can_use = int(total_q_discount) # 可使用的q幣,會隨著每張訂單減少
         if use_q_discount == True:
             # 得出一個依照價格高到低在原本list的位置的 list,稱為已排list
-            #price_sorted_index_list = sorted(range(len(amount_in_orders_list)), key=lambda price: amount_in_orders_list[price], reverse=True)
-            price_sorted_list = sorted(amount_in_orders_list,reverse=True)
-            logging.info(f"account_finance/views/storage_order 訂單金額從小排到大:{price_sorted_list}")
-            be_minus_q_discount = int(total_q_discount)
-            for index_num, price in enumerate(price_sorted_list):
-                # Q幣從最高金額開始減,如果< 0, 就不用再扣了,並且紀錄是扣到第幾筆
-                be_minus_q_discount -=  price
-                if be_minus_q_discount <= 0:   
-                    price_sorted_list_use_q_point_max_index = index_num # 只會扣到這筆
-                    logging.info(f"account_finance/views/storage_order 使用q幣到金額:{price},位置{index_num}的時候抵扣完畢")
-                    break
-                
-            # 用已排list的位置找金額,再用金額
-            # 回推在未排list的index(會等於原訂單(order)的順序),紀錄第一個一樣的金額位置後就刪除,所以金額重複也沒關係
-            checked_price = list()
-            for num in range(price_sorted_list_use_q_point_max_index+1):
-                logging.info(f"account_finance/views/storage_order 從大到小的第n個金額為:{price_sorted_list[num]}")
-                logging.info(f"account_finance/views/storage_order 原訂單金額列表:{amount_in_orders_list}")
-                #logging.info(f"account_finance/views/storage_order 原訂單的位置:")
-                    
-                order_use_q_discount_index_list.append(amount_in_orders_list.index(price_sorted_list[num]))
-                amount_in_orders_list.remove(price_sorted_list[num])
-                #order_use_q_discount_price_list.append(price_sorted_list[num]) #紀錄回推的金額
 
-            logging.info(f"account_finance/views/storage_order 需要折抵的訂單編號list:{order_use_q_discount_index_list}")
-            
+            # 這邊得到的 index從大到小的順序,要從最大的開始扣q幣
+            price_sorted_index_list = sorted(range(len(amount_in_orders_list)), key=lambda price: amount_in_orders_list[price], reverse=True)
+            logging.info(f"account_finance/views/storage_order 從大到小的index為:{price_sorted_index_list}")
+            logging.info(f"account_finance/views/storage_order 原訂單金額列表:{amount_in_orders_list}")
+            be_minus_q_discount = int(total_q_discount) # 經過每筆訂單,可用的q幣就會減少
+            for index in price_sorted_index_list:
+                be_minus_q_discount -= amount_in_orders_list[index]
+                order_use_q_discount_index_list.append(index)
+                if be_minus_q_discount <= 0: # 扣到這筆,q幣就用完了
+                    break
+            logging.info(f"account_finance/views/storage_order 使用q幣的訂單號碼{order_use_q_discount_index_list}的時候抵扣完畢")
+
             # 預扣額度增加,可使用額度減少
-            
-            
             student_obj.withholding_balance += q_discount_can_use # 預扣
             student_obj.balance -= q_discount_can_use
             student_obj.save()
