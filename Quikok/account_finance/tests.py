@@ -317,21 +317,15 @@ class test_exam_bank(TestCase):
         self.assertEqual(mail.outbox[0].subject, '用戶申請題庫退款通知信')
 
 
-
-    @skip
-    def test_storege_bank_order(self):
-        # 測試單純建立題庫訂單,是否能順利寫入
-        # 要先建立題庫set才能測試
-        order_data = {
+    def test_bank_order_history(self):
+        '''測試回傳歷史訂單'''
+        post_data = {
          # exam_bank_sales_setID: 正式版才會有
-            order_type: 'exam_bank_order', #/題庫
-            userID: 2, #購買者id 
-            sales_set : self.duration, #選擇的題庫方案"時間"
-            total_amount_of_the_sales_set: self.selling_price,
-            q_discount: 0 #這版不會用到只是預留
+            'userID': 2, #購買者id 
+            'type': 'student'
             } 
-
-        response = self.client.post(path='/api/account_finance/storageOrder/', data=data)
+        header = {'HTTP_Authorization':'bearer 1234'}
+        response = self.client.post(path='/api/account_finance/examBankOrderHistory/', data=post_data,**header )
         self.assertEqual(response.status_code, 200)
         self.assertJSONEqual(
             str(response.content, encoding='utf8'),
@@ -339,7 +333,7 @@ class test_exam_bank(TestCase):
                 'status': 'success',
                 'errCode': None,
                 'errMsg': None,
-                'data': 1 # 建立1號訂單
+                'data': None
             })
 
     def tearDown(self):

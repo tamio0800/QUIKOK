@@ -1,6 +1,6 @@
 import logging
 from django.shortcuts import render
-import math, json
+import math, json, logging
 from account_finance.models import (student_purchase_record, 
     student_remaining_minutes_of_each_purchased_lesson_set, 
     student_remaining_minutes_when_request_refund_each_purchased_lesson_set,
@@ -142,6 +142,10 @@ def exam_bank_order_history(request):
                 'errCode': 1,
                 'errMsg': '資料傳輸失敗，如問題持續麻煩聯絡客服！',
                 'data': None}
+            return JsonResponse(response)
+
+            logging.error('views/exam_bank_order_history 回傳題庫歷史訂單錯誤, userID:{userID},\
+                user_type:{user_type}, token_from_user_raw:{token_from_user_raw}')
 
         # 當前端傳來空白token時(例如訪客), bearer後面會是空白的,這邊寫死來判斷
         else:
@@ -151,10 +155,38 @@ def exam_bank_order_history(request):
             else:
                 token_from_user = ''
 
+            record = user_purchase_exam_bank_record.objects.filter(user_auth_id = userID).first()
+            if record is None:
+                data = None
+            
+            else:
+                purchase_date = (record.created_time).strftime("%Y-%m-%d") 
+                duration_days= exam_bank_sales_set.objects.get(id = record.exam_bank_sales_set_id).duration      
+                
+                remittance_info = {
+                'bank_code': '088',
+                'bank_name': '國泰世華銀行',
+                'bank_branches': '板橋分行',
+                'bank_account':'012345-411153',
+                'bank_account_name': '豆沙科技股份有限公司'}
+                
+                data = {'order_type': 'exam_order',
+                        'edony_bank': remittance_info,
+                        'is_valid':record.is_valid,
+                        'purchase_status': record.payment_status,
+                        'purchase_date':purchase_date,
+                        'start_date': '',
+                        'end_date':'',
+                        'sales_set':duration_days,
+                        'purchased_with_money':record.purchased_with_money
+                        }
+                logging.info(f"account_finance/views/exam_bank_order_history 題庫訂單歷史回傳:{data}")
+
             response = {'status':'success',
                 'errCode': None,
                 'errMsg': None,
-                'data': None}
+                'data': data}
+            return JsonResponse(response)
     
     except Exception as e:
         print(f'account_finance:exam_bank_edit_order Exception {e}')
@@ -495,6 +527,8 @@ def storage_order(request):
         'errMsg': '資料庫有問題，請稍後再試',
         'data': None}
         return JsonResponse(response)
+
+
 
 
 def student_order_history(request):
@@ -1372,8 +1406,3 @@ def get_q_points_wtihdrawal_history(request):
 
     return JsonResponse(response)
 
-
-    
-
-def exam_bank_order_history(request):
-    pass
