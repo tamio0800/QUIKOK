@@ -378,16 +378,19 @@ def storage_order(request):
             for index_num, price in enumerate(price_sorted_list):
                 # Q幣從最高金額開始減,如果< 0, 就不用再扣了,並且紀錄是扣到第幾筆
                 be_minus_q_discount -=  price
-                if be_minus_q_discount < 0:   
+                if be_minus_q_discount <= 0:   
                     price_sorted_list_use_q_point_max_index = index_num # 只會扣到這筆
                     logging.info(f"account_finance/views/storage_order 使用q幣到金額:{price},位置{index_num}的時候抵扣完畢")
                     break
-                #logging.info(f"account_finance/views/storage_order 使用q幣到金額:{price},位置{index_num}的時候抵扣完畢")
-
+                
             # 用已排list的位置找金額,再用金額
             # 回推在未排list的index(會等於原訂單(order)的順序),紀錄第一個一樣的金額位置後就刪除,所以金額重複也沒關係
-            #order_use_q_discount_index_list = list()    
+            checked_price = list()
             for num in range(price_sorted_list_use_q_point_max_index+1):
+                logging.info(f"account_finance/views/storage_order 從大到小的第n個金額為:{price_sorted_list[num]}")
+                logging.info(f"account_finance/views/storage_order 原訂單金額列表:{amount_in_orders_list}")
+                #logging.info(f"account_finance/views/storage_order 原訂單的位置:")
+                    
                 order_use_q_discount_index_list.append(amount_in_orders_list.index(price_sorted_list[num]))
                 amount_in_orders_list.remove(price_sorted_list[num])
                 #order_use_q_discount_price_list.append(price_sorted_list[num]) #紀錄回推的金額
@@ -395,8 +398,8 @@ def storage_order(request):
             logging.info(f"account_finance/views/storage_order 需要折抵的訂單編號list:{order_use_q_discount_index_list}")
             
             # 預扣額度增加,可使用額度減少
-            print('xxxxxxxx')
-            print(st)
+            
+            
             student_obj.withholding_balance += q_discount_can_use # 預扣
             student_obj.balance -= q_discount_can_use
             student_obj.save()
@@ -418,7 +421,6 @@ def storage_order(request):
                                                         is_open = True,
                                                         sales_set = lesson_set)
 
-                #purchase_date = datetime.now()
                 payment_deadline = datetime.now() + timedelta(days=6)
                 
                 purchased_with_money = int()
@@ -437,8 +439,6 @@ def storage_order(request):
                     else:
                         pass
                     q_discount_can_use -= price # 可使用的q幣會隨著有用到的訂單減少
-                    #if q_discount_can_use <= 0: # 正常來說是不會走到這
-                    #    break
                 else:
                     purchased_with_money = price
                     purchased_with_q_points = 0
@@ -501,9 +501,6 @@ def storage_order(request):
                     'data': None}
 
         return JsonResponse(response) 
-
-
-
     
     except Exception as e:
         logging.error(f"account_finance/views/storage_order 錯誤:{e}")

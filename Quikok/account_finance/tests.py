@@ -840,22 +840,86 @@ class test_finance_functions(TestCase):
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
 
-    @skip
+    
     def test_student_q_coin_balance_run_out_second_order(self):
         '''
         讓學生使用Q幣一次買三堂課, 買到第二堂剛好會用完, 確認訂單是否有照高到低寫入
         這時是Q幣很高、課程價格較便宜的情況
         '''
-    
-        pass
+        # 先把學生的q幣餘額提高到剛好可以付兩堂課
+        use_q_coin = 8000  #使用q幣 7200+800
+        lesson_set = '10:90'
+        student_obj = student_profile.objects.get(id=3)
+        student_obj.balance = 8000
+        student_obj.save()
+        new_student_obj = student_profile.objects.get(id=3)
+        self.assertEqual(new_student_obj.balance, 8000)
+        print('測試一次買三個課程而且有用Q幣')
+        # 一次買三堂課
+        post_data = {
+            'userID': student_obj.auth_id,
+            'total_q_discount': use_q_coin,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([
+                {
+                    'order_type':'lesson_order',
+                    'userID': 4,
+                    'teacherID':1,
+                    'lessonID':1,
+                    'sales_set': lesson_set,
+                    'total_amount_of_the_sales_set': int(800 * 10 * 0.9),
+                    'q_discount': 0
+                },
+                {
+                    'order_type':'lesson_order',
+                    'userID': 4,
+                    'teacherID':1,
+                    'lessonID':1,
+                    'sales_set': 'no_discount',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': self.lesson_post_data['price_per_hour'],
+                    'q_discount': 0
+                    },
+                {
+                    'order_type':'lesson_order',
+                    'userID': 4,
+                    'teacherID':1,
+                    'lessonID':1,
+                    'sales_set': 'trial',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set':self.lesson_post_data['trial_class_price'],
+                    'q_discount': 0
+                }
+                ])
+            }
+        # 以上三張訂單,金額由大排到小是 7200, 800, 69
+        # 所以如果給 869 Q幣會從7200扣
+        self.client.post(path='/api/account_finance/storageOrder/', data=post_data)
+        # 確認每個訂單寫入的金額是否正確
+        # 確認各方案的ID
+        print(lesson_sales_sets.objects.values())
+        trial_id = lesson_sales_sets.objects.get(teacher_auth_id = 1, lesson_id =1 , sales_set = 'trial').id
+        one_lesson_id= lesson_sales_sets.objects.get(teacher_auth_id = 1, lesson_id =1 , sales_set = 'no_discount').id
+        set_lesson_id = lesson_sales_sets.objects.get(teacher_auth_id = 1, lesson_id =1 , sales_set = '10:90').id
+        print(f'已儲存的訂定單資訊{student_purchase_record.objects.values()}')
+        trial_record = student_purchase_record.objects.get(student_auth_id=student_obj.auth_id, lesson_sales_set_id = trial_id)
+        self.assertEqual(trial_record.purchased_with_q_points, 0, lesson_sales_sets.objects.values())
+        self.assertEqual(trial_record.purchased_with_money, 69, lesson_sales_sets.objects.values())
+        
+        one_lesson_record = student_purchase_record.objects.get(student_auth_id=student_obj.auth_id, lesson_sales_set_id = one_lesson_id)
+        self.assertEqual(one_lesson_record.purchased_with_q_points, 800)
+        self.assertEqual(one_lesson_record.purchased_with_money, 0)
+
+        set_lesson_record = student_purchase_record.objects.get(student_auth_id=student_obj.auth_id, lesson_sales_set_id = set_lesson_id)
+        self.assertEqual(set_lesson_record.purchased_with_q_points, 7200)
+        self.assertEqual(set_lesson_record.purchased_with_money, 0)
+
     
     def test_student_q_coin_balance_run_out_first_order(self):
         '''
         讓學生使用Q幣一次買三堂課, 確認訂單是否有照高到低寫入、抵扣金額是否都正確
-        這時是課程>Q幣的情況
+        這時是課程>Q幣的情況, Q幣在第一個最高價的課就會用完
         '''
-        lesson_set = '10:90' #測試 10:90 看看是否成功
-        use_q_coin = 869  #使用q幣, 剛好夠付一堂課+試教
+        lesson_set = '10:90' 
+        use_q_coin = 869  #使用q幣
         # 先把學生的q幣餘額提高到剛好可以付兩堂課
         student_obj = student_profile.objects.get(id=3)
         #student_obj.balance = 869
@@ -919,6 +983,10 @@ class test_finance_functions(TestCase):
         set_lesson_record = student_purchase_record.objects.get(student_auth_id=student_obj.auth_id, lesson_sales_set_id = set_lesson_id)
         self.assertEqual(set_lesson_record.purchased_with_q_points, 869)
         self.assertEqual(set_lesson_record.purchased_with_money, (int(self.lesson_post_data['price_per_hour'] * 10 * 0.9)-869))
+
+
+
+
 
 
     def test_if_storege_order_select_active_lesson_sales_set(self):
