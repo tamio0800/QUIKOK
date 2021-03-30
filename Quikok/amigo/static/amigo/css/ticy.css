@@ -193,7 +193,14 @@ a {
     font-size: 20px;
 }
 
-a:hover p {
+a:hover p{
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 25px;
+}
+
+a:hover {
     color: white;
     text-decoration: none;
     font-weight: 600;
@@ -219,11 +226,25 @@ button {
     right: 0px;
 }
 
-span {
+button:hover{
+    background-color: #ffd00d;
+    color: #FFFFFF;
+    box-shadow: 0 0 5px #FF9900, 0 0 25px #FF9900, 0 0 50px #FF9900, 0 0 250px #FF9900;
+}
+
+.discount {
     color: white;
     font-weight: 900;
     font-size: large;
     letter-spacing: 1px;
+}
+
+.origin{
+    color: #8193b2;
+    font-weight: 400;
+    font-size: 0.8rem;
+    text-decoration:line-through;
+    line-height: 1px;
 }
 
 .row {
@@ -240,23 +261,33 @@ span {
     position: absolute;
     bottom: 0px;
     width: -webkit-fill-available;
-    background: #0575E6;
+    /* background: #0575E6; */
     /* fallback for old browsers */
-    background: -webkit-linear-gradient(to right, #021B79, #0575E6);
-    background: linear-gradient(to right, #021B79, #0575E6);
+    /* background: -webkit-linear-gradient(to right, #021B79, #0575E6);
+    background: linear-gradient(to right, #021B79, #0575E6); */
     height: 20vh;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
+.button_container img{
+    opacity: 0;
+}
+
+.card:hover img{
+    opacity: 1;
+}
+
 .card {
     /* 設定父定位點 */
-    position: relative;
     width: 200px;
     float: left;
     margin: 10px;
-    border: none !important;
+    text-shadow: 0 0 2px #00bdff, 0 0 0px #00bdff, 0 0 0px #021b79, 0 0 3px #021b79, 0 0 3px #00bdff;
+    background-color: rgba(255, 255, 255, 0) ;
+    border: 1px solid rgb(255 255 255 / 30%) !important;   
+    box-shadow: 3px 3px 6px rgb(5 204 255 / 25%);
 }
 
 .mbcards {
@@ -283,7 +314,7 @@ span {
 
 .info p {
     color: #fff;
-    line-height: 1rem;
+    line-height: 0.5rem;
     font-size: 20px;
 }
 
@@ -344,7 +375,13 @@ h2 {
     font-weight: 700;
     letter-spacing: 1px;
     z-index: 1;
-    margin-top: 17%;
+    margin-top: 18%;
+}
+
+.lastber button:hover{
+    background-color: #ffd00d;
+    color: #FFFFFF;
+    box-shadow: 0 0 5px #FF9900, 0 0 25px #FF9900, 0 0 50px #FF9900, 0 0 250px #FF9900;
 }
 
 .footer {
@@ -352,6 +389,7 @@ h2 {
     -webkit-box-pack: center;
     z-index: 1;
     padding: 10px 0px;
+    margin-top: 3px;
 }
 
 .footer p {
@@ -411,7 +449,7 @@ p.title {
     }
 
     .pay-order button {
-        font-size: 20px;
+        font-size: 18px;
         margin: 0 auto;
     }
 
@@ -468,6 +506,15 @@ p.title {
     .button_container {
         height: 22vh;
     }
+    .button_container {
+        position: absolute;
+        bottom: 0px;
+        width: -webkit-fill-available;
+        background: #0575E6;
+        background: -webkit-linear-gradient(to right, #021B79, #0575E6);
+        background: linear-gradient(to right, #021B79, #0575E6);
+    }
+
 }
 
 /* Small Phones to small Tablet 481-767px(Ipad) */
@@ -508,11 +555,12 @@ p.title {
     .lastber button {
         font-size: 12px;
         padding: 10px;
-        margin-top: 22%;
+        margin-top: 23%;
     }
 
     button {
         font-size: 20px;
+        margin: 10px 0px;
     }
 
     .banner_mb img {
