@@ -330,7 +330,7 @@ def storage_order(request):
                                     if use_q_discount == True: # 記錄每堂課的費用
                                         amount_in_orders_list.append(int(price))
                                                 
-                                        logging.info(f"account_finance/views/storage_order 買taril以外的課程有使用q幣, 金額:{price}")
+                                        logging.info(f"account_finance/views/storage_order 買trial以外的課程有使用q幣, 金額:{price}")
                                         logging.info(f"account_finance/views/storage_order 紀錄訂單金額:{amount_in_orders_list}")
                                 
             # 題庫訂單的檢查
@@ -372,7 +372,7 @@ def storage_order(request):
         if use_q_discount == True:
             # 得出一個依照價格高到低在原本list的位置的 list,稱為已排list
             #price_sorted_index_list = sorted(range(len(amount_in_orders_list)), key=lambda price: amount_in_orders_list[price], reverse=True)
-            price_sorted_list = sorted(amount_in_orders_list)
+            price_sorted_list = sorted(amount_in_orders_list,reverse=True)
             logging.info(f"account_finance/views/storage_order 訂單金額從小排到大:{price_sorted_list}")
             be_minus_q_discount = int(total_q_discount)
             for index_num, price in enumerate(price_sorted_list):
@@ -380,8 +380,9 @@ def storage_order(request):
                 be_minus_q_discount -=  price
                 if be_minus_q_discount < 0:   
                     price_sorted_list_use_q_point_max_index = index_num # 只會扣到這筆
+                    logging.info(f"account_finance/views/storage_order 使用q幣到金額:{price},位置{index_num}的時候抵扣完畢")
                     break
-                logging.info(f"account_finance/views/storage_order 使用q幣到金額:{price},位置{index_num}的時候抵扣完畢")
+                #logging.info(f"account_finance/views/storage_order 使用q幣到金額:{price},位置{index_num}的時候抵扣完畢")
 
             # 用已排list的位置找金額,再用金額
             # 回推在未排list的index(會等於原訂單(order)的順序),紀錄第一個一樣的金額位置後就刪除,所以金額重複也沒關係
@@ -394,11 +395,14 @@ def storage_order(request):
             logging.info(f"account_finance/views/storage_order 需要折抵的訂單編號list:{order_use_q_discount_index_list}")
             
             # 預扣額度增加,可使用額度減少
-            student_obj.withholding_balance += q_discount_can_use
+            print('xxxxxxxx')
+            print(st)
+            student_obj.withholding_balance += q_discount_can_use # 預扣
             student_obj.balance -= q_discount_can_use
             student_obj.save()
             logging.info(f"account_finance/views/storage_order 學生預扣與可使用額度已更新")
-            logging.info(f"account_finance/views/storage_order 預扣額增為:{student_obj.withholding_balance + q_discount_can_use},可使用額度:{student_obj.balance - q_discount_can_use}")
+            logging.info(f"account_finance/views/storage_order 預扣額增為:{student_obj.withholding_balance},\
+                可使用額度:{student_obj.balance}")
 
         
         for index, each_order in enumerate(total_order_list):
@@ -426,7 +430,7 @@ def storage_order(request):
                     if price > q_discount_can_use : # 要買的課程比擁有的Q幣貴
                         purchased_with_money = price - q_discount_can_use
                         purchased_with_q_points = q_discount_can_use
-                        logging.info(f"account_finance/views/storage_order 算好了:{purchased_with_money},{purchased_with_q_points}")
+                        logging.info(f"account_finance/views/storage_order 算好了,現金:{purchased_with_money},用Q幣:{purchased_with_q_points}")
                     elif q_discount_can_use >= price  : # Q幣大於或等於要買的課程,那就不用付現金
                         purchased_with_money = 0
                         purchased_with_q_points = price #最多折抵跟課程一樣的金額
