@@ -31,8 +31,8 @@ class user_purchase_exam_bank_record(models.Model):
         return f"題庫購買人auth_id: {str(self.user_auth_id)}, 方案:{str(self.exam_bank_sales_set_id)}"
 
     class Meta:
-        verbose_name = '題庫訂閱紀錄'
-        verbose_name_plural = '題庫訂閱紀錄'
+        verbose_name = '題庫預購紀錄'
+        verbose_name_plural = '題庫預購紀錄'
         ordering = ['-updated_time']
 
 # 學生購買紀錄
@@ -63,8 +63,8 @@ class student_purchase_record(models.Model):
         return f"學生{str(self.student_auth_id)} 購買 {self.teacher_nickname} 總價 {str(self.price)} 的方案。 狀態: {self.payment_status}"
 
     class Meta:
-        verbose_name = '學生購買紀錄'
-        verbose_name_plural = '學生購買紀錄'
+        verbose_name = '學生購買課程紀錄'
+        verbose_name_plural = '學生購買課程紀錄'
         ordering = ['-updated_time']
 
 
