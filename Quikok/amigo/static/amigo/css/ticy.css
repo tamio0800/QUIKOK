@@ -139,9 +139,9 @@ table {
 
 /*CSS Reset*/
 
-body {
+/* body {
     overflow: hidden;
-}
+} */
 
 .application--wrap {
     -webkit-box-flex: 1;
@@ -453,10 +453,6 @@ p.title {
     .pay-order button {
         font-size: 18px;
         margin: 0 auto;
-    }
-
-    .ftt {
-        display: flex;
     }
 
     .ftt p {
