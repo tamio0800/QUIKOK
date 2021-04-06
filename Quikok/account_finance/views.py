@@ -171,7 +171,7 @@ def exam_bank_order_history(request):
                 'bank_account_name': '豆沙科技股份有限公司'}
                 
                 data = {'order_type': 'exam_order',
-                        'edony_bank': remittance_info,
+                        'edony_bank_info': remittance_info,
                         'is_valid':record.is_valid,
                         'purchase_status': record.payment_status,
                         'purchase_date':purchase_date,
