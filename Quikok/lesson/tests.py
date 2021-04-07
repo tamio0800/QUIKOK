@@ -4,7 +4,7 @@ from django.test import TestCase, Client
 from django.core import mail
 import os
 from django.conf import settings
-import shutil
+import shutil, json
 from lesson.models import (lesson_completed_record, lesson_info_for_users_not_signed_up, 
                             lesson_info, lesson_card, lesson_sales_sets)
 from account.models import (general_available_time, student_profile, teacher_profile,
@@ -2183,15 +2183,22 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
     
     def test_if_2_students_can_book_overlapped_time_to_a_teacher(self):
         # 測試學生們可否預約同一個老師的重複(部分或完全)時段
-        order_post_data = {
+        purchase_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,
-            'teacherID': teacher_profile.objects.first().auth_id,
-            'lessonID': lesson_info.objects.get(id=1).id,
-            'sales_set': '10:90',
-            'total_amount_of_the_sales_set': int(800 * 10 * 0.9),
-            'q_discount':0
-        }  #測試 trial 看看是否成功
-        self.client.post(path='/api/account_finance/storageOrder/', data=order_post_data)
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).id,
+                    'lessonID': 1,
+                    'sales_set': '10:90',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': int(10*800*.9),
+                    'q_discount': 0
+                    }])
+                }
+
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
         # 將它設定為已付款
 
         student_edit_booking_status_post_data = {
@@ -2217,15 +2224,22 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         the_student_purchase_record_object.payment_status = 'paid'
         the_student_purchase_record_object.save()  # 學生1號設定完成
 
-        order_post_data = {
+        purchase_post_data = {
             'userID': student_profile.objects.get(id=2).auth_id,
-            'teacherID': teacher_profile.objects.first().auth_id,
-            'lessonID': lesson_info.objects.get(id=1).id,
-            'sales_set': 'trial',
-            'total_amount_of_the_sales_set': 69,
-            'q_discount':0
-        }  #測試 trial 看看是否成功
-        response = self.client.post(path='/api/account_finance/storageOrder/', data=order_post_data)
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=2).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).id,
+                    'lessonID': 1,
+                    'sales_set': 'trial',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': 69,
+                    'q_discount': 0
+                    }])
+                }
+
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
         # 將它設定為已付款
         self.assertIn('success', str(response.content, 'utf8'), str(response.content, 'utf8'))
         
@@ -2320,15 +2334,23 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         )  # 如果老師接受了學生2的試教，應該取消學生1的對應的預約
 
         # 讓學生2再預約一點課程
-        order_post_data = {
+
+        purchase_post_data = {
             'userID': student_profile.objects.get(id=2).auth_id,
-            'teacherID': teacher_profile.objects.first().auth_id,
-            'lessonID': lesson_info.objects.get(id=1).id,
-            'sales_set': '20:80',
-            'total_amount_of_the_sales_set': int(20*800*0.8),
-            'q_discount':0
-        }  #測試 trial 看看是否成功
-        response = self.client.post(path='/api/account_finance/storageOrder/', data=order_post_data)
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=2).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).id,
+                    'lessonID': 1,
+                    'sales_set': '20:80',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': int(20*800*0.8),
+                    'q_discount': 0
+                    }])
+                }
+
+        response = self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
         # 將它設定為已付款
         self.assertIn('success', str(response.content, 'utf8'), str(response.content, 'utf8'))
         
@@ -2430,15 +2452,20 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         當他有試教課程還沒使用時，是否可以成功回傳其他情況下的正確數值。
         '''
         # 還要建立課程才能測試
-        purchase_post_data = \
-            {
-                'userID':student_profile.objects.first().auth_id,
-                'teacherID':teacher_profile.objects.first().auth_id,
-                'lessonID':lesson_info.objects.get(id=1).id,
-                'sales_set': 'trial',
-                'total_amount_of_the_sales_set': 69,
-                'q_discount':0}
-
+        purchase_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).auth_id,
+                    'lessonID':lesson_info.objects.get(id=1).id,
+                    'sales_set': 'trial',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': 69,
+                    'q_discount': 0
+                    }])
+                }
         response = \
             self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
         # 建立購買資料
@@ -2507,14 +2534,20 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         # 理論上會回傳類似這樣的形式 >> (remaining_minutes(INT), has_unused_trial(Bool))
 
         # 此時再購買一個 20:80 的方案
-        purchase_post_data = \
-            {
-                'userID':student_profile.objects.first().auth_id,
-                'teacherID':teacher_profile.objects.first().auth_id,
-                'lessonID':lesson_info.objects.get(id=1).id,
-                'sales_set': '20:80',
-                'total_amount_of_the_sales_set': int(800*20*0.8),
-                'q_discount':0}
+        purchase_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).auth_id,
+                    'lessonID':lesson_info.objects.get(id=1).id,
+                    'sales_set': '20:80',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': int(800*20*0.8),
+                    'q_discount': 0
+                    }])
+                }
 
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
         # 建立購買資料
@@ -2570,14 +2603,20 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         當他沒有試教課程還沒使用時，是否可以成功回傳其他情況下的正確數值。
         '''
         # 此時再購買一個 20:80 的方案
-        purchase_post_data = \
-            {
-                'userID':student_profile.objects.first().auth_id,
-                'teacherID':teacher_profile.objects.first().auth_id,
-                'lessonID':lesson_info.objects.get(id=1).id,
-                'sales_set': '30:75',
-                'total_amount_of_the_sales_set': int(800*30*0.75),
-                'q_discount':0}
+        purchase_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).auth_id,
+                    'lessonID': 1,
+                    'sales_set': '30:75',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': int(800*30*0.75),
+                    'q_discount': 0
+                    }])
+                }
 
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
         # 建立購買資料
@@ -2630,14 +2669,22 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         '''
         測試學生預約試教後，回傳資訊正不正確
         '''
-        purchase_post_data = \
-            {
-                'userID':student_profile.objects.first().auth_id,
-                'teacherID':teacher_profile.objects.first().auth_id,
-                'lessonID':lesson_info.objects.get(id=1).id,
-                'sales_set': 'trial',
-                'total_amount_of_the_sales_set': 69,
-                'q_discount':0}
+        purchase_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).auth_id,
+                    'lessonID':1,
+                    'sales_set': 'trial',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': 69,
+                    'q_discount': 0
+                }
+            ])
+        }
+
 
         response = \
             self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
@@ -2677,14 +2724,21 @@ class Lesson_Booking_Related_Functions_Test(TestCase):
         '''
         測試學生預約一般課程後，回傳資訊正不正確
         '''
-        purchase_post_data = \
-            {
-                'userID':student_profile.objects.first().auth_id,
-                'teacherID':teacher_profile.objects.first().auth_id,
-                'lessonID':lesson_info.objects.get(id=1).id,
-                'sales_set': '10:90',
-                'total_amount_of_the_sales_set': int(800*10*0.9),
-                'q_discount':0}
+        purchase_post_data = {
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).auth_id,
+                    'lessonID':1,
+                    'sales_set': '10:90',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': int(800*10*0.9),
+                    'q_discount': 0
+                }
+            ])
+        }
 
         response = \
             self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
@@ -2913,14 +2967,20 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
 
      
     def test_get_teacher_s_booking_history_work_when_teacher_has_common_lessons_filtered_and_not(self):
-        
         purchase_post_data = {
-            'userID':student_profile.objects.first().auth_id,
-            'teacherID':teacher_profile.objects.first().auth_id,
-            'lessonID':lesson_info.objects.get(lesson_title='test_lesson_1').id,
-            'sales_set': '10:90',
-            'total_amount_of_the_sales_set': int(800*10*0.9),
-            'q_discount':0}
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).auth_id,
+                    'lessonID':lesson_info.objects.get(lesson_title='test_lesson_1').id,
+                    'sales_set': '10:90',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': int(800*10*0.9),
+                    'q_discount': 0
+                    }])
+                }
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
         student_edit_booking_status_post_data = {
@@ -3096,12 +3156,19 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
 
         # 此時帶入學生2號
         purchase_post_data = {
-            'userID':student_profile.objects.get(id=2).auth_id,
-            'teacherID':teacher_profile.objects.first().auth_id,
-            'lessonID':lesson_info.objects.get(lesson_title='test_lesson_1').id,
-            'sales_set': '10:90',
-            'total_amount_of_the_sales_set': int(800*10*0.9),
-            'q_discount':0}
+            'userID': student_profile.objects.get(id=2).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=2).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).auth_id,
+                    'lessonID':lesson_info.objects.get(lesson_title='test_lesson_1').id,
+                    'sales_set': '10:90',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': int(800*10*0.9),
+                    'q_discount': 0
+                    }])
+                }
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
         student_edit_booking_status_post_data = {
@@ -3172,14 +3239,23 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
                 lesson_id=lesson_info.objects.get(lesson_title='test_lesson_1').id
             ).exists()
             )
-        
+
         purchase_post_data = {
-            'userID':student_profile.objects.first().auth_id,
-            'teacherID':teacher_profile.objects.first().auth_id,
-            'lessonID':lesson_info.objects.get(lesson_title='test_lesson_1').id,
-            'sales_set': 'trial',
-            'total_amount_of_the_sales_set': 69,
-            'q_discount':0}
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).auth_id,
+                    'lessonID':lesson_info.objects.get(lesson_title='test_lesson_1').id,
+                    'sales_set': 'trial',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': 69,
+                    'q_discount': 0
+                    }])
+                }
+        
+
         response = \
             self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
         self.assertIn('success', str(response.content, "utf8"), 
@@ -3241,14 +3317,21 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         str(response.content, "utf8")) # 共1筆
         self.assertIn(f'"discount_price": "trial"', str(response.content, "utf8"))
         
-
         purchase_post_data = {
-            'userID':student_profile.objects.first().auth_id,
-            'teacherID':teacher_profile.objects.first().auth_id,
-            'lessonID':lesson_info.objects.get(lesson_title='test_lesson_1').id,
-            'sales_set': 'no_discount',
-            'total_amount_of_the_sales_set': 800,
-            'q_discount':0}
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).auth_id,
+                    'lessonID':lesson_info.objects.get(lesson_title='test_lesson_1').id,
+                    'sales_set': 'no_discount',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': 800,
+                    'q_discount': 0
+                    }])
+                }
+
         response = \
             self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
         self.assertIn('success', str(response.content, "utf8"),
@@ -3315,12 +3398,20 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
 
         # 加入學生 auth_id = 2
         purchase_post_data = {
-            'userID':student_profile.objects.get(id=2).auth_id,
-            'teacherID':teacher_profile.objects.first().auth_id,
-            'lessonID':lesson_info.objects.get(lesson_title='test_lesson_1').id,
-            'sales_set': '10:90',
-            'total_amount_of_the_sales_set': int(800*10*0.9),
-            'q_discount':0}
+            'userID': student_profile.objects.get(id=2).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=2).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).auth_id,
+                    'lessonID':lesson_info.objects.get(lesson_title='test_lesson_1').id,
+                    'sales_set': '10:90',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': int(800*10*0.9),
+                    'q_discount': 0
+                    }])
+                }
+
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
         student_edit_booking_status_post_data = {
@@ -3389,12 +3480,20 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
     def test_searched_by_feature(self):
         # 測試搜尋功能是否運作正確
         purchase_post_data = {
-            'userID':student_profile.objects.first().auth_id,
-            'teacherID':teacher_profile.objects.first().auth_id,
-            'lessonID':lesson_info.objects.get(lesson_title='test_lesson_1').id,
-            'sales_set': 'trial',
-            'total_amount_of_the_sales_set': 69,
-            'q_discount':0}
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).auth_id,
+                    'lessonID':1,
+                    'sales_set': 'trial',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': 69,
+                    'q_discount': 0
+                    }])
+                }
+
         response = \
             self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
         self.assertIn('success', str(response.content, 'utf8'))
@@ -3437,12 +3536,20 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
 
         # 加入學生 auth_id = 2，讓他購買第二門課
         purchase_post_data = {
-            'userID':student_profile.objects.all()[1].auth_id,
-            'teacherID':teacher_profile.objects.first().auth_id,
-            'lessonID':lesson_info.objects.get(lesson_title='test_lesson_2').id,
-            'sales_set': '10:90',
-            'total_amount_of_the_sales_set': int(1300*10*0.9),
-            'q_discount':0}
+            'userID': student_profile.objects.get(id=2).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=2).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).auth_id,
+                    'lessonID':lesson_info.objects.get(lesson_title='test_lesson_2').id,
+                    'sales_set': '10:90',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': int(1300*10*0.9),
+                    'q_discount': 0
+                    }])
+                }
+
         response = \
             self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
         self.assertIn('success', str(response.content, 'utf8'))
@@ -3526,12 +3633,19 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
     def test_get_teacher_s_booking_history_has_new_arguments(self):
         # 測試有沒有抓到新的參數
         purchase_post_data = {
-            'userID':student_profile.objects.first().auth_id,
-            'teacherID':teacher_profile.objects.first().auth_id,
-            'lessonID':lesson_info.objects.get(lesson_title='test_lesson_1').id,
-            'sales_set': 'trial',
-            'total_amount_of_the_sales_set': 69,
-            'q_discount':0}
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).auth_id,
+                    'lessonID':lesson_info.objects.get(lesson_title='test_lesson_1').id,
+                    'sales_set': 'trial',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': 69,
+                    'q_discount': 0
+                    }])
+                }
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
         student_edit_booking_status_post_data = {
@@ -3596,12 +3710,19 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
         測試老師預約歷史新的參數內容正確性
         '''
         purchase_post_data = {
-            'userID':student_profile.objects.first().auth_id,
-            'teacherID':teacher_profile.objects.first().auth_id,
-            'lessonID':lesson_info.objects.get(lesson_title='test_lesson_1').id,
-            'sales_set': 'trial',
-            'total_amount_of_the_sales_set': 69,
-            'q_discount':0}
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).auth_id,
+                    'lessonID':lesson_info.objects.get(lesson_title='test_lesson_1').id,
+                    'sales_set': 'trial',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': 69,
+                    'q_discount': 0
+                    }])
+                }
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
         # 此時id=1
 
@@ -3704,12 +3825,19 @@ class TEACHER_BOOKING_HISTORY_TESTS(TestCase):
 
         # 接下來測試一下預約取消
         purchase_post_data = {
-            'userID':student_profile.objects.get(id=1).auth_id,
-            'teacherID':teacher_profile.objects.get(id=1).auth_id,
-            'lessonID':lesson_info.objects.get(lesson_title='test_lesson_1').id,
-            'sales_set': '10:90',
-            'total_amount_of_the_sales_set': int(800*10*.9),
-            'q_discount':0}
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID': teacher_profile.objects.get(id=1).auth_id,
+                    'lessonID':lesson_info.objects.get(lesson_title='test_lesson_1').id,
+                    'sales_set': '10:90',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': int(800*10*.9),
+                    'q_discount': 0
+                    }])
+                }
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
         # 此時id=2
 
@@ -4040,12 +4168,20 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
 
     def test_get_student_s_booking_history_work_when_student_has_common_lessons_filtered_and_not(self):
         purchase_post_data = {
-            'userID':self.student1.auth_id,
-            'teacherID':self.teacher1.auth_id,
-            'lessonID':self.lesson1.id,
-            'sales_set': '10:90',
-            'total_amount_of_the_sales_set': int(800*10*0.9),
-            'q_discount':0}
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).id,
+                    'lessonID':1,
+                    'sales_set': '10:90',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': int(800*10*.9),
+                    'q_discount': 0
+                    }])
+                }
+        
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
         student_edit_booking_status_post_data = {
@@ -4224,12 +4360,19 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
 
         # 此時帶入學生2號
         purchase_post_data = {
-            'userID':self.student2.auth_id,
-            'teacherID':self.teacher1.auth_id,
-            'lessonID':self.lesson1.id,
-            'sales_set': '10:90',
-            'total_amount_of_the_sales_set': int(800*10*0.9),
-            'q_discount':0}
+            'userID': student_profile.objects.get(id=2).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=2).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).id,
+                    'lessonID':1,
+                    'sales_set': '10:90',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': int(800*10*.9),
+                    'q_discount': 0
+                    }])
+                }
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
         student_edit_booking_status_post_data = {
@@ -4363,12 +4506,20 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
 
     def test_get_student_s_booking_history_work_when_student_has_trial_and_no_discount_lessons_filtered_and_not(self):
         purchase_post_data = {
-            'userID':student_profile.objects.first().auth_id,
-            'teacherID':teacher_profile.objects.first().auth_id,
-            'lessonID':lesson_info.objects.get(id=1).id,
-            'sales_set': 'trial',
-            'total_amount_of_the_sales_set': 69,
-            'q_discount':0}
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).id,
+                    'lessonID':1,
+                    'sales_set': 'trial',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': 69,
+                    'q_discount': 0
+                    }])
+                }
+        
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
         student_edit_booking_status_post_data = {
@@ -4427,14 +4578,21 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         str(response.content, "utf8")) # 共1筆
         self.assertIn(f'"discount_price": "trial"', str(response.content, "utf8"))
         
-
         purchase_post_data = {
-            'userID':student_profile.objects.first().auth_id,
-            'teacherID':teacher_profile.objects.first().auth_id,
-            'lessonID':lesson_info.objects.get(id=1).id,
-            'sales_set': 'no_discount',
-            'total_amount_of_the_sales_set': 800,
-            'q_discount':0}
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).id,
+                    'lessonID':1,
+                    'sales_set': 'no_discount',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': 800,
+                    'q_discount': 0
+                    }])
+                }
+
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
         student_edit_booking_status_post_data = {
@@ -4506,13 +4664,22 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         print(f'確認加入學生2前，學生1目前的課程預約日: {str(response.content, "utf8")}')
 
         # 加入學生 auth_id = 2
+
         purchase_post_data = {
-            'userID':student_profile.objects.get(id=2).auth_id,
-            'teacherID':teacher_profile.objects.first().auth_id,
-            'lessonID':lesson_info.objects.get(id=1).id,
-            'sales_set': '10:90',
-            'total_amount_of_the_sales_set': int(800*10*0.9),
-            'q_discount':0}
+            'userID': student_profile.objects.get(id=2).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=2).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).id,
+                    'lessonID':1,
+                    'sales_set': '10:90',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': int(800*10*0.9),
+                    'q_discount': 0
+                    }])
+                }
+
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
         the_purchase_object = \
@@ -4589,12 +4756,19 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         測試 學生學習檔案 這隻API的搜尋功能是否運作正確
         '''
         purchase_post_data = {
-            'userID':student_profile.objects.first().auth_id,
-            'teacherID':teacher_profile.objects.first().auth_id,
-            'lessonID':lesson_info.objects.get(lesson_title='test1111').id,
-            'sales_set': 'trial',
-            'total_amount_of_the_sales_set': 69,
-            'q_discount':0}
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).auth_id,
+                    'lessonID':lesson_info.objects.get(lesson_title='test1111').id,
+                    'sales_set': 'trial',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': 69,
+                    'q_discount': 0
+                    }])
+                }
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
         student_edit_booking_status_post_data = {
@@ -4637,12 +4811,20 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
 
         # 讓學生 auth_id = 1，購買第二位老師的第二門課
         purchase_post_data = {
-            'userID':student_profile.objects.get(id=1).auth_id,
-            'teacherID':teacher_profile.objects.get(id=2).auth_id,
-            'lessonID':lesson_info.objects.get(lesson_title='test2222').id,
-            'sales_set': '5:90',
-            'total_amount_of_the_sales_set': int(1200*5*0.9),
-            'q_discount':0}
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=2).auth_id,
+                    'lessonID':lesson_info.objects.get(lesson_title='test2222').id,
+                    'sales_set': '5:90',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': int(1200*5*0.9),
+                    'q_discount': 0
+                    }])
+                }
+
         response = self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
         self.assertIn('success', str(response.content, "utf8"))
 
@@ -4719,12 +4901,20 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         測試 學生學習檔案 這隻API修改後 有沒有抓到新的參數
         '''
         purchase_post_data = {
-            'userID':student_profile.objects.first().auth_id,
-            'teacherID':teacher_profile.objects.first().auth_id,
-            'lessonID':lesson_info.objects.get(id=1).id,
-            'sales_set': 'trial',
-            'total_amount_of_the_sales_set': 69,
-            'q_discount':0}
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).auth_id,
+                    'lessonID': 1,
+                    'sales_set': 'trial',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': 69,
+                    'q_discount': 0
+                    }])
+                }
+
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
         student_edit_booking_status_post_data = {
@@ -4793,12 +4983,19 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
         '''
         # 學生1先購買一門老師1的試教課
         purchase_post_data = {
-            'userID':student_profile.objects.first().auth_id,
-            'teacherID':teacher_profile.objects.first().auth_id,
-            'lessonID':lesson_info.objects.get(id=1).id,
-            'sales_set': 'trial',
-            'total_amount_of_the_sales_set': 69,
-            'q_discount':0}
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).id,
+                    'lessonID':1,
+                    'sales_set': 'trial',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': 69,
+                    'q_discount': 0
+                    }])
+                }
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
         # 此時id=1
 
@@ -4901,12 +5098,19 @@ class STUDENT_BOOKING_HISTORY_TESTS(TestCase):
 
         # 接下來測試一下預約取消，向第二個老師購課
         purchase_post_data = {
-            'userID':student_profile.objects.first().auth_id,
-            'teacherID':teacher_profile.objects.get(id=2).auth_id,
-            'lessonID':lesson_info.objects.get(teacher=teacher_profile.objects.get(id=2)).id,
-            'sales_set': '5:90',
-            'total_amount_of_the_sales_set': int(1200*5*.9),
-            'q_discount':0}
+            'userID': student_profile.objects.get(id=1).auth_id,
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=2).id,
+                    'lessonID':2,
+                    'sales_set': '5:90',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': int(1200*5*.9),
+                    'q_discount': 0
+                    }])
+                }
         self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
         # 此時id=2
 
@@ -5205,13 +5409,24 @@ class CLASS_FINISHED_TEST(TestCase):
         # 因為沒有對應的預約紀錄，所以沒辦法完課
 
         # 接下來來產生對應的預約，先進行購課
+
         purchased_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,
-            'teacherID': teacher_profile.objects.get(id=1).auth_id,
-            'lessonID': lesson_info.objects.get(id=1).id,
-            'sales_set': '10:90',
-            'total_amount_of_the_sales_set': int(800*10*0.9),
-            'q_discount': 0}
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':lesson_info.objects.get(id=1).id,
+                    'lessonID':1,
+                    'sales_set': '10:90',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': int(800*10*0.9),
+                    'q_discount': 0
+                }
+            ])
+        }
+
+
         self.client.post(path='/api/account_finance/storageOrder/', data=purchased_post_data)
         self.assertEqual(1, student_purchase_record.objects.count())
 
@@ -5281,6 +5496,9 @@ class CLASS_FINISHED_TEST(TestCase):
                 'end_time': '11:20',
                 'time_interval_in_minutes': 60
         }  # 測試看看這個 api 能不能產出對應的 record 來
+
+
+
         response = \
             self.client.post(path='/api/lesson/lessonCompletedNotificationFromTeacher/', data=noti_post_data)
         self.assertIn('success', str(response.content, "utf8"))
@@ -5291,14 +5509,23 @@ class CLASS_FINISHED_TEST(TestCase):
         確認當老師按完課後，會產生對應的紀錄
         '''
         # 先進行購課
-        purchased_post_data = {
+        purchase_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,
-            'teacherID': teacher_profile.objects.get(id=1).auth_id,
-            'lessonID': lesson_info.objects.get(id=1).id,
-            'sales_set': '10:90',
-            'total_amount_of_the_sales_set': int(800*10*0.9),
-            'q_discount': 0}
-        self.client.post(path='/api/account_finance/storageOrder/', data=purchased_post_data)
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).auth_id,
+                    'lessonID':1,
+                    'sales_set': '10:90',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': int(800*10*0.9),
+                    'q_discount': 0
+                }
+            ])
+        }
+
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
         student_edit_booking_status_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,
@@ -5480,14 +5707,23 @@ class CLASS_FINISHED_TEST(TestCase):
 
         # 接著測試學生確認時數
         # 先購買課程
-        purchased_post_data = {
+        purchase_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,
-            'teacherID': teacher_profile.objects.get(id=1).auth_id,
-            'lessonID': lesson_info.objects.get(id=1).id,
-            'sales_set': '10:90',
-            'total_amount_of_the_sales_set': int(800*10*0.9),
-            'q_discount': 0}
-        self.client.post(path='/api/account_finance/storageOrder/', data=purchased_post_data)
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).auth_id,
+                    'lessonID':1,
+                    'sales_set': '10:90',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': int(800*10*0.9),
+                    'q_discount': 0
+                }
+            ])
+        }
+
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
         student_edit_booking_status_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,
@@ -5626,13 +5862,23 @@ class CLASS_FINISHED_TEST(TestCase):
         這個用來測試當 試教 課程確認結束後，假設時間如預約時間，學生的時數會不會正確被更新。
         '''
         # 先購買課程
+
         purchased_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,
-            'teacherID': teacher_profile.objects.get(id=1).auth_id,
-            'lessonID': lesson_info.objects.get(id=1).id,
-            'sales_set': 'trial',
-            'total_amount_of_the_sales_set': 69,
-            'q_discount': 0}
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':lesson_info.objects.get(id=1).id,
+                    'lessonID':1,
+                    'sales_set': 'trial',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set':69,
+                    'q_discount': 0
+                }
+            ])
+        }
+
         response = \
             self.client.post(path='/api/account_finance/storageOrder/', data=purchased_post_data)
         self.assertIn('success', str(response.content, "utf8"))
@@ -5731,11 +5977,19 @@ class CLASS_FINISHED_TEST(TestCase):
         # 先購買 no_discount
         purchased_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,
-            'teacherID': teacher_profile.objects.get(id=1).auth_id,
-            'lessonID': lesson_info.objects.get(id=1).id,
-            'sales_set': 'no_discount',
-            'total_amount_of_the_sales_set': 800,
-            'q_discount': 0}
+            'total_q_discount': 0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':lesson_info.objects.get(id=1).id,
+                    'lessonID':1,
+                    'sales_set': 'no_discount',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set':  800,
+                    'q_discount': 0
+                }
+            ])
+        }
         response = \
             self.client.post(path='/api/account_finance/storageOrder/', data=purchased_post_data)
         self.assertIn('success', str(response.content, "utf8"))
@@ -5837,11 +6091,19 @@ class CLASS_FINISHED_TEST(TestCase):
         # 接下來測試購買 老師2 的 5:90 方案
         purchased_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,
-            'teacherID': teacher_profile.objects.get(id=2).auth_id,
-            'lessonID': lesson_info.objects.get(teacher=teacher_profile.objects.get(id=2)).id,
-            'sales_set': '5:90',
-            'total_amount_of_the_sales_set': int(5*1200*0.9),
-            'q_discount': 0}
+            'total_q_discount': 0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':lesson_info.objects.get(id=2).id,
+                    'lessonID':2,
+                    'sales_set': '5:90',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set':int(5*1200*0.9),
+                    'q_discount': 0
+                }
+            ])
+        }
         response = \
             self.client.post(path='/api/account_finance/storageOrder/', data=purchased_post_data)
         self.assertIn('success', str(response.content, "utf8"))
@@ -5939,15 +6201,24 @@ class CLASS_FINISHED_TEST(TestCase):
 
         # 接下來測試跨方案能不能扣時數成功
         # 這次購買 老師2 的 30:70 方案
-        purchased_post_data = {
+        purchase_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,
-            'teacherID': teacher_profile.objects.get(id=2).auth_id,
-            'lessonID': lesson_info.objects.get(teacher=teacher_profile.objects.get(id=2)).id,
-            'sales_set': '30:70',
-            'total_amount_of_the_sales_set': int(30*1200*0.7),
-            'q_discount': 0}  # 測試看看其中2萬元是Q幣支付的會怎麼樣
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=2).auth_id,
+                    'lessonID': lesson_info.objects.get(teacher=teacher_profile.objects.get(id=2)).id,
+                    'sales_set': '30:70',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': int(30*1200*0.7),
+                    'q_discount': 0
+                }
+            ])
+        }
+
         response = \
-            self.client.post(path='/api/account_finance/storageOrder/', data=purchased_post_data)
+            self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
         # self.assertIn('success', str(response.content, "utf8"))
 
         student_edit_booking_status_post_data = {
@@ -6072,14 +6343,22 @@ class CLASS_FINISHED_TEST(TestCase):
         '''
         這個用來測試當 一般 課程確認結束後，假設時間比預約時間來得更長，學生的時數會不會正確被更新。
         '''
-        # 先購買 老師1 的 10:90
+        # 先購買 老師1 的 10:90\        
         purchased_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,
-            'teacherID': teacher_profile.objects.get(id=1).auth_id,
-            'lessonID': lesson_info.objects.get(id=1).id,
-            'sales_set': '10:90',
-            'total_amount_of_the_sales_set': int(10*800*.9),
-            'q_discount': 0}
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':lesson_info.objects.get(id=1).id,
+                    'lessonID':1,
+                    'sales_set': '10:90',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set':int(10*800*.9),
+                    'q_discount': 0
+                }
+            ])
+        }
         response = \
             self.client.post(path='/api/account_finance/storageOrder/', data=purchased_post_data)
         self.assertIn('success', str(response.content, "utf8"))
@@ -6273,11 +6552,29 @@ class CLASS_FINISHED_TEST(TestCase):
         # 購買 老師1 的 10:90 與 20:80
         purchased_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,
-            'teacherID': teacher_profile.objects.get(id=1).auth_id,
-            'lessonID': lesson_info.objects.get(id=1).id,
-            'sales_set': '10:90',
-            'total_amount_of_the_sales_set': int(10*800*.9),
-            'q_discount': 0}
+            'total_q_discount': 0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':lesson_info.objects.get(id=1).id,
+                    'lessonID':1,
+                    'sales_set': '10:90',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set':  int(10*800*.9),
+                    'q_discount': 0
+                },
+            {
+                'order_type':'lesson_order',
+                'userID': student_profile.objects.get(id=1).auth_id,
+                'teacherID':lesson_info.objects.get(id=1).id,
+                'lessonID':1,
+                'sales_set': '20:80',#,'no_discount','30:70']
+                'total_amount_of_the_sales_set': int(20*800*.8),
+                'q_discount': 0  
+                }
+            ])
+        }
+
         response = \
             self.client.post(path='/api/account_finance/storageOrder/', data=purchased_post_data)
         self.assertIn('success', str(response.content, "utf8"))
@@ -6296,13 +6593,6 @@ class CLASS_FINISHED_TEST(TestCase):
         purchase_obj.save()
         # 我們確認她付款了
 
-        purchased_post_data = {
-            'userID': student_profile.objects.get(id=1).auth_id,
-            'teacherID': teacher_profile.objects.get(id=1).auth_id,
-            'lessonID': lesson_info.objects.get(id=1).id,
-            'sales_set': '20:80',
-            'total_amount_of_the_sales_set': int(20*800*.8),
-            'q_discount': 0}
         response = \
             self.client.post(path='/api/account_finance/storageOrder/', data=purchased_post_data)
         self.assertIn('success', str(response.content, "utf8"))
@@ -6425,13 +6715,22 @@ class CLASS_FINISHED_TEST(TestCase):
         這個用來測試當 一般 課程確認結束後，假設時間比預約時間來得更短，學生的時數會不會正確被更新。
         '''
         # 先購買 老師1 的 10:90
+
         purchased_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,
-            'teacherID': teacher_profile.objects.get(id=1).auth_id,
-            'lessonID': lesson_info.objects.get(id=1).id,
-            'sales_set': '10:90',
-            'total_amount_of_the_sales_set': int(10*800*.9),
-            'q_discount': 0}
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':lesson_info.objects.get(id=1).id,
+                    'lessonID':1,
+                    'sales_set': '10:90',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set':int(10*800*.9),
+                    'q_discount': 0
+                }
+            ])
+        }
         response = \
             self.client.post(path='/api/account_finance/storageOrder/', data=purchased_post_data)
         self.assertIn('success', str(response.content, "utf8"))
@@ -6698,11 +6997,19 @@ class REVIEWS_TESTS(TestCase):
         # 先購買 老師1 的 10:90
         purchased_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,
-            'teacherID': teacher_profile.objects.get(id=1).auth_id,
-            'lessonID': lesson_info.objects.get(id=1).id,
-            'sales_set': '10:90',
-            'total_amount_of_the_sales_set': int(10*800*.9),
-            'q_discount': 0}
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':lesson_info.objects.get(id=1).id,
+                    'lessonID':lesson_info.objects.get(id=1).id,
+                    'sales_set': '10:90',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': int(10*800*.9),
+                    'q_discount': 0
+                    }])
+                }
+
         response = \
             self.client.post(path='/api/account_finance/storageOrder/', data=purchased_post_data)
         self.assertIn('success', str(response.content, "utf8"))
@@ -6972,11 +7279,19 @@ class REVIEWS_TESTS(TestCase):
         # 先購買 老師1 的 10:90
         purchased_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,
-            'teacherID': teacher_profile.objects.get(id=1).auth_id,
-            'lessonID': lesson_info.objects.get(id=1).id,
-            'sales_set': '10:90',
-            'total_amount_of_the_sales_set': int(10*800*.9),
-            'q_discount': 0}
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':lesson_info.objects.get(id=1).id,
+                    'lessonID':lesson_info.objects.get(id=1).id,
+                    'sales_set': '10:90',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': int(10*800*.9),
+                    'q_discount': 0
+                    }])
+                }
+
         response = \
             self.client.post(path='/api/account_finance/storageOrder/', data=purchased_post_data)
         self.assertIn('success', str(response.content, "utf8"))
@@ -7278,14 +7593,21 @@ class REVIEWS_TESTS(TestCase):
 
 
         # 學生1 先購買 老師1 的 10:90
-        purchased_post_data = {
+        purchase_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,
-            'teacherID': teacher_profile.objects.get(id=1).auth_id,
-            'lessonID': lesson_info.objects.get(id=1).id,
-            'sales_set': '10:90',
-            'total_amount_of_the_sales_set': int(10*800*.9),
-            'q_discount': 0}
-        self.client.post(path='/api/account_finance/storageOrder/', data=purchased_post_data)
+            'total_q_discount':0,
+            'total_amount_of_orders':0,
+            'total_order': json.dumps([{
+                    'order_type':'lesson_order',
+                    'userID': student_profile.objects.get(id=1).auth_id,
+                    'teacherID':teacher_profile.objects.get(id=1).id,
+                    'lessonID': 1,
+                    'sales_set': '10:90',#,'no_discount','30:70']
+                    'total_amount_of_the_sales_set': int(10*800*.9),
+                    'q_discount': 0
+                    }])
+                }
+        self.client.post(path='/api/account_finance/storageOrder/', data=purchase_post_data)
 
         student_edit_booking_status_post_data = {
             'userID': student_profile.objects.get(id=1).auth_id,

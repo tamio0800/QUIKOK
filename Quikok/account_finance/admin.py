@@ -1,9 +1,12 @@
 from django.contrib import admin
-from account_finance.models import student_remaining_minutes_of_each_purchased_lesson_set
-from account_finance.models import student_purchase_record
-from account_finance.models import student_refund, teacher_refund
+from account_finance.models import (student_remaining_minutes_of_each_purchased_lesson_set,
+                    student_purchase_record,student_refund, teacher_refund,
+                    user_purchase_exam_bank_record)
+        
 
 # Register your models here.
+class userPurchaseExamBankRecordAdmin(admin.ModelAdmin):
+    readonly_fields = ('id', 'created_time', 'updated_time')
 
 class studentRemainingMinutesAdmin(admin.ModelAdmin):
     readonly_fields = ('id', 'created_time', 'last_changed_time')
@@ -19,7 +22,10 @@ class studentRefundAdmin(admin.ModelAdmin):
 class teacherRefundAdmin(admin.ModelAdmin):
     readonly_fields = ('id', 'teacher_auth_id', 'snapshot_balance', 'created_time', 'update_time')
 
-
+admin.site.register(
+    user_purchase_exam_bank_record,
+    userPurchaseExamBankRecordAdmin
+)
 admin.site.register(
     student_remaining_minutes_of_each_purchased_lesson_set, 
     studentRemainingMinutesAdmin

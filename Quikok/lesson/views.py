@@ -11,6 +11,7 @@ from django.core.files.storage import FileSystemStorage
 import pandas as pd
 from account.models import teacher_profile, favorite_lessons
 from lesson.lesson_tools import *
+import numpy as np
 from django.contrib.auth.decorators import login_required
 from account.model_tools import *
 from django.db.models import Q
@@ -778,6 +779,7 @@ def create_or_edit_a_lesson(request):
                         lesson_attributes = lesson_attributes,
                         lesson_avg_score = 0.0,
                         lesson_reviewed_times = 0,
+                        lesson_ranking_score = np.random.randint(0, 60),
                         selling_status = selling_status
                     )  # 課程建立完成(尚未儲存寫入)，接著要確認用戶有否上傳背景圖片
 

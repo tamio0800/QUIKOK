@@ -273,4 +273,34 @@ class email_for_edony:
             )
             email.fail_silently = False
             email.send()
+
+    #提醒我們題庫有使用者匯款,要對帳
+    def send_email_exam_bank_reconciliation_reminder(self, **kwargs):
+        user_authID =  kwargs['user_authID']
+        user5_bank_code =  kwargs['user5_bank_code']
+        total_price =  kwargs['total_price']
+
+        if settings.DISABLED_EMAIL == False:
+            email = EmailMessage(
+                subject = '用戶購買題庫匯款通知信',  # 電子郵件標題
+                body = f'用戶authID：{user_authID}已匯款，金額：{total_price}元，銀行帳號末五碼：{user5_bank_code}。請對帳',
+                from_email=settings.EMAIL_HOST_USER,  # 寄件者
+                to = ['quikok.taiwan@quikok.com']  # 收件者
+            )
+            email.fail_silently = False
+            email.send()
+
+    #提醒我們題庫有使用者申請退款,要處理
+    def send_email_exam_bank_apply_refund_reminder(self, **kwargs):
+        user_authID =  kwargs['user_authID']
+
+        if settings.DISABLED_EMAIL == False:
+            email = EmailMessage(
+                subject = '用戶申請題庫退款通知信',  # 電子郵件標題
+                body = f'用戶authID：{user_authID}，申請退款',
+                from_email=settings.EMAIL_HOST_USER,  # 寄件者
+                to = ['quikok.taiwan@quikok.com']  # 收件者
+            )
+            email.fail_silently = False
+            email.send()
         

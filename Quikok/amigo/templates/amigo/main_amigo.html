@@ -1,0 +1,184 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/static/amigo/img/ticy_icon.png">
+    <title>開課！Quikok | Ticy智慧題庫系統-數據追蹤學習，最效率的練題</title>
+    <!--bootstrap-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.6.0/dist/umd/popper.min.js"
+        integrity="sha384-KsvD1yqQ1/1+IA7gi3P0tyJcT3vR+NdBTt13hSJ2lnve8agRGXTTyNaBYmCR/Nwi"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.min.js"
+        integrity="sha384-nsg8ua9HAw1y0W1btsyWgBklPnCUAFLuTMS2G72MMONqmOymq585AcH49TLBQObG"
+        crossorigin="anonymous"></script>
+    <!--js-->
+    <script src="/static/amigo/js/jquery-3.6.0.min.js"></script>
+    <script src="/static/amigo/js/jquery.mousewheel.min.js"></script>
+    <script src="/static/amigo/js/ticy.js"></script>
+    <!--css-->
+    <link rel="stylesheet" href="/static/amigo/css/all.css">
+    <link rel="stylesheet" href="/static/amigo/css/ticy.css">
+    <title>Ticy</title>
+</head>
+
+<body>
+    <div class="application--wrap">
+        <div class="top page0 pagearea">
+            <!--以下Ticy上方大Banner-->
+            <div class="banner">
+                <div class="topbanner">
+                    <div class="row">
+                        <div class="banner_mb col-md-12">
+                            <img src="/static/amigo/img/mobile_br.png" alt="Ticy題庫手機板示意圖"
+                                style="width: 90vw;max-height:100vh;margin: -12px;">
+                            <div class="pay-order_mb" style="text-align: center;margin: 18px;">
+                                <div>
+                                    <span class="discount">早鳥優惠價NT$699/年</span></br>
+                                    <span style="color: #8193b2;font-weight: 400;font-size: 0.8rem;line-height: 1px;">*不滿意無條件退費</span>
+                                    <span class="origin">原價NT3,680/年</span>
+                                </div>
+                                <button style="display: inline-block;" onclick="location.href='/questionBank/program/pre_order'">預購</button>
+                            </div>
+                        </div>
+                        <div class="banner_cp col-md-6">
+                            <img class="banner_cp" src="/static/amigo/img/banner_cp.png" alt="Ticy題庫示意圖"
+                                style="min-width: 50%; width: 120%;">
+                        </div>
+                        <div class="banner_wd col-md-6 p-0">
+                            <div style="position: relative; text-align: right; display: inline;">
+                                <img class="banner_ed" src="/static/amigo/img/banner_wd.png" alt="Ticy題庫文字"
+                                    style="max-width: 100%; max-height: 640px;">
+                                <div class="pay-order">
+                                    <div style="margin-right: 10px;">
+                                        <span class="discount">早鳥優惠價NT$699/年</span></br>
+                                        <span style="color: #8193b2;font-weight: 400;font-size: 0.8rem;line-height: 1px;">*不滿意無條件退費</span>
+                                        <span class="origin">原價NT3,680/年</span>
+                                    </div>
+                                    <button class="pay" value="登入註冊頁"onclick="location.href='/questionBank/program/pre_order'">預購</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--以上Ticy上方大Banner-->
+            <!--以下是四顆電梯按鈕-->
+            <div class="button_container">
+                <div class="mbcards">
+                    <p><a href="#analysis point">落點分析</a></p>
+                    <p><a href="#test check-up">考點健檢</a></p>
+                    <p><a href="#answer tracking">作答追蹤</a></p>
+                    <p><a href="#compose question">豐富考題</a></p>
+                </div>
+                <div class="cp_card">
+                    <a class="card" href="#analysis point">
+                        <img src="/static/amigo/img/card01.png" alt="">
+                        <div class="info">
+                            <p>落點分析</p>
+                        </div>
+                    </a>
+                    <a class="card" href="#test check-up">
+                        <img src="/static/amigo/img/card02.png" alt="">
+                        <div class="info">
+                            <p>考點健檢</p>
+                        </div>
+                    </a>
+                    <a class="card" href="#answer tracking">
+                        <img src="/static/amigo/img/card03.png" alt="">
+                        <div class="info">
+                            <p>作答追蹤</p>
+                        </div>
+                    </a>
+                    <a class="card" href="#compose question">
+                        <img src="/static/amigo/img/card04.png" alt="">
+                        <div class="info">
+                            <p>豐富考題</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            <!--以上是四顆電梯按鈕-->
+        </div>
+
+        <!--以下是四大特色區塊-->
+        <div class="main container-full mt-3">
+            <div class="feature01 page1 pagearea row m-1 p-5" id="analysis point">
+                <div class="wd col-md-4">
+                    <h2>數據分析追蹤學習效率</h2>
+                    <p>辛苦唸書，但不清楚進步幅度？想時時掌握自己落點排名嗎？Ticy智慧題庫依照每次答題結果，分析地區及全國落點，提供您檢測成績及學習效率。</p>
+                </div>
+                <div class="fpic col-md-8">
+                    <img src="/static/amigo/img/fpic01.png" alt="" style="width: 100%;">
+                </div>
+            </div>
+            <div class="feature02 page2 pagearea row m-0 p-5" id="test check-up">
+                <div class="wd col-md-4">
+                    <h2>弱項考點健檢</h2>
+                    <p>每個章節都有十足準備，卻總是敗在綜合題型？在Ticy你更可以清楚了解自己的弱考點，讓您輕鬆戰勝綜合題、素養題。</p>
+                </div>
+                <div class="fpic col-md-8">
+                    <img src="/static/amigo/img/fpic02.png" alt="" style="width: 100%;">
+                </div>
+            </div>
+            <div class="feature01 page3 pagearea row m-1 p-5" id="answer tracking">
+                <div class="wd col-md-4">
+                    <h2>捕捉答題邏輯路徑</h2>
+                    <p>為了更精確分析學習狀況，我們完整的紀錄答題軌跡、時間等資訊，用數據結果釐清觀念模糊之處。</p>
+                </div>
+                <div class="fpic col-md-8">
+                    <img src="/static/amigo/img/fpic03.png" alt="" style="width: 100%;">
+                </div>
+            </div>
+            <div class="feature02 page4 pagearea row m-0 p-5" id="compose question">
+                <div class="wd col-md-4">
+                    <h2>豐富考題每月更新</h2>
+                    <p>國、高中學科眾多單元、近萬考題供您組卷，模擬考試刷題練習，每月持續更新題庫，自組練題so easy。</p>
+                </div>
+                <div class="fpic col-md-8">
+                    <img src="/static/amigo/img/fpic04.png" alt="" style="width: 100%;">
+                </div>
+            </div>
+        </div>
+        <!--以上是四大特色區塊-->
+
+
+        <!--以下是介紹banner含footer-->
+        <div class="lastber page5 pagearea">
+            <img class="lastber01" src="/static/amigo/img/last_banner.png" alt="Ticy底部Banner背景圖">
+            <img src="/static/amigo/img/Ticy_logo.png" alt="Ticy_logo" style="margin-top: 1%;width: 20%;">
+            <p>提攜你的題庫 題析你的困惑</p>
+            <button value="登入註冊頁"onclick="location.href='/questionBank/program/pre_order'">立即預購</button>
+        </div>
+        <div class="footer">
+            <div class="container">
+                <div class="ftt">
+                    <p class="title">聯絡我們</p>
+                    <p>台北市信義區忠孝東路五段一之二號五樓</p>
+                    <p>quikok.taiwan@quikok.com</p>
+                    <p style="font-size: xx-small;">*Quikok保有最終修改、變更、活動解釋及取消本活動之權利，恕不另行通知。</p>
+                </div>
+            </div>
+        </div>
+        <!--以上是介紹banner含footer-->
+    </div>
+    <!--以下是Gotop按鈕-->
+    <div class="box" id="gotop">
+        <a href="#" class="goTopBtn jq-goTop" style="font-size: 40px;color: unset;">
+            <i class="fas fa-arrow-circle-up"></i>
+        </a>
+    </div>
+    <!--以上是Gotop按鈕-->
+
+
+</body>
+
+</html>

@@ -8,8 +8,8 @@ from account_finance.email_sending import email_manager
 class user_purchase_exam_bank_record(models.Model):
     user_auth_id = models.IntegerField() # 購買者的 authID
     exam_bank_sales_set_id = models.IntegerField()
-    start_date =  models.DateTimeField()  # 可使用題庫的有效時間開始日期，應為確認付款日
-    end_date = models.DateTimeField() # 可使用題庫的有效時間結束日期
+    start_date =  models.DateTimeField(blank=True, null=True)  # 可使用題庫的有效時間開始日期，應為確認付款日
+    end_date = models.DateTimeField(blank=True, null=True) # 可使用題庫的有效時間結束日期
     is_valid = models.BooleanField(default=False) 
     #是否可使用題庫，在可使用題庫的有效期內即為有效，測試期間有效期開始日統一決定，
     # 不做是否在有效期間判定
@@ -18,16 +18,21 @@ class user_purchase_exam_bank_record(models.Model):
     purchased_with_q_points = models.IntegerField(default=0)  # 用多少Q幣支付,這版暫不會用到
     part_of_bank_account_code = models.CharField(max_length=30, default='')#銀行末5碼
     is_refunded = models.BooleanField(default=False) # 是否有退款,相關功能暫人工處理
-    is_preorder = models.BooleanField(default=False) # 是否為預購期間購買
+    is_preorder = models.BooleanField(default=True) # 是否為預購期間購買
     created_time = models.DateTimeField(auto_now_add=True) 
     updated_time = models.DateTimeField(auto_now=True)
+    payment_status = models.CharField(max_length=30, default='unpaid')
+    # unpaid, reconciliation, paid, refunding, refunded, cancel_after_paid , unpaid_cancel
+    # 0-待付款/1-對帳中/2-已付款/3-退款中/4-已退款/5-有付款_取消訂單 6. 未付款_取消訂單 
+    when_is_remittance_confirmed_by_quikok = models.DateTimeField(blank=True, null=True)
+    # 確認用戶付款的日期 datetime 格式
 
     def __str__(self):
         return f"題庫購買人auth_id: {str(self.user_auth_id)}, 方案:{str(self.exam_bank_sales_set_id)}"
 
     class Meta:
-        verbose_name = '題庫訂閱紀錄'
-        verbose_name_plural = '題庫訂閱紀錄'
+        verbose_name = '題庫預購紀錄'
+        verbose_name_plural = '題庫預購紀錄'
         ordering = ['-updated_time']
 
 # 學生購買紀錄
@@ -58,8 +63,8 @@ class student_purchase_record(models.Model):
         return f"學生{str(self.student_auth_id)} 購買 {self.teacher_nickname} 總價 {str(self.price)} 的方案。 狀態: {self.payment_status}"
 
     class Meta:
-        verbose_name = '學生購買紀錄'
-        verbose_name_plural = '學生購買紀錄'
+        verbose_name = '學生購買課程紀錄'
+        verbose_name_plural = '學生購買課程紀錄'
         ordering = ['-updated_time']
 
 
