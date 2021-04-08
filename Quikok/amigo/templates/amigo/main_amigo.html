@@ -28,6 +28,25 @@
     <link rel="stylesheet" href="/static/amigo/css/all.css">
     <link rel="stylesheet" href="/static/amigo/css/ticy.css">
     <title>Ticy</title>
+    <!-- Facebook Pixel Code -->
+    <script>
+        !function (f, b, e, v, n, t, s) {
+            if (f.fbq) return; n = f.fbq = function () {
+                n.callMethod ?
+                n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+            };
+            if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
+            n.queue = []; t = b.createElement(e); t.async = !0;
+            t.src = v; s = b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t, s)
+        }(window, document, 'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '155784113096663');
+        fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+            src="https://www.facebook.com/tr?id=155784113096663&ev=PageView&noscript=1" /></noscript>
+    <!-- End Facebook Pixel Code -->
 </head>
 
 <body>
@@ -43,10 +62,12 @@
                             <div class="pay-order_mb" style="text-align: center;margin: 18px;">
                                 <div>
                                     <span class="discount">早鳥優惠價NT$699/年</span></br>
-                                    <span style="color: #8193b2;font-weight: 400;font-size: 0.8rem;line-height: 1px;">*不滿意無條件退費</span>
+                                    <span
+                                        style="color: #8193b2;font-weight: 400;font-size: 0.8rem;line-height: 1px;">*不滿意無條件退費</span>
                                     <span class="origin">原價NT3,680/年</span>
                                 </div>
-                                <button style="display: inline-block;" onclick="location.href='/questionBank/program/pre_order?openExternalBrowser=1'">預購</button>
+                                <button style="display: inline-block;"
+                                    onclick="location.href='/questionBank/program/pre_order?openExternalBrowser=1'">預購</button>
                             </div>
                         </div>
                         <div class="banner_cp col-md-6">
@@ -60,10 +81,12 @@
                                 <div class="pay-order">
                                     <div style="margin-right: 10px;">
                                         <span class="discount">早鳥優惠價NT$699/年</span></br>
-                                        <span style="color: #8193b2;font-weight: 400;font-size: 0.8rem;line-height: 1px;">*不滿意無條件退費</span>
+                                        <span
+                                            style="color: #8193b2;font-weight: 400;font-size: 0.8rem;line-height: 1px;">*不滿意無條件退費</span>
                                         <span class="origin">原價NT3,680/年</span>
                                     </div>
-                                    <button class="pay" value="登入註冊頁"onclick="location.href='/questionBank/program/pre_order?openExternalBrowser=1'">預購</button>
+                                    <button class="pay" value="登入註冊頁"
+                                        onclick="location.href='/questionBank/program/pre_order?openExternalBrowser=1'">預購</button>
                                 </div>
                             </div>
                         </div>
@@ -156,7 +179,8 @@
             <img class="lastber01" src="/static/amigo/img/last_banner.png" alt="Ticy底部Banner背景圖">
             <img src="/static/amigo/img/Ticy_logo.png" alt="Ticy_logo" style="margin-top: 1%;width: 20%;">
             <p>提攜你的題庫 題析你的困惑</p>
-            <button value="登入註冊頁"onclick="location.href='/questionBank/program/pre_order?openExternalBrowser=1'">立即預購</button>
+            <button value="登入註冊頁"
+                onclick="location.href='/questionBank/program/pre_order?openExternalBrowser=1'">立即預購</button>
         </div>
         <div class="footer">
             <div class="container">
