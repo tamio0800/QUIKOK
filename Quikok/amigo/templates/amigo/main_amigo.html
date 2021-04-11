@@ -58,6 +58,13 @@
         gtag('js', new Date());
 
         gtag('config', 'G-4EC8L4WNEW');
+        gtag('event', '題庫預購頁-按鈕：立即預購', {
+            description: '按下[立即預購]按鈕',
+            remarks: '',
+            page_path: '/ticy/',
+            hostname: 'https://www.quikok.com',
+            user_id: (JSON.parse(localStorage.getItem('user')) ? JSON.parse(localStorage.getItem('user')).user_id : -1)
+        })
     </script>
     <!-- End Global site tag (gtag.js) - Google Analytics -->
 </head>
