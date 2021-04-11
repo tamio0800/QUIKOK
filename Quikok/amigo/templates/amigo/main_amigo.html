@@ -33,7 +33,7 @@
         !function (f, b, e, v, n, t, s) {
             if (f.fbq) return; n = f.fbq = function () {
                 n.callMethod ?
-                n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+                    n.callMethod.apply(n, arguments) : n.queue.push(arguments)
             };
             if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
             n.queue = []; t = b.createElement(e); t.async = !0;
@@ -48,8 +48,18 @@
             src="https://www.facebook.com/tr?id=155784113096663&ev=PageView&noscript=1" /></noscript>
     <!-- End Facebook Pixel Code -->
     <!--Open Graph mata-->
-        <meta property="og:image" content="/static/amigo/img/ogimage.jpg">
+    <meta property="og:image" content="/static/amigo/img/ogimage.jpg">
     <!--End Open Graph mata-->
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4EC8L4WNEW"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-4EC8L4WNEW');
+    </script>
+    <!-- End Global site tag (gtag.js) - Google Analytics -->
 </head>
 
 <body>
