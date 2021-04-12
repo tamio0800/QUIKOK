@@ -131,7 +131,7 @@ class lesson_email_manager:
     def send_student_remind_one_day_before_lesson(self, **kwargs):
         # 信件主題:提醒學生明天要上課
         # 預約時間的前一天寄信提醒
-        st = time()
+        #st = time()
         student_authID = kwargs['student_authID']
         lesson_title = kwargs['lesson_title']
         booking_date_and_time = kwargs['booking_date_and_time']
