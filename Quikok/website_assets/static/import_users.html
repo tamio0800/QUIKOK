@@ -1,0 +1,103 @@
+{% extends 'base_layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-3" style="font-family: Microsoft Yahei;">
+    <div class="jumbotron">
+        <div class="row justify-center">
+            <div class="col">
+                <h1 class="mb-3"><b>匯入用戶資訊</b></h1>
+                <hr>
+                <p class="ml-2" style="font-size:22px; color: #626567;">
+                    - 請依照下列格式進行資料整批上傳：</p>
+
+                <table class="table table-bordered text-center" style="color:#626567 ;">
+                    <tr style="background-color: #9ed1f386; font-weight: bold;">
+                        <td>類別</td>
+                        <td>帳號</td>
+                        <td>姓名</td>
+                        <td>暱稱</td>
+                        <td>...</td>
+                    </tr>
+                    <tr style="background-color: #E8F8F5;">
+                        <td>s</td>
+                        <td>s1@s1</td>
+                        <td>學生1號</td>
+                        <td>逮丸no1</td>
+                        <td>...</td>
+                    </tr>
+                    <tr style="background-color: #E8F8F5;">
+                        <td>t</td>
+                        <td>t1@t1</td>
+                        <td>老師1號</td>
+                        <td>番茄老師</td>
+                        <td>...</td>
+                    </tr>
+                    <tr style="background-color: #E8F8F5;">
+                        <td>t</td>
+                        <td>teacher2@quikok.com</td>
+                        <td>老師二號</td>
+                        <td></td>
+                        <td>...</td>
+                    </tr>
+                </table>
+                <p class="ml-2" style="font-size:22px; color: #626567;">
+                    - 密碼全部預設為"00000000"，8個零。<br>
+                    - 檔案格式為csv、txt、xlsx、xls皆可，<strong>需要</strong>加上標題欄位。<br>
+                    - 類別中的小寫"s"代表學生，"t"代表是老師。<br>
+                    - 類別、帳號、姓名為<strong>必填</strong>，其他皆為選填。<br>
+                    - 暱稱欄位不填寫的話會自動帶入姓名資訊。<br>
+                    - 匯入後除了建立老師、學生的資料外，亦會同步建立auth.User以及相互串聯起chatroom的資料。<br>
+                </p>
+            </div>
+        </div>
+        <form method="post" enctype="multipart/form-data" action="">
+            <div class="row mt-5">
+                {% csrf_token %}
+                <div class="col-7">
+                    <input id="files" type="file" multiple name="files" accept=".xls,.xlsx,.csv,.xlsm,.xlsb" />
+                </div>
+                <div class="col-5 text-center">
+                    <input style="width:250px;height:70px;" class="btn btn-primary btn-lg"
+                    type="submit" role="button" value=確定匯入 >
+                    <input id="upload_vendor_info" style="width:250px;height:70px;" class="btn btn-primary btn-lg"
+                        type="submit" role="button" value=確定匯入 disabled=true>
+                    <button class="btn btn-primary btn-lg" type="button" style="width:250px;height:70px;"
+                        id="upload_vendor_info_running" disabled>
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        資料匯入中
+                    </button>
+                </div>
+            </div>
+        </form>
+        <div class="row mt-4">
+            <div class="col">
+                {% if is_imported %}
+                <hr>
+                <a style="font-size: 28px; color: blueviolet;"><b>資料匯入成功囉!</b></a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    $(document).ready(function () {
+        $("#upload_vendor_info_running").hide();
+
+        $("#upload_vendor_info").click(function () {
+            $(this).hide();
+            $("#upload_vendor_info_running").show();
+        });
+
+        $("#files").change(function () {
+            if (document.getElementById("files").files.length == 0) {
+                $('#upload_vendor_info').attr('disabled', true);
+            } else {
+                $('#upload_vendor_info').removeAttr('disabled');
+            }
+        });
+    });
+</script>
+{% endblock %}

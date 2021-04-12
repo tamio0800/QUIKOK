@@ -1,0 +1,197 @@
+{% extends 'base_layout_no_search.html' %} {% block content %}{% load static %}
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Toy Chat Application">
+<title>聊天室 </title>
+
+<link rel="stylesheet" href="{% static 'CSS/bootstrap.min.css' %}">
+<script src="{% static 'JS/jquery.min.js' %}"></script>
+<script src="{% static 'JS/bootstrap.min.js' %}"></script>
+
+<link rel="stylesheet" href="{% static 'CSS/style.css' %}" />
+<link rel="stylesheet" href="{% static 'CSS/font-awesome.min.css' %}" />
+<link rel="stylesheet" href="{% static 'CSS/teacher.css' %}" />
+
+<style>
+    .box {
+        height: 100px;
+        background-color: rebeccapurple;
+        border: 1px solid rosybrown;
+    }
+    
+    .friends_list {
+        background-color: #B2C8CE;
+        color: snow;
+    }
+    
+    .friends_list:hover {
+        background-color: #778488;
+    }
+</style>
+
+<div></div>
+<style>
+/* Hide scrollbar for Chrome, Safari and Opera */
+.hide_scrollbar::-webkit-scrollbar {
+    display: none;
+  }  
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .hide_scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+</style>
+<div class="container mt-4" id="排版2">
+    <div class="row">
+        <div class="col-sm-3 overflow-auto hide_scrollbar " style=" max-height: 550px;background-color:#B2C8CE;" id="左側好友">
+            <ul class="list-group">
+                {% for room_id, friend_name, thumbnail in roomid_and_friend_list %}
+                <span class="overflow-auto">
+                    <img src="/user_upload/{{thumbnail}}/snapshot.png" width="50px" class="img-fluid mt-1">
+                    <a href="/chat/{{current_user.username}}/?room_id={{room_id}}">
+                        <font>{{friend_name}}</font>
+                    </a>
+                </span>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="col-sm-6" id="中間對話區">
+            <div class="panel panel-info">
+                {# Messages go here #}
+                <ul id="messages" class="messages">
+
+                    {% for message in chat_messages %} {% if message.sender.username == current_user.username %}
+                    <li class="message right">
+                        <!--在聊天中顯示大頭照 <div class="avatar">{{message.sender.username}}</div>-->
+                        <div class="text_wrapper">
+                            <div class="text">{{message.message}}<br>
+                                <span class="small">{{message.timestamp}}</span>
+                            </div>
+                        </div>
+                    </li>
+
+                    {% else %}
+                    <li class="message left">
+                        <!-- 在聊天中顯示大頭照 <div class="avatar">{{message.sender.username}}</div>-->
+                        <div class="text_wrapper">
+                            <div class="text">{{message.message}}<br>
+                                <span class="small">{{message.timestamp}}</span>
+                            </div>
+                        </div>
+                    </li>
+                    {% endif %} {% endfor %}
+                </ul>
+                <!--發送訊息處-->
+                <div class="panel-footer">
+                    <div class="input-group">
+                        <input id="chat-input" type="text" class="form-control input" placeholder="Type your message here ..." maxlength="500">
+                        <span class="input-group-btn">
+                            <button class="btn btn-info btn" id="btn-send">Send</button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--col-->
+        <div class="col-sm-3" id="右側資訊">
+            <!--老師資訊-->
+            <div class="container" style="background-color:#B2C8CE;">
+                <row>
+
+                    {% if current_user_identity == 'student' %}
+                    <img class="mt-2 col-12" src="{{current_teacher.picture_folder.url}}/snapshot.png" />
+                    <p class="mt-2 col-12">{{current_teacher.nickname}}</p>
+                    <p>{{current_teacher.intro}}</p>
+                    {% if current_teacher.highlight_1 %}
+                    <label class="mt-1 teacher-info col-12">{{current_teacher.highlight_1}}</label>
+                    {% endif %}
+                    {% if current_teacher.highlight_2 %}
+                    <label class="teacher-info col-12">{{current_teacher.highlight_2}}</label>
+                    {% endif %}
+                    {% if current_teacher.highlight_3 %}
+                    <label class="teacher-info col-12">{{current_teacher.highlight_3}}</label>
+                    {% endif %}
+                    <button class="btn"><a href="/account/teacher_info/">前往教師資訊頁</button>
+
+
+                    <!--學生資訊-->
+                    {% elif current_user_identity == 'teacher' %}
+                    <img src="{{current_student.picture_folder.url}}/snapshot.png" />
+                    <p>{{current_student.nickname}}</p>
+                    <p>{{current_student.intro}}</p>
+                    {% endif %}
+
+                </row>
+            </div>
+        </div>
+    </div>
+</div>
+<!--container whole-->
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
+<script>
+    $('#messages').animate({
+        scrollTop: $('#messages').prop('scrollHeight')
+    });
+    var room_url = '{{current_user.id}}_chatroom_{{chatroom.id}}/';
+    var ws_scheme = window.location.protocol == "https:" ? "wss" : "ws";
+    var websocket_str = ws_scheme + '://' + window.location.host + '/ws/chat/' + room_url;
+    var chatSocket = new WebSocket(websocket_str);
+
+    chatSocket.onopen = function(e) {
+        console.log("Connection success");
+    };
+    console.log(chatSocket);
+    chatSocket.onmessage = function(e) {
+        var data = JSON.parse(e.data);
+        var message = data['message'];
+        var now_time = data['now_time'];
+        var sender_user = data['user'];
+        var user = "{{current_user.username}}";
+        let position = 'left';
+        if (sender_user === user) position = 'right';
+        const messageItem = `
+            <li class="message ${position}">
+                
+                
+                    <div class="text_wrapper">
+                        <div class="text">${message}<br>
+                            <span class="small">${now_time}</span>
+                    </div>
+                </div>
+            </li>`;
+        $(messageItem).appendTo('#messages');
+
+
+        $('#messages').animate({
+            scrollTop: $('#messages').prop('scrollHeight')
+        });
+    };
+
+
+    chatSocket.onclose = function(e) {
+        console.error('Chat socket closed unexpectedly');
+        console.log(e)
+    };
+
+
+    $("#chat-input").focus();
+    $("#chat-input").keyup(function(e) {
+        if (e.keyCode === 13) { // enter, return
+            $("#btn-send").click();
+        }
+    });
+
+    $("#btn-send").click(function() {
+        var message = $('#chat-input').val();
+        chatSocket.send(JSON.stringify({
+            'message': message
+        }));
+
+        $('#chat-input').val('');
+        console.log(message)
+    });
+</script>
+
+{% endblock %}
