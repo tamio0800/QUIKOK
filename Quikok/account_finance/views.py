@@ -171,7 +171,7 @@ def exam_bank_order_history(request):
                 'bank_account_name': '豆沙科技股份有限公司'}
                 
                 data = {'order_type': 'exam_order',
-                        'edony_bank': remittance_info,
+                        'edony_bank_info': remittance_info,
                         'is_valid':record.is_valid,
                         'purchase_status': record.payment_status,
                         'purchase_date':purchase_date,
@@ -386,14 +386,14 @@ def storage_order(request):
                    
                 else:
                     response = {'status':'failed',
-                                'errCode': 8,
+                                'errCode': 9,
                                 'errMsg': '已經選購過題庫囉，請至帳務中心檢查，如有疑問可連絡客服，謝謝！',
                                 'data': None}
                     return JsonResponse(response)         
             else:
                 logging.error(f"account_finance/views/storage_order:收到不存在的訂單分類")
                 response = {'status':'failed',
-                            'errCode': 9,
+                            'errCode': 10,
                             'errMsg': '不存在的訂單分類，如有疑問可連絡客服，謝謝！',
                             'data': None}
                 return JsonResponse(response) 
