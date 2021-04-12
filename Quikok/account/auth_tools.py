@@ -45,6 +45,7 @@ class auth_check_manager:
             '訪客上架':('^/lesson/guestready', 'public'),
             '入口頁':('^/landing', 'public'),
             '老師/學生資訊頁(公開)':('^/account/profile/\d*', 'public'),
+            '題庫方案頁':('^/questionBank/program/.*', 'public')
             
         }
     # 確認前端這次傳來的url屬於哪個權限範圍(一次一個url檢查權限,bag裡只應該有一筆資料)

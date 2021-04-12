@@ -58,13 +58,18 @@
         gtag('js', new Date());
 
         gtag('config', 'G-4EC8L4WNEW');
-        gtag('event', '題庫預購頁-按鈕：立即預購', {
+
+        var buyclick = function(url){
+            gtag('event', '題庫預購頁-按鈕：立即預購', {
             description: '按下[立即預購]按鈕',
             remarks: '',
             page_path: '/ticy/',
             hostname: 'https://www.quikok.com',
-            user_id: (JSON.parse(localStorage.getItem('user')) ? JSON.parse(localStorage.getItem('user')).user_id : -1)
+            user_id: (JSON.parse(localStorage.getItem('user')) ? JSON.parse(localStorage.getItem('user')).user_id : -1),
+            event_callback:'function(){document.location = url;}'
         })
+        }
+
     </script>
     <!-- End Global site tag (gtag.js) - Google Analytics -->
 </head>
@@ -87,7 +92,7 @@
                                     <span class="origin">原價NT3,680/年</span>
                                 </div>
                                 <button style="display: inline-block;"
-                                    onclick="location.href='/questionBank/program/pre_order?openExternalBrowser=1'">預購</button>
+                                    onclick="buyclick('/questionBank/program/pre_order?openExternalBrowser=1')">預購</button>
                             </div>
                         </div>
                         <div class="banner_cp col-md-6">

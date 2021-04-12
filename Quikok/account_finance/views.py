@@ -218,7 +218,9 @@ def storage_order(request):
         total_order_list = request.POST.get('total_order', False)
         total_q_discount = request.POST.get('total_q_discount', False)
 
-        logging.info(f"account_finance/views/storage_order 收到參數user_ID:{user_ID}")
+        logging.info(f"account_finance/views/storage_order 收到訂單user_ID:{user_ID}")
+
+
         if False in [total_order_list, total_q_discount, user_ID]:
             response = {'status':'failed',
                 'errCode': 1,
@@ -259,7 +261,7 @@ def storage_order(request):
         order_has_checked_list = list() # 用來寄email用 這版先不理他(不合併寄信)
         #exam_bank_check_list = list() # 用來暫存訂購題庫的ID，預購期間只能有一筆
         total_order_list = eval(total_order_list) # 由於json傳來的巢狀結構是str,這邊由str轉成list
-        logging.info(f"account_finance/views/storage_order total_order_list type:{type(total_order_list)}")
+        logging.info(f"account_finance/views/storage_order 訂單們的資訊:{total_order_list}")
         # 這邊的迴圈用來檢查每筆訂單
         for each_order in total_order_list:
             # 課程訂單
@@ -527,7 +529,6 @@ def storage_order(request):
         'errMsg': '資料庫有問題，請稍後再試',
         'data': None}
         return JsonResponse(response)
-
 
 
 
@@ -922,8 +923,6 @@ def student_edit_order(request):
                             target = email_to_edony.send_email_reconciliation_reminder,
                             kwargs = send_email_info)
                         send_email_to_edony.start()
-                        
-                        
                         
                         
                         response = {'status':'success',
