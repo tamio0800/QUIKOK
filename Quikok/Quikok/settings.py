@@ -214,3 +214,76 @@ if DISABLED_EMAIL == False:
     EMAIL_HOST_USER = 'quikok.taiwan@quikok.com'     # 'edony.ai.tech@gmail.com'  #寄件者電子郵件
     EMAIL_HOST_PASSWORD = 'jamthqadrfcxesdq'  #Gmail應用程式的密碼   
 
+# django logging設定
+if DEV_MODE:
+    log_path = ''
+else:
+    log_path = ''
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,  # 是否禁用已经存在的日志器
+    'formatters': {  # 日志信息显示的格式
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(lineno)s %(message)s'
+            # "class": "pythonjsonlogger.jsonlogger.JsonFormatter"
+        },
+        'simple': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(funcName)s %(lineno)d %(message)s'
+            # "class": "pythonjsonlogger.jsonlogger.JsonFormatter"
+        },  # 日志记录级别+时间日期+模块名称+函数名称+行号+记录消息
+    },
+    'filters': {
+        'special': {
+            '()': 'Quikok.logging.SpecialFilter',
+            #'foo': 'bar',
+        },
+    },    
+    'handlers': {  # 日志处理方法
+        'console': {  # 向终端中输出日志
+            'level': 'INFO',
+            'class': 'logging.StreamHandler'
+        },
+        'info': {  # 中输出日志
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR+'/logs', "info.log"),  # 日志文件的位置
+            #'maxBytes': 300 * 1024 * 1024,  # 300M大小
+            #'backupCount': 10,
+            'formatter': 'verbose',
+            'encoding': 'utf-8'
+        },
+        'mail_admins': { #  which emails any ERROR (or higher) message to the site ADMINS
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'filters': ['special']
+        },
+        'chatroom_info': {  # 输出日志
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR+'/logs', "chatroom_info.log"),  # 日志文件的位置
+            #'maxBytes': 300 * 1024 * 1024,  # 日志大小300M
+            #'backupCount': 10,
+            'formatter': 'verbose',
+            'encoding': 'utf-8'
+        },
+
+    },
+    'loggers': {  # 日志器
+        "django": {        # 默认的logger应用如下配置
+            "handlers": ["info", "console"],
+            "propagate": True,
+            "level": "INFO"
+        },
+        "django.request": {        #which emails any ERROR (or higher) message to the site ADMINS
+            "handlers": ["mail_admins"],
+            "propagate": True,
+            "level": "INFO"
+        },
+        'chatroom_info': {      # 名为chatroom_info的logger还单独处理
+            'handlers': ['chatroom_info','mail_admins'],
+            "propagate": True,
+            'level': 'INFO',
+        },
+    }
+    }

@@ -1,0 +1,23 @@
+INFO 2021-04-19 20:54:17,712 autoreload 617 Watching for file changes with StatReloader
+INFO 2021-04-19 20:54:18,747 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50748]
+INFO 2021-04-19 20:54:18,846 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50748]
+INFO 2021-04-19 20:54:31,432 runserver 141 [mHTTP GET / 200 [0.01, 127.0.0.1:50754][0m
+INFO 2021-04-19 20:54:31,443 runserver 160 WebSocket DISCONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50748]
+INFO 2021-04-19 20:54:31,707 runserver 141 [mHTTP GET /api/get_csrf_token/ 200 [0.01, 127.0.0.1:50754][0m
+INFO 2021-04-19 20:54:31,842 runserver 141 [mHTTP GET /static/img/boy_teacher.d852f4ff.jpg?t=1618836871800 200 [0.02, 127.0.0.1:50754][0m
+INFO 2021-04-19 20:54:31,973 runserver 141 [mHTTP GET /static/favicon.png 200 [0.03, 127.0.0.1:50754][0m
+INFO 2021-04-19 20:54:32,027 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.15, 127.0.0.1:50755][0m
+INFO 2021-04-19 20:54:32,057 runserver 141 [mHTTP GET /api/getBannerBar/ 200 [0.02, 127.0.0.1:50755][0m
+INFO 2021-04-19 20:54:32,093 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfSystemChatroom/ 200 [0.22, 127.0.0.1:50756][0m
+INFO 2021-04-19 20:54:32,148 runserver 141 [mHTTP POST /api/lesson/getLessonCardsForCommonUsers/ 200 [0.11, 127.0.0.1:50754][0m
+WARNING 2021-04-19 20:54:32,185 log 224 Not Found: /user_upload/teachers/tamio.chou@gmail.com/thumbnail.jpeg
+WARNING 2021-04-19 20:54:32,185 log 224 Not Found: /user_upload/teachers/tamio.chou@gmail.com/lessons/7/customized_lesson_background_for_cards.jpeg
+WARNING 2021-04-19 20:54:32,192 runserver 149 [33mHTTP GET /user_upload/teachers/tamio.chou@gmail.com/thumbnail.jpeg 404 [0.03, 127.0.0.1:50754][0m
+WARNING 2021-04-19 20:54:32,193 runserver 149 [33mHTTP GET /user_upload/teachers/tamio.chou@gmail.com/lessons/7/customized_lesson_background_for_cards.jpeg 404 [0.02, 127.0.0.1:50755][0m
+INFO 2021-04-19 20:54:32,223 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfChatroom/ 200 [0.11, 127.0.0.1:50756][0m
+INFO 2021-04-19 20:54:32,230 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50761]
+INFO 2021-04-19 20:54:32,237 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50761]
+INFO 2021-04-19 20:57:17,286 autoreload 240 /mnt/d/Users/edony/Desktop/quikok project/QUIKOK/Quikok/Quikok/settings.py changed, reloading.
+INFO 2021-04-19 20:57:18,026 autoreload 617 Watching for file changes with StatReloader
+INFO 2021-04-19 20:57:18,977 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50791]
+INFO 2021-04-19 20:57:19,001 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50791]
