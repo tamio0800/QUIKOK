@@ -21,3 +21,66 @@ INFO 2021-04-20 12:15:55,782 autoreload 617 Watching for file changes with StatR
 INFO 2021-04-20 12:15:56,703 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:52405]
 INFO 2021-04-20 12:15:56,744 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:52405]
 INFO 2021-04-20 12:16:26,304 runserver 160 WebSocket DISCONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:52405]
+INFO 2021-04-20 14:01:12,688 autoreload 617 Watching for file changes with StatReloader
+INFO 2021-04-20 14:01:13,698 runserver 141 [mHTTP GET / 200 [0.01, 127.0.0.1:45340][0m
+INFO 2021-04-20 14:01:13,736 runserver 141 [mHTTP GET /static/css/app.271cf78c.css 200 [0.02, 127.0.0.1:45340][0m
+INFO 2021-04-20 14:01:13,742 runserver 141 [mHTTP GET /static/js/chunk-vendors.62787647.js 200 [0.02, 127.0.0.1:45346][0m
+INFO 2021-04-20 14:01:13,742 runserver 141 [mHTTP GET /static/js/app.fc3215b9.js 200 [0.03, 127.0.0.1:45342][0m
+INFO 2021-04-20 14:01:13,744 runserver 141 [mHTTP GET /static/css/chunk-3064fe14.76087ffc.css 200 [0.01, 127.0.0.1:45348][0m
+INFO 2021-04-20 14:01:13,746 runserver 141 [mHTTP GET /static/css/chunk-vendors.23458bae.css 200 [0.03, 127.0.0.1:45344][0m
+INFO 2021-04-20 14:01:13,747 runserver 141 [mHTTP GET /static/js/chunk-3064fe14.67257dd6.js 200 [0.01, 127.0.0.1:45350][0m
+INFO 2021-04-20 14:01:14,082 runserver 141 [mHTTP GET /api/get_csrf_token/ 200 [0.00, 127.0.0.1:45346][0m
+INFO 2021-04-20 14:01:14,104 runserver 141 [mHTTP GET /static/js/app.fc3215b9.js.map 200 [0.02, 127.0.0.1:45344][0m
+INFO 2021-04-20 14:01:14,115 runserver 141 [mHTTP GET /static/js/chunk-vendors.62787647.js.map 200 [0.03, 127.0.0.1:45346][0m
+INFO 2021-04-20 14:01:14,196 runserver 141 [mHTTP GET /user_upload/students/student_system5@quikok.com/thumbnail.jpeg?t=1617962461766?t=1618898474171 200 [0.00, 127.0.0.1:45346][0m
+INFO 2021-04-20 14:01:14,307 runserver 141 [mHTTP GET /static/img/searchLesson_hover.a8b8aef9.jpg 200 [0.01, 127.0.0.1:45346][0m
+INFO 2021-04-20 14:01:14,308 runserver 141 [mHTTP GET /static/img/beTeacher_hover.d7621fb7.jpg 200 [0.01, 127.0.0.1:45344][0m
+INFO 2021-04-20 14:01:14,349 runserver 141 [mHTTP GET /static/img/logo.afbf1ba8.png 200 [0.00, 127.0.0.1:45346][0m
+INFO 2021-04-20 14:01:14,350 runserver 141 [mHTTP GET /static/img/loading.47f6ffc4.gif 200 [0.00, 127.0.0.1:45344][0m
+INFO 2021-04-20 14:01:14,364 runserver 141 [mHTTP GET /static/img/beTeacher.df78563d.jpg 200 [0.01, 127.0.0.1:45342][0m
+INFO 2021-04-20 14:01:14,369 runserver 141 [mHTTP GET /static/img/searchLesson.d75fe4ba.jpg 200 [0.01, 127.0.0.1:45348][0m
+INFO 2021-04-20 14:01:14,372 runserver 141 [mHTTP GET /static/img/searchLessonM.3b8824ce.jpg 200 [0.02, 127.0.0.1:45340][0m
+INFO 2021-04-20 14:01:14,375 runserver 141 [mHTTP GET /static/img/beTeacherM.a758bcdf.jpg 200 [0.02, 127.0.0.1:45344][0m
+INFO 2021-04-20 14:01:14,376 runserver 141 [mHTTP GET /static/img/question_bank_banner_pc.a5a21920.jpg 200 [0.02, 127.0.0.1:45350][0m
+INFO 2021-04-20 14:01:14,418 runserver 141 [mHTTP GET /static/img/question_bank_banner_m.ab6d67aa.jpg 200 [0.01, 127.0.0.1:45348][0m
+INFO 2021-04-20 14:01:14,418 runserver 141 [mHTTP GET /static/fonts/materialdesignicons-webfont.45911874.woff2 200 [0.01, 127.0.0.1:45342][0m
+INFO 2021-04-20 14:01:14,425 runserver 141 [mHTTP GET /static/js/chunk-3064fe14.67257dd6.js.map 200 [0.01, 127.0.0.1:45344][0m
+INFO 2021-04-20 14:01:14,757 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.40, 127.0.0.1:45346][0m
+INFO 2021-04-20 14:01:14,784 runserver 141 [mHTTP GET /api/getBannerBar/ 200 [0.01, 127.0.0.1:45346][0m
+INFO 2021-04-20 14:01:14,801 runserver 145 [36mHTTP GET /static/homepage/desktop/%E9%A6%96%E9%A0%81banner_%E9%9B%BB%E8%85%A6%E7%89%880209.jpg 304 [0.00, 127.0.0.1:45346][0m
+INFO 2021-04-20 14:01:14,968 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfSystemChatroom/ 200 [0.56, 127.0.0.1:45340][0m
+INFO 2021-04-20 14:01:15,126 runserver 141 [mHTTP POST /api/lesson/getLessonCardsForCommonUsers/ 200 [0.35, 127.0.0.1:45350][0m
+WARNING 2021-04-20 14:01:15,154 log 230 Not Found: /user_upload/teachers/tamio.chou@gmail.com/lessons/7/customized_lesson_background_for_cards.jpeg
+WARNING 2021-04-20 14:01:15,155 log 230 Not Found: /user_upload/teachers/tamio.chou@gmail.com/thumbnail.jpeg
+INFO 2021-04-20 14:01:15,156 runserver 141 [mHTTP GET /static/img/lesson_card_bg1.04373b68.jpg 200 [0.01, 127.0.0.1:45342][0m
+INFO 2021-04-20 14:01:15,157 runserver 141 [mHTTP GET /static/img/boy_teacher.d852f4ff.jpg 200 [0.01, 127.0.0.1:45344][0m
+INFO 2021-04-20 14:01:15,157 runserver 141 [mHTTP GET /static/img/girl_teacher.d08c9e4b.jpg 200 [0.01, 127.0.0.1:45348][0m
+WARNING 2021-04-20 14:01:15,159 runserver 149 [33mHTTP GET /user_upload/teachers/tamio.chou@gmail.com/lessons/7/customized_lesson_background_for_cards.jpeg 404 [0.02, 127.0.0.1:45346][0m
+WARNING 2021-04-20 14:01:15,159 runserver 149 [33mHTTP GET /user_upload/teachers/tamio.chou@gmail.com/thumbnail.jpeg 404 [0.02, 127.0.0.1:45350][0m
+INFO 2021-04-20 14:01:15,253 runserver 141 [mHTTP GET /static/favicon.png 200 [0.00, 127.0.0.1:45344][0m
+INFO 2021-04-20 14:01:15,328 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfChatroom/ 200 [0.35, 127.0.0.1:45340][0m
+INFO 2021-04-20 14:01:15,333 runserver 162 WebSocket HANDSHAKING /ws/chat/6_chatroom_6_1/ [127.0.0.1:45378]
+INFO 2021-04-20 14:01:15,729 runserver 158 WebSocket CONNECT /ws/chat/6_chatroom_6_1/ [127.0.0.1:45378]
+INFO 2021-04-20 14:01:19,435 runserver 141 [mHTTP GET /ticy/ 200 [0.00, 127.0.0.1:45340][0m
+INFO 2021-04-20 14:01:19,453 runserver 145 [36mHTTP GET /static/amigo/css/all.css 304 [0.01, 127.0.0.1:45340][0m
+INFO 2021-04-20 14:01:19,455 runserver 145 [36mHTTP GET /static/amigo/js/jquery.mousewheel.min.js 304 [0.01, 127.0.0.1:45348][0m
+INFO 2021-04-20 14:01:19,455 runserver 145 [36mHTTP GET /static/amigo/css/ticy.css 304 [0.01, 127.0.0.1:45350][0m
+INFO 2021-04-20 14:01:19,456 runserver 145 [36mHTTP GET /static/amigo/js/ticy.js 304 [0.01, 127.0.0.1:45346][0m
+INFO 2021-04-20 14:01:19,456 runserver 145 [36mHTTP GET /static/amigo/js/jquery-3.6.0.min.js 304 [0.01, 127.0.0.1:45344][0m
+INFO 2021-04-20 14:01:19,474 runserver 141 [mHTTP GET /static/amigo/img/mobile_br.png 200 [0.00, 127.0.0.1:45344][0m
+INFO 2021-04-20 14:01:19,487 runserver 145 [36mHTTP GET /static/amigo/img/card01.png 304 [0.01, 127.0.0.1:45350][0m
+INFO 2021-04-20 14:01:19,490 runserver 145 [36mHTTP GET /static/amigo/img/banner_cp.png 304 [0.01, 127.0.0.1:45344][0m
+INFO 2021-04-20 14:01:19,490 runserver 145 [36mHTTP GET /static/amigo/img/card02.png 304 [0.01, 127.0.0.1:45348][0m
+INFO 2021-04-20 14:01:19,491 runserver 141 [mHTTP GET /static/amigo/img/banner_wd.png 200 [0.01, 127.0.0.1:45346][0m
+INFO 2021-04-20 14:01:19,491 runserver 145 [36mHTTP GET /static/amigo/img/card04.png 304 [0.01, 127.0.0.1:45342][0m
+INFO 2021-04-20 14:01:19,492 runserver 145 [36mHTTP GET /static/amigo/img/card03.png 304 [0.01, 127.0.0.1:45340][0m
+INFO 2021-04-20 14:01:19,497 runserver 145 [36mHTTP GET /static/amigo/img/fpic01.png 304 [0.01, 127.0.0.1:45350][0m
+INFO 2021-04-20 14:01:19,498 runserver 145 [36mHTTP GET /static/amigo/img/fpic02.png 304 [0.01, 127.0.0.1:45346][0m
+INFO 2021-04-20 14:01:19,501 runserver 145 [36mHTTP GET /static/amigo/img/last_banner.png 304 [0.01, 127.0.0.1:45348][0m
+INFO 2021-04-20 14:01:19,502 runserver 145 [36mHTTP GET /static/amigo/img/Ticy_logo.png 304 [0.01, 127.0.0.1:45344][0m
+INFO 2021-04-20 14:01:19,503 runserver 145 [36mHTTP GET /static/amigo/img/fpic04.png 304 [0.01, 127.0.0.1:45342][0m
+INFO 2021-04-20 14:01:19,503 runserver 145 [36mHTTP GET /static/amigo/img/fpic03.png 304 [0.01, 127.0.0.1:45340][0m
+INFO 2021-04-20 14:01:19,506 runserver 145 [36mHTTP GET /static/amigo/img/banner_bk.jpg 304 [0.00, 127.0.0.1:45346][0m
+INFO 2021-04-20 14:01:20,201 runserver 141 [mHTTP GET /static/amigo/img/ticy_icon.png 200 [0.01, 127.0.0.1:45346][0m
+INFO 2021-04-20 14:01:31,767 runserver 141 [mHTTP GET /static/amigo/webfonts/fa-solid-900.woff2 200 [0.00, 127.0.0.1:45346][0m
+INFO 2021-04-20 14:02:10,669 runserver 160 WebSocket DISCONNECT /ws/chat/6_chatroom_6_1/ [127.0.0.1:45378]
