@@ -218,10 +218,24 @@ if DISABLED_EMAIL == False:
     MANAGERS = ADMINS
 
 # django logging設定
+def touch(file_path):
+    if os.path.isfile(file_path) == False:
+        open(file_path, 'a').close()
+        # 沒有該檔案的話就創建一個
+
+if os.path.isdir(os.path.join(BASE_DIR, "logs")) == False:
+    os.mkdir(os.path.join(BASE_DIR, "logs"))
 if DEV_MODE:
-    log_path = '/logs/develop_logs'
+    if os.path.isdir(os.path.join(BASE_DIR, "logs", "develop_logs")) == False:
+        os.mkdir(os.path.join(BASE_DIR, "logs", "develop_logs"))
+    log_path = os.path.join(BASE_DIR, "logs", "develop_logs")
 else: 
-    log_path = '/logs/production_logs'
+    if os.path.isdir(os.path.join(BASE_DIR, "logs", "production_logs")) == False:
+        os.mkdir(os.path.join(BASE_DIR, "logs", "production_logs"))
+    log_path = os.path.join(BASE_DIR, "logs", "production_logs")
+
+touch(os.path.join(BASE_DIR, log_path, "info.log"))
+touch(os.path.join(BASE_DIR, log_path, "chatroom_info.log"))
 
 LOGGING = {
     'version': 1,
@@ -250,7 +264,7 @@ LOGGING = {
         'info': {  # 中输出日志
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR+log_path, "info.log"),  # 日志文件的位置
+            'filename': os.path.join(BASE_DIR, log_path, "info.log"),  # 日志文件的位置
             #'maxBytes': 300 * 1024 * 1024,  # 300M大小
             #'backupCount': 10,
             'formatter': 'verbose',
@@ -264,7 +278,7 @@ LOGGING = {
         'chatroom_info': {  # 输出日志
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR+log_path, "chatroom_info.log"),  # 日志文件的位置
+            'filename': os.path.join(BASE_DIR, log_path, "chatroom_info.log"),  # 日志文件的位置
             #'maxBytes': 300 * 1024 * 1024,  # 日志大小300M
             #'backupCount': 10,
             'formatter': 'verbose',
