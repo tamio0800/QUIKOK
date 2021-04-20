@@ -1,0 +1,23 @@
+INFO 2021-04-20 14:19:51,224 autoreload 617 Watching for file changes with StatReloader
+INFO 2021-04-20 14:20:01,921 runserver 141 [mHTTP GET / 200 [0.06, 127.0.0.1:50103][0m
+INFO 2021-04-20 14:20:02,254 runserver 141 [mHTTP GET /api/get_csrf_token/ 200 [0.00, 127.0.0.1:50103][0m
+INFO 2021-04-20 14:20:02,373 runserver 141 [mHTTP GET /static/img/boy_teacher.d852f4ff.jpg?t=1618899602329 200 [0.03, 127.0.0.1:50103][0m
+INFO 2021-04-20 14:20:02,647 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.19, 127.0.0.1:50104][0m
+INFO 2021-04-20 14:20:02,686 runserver 141 [mHTTP GET /api/getBannerBar/ 200 [0.02, 127.0.0.1:50104][0m
+INFO 2021-04-20 14:20:02,725 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfSystemChatroom/ 200 [0.27, 127.0.0.1:50105][0m
+INFO 2021-04-20 14:20:02,780 runserver 141 [mHTTP POST /api/lesson/getLessonCardsForCommonUsers/ 200 [0.12, 127.0.0.1:50103][0m
+INFO 2021-04-20 14:20:02,822 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfChatroom/ 200 [0.09, 127.0.0.1:50105][0m
+INFO 2021-04-20 14:20:02,851 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50110]
+WARNING 2021-04-20 14:20:02,887 log 224 Not Found: /user_upload/teachers/tamio.chou@gmail.com/thumbnail.jpeg
+WARNING 2021-04-20 14:20:02,888 log 224 Not Found: /user_upload/teachers/tamio.chou@gmail.com/lessons/7/customized_lesson_background_for_cards.jpeg
+WARNING 2021-04-20 14:20:03,123 runserver 149 [33mHTTP GET /user_upload/teachers/tamio.chou@gmail.com/thumbnail.jpeg 404 [0.33, 127.0.0.1:50103][0m
+WARNING 2021-04-20 14:20:03,124 runserver 149 [33mHTTP GET /user_upload/teachers/tamio.chou@gmail.com/lessons/7/customized_lesson_background_for_cards.jpeg 404 [0.33, 127.0.0.1:50104][0m
+INFO 2021-04-20 14:20:03,135 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50110]
+INFO 2021-04-20 14:20:08,611 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.15, 127.0.0.1:50104][0m
+INFO 2021-04-20 14:20:08,908 runserver 141 [mHTTP GET /api/account/returnTeacherProfileForOneselfViewing/?userID=2 200 [0.29, 127.0.0.1:50104][0m
+INFO 2021-04-20 14:20:09,241 runserver 141 [mHTTP POST /api/lesson/getLessonCardsForCommonUsers/ 200 [0.18, 127.0.0.1:50104][0m
+INFO 2021-04-20 14:20:11,767 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.19, 127.0.0.1:50104][0m
+INFO 2021-04-20 14:20:12,009 runserver 141 [mHTTP GET /articles/ 200 [0.23, 127.0.0.1:50104][0m
+INFO 2021-04-20 14:20:12,035 runserver 141 [mHTTP GET /static/css/blog.css 200 [0.02, 127.0.0.1:50104][0m
+INFO 2021-04-20 14:20:12,081 runserver 141 [mHTTP GET /user_upload/articles/default_main_picture.png 200 [0.06, 127.0.0.1:50105][0m
+INFO 2021-04-20 14:20:12,084 runserver 141 [mHTTP GET /user_upload/articles/2020/12/22/blog_main_picture.png 200 [0.07, 127.0.0.1:50103][0m
