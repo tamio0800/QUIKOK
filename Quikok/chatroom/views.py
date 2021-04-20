@@ -19,6 +19,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 
 logging.basicConfig(level=logging.NOTSET) #DEBUG
+logger_chatroom = logging.getLogger('chatroom_info')
 
 # 寄信到edony的email
 chatroom_email_edony_notification = chatroom_email_for_edony()
@@ -32,9 +33,11 @@ def check_if_edony_chatroom_unread():
     unread_msg = chat_history_Mr_Q2user.objects.filter(system_is_read = 0,user_is_read =1).count()
     if unread_msg != 0:
         chatroom_email_edony_notification.edony_unread_user_msg(unread_msg)
+        logger_chatroom.info('chatroom.view 例行檢查，寄出未讀訊息')
 
 scheduler.add_job(check_if_edony_chatroom_unread, 'interval',
     hours = 8, start_date = '2021-04-12 01:01:00')
+logger_chatroom.info('chatroom.view 例行檢查是否有未讀訊息')
     # hours = 24
    #,end_date = '2021-02-02 10:31:00' seconds, minutes, hours
 scheduler.start()

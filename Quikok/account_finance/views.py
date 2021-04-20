@@ -1,4 +1,3 @@
-import logging
 from django.shortcuts import render
 import math, json, logging
 from account_finance.models import (student_purchase_record, 
