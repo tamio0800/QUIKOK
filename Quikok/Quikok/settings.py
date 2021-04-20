@@ -214,11 +214,14 @@ if DISABLED_EMAIL == False:
     EMAIL_HOST_USER = 'quikok.taiwan@quikok.com'     # 'edony.ai.tech@gmail.com'  #寄件者電子郵件
     EMAIL_HOST_PASSWORD = 'jamthqadrfcxesdq'  #Gmail應用程式的密碼   
 
+    ADMINS = ['quikok.taiwan@quikok.com'] # log error
+    MANAGERS = ADMINS
+
 # django logging設定
 if DEV_MODE:
-    log_path = ''
-else:
-    log_path = ''
+    log_path = '/logs/develop_logs'
+else: 
+    log_path = '/logs/production_logs'
 
 LOGGING = {
     'version': 1,
@@ -247,7 +250,7 @@ LOGGING = {
         'info': {  # 中输出日志
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR+'/logs', "info.log"),  # 日志文件的位置
+            'filename': os.path.join(BASE_DIR+log_path, "info.log"),  # 日志文件的位置
             #'maxBytes': 300 * 1024 * 1024,  # 300M大小
             #'backupCount': 10,
             'formatter': 'verbose',
@@ -261,7 +264,7 @@ LOGGING = {
         'chatroom_info': {  # 输出日志
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR+'/logs', "chatroom_info.log"),  # 日志文件的位置
+            'filename': os.path.join(BASE_DIR+log_path, "chatroom_info.log"),  # 日志文件的位置
             #'maxBytes': 300 * 1024 * 1024,  # 日志大小300M
             #'backupCount': 10,
             'formatter': 'verbose',
