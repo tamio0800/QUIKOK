@@ -168,3 +168,165 @@ INFO 2021-04-20 14:32:41,732 runserver 141 [mHTTP POST /api/chat/contentAndHist
 INFO 2021-04-20 14:32:41,738 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50392]
 INFO 2021-04-20 14:32:41,746 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50392]
 INFO 2021-04-20 14:32:41,817 runserver 141 [mHTTP GET /articles/ 200 [0.12, 127.0.0.1:50379][0m
+INFO 2021-04-20 14:50:09,406 autoreload 617 Watching for file changes with StatReloader
+INFO 2021-04-20 14:50:15,096 runserver 141 [mHTTP GET / 200 [0.02, 127.0.0.1:50514][0m
+INFO 2021-04-20 14:50:15,156 runserver 141 [mHTTP GET /static/js/app.1b2c6926.js 200 [0.01, 127.0.0.1:50514][0m
+INFO 2021-04-20 14:50:15,458 runserver 141 [mHTTP GET /api/get_csrf_token/ 200 [0.00, 127.0.0.1:50514][0m
+INFO 2021-04-20 14:50:15,566 runserver 141 [mHTTP GET /static/img/boy_teacher.d852f4ff.jpg?t=1618901415532 200 [0.01, 127.0.0.1:50514][0m
+INFO 2021-04-20 14:50:15,680 runserver 145 [36mHTTP GET /static/img/question_bank_banner_pc.a5a21920.jpg 304 [0.03, 127.0.0.1:50516][0m
+INFO 2021-04-20 14:50:15,685 runserver 145 [36mHTTP GET /static/img/question_bank_banner_m.ab6d67aa.jpg 304 [0.02, 127.0.0.1:50517][0m
+INFO 2021-04-20 14:50:15,985 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.34, 127.0.0.1:50513][0m
+INFO 2021-04-20 14:50:16,032 runserver 141 [mHTTP GET /api/getBannerBar/ 200 [0.02, 127.0.0.1:50513][0m
+INFO 2021-04-20 14:50:16,040 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfSystemChatroom/ 200 [0.39, 127.0.0.1:50515][0m
+INFO 2021-04-20 14:50:16,128 runserver 141 [mHTTP POST /api/lesson/getLessonCardsForCommonUsers/ 200 [0.12, 127.0.0.1:50517][0m
+INFO 2021-04-20 14:50:16,160 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfChatroom/ 200 [0.10, 127.0.0.1:50515][0m
+WARNING 2021-04-20 14:50:16,171 log 224 Not Found: /user_upload/teachers/tamio.chou@gmail.com/thumbnail.jpeg
+WARNING 2021-04-20 14:50:16,173 log 224 Not Found: /user_upload/teachers/tamio.chou@gmail.com/lessons/7/customized_lesson_background_for_cards.jpeg
+WARNING 2021-04-20 14:50:16,177 runserver 149 [33mHTTP GET /user_upload/teachers/tamio.chou@gmail.com/lessons/7/customized_lesson_background_for_cards.jpeg 404 [0.03, 127.0.0.1:50513][0m
+WARNING 2021-04-20 14:50:16,179 runserver 149 [33mHTTP GET /user_upload/teachers/tamio.chou@gmail.com/thumbnail.jpeg 404 [0.03, 127.0.0.1:50517][0m
+INFO 2021-04-20 14:50:16,204 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50522]
+INFO 2021-04-20 14:50:16,237 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50522]
+INFO 2021-04-20 14:50:26,268 runserver 141 [mHTTP GET /ticy/ 200 [0.02, 127.0.0.1:50517][0m
+INFO 2021-04-20 14:50:26,318 runserver 141 [mHTTP GET /static/amigo/js/jquery-3.6.0.min.js 200 [0.03, 127.0.0.1:50517][0m
+INFO 2021-04-20 14:50:26,320 runserver 141 [mHTTP GET /static/amigo/css/all.css 200 [0.02, 127.0.0.1:50516][0m
+INFO 2021-04-20 14:50:26,322 runserver 141 [mHTTP GET /static/amigo/js/ticy.js 200 [0.03, 127.0.0.1:50515][0m
+INFO 2021-04-20 14:50:26,326 runserver 141 [mHTTP GET /static/amigo/js/jquery.mousewheel.min.js 200 [0.04, 127.0.0.1:50513][0m
+INFO 2021-04-20 14:50:26,330 runserver 141 [mHTTP GET /static/amigo/css/ticy.css 200 [0.04, 127.0.0.1:50514][0m
+INFO 2021-04-20 14:50:26,371 runserver 141 [mHTTP GET /static/amigo/img/mobile_br.png 200 [0.03, 127.0.0.1:50514][0m
+INFO 2021-04-20 14:50:26,422 runserver 141 [mHTTP GET /static/amigo/img/card01.png 200 [0.04, 127.0.0.1:50513][0m
+INFO 2021-04-20 14:50:26,437 runserver 141 [mHTTP GET /static/amigo/img/banner_wd.png 200 [0.05, 127.0.0.1:50515][0m
+INFO 2021-04-20 14:50:26,440 runserver 141 [mHTTP GET /static/amigo/img/banner_cp.png 200 [0.06, 127.0.0.1:50514][0m
+INFO 2021-04-20 14:50:26,451 runserver 141 [mHTTP GET /static/amigo/img/card03.png 200 [0.06, 127.0.0.1:50517][0m
+INFO 2021-04-20 14:50:26,469 runserver 141 [mHTTP GET /static/amigo/img/card04.png 200 [0.07, 127.0.0.1:50525][0m
+INFO 2021-04-20 14:50:26,481 runserver 141 [mHTTP GET /static/amigo/img/card02.png 200 [0.09, 127.0.0.1:50516][0m
+INFO 2021-04-20 14:50:26,495 runserver 141 [mHTTP GET /static/amigo/img/fpic01.png 200 [0.07, 127.0.0.1:50513][0m
+INFO 2021-04-20 14:50:26,507 runserver 141 [mHTTP GET /static/amigo/img/fpic04.png 200 [0.04, 127.0.0.1:50514][0m
+INFO 2021-04-20 14:50:26,516 runserver 141 [mHTTP GET /static/amigo/img/fpic03.png 200 [0.05, 127.0.0.1:50517][0m
+INFO 2021-04-20 14:50:26,519 runserver 141 [mHTTP GET /static/amigo/img/fpic02.png 200 [0.06, 127.0.0.1:50515][0m
+INFO 2021-04-20 14:50:26,521 runserver 141 [mHTTP GET /static/amigo/img/last_banner.png 200 [0.05, 127.0.0.1:50525][0m
+INFO 2021-04-20 14:50:26,523 runserver 141 [mHTTP GET /static/amigo/img/Ticy_logo.png 200 [0.04, 127.0.0.1:50516][0m
+INFO 2021-04-20 14:50:26,533 runserver 141 [mHTTP GET /static/amigo/img/banner_bk.jpg 200 [0.03, 127.0.0.1:50513][0m
+INFO 2021-04-20 14:50:26,685 runserver 141 [mHTTP GET /static/amigo/img/ticy_icon.png 200 [0.02, 127.0.0.1:50513][0m
+INFO 2021-04-20 14:50:28,019 runserver 141 [mHTTP GET /questionBank/program/pre_order?openExternalBrowser=1 200 [0.01, 127.0.0.1:50513][0m
+INFO 2021-04-20 14:50:28,273 runserver 141 [mHTTP GET /api/get_csrf_token/ 200 [0.00, 127.0.0.1:50513][0m
+INFO 2021-04-20 14:50:28,378 runserver 141 [mHTTP GET /static/img/boy_teacher.d852f4ff.jpg?t=1618901428342 200 [0.02, 127.0.0.1:50513][0m
+INFO 2021-04-20 14:50:28,519 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.13, 127.0.0.1:50516][0m
+INFO 2021-04-20 14:50:28,589 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfSystemChatroom/ 200 [0.19, 127.0.0.1:50525][0m
+INFO 2021-04-20 14:50:28,690 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfChatroom/ 200 [0.09, 127.0.0.1:50525][0m
+INFO 2021-04-20 14:50:28,701 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50531]
+INFO 2021-04-20 14:50:28,704 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50531]
+INFO 2021-04-20 14:50:29,650 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.13, 127.0.0.1:50525][0m
+INFO 2021-04-20 14:50:36,598 runserver 141 [mHTTP POST /api/account_finance/storageOrder/ 200 [0.15, 127.0.0.1:50525][0m
+INFO 2021-04-20 14:50:40,045 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.12, 127.0.0.1:50525][0m
+INFO 2021-04-20 14:50:40,154 runserver 141 [mHTTP POST /api/account_finance/getLessonSalesHistory/ 200 [0.10, 127.0.0.1:50516][0m
+INFO 2021-04-20 14:50:40,162 runserver 141 [mHTTP POST /api/account_finance/examBankOrderHistory/ 200 [0.11, 127.0.0.1:50525][0m
+INFO 2021-04-20 14:50:40,168 runserver 141 [mHTTP POST /api/account_finance/getQPointsWithdrawalHistory/ 200 [0.11, 127.0.0.1:50513][0m
+INFO 2021-04-20 14:50:40,172 runserver 141 [mHTTP POST /api/account/getBankingInfomation/ 200 [0.11, 127.0.0.1:50517][0m
+INFO 2021-04-20 14:50:47,957 runserver 141 [mHTTP POST /api/account_finance/examBankEditOrder/ 200 [0.16, 127.0.0.1:50517][0m
+INFO 2021-04-20 14:50:48,071 runserver 141 [mHTTP POST /api/account_finance/examBankOrderHistory/ 200 [0.10, 127.0.0.1:50517][0m
+INFO 2021-04-20 14:51:55,097 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.13, 127.0.0.1:50555][0m
+INFO 2021-04-20 14:51:55,282 runserver 141 [mHTTP GET /api/account/returnTeacherProfileForOneselfViewing/?userID=2 200 [0.18, 127.0.0.1:50555][0m
+INFO 2021-04-20 14:51:55,595 runserver 141 [mHTTP POST /api/lesson/getLessonCardsForCommonUsers/ 200 [0.20, 127.0.0.1:50555][0m
+INFO 2021-04-20 14:52:02,646 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.13, 127.0.0.1:50555][0m
+INFO 2021-04-20 14:52:02,758 runserver 141 [mHTTP POST /api/account_finance/examBankOrderHistory/ 200 [0.10, 127.0.0.1:50555][0m
+INFO 2021-04-20 14:52:02,763 runserver 141 [mHTTP POST /api/account_finance/getLessonSalesHistory/ 200 [0.10, 127.0.0.1:50562][0m
+INFO 2021-04-20 14:52:02,891 runserver 141 [mHTTP POST /api/account/getBankingInfomation/ 200 [0.22, 127.0.0.1:50564][0m
+INFO 2021-04-20 14:52:03,137 runserver 141 [mHTTP POST /api/account_finance/getQPointsWithdrawalHistory/ 200 [0.47, 127.0.0.1:50563][0m
+INFO 2021-04-20 14:54:57,724 runserver 141 [mHTTP GET /account/finance 200 [0.00, 127.0.0.1:50582][0m
+INFO 2021-04-20 14:54:57,736 runserver 160 WebSocket DISCONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50531]
+INFO 2021-04-20 14:54:57,765 runserver 145 [36mHTTP GET /static/js/app.1b2c6926.js 304 [0.01, 127.0.0.1:50582][0m
+INFO 2021-04-20 14:54:58,105 runserver 141 [mHTTP GET /api/get_csrf_token/ 200 [0.01, 127.0.0.1:50582][0m
+INFO 2021-04-20 14:54:58,282 runserver 141 [mHTTP GET /static/img/boy_teacher.d852f4ff.jpg?t=1618901698239 200 [0.02, 127.0.0.1:50582][0m
+INFO 2021-04-20 14:54:58,448 runserver 141 [mHTTP GET /static/favicon.png 200 [0.02, 127.0.0.1:50582][0m
+INFO 2021-04-20 14:54:58,529 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.20, 127.0.0.1:50583][0m
+INFO 2021-04-20 14:54:58,556 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfSystemChatroom/ 200 [0.22, 127.0.0.1:50584][0m
+INFO 2021-04-20 14:54:58,624 runserver 141 [mHTTP POST /api/account_finance/examBankOrderHistory/ 200 [0.09, 127.0.0.1:50583][0m
+INFO 2021-04-20 14:54:58,637 runserver 141 [mHTTP POST /api/account_finance/getLessonSalesHistory/ 200 [0.10, 127.0.0.1:50582][0m
+INFO 2021-04-20 14:54:58,651 runserver 141 [mHTTP POST /api/account_finance/getQPointsWithdrawalHistory/ 200 [0.11, 127.0.0.1:50587][0m
+INFO 2021-04-20 14:54:58,655 runserver 141 [mHTTP POST /api/account/getBankingInfomation/ 200 [0.11, 127.0.0.1:50588][0m
+INFO 2021-04-20 14:54:58,669 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfChatroom/ 200 [0.10, 127.0.0.1:50584][0m
+INFO 2021-04-20 14:54:58,701 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50594]
+INFO 2021-04-20 14:54:58,704 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50594]
+INFO 2021-04-20 14:55:00,529 runserver 145 [36mHTTP GET /static/img/question_bank_banner_pc.a5a21920.jpg 304 [0.01, 127.0.0.1:50588][0m
+INFO 2021-04-20 14:55:00,531 runserver 145 [36mHTTP GET /static/img/question_bank_banner_m.ab6d67aa.jpg 304 [0.01, 127.0.0.1:50587][0m
+INFO 2021-04-20 14:55:00,665 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.15, 127.0.0.1:50584][0m
+INFO 2021-04-20 14:55:00,690 runserver 141 [mHTTP GET /api/getBannerBar/ 200 [0.00, 127.0.0.1:50588][0m
+INFO 2021-04-20 14:55:00,798 runserver 141 [mHTTP POST /api/lesson/getLessonCardsForCommonUsers/ 200 [0.12, 127.0.0.1:50584][0m
+WARNING 2021-04-20 14:55:00,824 log 224 Not Found: /user_upload/teachers/tamio.chou@gmail.com/thumbnail.jpeg
+WARNING 2021-04-20 14:55:00,825 log 224 Not Found: /user_upload/teachers/tamio.chou@gmail.com/lessons/7/customized_lesson_background_for_cards.jpeg
+WARNING 2021-04-20 14:55:00,830 runserver 149 [33mHTTP GET /user_upload/teachers/tamio.chou@gmail.com/thumbnail.jpeg 404 [0.01, 127.0.0.1:50584][0m
+WARNING 2021-04-20 14:55:00,832 runserver 149 [33mHTTP GET /user_upload/teachers/tamio.chou@gmail.com/lessons/7/customized_lesson_background_for_cards.jpeg 404 [0.02, 127.0.0.1:50588][0m
+INFO 2021-04-20 14:55:03,690 runserver 141 [mHTTP GET /ticy/ 200 [0.01, 127.0.0.1:50588][0m
+INFO 2021-04-20 14:55:35,127 autoreload 240 /mnt/d/Users/edony/Desktop/quikok project/QUIKOK/Quikok/Quikok/settings.py changed, reloading.
+INFO 2021-04-20 14:55:36,048 autoreload 617 Watching for file changes with StatReloader
+INFO 2021-04-20 14:55:36,947 runserver 141 [mHTTP GET /questionBank/program/pre_order?openExternalBrowser=1 200 [0.01, 127.0.0.1:50602][0m
+INFO 2021-04-20 14:55:37,279 runserver 141 [mHTTP GET /api/get_csrf_token/ 200 [0.01, 127.0.0.1:50602][0m
+INFO 2021-04-20 14:55:37,343 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50600]
+INFO 2021-04-20 14:55:37,386 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50600]
+INFO 2021-04-20 14:55:37,400 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50608]
+INFO 2021-04-20 14:55:37,431 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50608]
+INFO 2021-04-20 14:55:37,503 runserver 141 [mHTTP GET /static/img/boy_teacher.d852f4ff.jpg?t=1618901737367 200 [0.09, 127.0.0.1:50602][0m
+INFO 2021-04-20 14:55:37,633 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.19, 127.0.0.1:50601][0m
+INFO 2021-04-20 14:55:37,671 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfSystemChatroom/ 200 [0.22, 127.0.0.1:50603][0m
+INFO 2021-04-20 14:55:37,780 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfChatroom/ 200 [0.09, 127.0.0.1:50603][0m
+INFO 2021-04-20 14:55:37,788 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50612]
+INFO 2021-04-20 14:55:37,793 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50612]
+INFO 2021-04-20 14:55:38,764 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.15, 127.0.0.1:50603][0m
+INFO 2021-04-20 14:55:44,611 runserver 141 [mHTTP POST /api/account_finance/storageOrder/ 200 [0.21, 127.0.0.1:50603][0m
+INFO 2021-04-20 14:55:48,087 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.12, 127.0.0.1:50603][0m
+INFO 2021-04-20 14:55:48,216 runserver 141 [mHTTP POST /api/account_finance/getLessonSalesHistory/ 200 [0.11, 127.0.0.1:50601][0m
+INFO 2021-04-20 14:55:48,220 runserver 141 [mHTTP POST /api/account_finance/getQPointsWithdrawalHistory/ 200 [0.11, 127.0.0.1:50602][0m
+INFO 2021-04-20 14:55:48,222 runserver 141 [mHTTP POST /api/account_finance/examBankOrderHistory/ 200 [0.12, 127.0.0.1:50603][0m
+INFO 2021-04-20 14:55:48,254 runserver 141 [mHTTP POST /api/account/getBankingInfomation/ 200 [0.13, 127.0.0.1:50617][0m
+INFO 2021-04-20 14:55:51,450 runserver 141 [mHTTP POST /api/account_finance/examBankEditOrder/ 200 [0.21, 127.0.0.1:50617][0m
+INFO 2021-04-20 14:55:51,563 runserver 141 [mHTTP POST /api/account_finance/examBankOrderHistory/ 200 [0.09, 127.0.0.1:50617][0m
+INFO 2021-04-20 14:57:26,634 autoreload 240 /mnt/d/Users/edony/Desktop/quikok project/QUIKOK/Quikok/Quikok/settings.py changed, reloading.
+INFO 2021-04-20 14:57:27,348 autoreload 617 Watching for file changes with StatReloader
+INFO 2021-04-20 14:57:28,314 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50635]
+INFO 2021-04-20 14:57:28,337 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50635]
+INFO 2021-04-20 14:57:28,349 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50640]
+INFO 2021-04-20 14:57:28,354 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50640]
+INFO 2021-04-20 14:57:28,367 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50641]
+INFO 2021-04-20 14:57:28,369 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50641]
+INFO 2021-04-20 14:58:21,136 runserver 141 [mHTTP GET /account/finance 200 [0.01, 127.0.0.1:50649][0m
+INFO 2021-04-20 14:58:21,150 runserver 160 WebSocket DISCONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50641]
+INFO 2021-04-20 14:58:21,184 runserver 145 [36mHTTP GET /static/js/app.1b2c6926.js 304 [0.01, 127.0.0.1:50649][0m
+INFO 2021-04-20 14:58:21,547 runserver 141 [mHTTP GET /api/get_csrf_token/ 200 [0.02, 127.0.0.1:50649][0m
+INFO 2021-04-20 14:58:21,791 runserver 141 [mHTTP GET /static/img/boy_teacher.d852f4ff.jpg?t=1618901901718 200 [0.04, 127.0.0.1:50649][0m
+INFO 2021-04-20 14:58:21,979 runserver 141 [mHTTP GET /static/favicon.png 200 [0.02, 127.0.0.1:50649][0m
+INFO 2021-04-20 14:58:22,189 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.36, 127.0.0.1:50650][0m
+INFO 2021-04-20 14:58:22,231 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfSystemChatroom/ 200 [0.40, 127.0.0.1:50651][0m
+INFO 2021-04-20 14:58:22,338 runserver 141 [mHTTP POST /api/account_finance/examBankOrderHistory/ 200 [0.14, 127.0.0.1:50650][0m
+INFO 2021-04-20 14:58:22,367 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfChatroom/ 200 [0.13, 127.0.0.1:50651][0m
+INFO 2021-04-20 14:58:22,397 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50661]
+INFO 2021-04-20 14:58:22,404 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50661]
+INFO 2021-04-20 14:58:22,532 runserver 141 [mHTTP POST /api/account_finance/getLessonSalesHistory/ 200 [0.33, 127.0.0.1:50649][0m
+INFO 2021-04-20 14:58:22,533 runserver 141 [mHTTP POST /api/account/getBankingInfomation/ 200 [0.32, 127.0.0.1:50655][0m
+INFO 2021-04-20 14:58:22,591 runserver 141 [mHTTP POST /api/account_finance/getQPointsWithdrawalHistory/ 200 [0.39, 127.0.0.1:50654][0m
+INFO 2021-04-20 14:58:28,497 runserver 141 [mHTTP POST /api/account_finance/examBankEditOrder/ 200 [0.15, 127.0.0.1:50654][0m
+INFO 2021-04-20 14:58:28,627 runserver 141 [mHTTP POST /api/account_finance/examBankOrderHistory/ 200 [0.11, 127.0.0.1:50654][0m
+INFO 2021-04-20 14:59:59,184 autoreload 240 /mnt/d/Users/edony/Desktop/quikok project/QUIKOK/Quikok/Quikok/settings.py changed, reloading.
+INFO 2021-04-20 15:00:00,165 autoreload 617 Watching for file changes with StatReloader
+INFO 2021-04-20 15:00:01,468 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50674]
+INFO 2021-04-20 15:00:01,520 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50674]
+INFO 2021-04-20 15:00:01,533 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50679]
+INFO 2021-04-20 15:00:01,536 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50679]
+INFO 2021-04-20 15:00:01,549 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50680]
+INFO 2021-04-20 15:00:01,553 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50680]
+INFO 2021-04-20 15:00:06,143 runserver 141 [mHTTP GET /account/finance 200 [0.01, 127.0.0.1:50681][0m
+INFO 2021-04-20 15:00:06,161 runserver 160 WebSocket DISCONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50679]
+INFO 2021-04-20 15:00:06,189 runserver 145 [36mHTTP GET /static/js/app.1b2c6926.js 304 [0.01, 127.0.0.1:50681][0m
+INFO 2021-04-20 15:00:06,523 runserver 141 [mHTTP GET /api/get_csrf_token/ 200 [0.01, 127.0.0.1:50681][0m
+INFO 2021-04-20 15:00:06,696 runserver 141 [mHTTP GET /static/img/boy_teacher.d852f4ff.jpg?t=1618902006661 200 [0.01, 127.0.0.1:50681][0m
+INFO 2021-04-20 15:00:06,816 runserver 141 [mHTTP GET /static/favicon.png 200 [0.03, 127.0.0.1:50681][0m
+INFO 2021-04-20 15:00:06,941 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.21, 127.0.0.1:50682][0m
+INFO 2021-04-20 15:00:06,973 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfSystemChatroom/ 200 [0.24, 127.0.0.1:50683][0m
+INFO 2021-04-20 15:00:07,066 runserver 141 [mHTTP POST /api/account_finance/getLessonSalesHistory/ 200 [0.11, 127.0.0.1:50681][0m
+INFO 2021-04-20 15:00:07,085 runserver 141 [mHTTP POST /api/account_finance/examBankOrderHistory/ 200 [0.13, 127.0.0.1:50682][0m
+INFO 2021-04-20 15:00:07,091 runserver 141 [mHTTP POST /api/account_finance/getQPointsWithdrawalHistory/ 200 [0.13, 127.0.0.1:50686][0m
+INFO 2021-04-20 15:00:07,100 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfChatroom/ 200 [0.11, 127.0.0.1:50683][0m
+INFO 2021-04-20 15:00:07,104 runserver 141 [mHTTP POST /api/account/getBankingInfomation/ 200 [0.14, 127.0.0.1:50687][0m
+INFO 2021-04-20 15:00:07,149 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50693]
+INFO 2021-04-20 15:00:07,153 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50693]
+INFO 2021-04-20 15:00:10,588 runserver 141 [mHTTP POST /api/account_finance/examBankEditOrder/ 200 [0.45, 127.0.0.1:50687][0m
+INFO 2021-04-20 15:00:10,721 runserver 141 [mHTTP POST /api/account_finance/examBankOrderHistory/ 200 [0.08, 127.0.0.1:50687][0m
