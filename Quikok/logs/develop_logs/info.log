@@ -21,3 +21,150 @@ INFO 2021-04-20 14:20:12,009 runserver 141 [mHTTP GET /articles/ 200 [0.23, 127
 INFO 2021-04-20 14:20:12,035 runserver 141 [mHTTP GET /static/css/blog.css 200 [0.02, 127.0.0.1:50104][0m
 INFO 2021-04-20 14:20:12,081 runserver 141 [mHTTP GET /user_upload/articles/default_main_picture.png 200 [0.06, 127.0.0.1:50105][0m
 INFO 2021-04-20 14:20:12,084 runserver 141 [mHTTP GET /user_upload/articles/2020/12/22/blog_main_picture.png 200 [0.07, 127.0.0.1:50103][0m
+INFO 2021-04-20 14:24:34,405 autoreload 617 Watching for file changes with StatReloader
+INFO 2021-04-20 14:24:38,982 runserver 141 [mHTTP GET / 200 [0.03, 127.0.0.1:50201][0m
+INFO 2021-04-20 14:24:39,057 runserver 141 [mHTTP GET /static/js/app.fc3215b9.js 200 [0.01, 127.0.0.1:50201][0m
+INFO 2021-04-20 14:24:39,318 runserver 141 [mHTTP GET /api/get_csrf_token/ 200 [0.00, 127.0.0.1:50201][0m
+INFO 2021-04-20 14:24:39,418 runserver 141 [mHTTP GET /static/img/boy_teacher.d852f4ff.jpg?t=1618899879385 200 [0.01, 127.0.0.1:50201][0m
+INFO 2021-04-20 14:24:39,550 runserver 141 [mHTTP GET /static/img/question_bank_banner_m.ab6d67aa.jpg 200 [0.03, 127.0.0.1:50205][0m
+INFO 2021-04-20 14:24:39,551 runserver 141 [mHTTP GET /static/img/question_bank_banner_pc.a5a21920.jpg 200 [0.04, 127.0.0.1:50204][0m
+INFO 2021-04-20 14:24:39,732 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.23, 127.0.0.1:50202][0m
+INFO 2021-04-20 14:24:39,752 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfSystemChatroom/ 200 [0.24, 127.0.0.1:50203][0m
+INFO 2021-04-20 14:24:39,775 runserver 141 [mHTTP GET /api/getBannerBar/ 200 [0.02, 127.0.0.1:50202][0m
+INFO 2021-04-20 14:24:39,854 runserver 141 [mHTTP POST /api/lesson/getLessonCardsForCommonUsers/ 200 [0.09, 127.0.0.1:50204][0m
+INFO 2021-04-20 14:24:39,866 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfChatroom/ 200 [0.10, 127.0.0.1:50203][0m
+WARNING 2021-04-20 14:24:39,898 log 224 Not Found: /user_upload/teachers/tamio.chou@gmail.com/lessons/7/customized_lesson_background_for_cards.jpeg
+WARNING 2021-04-20 14:24:39,899 log 224 Not Found: /user_upload/teachers/tamio.chou@gmail.com/thumbnail.jpeg
+WARNING 2021-04-20 14:24:39,902 runserver 149 [33mHTTP GET /user_upload/teachers/tamio.chou@gmail.com/lessons/7/customized_lesson_background_for_cards.jpeg 404 [0.02, 127.0.0.1:50204][0m
+WARNING 2021-04-20 14:24:39,904 runserver 149 [33mHTTP GET /user_upload/teachers/tamio.chou@gmail.com/thumbnail.jpeg 404 [0.02, 127.0.0.1:50203][0m
+INFO 2021-04-20 14:24:39,924 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50211]
+INFO 2021-04-20 14:24:39,959 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50211]
+INFO 2021-04-20 14:28:02,521 autoreload 617 Watching for file changes with StatReloader
+INFO 2021-04-20 14:28:03,784 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50288]
+INFO 2021-04-20 14:28:03,849 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50288]
+INFO 2021-04-20 14:28:15,616 runserver 141 [mHTTP GET / 200 [0.02, 127.0.0.1:50291][0m
+INFO 2021-04-20 14:28:15,637 runserver 160 WebSocket DISCONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50288]
+INFO 2021-04-20 14:28:15,677 runserver 145 [36mHTTP GET /static/js/app.fc3215b9.js 304 [0.01, 127.0.0.1:50291][0m
+INFO 2021-04-20 14:28:16,120 runserver 141 [mHTTP GET /api/get_csrf_token/ 200 [0.01, 127.0.0.1:50291][0m
+INFO 2021-04-20 14:28:16,218 runserver 145 [36mHTTP GET /static/img/question_bank_banner_pc.a5a21920.jpg 304 [0.01, 127.0.0.1:50291][0m
+INFO 2021-04-20 14:28:16,227 runserver 145 [36mHTTP GET /static/img/question_bank_banner_m.ab6d67aa.jpg 304 [0.01, 127.0.0.1:50292][0m
+INFO 2021-04-20 14:28:16,284 runserver 141 [mHTTP GET /static/img/boy_teacher.d852f4ff.jpg?t=1618900096234 200 [0.01, 127.0.0.1:50292][0m
+INFO 2021-04-20 14:28:16,393 runserver 141 [mHTTP GET /static/favicon.png 200 [0.02, 127.0.0.1:50292][0m
+INFO 2021-04-20 14:28:16,474 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.16, 127.0.0.1:50291][0m
+INFO 2021-04-20 14:28:16,509 runserver 141 [mHTTP GET /api/getBannerBar/ 200 [0.02, 127.0.0.1:50291][0m
+INFO 2021-04-20 14:28:16,536 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfSystemChatroom/ 200 [0.22, 127.0.0.1:50293][0m
+INFO 2021-04-20 14:28:16,592 runserver 141 [mHTTP POST /api/lesson/getLessonCardsForCommonUsers/ 200 [0.10, 127.0.0.1:50292][0m
+WARNING 2021-04-20 14:28:16,632 log 224 Not Found: /user_upload/teachers/tamio.chou@gmail.com/thumbnail.jpeg
+WARNING 2021-04-20 14:28:16,634 log 224 Not Found: /user_upload/teachers/tamio.chou@gmail.com/lessons/7/customized_lesson_background_for_cards.jpeg
+WARNING 2021-04-20 14:28:16,635 runserver 149 [33mHTTP GET /user_upload/teachers/tamio.chou@gmail.com/thumbnail.jpeg 404 [0.02, 127.0.0.1:50292][0m
+WARNING 2021-04-20 14:28:16,637 runserver 149 [33mHTTP GET /user_upload/teachers/tamio.chou@gmail.com/lessons/7/customized_lesson_background_for_cards.jpeg 404 [0.02, 127.0.0.1:50291][0m
+INFO 2021-04-20 14:28:16,659 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfChatroom/ 200 [0.11, 127.0.0.1:50293][0m
+INFO 2021-04-20 14:28:17,647 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50298]
+INFO 2021-04-20 14:28:17,653 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50298]
+INFO 2021-04-20 14:29:40,144 runserver 141 [mHTTP GET / 200 [0.01, 127.0.0.1:50325][0m
+INFO 2021-04-20 14:29:40,153 runserver 160 WebSocket DISCONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50298]
+INFO 2021-04-20 14:29:40,183 runserver 145 [36mHTTP GET /static/js/app.fc3215b9.js 304 [0.01, 127.0.0.1:50325][0m
+INFO 2021-04-20 14:29:40,542 runserver 141 [mHTTP GET /api/get_csrf_token/ 200 [0.01, 127.0.0.1:50325][0m
+INFO 2021-04-20 14:29:40,632 runserver 145 [36mHTTP GET /static/img/question_bank_banner_pc.a5a21920.jpg 304 [0.00, 127.0.0.1:50325][0m
+INFO 2021-04-20 14:29:40,632 runserver 145 [36mHTTP GET /static/img/question_bank_banner_m.ab6d67aa.jpg 304 [0.00, 127.0.0.1:50326][0m
+INFO 2021-04-20 14:29:40,686 runserver 141 [mHTTP GET /static/img/boy_teacher.d852f4ff.jpg?t=1618900180650 200 [0.01, 127.0.0.1:50326][0m
+INFO 2021-04-20 14:29:40,798 runserver 141 [mHTTP GET /static/favicon.png 200 [0.02, 127.0.0.1:50326][0m
+INFO 2021-04-20 14:29:40,827 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.12, 127.0.0.1:50325][0m
+INFO 2021-04-20 14:29:40,843 runserver 141 [mHTTP GET /api/getBannerBar/ 200 [0.01, 127.0.0.1:50325][0m
+INFO 2021-04-20 14:29:40,922 runserver 141 [mHTTP POST /api/lesson/getLessonCardsForCommonUsers/ 200 [0.08, 127.0.0.1:50326][0m
+WARNING 2021-04-20 14:29:40,961 log 224 Not Found: /user_upload/teachers/tamio.chou@gmail.com/thumbnail.jpeg
+WARNING 2021-04-20 14:29:40,964 log 224 Not Found: /user_upload/teachers/tamio.chou@gmail.com/lessons/7/customized_lesson_background_for_cards.jpeg
+WARNING 2021-04-20 14:29:40,966 runserver 149 [33mHTTP GET /user_upload/teachers/tamio.chou@gmail.com/thumbnail.jpeg 404 [0.02, 127.0.0.1:50326][0m
+WARNING 2021-04-20 14:29:40,967 runserver 149 [33mHTTP GET /user_upload/teachers/tamio.chou@gmail.com/lessons/7/customized_lesson_background_for_cards.jpeg 404 [0.02, 127.0.0.1:50325][0m
+INFO 2021-04-20 14:29:41,245 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfSystemChatroom/ 200 [0.53, 127.0.0.1:50327][0m
+INFO 2021-04-20 14:29:42,178 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfChatroom/ 200 [0.92, 127.0.0.1:50327][0m
+INFO 2021-04-20 14:29:42,221 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50332]
+INFO 2021-04-20 14:29:42,228 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50332]
+INFO 2021-04-20 14:29:49,955 runserver 141 [mHTTP GET / 200 [0.00, 127.0.0.1:50327][0m
+INFO 2021-04-20 14:29:49,971 runserver 160 WebSocket DISCONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50332]
+INFO 2021-04-20 14:29:50,279 runserver 141 [mHTTP GET /api/get_csrf_token/ 200 [0.01, 127.0.0.1:50327][0m
+INFO 2021-04-20 14:29:50,412 runserver 141 [mHTTP GET /static/img/boy_teacher.d852f4ff.jpg?t=1618900190377 200 [0.02, 127.0.0.1:50327][0m
+INFO 2021-04-20 14:29:50,560 runserver 141 [mHTTP GET /static/favicon.png 200 [0.01, 127.0.0.1:50327][0m
+INFO 2021-04-20 14:29:50,651 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.21, 127.0.0.1:50325][0m
+INFO 2021-04-20 14:29:50,687 runserver 141 [mHTTP GET /api/getBannerBar/ 200 [0.02, 127.0.0.1:50325][0m
+INFO 2021-04-20 14:29:50,732 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfSystemChatroom/ 200 [0.28, 127.0.0.1:50326][0m
+INFO 2021-04-20 14:29:50,790 runserver 141 [mHTTP POST /api/lesson/getLessonCardsForCommonUsers/ 200 [0.12, 127.0.0.1:50327][0m
+WARNING 2021-04-20 14:29:50,820 log 224 Not Found: /user_upload/teachers/tamio.chou@gmail.com/lessons/7/customized_lesson_background_for_cards.jpeg
+WARNING 2021-04-20 14:29:50,821 log 224 Not Found: /user_upload/teachers/tamio.chou@gmail.com/thumbnail.jpeg
+WARNING 2021-04-20 14:29:50,826 runserver 149 [33mHTTP GET /user_upload/teachers/tamio.chou@gmail.com/lessons/7/customized_lesson_background_for_cards.jpeg 404 [0.02, 127.0.0.1:50325][0m
+WARNING 2021-04-20 14:29:50,828 runserver 149 [33mHTTP GET /user_upload/teachers/tamio.chou@gmail.com/thumbnail.jpeg 404 [0.02, 127.0.0.1:50327][0m
+INFO 2021-04-20 14:29:50,849 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfChatroom/ 200 [0.10, 127.0.0.1:50326][0m
+INFO 2021-04-20 14:29:50,865 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50338]
+INFO 2021-04-20 14:29:50,874 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50338]
+INFO 2021-04-20 14:30:07,256 runserver 141 [mHTTP GET / 200 [0.00, 127.0.0.1:50326][0m
+INFO 2021-04-20 14:30:07,269 runserver 160 WebSocket DISCONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50338]
+INFO 2021-04-20 14:30:07,597 runserver 141 [mHTTP GET /api/get_csrf_token/ 200 [0.01, 127.0.0.1:50326][0m
+INFO 2021-04-20 14:30:07,720 runserver 141 [mHTTP GET /static/img/boy_teacher.d852f4ff.jpg?t=1618900207688 200 [0.01, 127.0.0.1:50326][0m
+INFO 2021-04-20 14:30:07,811 runserver 141 [mHTTP GET /static/favicon.png 200 [0.01, 127.0.0.1:50326][0m
+INFO 2021-04-20 14:30:07,859 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.11, 127.0.0.1:50327][0m
+INFO 2021-04-20 14:30:07,875 runserver 141 [mHTTP GET /api/getBannerBar/ 200 [0.01, 127.0.0.1:50327][0m
+INFO 2021-04-20 14:30:07,952 runserver 141 [mHTTP POST /api/lesson/getLessonCardsForCommonUsers/ 200 [0.08, 127.0.0.1:50326][0m
+WARNING 2021-04-20 14:30:07,977 log 224 Not Found: /user_upload/teachers/tamio.chou@gmail.com/thumbnail.jpeg
+WARNING 2021-04-20 14:30:07,981 log 224 Not Found: /user_upload/teachers/tamio.chou@gmail.com/lessons/7/customized_lesson_background_for_cards.jpeg
+WARNING 2021-04-20 14:30:07,985 runserver 149 [33mHTTP GET /user_upload/teachers/tamio.chou@gmail.com/thumbnail.jpeg 404 [0.02, 127.0.0.1:50326][0m
+WARNING 2021-04-20 14:30:07,987 runserver 149 [33mHTTP GET /user_upload/teachers/tamio.chou@gmail.com/lessons/7/customized_lesson_background_for_cards.jpeg 404 [0.02, 127.0.0.1:50327][0m
+INFO 2021-04-20 14:30:08,187 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfSystemChatroom/ 200 [0.44, 127.0.0.1:50325][0m
+INFO 2021-04-20 14:30:08,293 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfChatroom/ 200 [0.10, 127.0.0.1:50325][0m
+INFO 2021-04-20 14:30:08,303 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50346]
+INFO 2021-04-20 14:30:08,315 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50346]
+INFO 2021-04-20 14:30:26,021 runserver 141 [mHTTP GET / 200 [0.00, 127.0.0.1:50325][0m
+INFO 2021-04-20 14:30:26,032 runserver 160 WebSocket DISCONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50346]
+INFO 2021-04-20 14:30:26,054 runserver 145 [36mHTTP GET /static/js/app.fc3215b9.js 304 [0.01, 127.0.0.1:50325][0m
+INFO 2021-04-20 14:30:26,367 runserver 141 [mHTTP GET /api/get_csrf_token/ 200 [0.00, 127.0.0.1:50325][0m
+INFO 2021-04-20 14:30:26,461 runserver 145 [36mHTTP GET /static/img/question_bank_banner_pc.a5a21920.jpg 304 [0.01, 127.0.0.1:50325][0m
+INFO 2021-04-20 14:30:26,464 runserver 145 [36mHTTP GET /static/img/question_bank_banner_m.ab6d67aa.jpg 304 [0.01, 127.0.0.1:50327][0m
+INFO 2021-04-20 14:30:26,504 runserver 141 [mHTTP GET /static/img/boy_teacher.d852f4ff.jpg?t=1618900226471 200 [0.01, 127.0.0.1:50327][0m
+INFO 2021-04-20 14:30:26,610 runserver 141 [mHTTP GET /static/favicon.png 200 [0.01, 127.0.0.1:50327][0m
+INFO 2021-04-20 14:30:26,642 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.11, 127.0.0.1:50325][0m
+INFO 2021-04-20 14:30:26,658 runserver 141 [mHTTP GET /api/getBannerBar/ 200 [0.01, 127.0.0.1:50325][0m
+INFO 2021-04-20 14:30:26,760 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfSystemChatroom/ 200 [0.23, 127.0.0.1:50326][0m
+INFO 2021-04-20 14:30:26,794 runserver 141 [mHTTP POST /api/lesson/getLessonCardsForCommonUsers/ 200 [0.14, 127.0.0.1:50327][0m
+WARNING 2021-04-20 14:30:26,823 log 224 Not Found: /user_upload/teachers/tamio.chou@gmail.com/thumbnail.jpeg
+WARNING 2021-04-20 14:30:26,826 log 224 Not Found: /user_upload/teachers/tamio.chou@gmail.com/lessons/7/customized_lesson_background_for_cards.jpeg
+WARNING 2021-04-20 14:30:26,833 runserver 149 [33mHTTP GET /user_upload/teachers/tamio.chou@gmail.com/lessons/7/customized_lesson_background_for_cards.jpeg 404 [0.02, 127.0.0.1:50325][0m
+WARNING 2021-04-20 14:30:26,835 runserver 149 [33mHTTP GET /user_upload/teachers/tamio.chou@gmail.com/thumbnail.jpeg 404 [0.02, 127.0.0.1:50327][0m
+INFO 2021-04-20 14:30:26,853 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfChatroom/ 200 [0.09, 127.0.0.1:50326][0m
+INFO 2021-04-20 14:30:26,868 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50354]
+INFO 2021-04-20 14:30:26,897 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50354]
+INFO 2021-04-20 14:30:32,510 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.12, 127.0.0.1:50326][0m
+INFO 2021-04-20 14:30:32,735 runserver 141 [mHTTP GET /api/account/returnTeacherProfileForOneselfViewing/?userID=2 200 [0.22, 127.0.0.1:50326][0m
+INFO 2021-04-20 14:30:32,930 runserver 141 [mHTTP POST /api/lesson/getLessonCardsForCommonUsers/ 200 [0.08, 127.0.0.1:50326][0m
+INFO 2021-04-20 14:30:35,023 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [1.14, 127.0.0.1:50326][0m
+INFO 2021-04-20 14:30:35,215 runserver 141 [mHTTP GET /articles/ 200 [0.18, 127.0.0.1:50326][0m
+INFO 2021-04-20 14:30:36,987 runserver 141 [mHTTP GET /blog/post/6 200 [0.00, 127.0.0.1:50326][0m
+INFO 2021-04-20 14:30:36,998 runserver 160 WebSocket DISCONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50354]
+INFO 2021-04-20 14:30:37,225 runserver 141 [mHTTP GET /api/get_csrf_token/ 200 [0.00, 127.0.0.1:50326][0m
+INFO 2021-04-20 14:30:37,315 runserver 141 [mHTTP GET /static/img/boy_teacher.d852f4ff.jpg?t=1618900237283 200 [0.01, 127.0.0.1:50326][0m
+INFO 2021-04-20 14:30:37,491 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfSystemChatroom/ 200 [0.15, 127.0.0.1:50325][0m
+INFO 2021-04-20 14:30:37,551 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.22, 127.0.0.1:50327][0m
+INFO 2021-04-20 14:30:37,598 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfChatroom/ 200 [0.10, 127.0.0.1:50325][0m
+INFO 2021-04-20 14:30:37,605 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50365]
+INFO 2021-04-20 14:30:37,625 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50365]
+INFO 2021-04-20 14:30:38,733 runserver 141 [mHTTP GET /articles/article=6/ 200 [1.17, 127.0.0.1:50327][0m
+INFO 2021-04-20 14:30:38,784 runserver 141 [mHTTP GET /user_upload/authors/2020/12/18/tutor_thumbnail.png 200 [0.02, 127.0.0.1:50327][0m
+INFO 2021-04-20 14:32:04,965 runserver 141 [mHTTP GET /blog/main 200 [0.00, 127.0.0.1:50377][0m
+INFO 2021-04-20 14:32:04,976 runserver 160 WebSocket DISCONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50365]
+INFO 2021-04-20 14:32:05,446 runserver 141 [mHTTP GET /static/img/boy_teacher.d852f4ff.jpg?t=1618900325413 200 [0.01, 127.0.0.1:50377][0m
+INFO 2021-04-20 14:32:05,619 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfSystemChatroom/ 200 [0.15, 127.0.0.1:50379][0m
+INFO 2021-04-20 14:32:05,730 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.26, 127.0.0.1:50378][0m
+INFO 2021-04-20 14:32:05,769 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfChatroom/ 200 [0.14, 127.0.0.1:50379][0m
+INFO 2021-04-20 14:32:05,779 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50384]
+INFO 2021-04-20 14:32:05,785 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50384]
+INFO 2021-04-20 14:32:05,852 runserver 141 [mHTTP GET /articles/ 200 [0.12, 127.0.0.1:50378][0m
+INFO 2021-04-20 14:32:40,954 runserver 141 [mHTTP GET /blog/main 200 [0.00, 127.0.0.1:50378][0m
+INFO 2021-04-20 14:32:40,965 runserver 160 WebSocket DISCONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50384]
+INFO 2021-04-20 14:32:40,993 runserver 145 [36mHTTP GET /static/js/app.fc3215b9.js 304 [0.01, 127.0.0.1:50378][0m
+INFO 2021-04-20 14:32:41,337 runserver 141 [mHTTP GET /api/get_csrf_token/ 200 [0.00, 127.0.0.1:50378][0m
+INFO 2021-04-20 14:32:41,443 runserver 141 [mHTTP GET /static/img/boy_teacher.d852f4ff.jpg?t=1618900361410 200 [0.01, 127.0.0.1:50378][0m
+INFO 2021-04-20 14:32:41,527 runserver 141 [mHTTP GET /static/favicon.png 200 [0.01, 127.0.0.1:50378][0m
+INFO 2021-04-20 14:32:41,631 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfSystemChatroom/ 200 [0.16, 127.0.0.1:50377][0m
+INFO 2021-04-20 14:32:41,695 runserver 141 [mHTTP POST /api/account/authCheck/ 200 [0.22, 127.0.0.1:50379][0m
+INFO 2021-04-20 14:32:41,732 runserver 141 [mHTTP POST /api/chat/contentAndHistoryOfChatroom/ 200 [0.09, 127.0.0.1:50377][0m
+INFO 2021-04-20 14:32:41,738 runserver 162 WebSocket HANDSHAKING /ws/chat/2_chatroom_2_1/ [127.0.0.1:50392]
+INFO 2021-04-20 14:32:41,746 runserver 158 WebSocket CONNECT /ws/chat/2_chatroom_2_1/ [127.0.0.1:50392]
+INFO 2021-04-20 14:32:41,817 runserver 141 [mHTTP GET /articles/ 200 [0.12, 127.0.0.1:50379][0m

@@ -2,6 +2,8 @@
 quikok_env/
 .vscode/settings.json
 /static/
+/logs/devlop_logs/*
+/logs/production_logs/*
 /user_upload/teachers/*
 /user_upload/students/*
 !/user_upload/teachers/quikok.taiwan@quikok.com/
