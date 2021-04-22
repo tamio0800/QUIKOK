@@ -40,3 +40,19 @@ $(function () {
         }, 30);
     });
 });
+
+// //Qlogo//
+$(function () {
+    $(window).scroll(function () {
+        if ($(this).scrollTop() > 100) {
+            $("#qlogo").fadeIn();
+        } else {
+            $("#qlogo").fadeOut();
+        }
+    });
+    $("#qlogo").click(function () {
+        $('body, html').animate({
+            scrollTop: 0
+        }, 30);
+    });
+});

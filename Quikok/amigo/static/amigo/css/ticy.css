@@ -426,6 +426,14 @@ p.title {
     cursor: pointer;
 }
 
+.qlogo{
+    position: fixed;
+    left: 10px;
+    top: 10px;
+    z-index: 99;
+    display: none;
+}
+
 /* Big Tablet to 1200px (width smaller than 1140px row */
 @media(min-width: 1200px) {
     .container {
