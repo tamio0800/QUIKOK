@@ -163,10 +163,10 @@ def exam_bank_order_history(request):
                 duration_days= exam_bank_sales_set.objects.get(id = record.exam_bank_sales_set_id).duration      
                 
                 remittance_info = {
-                'bank_code': '088',
-                'bank_name': '國泰世華銀行',
-                'bank_branches': '板橋分行',
-                'bank_account':'012345-411153',
+                'bank_code': '009',
+                'bank_name': '彰化商業銀行',
+                'bank_branches': '忠孝東路分行',
+                'bank_account':'5203-86-080255-00',
                 'bank_account_name': '豆沙科技股份有限公司'}
                 
                 data = {'order_type': 'exam_order',
@@ -551,10 +551,10 @@ def student_order_history(request):
     if check_if_all_variables_are_true(student_authID, user_type):
         data = []
         remittance_info = {
-            'bank_code': '088',
-            'bank_name': '國泰世華銀行',
-            'bank_branches': '板橋分行',
-            'bank_account':'012345-411153',
+            'bank_code': '009',
+            'bank_name': '彰化商業銀行',
+            'bank_branches': '忠孝東路分行',
+            'bank_account':'5203-86-080255-00',
             'bank_account_name': '豆沙科技股份有限公司'}
 
         # 這裡在 query 之餘也要進行資料排序，
