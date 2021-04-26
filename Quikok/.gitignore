@@ -5,6 +5,7 @@ nohup*
 /static/
 info.log
 chatroom_info.log
+/user_upload/articles
 /user_upload/teachers/*
 /user_upload/students/*
 !/user_upload/teachers/quikok.taiwan@quikok.com/
