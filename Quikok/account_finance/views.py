@@ -161,7 +161,7 @@ def exam_bank_order_history(request):
                 
                 remittance_info = {
                 'bank_code': '009',
-                'bank_name': '彰化銀行',
+                'bank_name': '彰化商業銀行',
                 'bank_branches': '忠孝東路分行',
                 'bank_account':'5203-86-080255-00',
                 'bank_account_name': '豆沙科技股份有限公司'}
@@ -550,7 +550,7 @@ def student_order_history(request):
         data = []
         remittance_info = {
             'bank_code': '009',
-            'bank_name': '彰化銀行',
+            'bank_name': '彰化商業銀行',
             'bank_branches': '忠孝東路分行',
             'bank_account':'5203-86-080255-00',
             'bank_account_name': '豆沙科技股份有限公司'}
