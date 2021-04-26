@@ -30,7 +30,7 @@ def main_blog(request):
     articles_in_list = list()
     # 將文章應該有的資訊再度整合成一個物件（字典形式）
     if len(the_articles) > 0:
-        for each_article_object in the_articles:
+        for each_article_object in the_articles[::-1]:
             articles = dict()
             correspondent_author_object = \
                 author_profile.objects.filter(id=each_article_object.author_id).first()
