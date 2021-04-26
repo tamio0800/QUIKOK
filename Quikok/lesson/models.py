@@ -731,8 +731,8 @@ def when_lesson_info_changed_synchronize_lesson_sales_sets(sender, instance:less
                             hours, discount_price = each_hours_discount_set.split(':')
                             shared_columns['sales_set'] = each_hours_discount_set
                             shared_columns['total_hours_of_the_sales_set'] = int(hours)
-                            shared_columns['price_per_hour_after_discount'] = round(int(instance.price_per_hour) * int(discount_price) / 100)
-                            shared_columns['total_amount_of_the_sales_set'] = round(int(instance.price_per_hour) * int(hours) * int(discount_price) / 100)
+                            shared_columns['price_per_hour_after_discount'] = round(int(instance.price_per_hour) * int(discount_price) / 100 + 0.00001)
+                            shared_columns['total_amount_of_the_sales_set'] = round(int(instance.price_per_hour) * int(hours) * int(discount_price)/ 100 + 0.00001)
 
                             lesson_sales_sets.objects.create(
                                 **shared_columns

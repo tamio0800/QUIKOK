@@ -25,7 +25,7 @@
     <meta charset="UTF-8">
     <title>文章編輯</title>
 </head>
-<body>
+<body>    
     <center>
         <div class="mt-3 mb-1" >
             <a style="font-size: 34px; font-weight: bold;">文章編輯器</a>
@@ -33,7 +33,12 @@
         </div>
     </center>
     <form method="POST">
-        <div class="article-form">
+        <form method="post" enctype="multipart/form-data"
+            <label for= 'upload_main'> 請選擇部落格主視覺圖檔</label>
+            {% csrf_token %}
+            <input type="file" name="upload_main">
+        
+            <div class="article-form">
             <div class="a-block offset-1 col-10">
                 <h4 class="mb-3 mt-4 row col-10 ">標題</h4>
                 <input class="form-control col-6" type="text" name="title" id="title" placeholder="寫什麼好呢...">

@@ -1,5 +1,5 @@
 from django.shortcuts import render
-import math, json, logging
+import math, json, logging, asyncio
 from account_finance.models import (student_purchase_record, 
     student_remaining_minutes_of_each_purchased_lesson_set, 
     student_remaining_minutes_when_request_refund_each_purchased_lesson_set,
@@ -16,7 +16,6 @@ from handy_functions import check_if_all_variables_are_true
 from django.views.decorators.http import require_http_methods
 from time import time
 from threading import Thread
-import asyncio
 from asgiref.sync import sync_to_async
 from django.conf import settings
 
@@ -24,8 +23,6 @@ from django.conf import settings
 email_to_edony = email_for_edony()
 email_notification = email_manager()
 authID_type_check = auth_check_manager()
-
-
 
 def exam_bank_edit_order(request):
     '''api58:給user編輯題庫的訂單狀態，可操作的選項有：付款完成(填入帳號末五碼)
@@ -163,10 +160,10 @@ def exam_bank_order_history(request):
                 duration_days= exam_bank_sales_set.objects.get(id = record.exam_bank_sales_set_id).duration      
                 
                 remittance_info = {
-                'bank_code': '088',
-                'bank_name': '國泰世華銀行',
-                'bank_branches': '板橋分行',
-                'bank_account':'012345-411153',
+                'bank_code': '009',
+                'bank_name': '彰化商業銀行',
+                'bank_branches': '忠孝東路分行',
+                'bank_account':'5203-86-080255-00',
                 'bank_account_name': '豆沙科技股份有限公司'}
                 
                 data = {'order_type': 'exam_order',
@@ -191,7 +188,7 @@ def exam_bank_order_history(request):
         print(f'account_finance:exam_bank_edit_order Exception {e}')
         response = {'status':'failed',
             'errCode': 0,
-            'errMsg': '資料庫有問題，請稍後再試',
+            'errMsg': 'account_finance/views/exam_bank_order_history 資料庫有問題，請稍後再試',
             'data': None}
 
         return JsonResponse(response)
@@ -218,7 +215,6 @@ def storage_order(request):
         total_q_discount = request.POST.get('total_q_discount', False)
 
         logging.info(f"account_finance/views/storage_order 收到訂單user_ID:{user_ID}")
-
 
         if False in [total_order_list, total_q_discount, user_ID]:
             response = {'status':'failed',
@@ -302,6 +298,8 @@ def storage_order(request):
                                     'errCode': 6,
                                     'errMsg': '課程金額與資料庫不符合，如有疑問可連絡客服，謝謝！',
                                     'data': None}
+                                logging.info(f"account_finance/views/storage_order 收到訂單課程金額與資料庫不符合,\
+                                    set_id:{set_obj.id},收到的金額:{price},資料庫裡的金額:{set_obj.total_amount_of_the_sales_set}")
                                 return JsonResponse(response)
                             else:
                                 # 如果要買試教課程, 檢查：
@@ -551,10 +549,10 @@ def student_order_history(request):
     if check_if_all_variables_are_true(student_authID, user_type):
         data = []
         remittance_info = {
-            'bank_code': '088',
-            'bank_name': '國泰世華銀行',
-            'bank_branches': '板橋分行',
-            'bank_account':'012345-411153',
+            'bank_code': '009',
+            'bank_name': '彰化商業銀行',
+            'bank_branches': '忠孝東路分行',
+            'bank_account':'5203-86-080255-00',
             'bank_account_name': '豆沙科技股份有限公司'}
 
         # 這裡在 query 之餘也要進行資料排序，

@@ -9,7 +9,7 @@ from analytics.signals import object_accessed_signal
 #from django.dispatch import receiver
 from analytics.models import object_accessed_info
 from analytics.utils import get_client_ip
-
+from django.core.files.storage import FileSystemStorage
 
 
 def _get_all_categories_for_blog(excluded=['Mail',]):
@@ -104,6 +104,10 @@ def article_editor(request):
         author_id = request.POST.get('author_id', False)
         category = request.POST.get('category', False)
         hashtag = request.POST.get('hashtag', False)
+        #each_file = request.FILES.get("upload_main")
+        #each_file = request.FILES["upload_main"]
+        each_file = request.POST.get("upload_main")
+        print(request.POST)
         if False not in [title, textarea, category, author_id, hashtag]:
             
             new_article = article_info.objects.create(
@@ -114,6 +118,18 @@ def article_editor(request):
                 hashtag = hashtag)
             new_article.save()
             
+            if each_file:
+                print(f'ccccc{each_file}')
+                #print(each_file.name)
+                path = '/user_upload/articles'
+                fs = FileSystemStorage()
+                #file_exten = each_file.name.split('.')[-1]
+                fs.save(str(each_file) , each_file)
+                print(f'xxxx{each_file.name}')
+                new_article.main_picture = each_file.name
+                new_article.save()
+
+
             return HttpResponse('已經成功匯入資料庫')
         else:
             return render(request, 'blog/article_editor.html', 
