@@ -91,17 +91,22 @@ def aritcle_content(request, article_id):
     article_hashtags = [_ for _ in re.sub(r'[,#;]', ' ', the_article.hashtag).split() if len(_) > 0]
     the_articles = article_info.objects.all()
     all_unique_categories = _get_all_categories_for_blog()
-    article_content = the_article.content
+    
 
     if article_id in (1,4,5,8,9,10,11,12,13,14,21):    
         # 由於改主圖儲存的方式成二進位置,為了保留舊的回傳格式, 把要用舊格式回傳的ID另做處理
         article_main_picture = the_article.main_picture.url
+        article_content = the_article.content
     else:
         # 我們定義文章的一開頭若有圖檔,就是 main pic, 若無,則表示沒有特別設定,用default的圖
         find_main_pic = re.search(r'^<p><img.src=.*>', the_article.content)
         if find_main_pic:
             temp_pic = re.findall(r'["]\w*.*["] ', find_main_pic[0]) # 去除前後的 tag
-            article_main_picture = temp_pic[0].strip('"').strip(' ').strip('"')
+            adjust_content = re.findall(r'^<img.*>',find_main_pic)
+            if temp_pic:
+                article_main_picture = temp_pic[0].strip('"').strip(' ').strip('"')
+            else: # 萬一找不到圖就用預設圖
+                article_main_picture = the_article.main_picture.url
         else:
             article_main_picture = the_article.main_picture.url
     
