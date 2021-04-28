@@ -91,7 +91,15 @@ class blog_articles_editor_test(TestCase):
             all_categories
             )
 
-
+@skip
+class blog_main_page(TestCase):
+    def setUp(self) -> None:
+        return super().setUp()
+    
+    def test_main_page_show_article_picture(self):
+		''''''
+		self.client.get('articles/')
+        self.assert()
 
 
 

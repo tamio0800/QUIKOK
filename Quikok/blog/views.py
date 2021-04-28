@@ -38,9 +38,23 @@ def main_blog(request):
             articles['id'] = each_article_object.id
             articles['category'] = each_article_object.category
             articles['hashtag'] = each_article_object.hashtag
-            articles['main_picture'] = each_article_object.main_picture
+            
             articles['author'] = correspondent_author_object
             articles['title'] = each_article_object.title
+
+            if each_article_object.id in (1,4,5,8,9,10,11,12,13,14,21):    
+                # 由於改主圖儲存的方式成二進位置,為了保留舊的回傳格式, 把要用舊格式回傳的ID另做處理
+                article_main_picture = each_article_object.main_picture.url
+            else:
+                # 我們定義文章的一開頭若有圖檔,就是 main pic, 若無,則表示沒有特別設定,用default的圖
+                find_main_pic = re.search(r'^<p><img src=\w*.*>$', each_article_object.content)
+                if find_main_pic:
+                    temp_pic = re.findall(r'["]\w*.*["] ', find_main_pic[0]) # 去除前後的 tag
+                    article_main_picture = temp_pic[0].strip('"').strip(' ').strip('"')
+                else:
+                    article_main_picture = each_article_object.main_picture.url
+            articles['main_picture'] = article_main_picture
+
             articles['snippet'] = each_article_object.snippet
             print(f'articles[\'snippet\']:  {each_article_object.snippet}')
             articles_in_list.append(articles)
@@ -58,6 +72,7 @@ def main_blog(request):
     
 
 def aritcle_content(request, article_id):
+    '''顯示部落格文章內容'''
     the_article = article_info.objects.filter(id = article_id).first()
     if the_article is None:
         # 萬一找不到該文章的id，直接回到blog首頁。
@@ -65,17 +80,30 @@ def aritcle_content(request, article_id):
     
     author_object = author_profile.objects.filter(id=the_article.author_id).first()
     author_nickname = author_object.name
-    author_intro = author_object.intro
+    author_intro = author_object.intro    
     author_thumbnail = author_object.thumbnail
     article_title = the_article.title
     article_date = str(the_article.last_edited_time).split()[0].replace('-', '.')
-    article_main_picture = the_article.main_picture
-    article_content = the_article.content
     article_category = the_article.category
     article_hashtags = [_ for _ in re.sub(r'[,#;]', ' ', the_article.hashtag).split() if len(_) > 0]
-
     the_articles = article_info.objects.all()
     all_unique_categories = _get_all_categories_for_blog()
+    article_content = the_article.content
+
+    if article_id in (1,4,5,8,9,10,11,12,13,14,21):    
+        # 由於改主圖儲存的方式成二進位置,為了保留舊的回傳格式, 把要用舊格式回傳的ID另做處理
+        article_main_picture = the_article.main_picture
+    else:
+        # 我們定義文章的一開頭若有圖檔,就是 main pic, 若無,則表示沒有特別設定,用default的圖
+        find_main_pic = re.search(r'^<p><img src=\w*.*>$', the_article.content)
+        if find_main_pic:
+            temp_pic = re.findall(r'["]\w*.*["] ', find_main_pic[0]) # 去除前後的 tag
+            article_main_picture = temp_pic[0].strip('"').strip(' ').strip('"')
+        else:
+            article_main_picture = the_article.main_picture
+    
+
+    
     
     return render(
         request,
@@ -97,7 +125,8 @@ def aritcle_content(request, article_id):
 
 
 def article_editor(request):
-    # 這個函式用來回傳blog中文章的編輯器
+    # 接收部落格編輯器以產生新文章
+
     if request.method == 'POST':
         title = request.POST.get('title', False)
         textarea = request.POST.get('textarea', False)
@@ -106,7 +135,7 @@ def article_editor(request):
         hashtag = request.POST.get('hashtag', False)
         #each_file = request.FILES.get("upload_main")
         #each_file = request.FILES["upload_main"]
-        each_file = request.POST.get("upload_main")
+        main_page_file_name = request.POST.get("upload_main", False)
         print(request.POST)
         if False not in [title, textarea, category, author_id, hashtag]:
             
@@ -118,7 +147,7 @@ def article_editor(request):
                 hashtag = hashtag)
             new_article.save()
             
-            if each_file:
+            if main_page_file_name:
                 print(f'ccccc{each_file}')
                 #print(each_file.name)
                 path = '/user_upload/articles'
