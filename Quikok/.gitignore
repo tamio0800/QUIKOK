@@ -5,6 +5,7 @@ nohup*
 /static/
 info.log
 chatroom_info.log
+account_info.log
 /user_upload/articles
 /user_upload/teachers/*
 /user_upload/students/*
