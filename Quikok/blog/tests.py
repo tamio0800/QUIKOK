@@ -2,9 +2,8 @@ from django.test import TestCase, Client
 from blog.models import article_info
 
 
-# python manage.py test blog/ --settings=Quikok.settings_for_test
+# python3 manage.py test blog/ --settings=Quikok.settings_for_test
 
-# Create your tests here.
 class blog_articles_editor_test(TestCase):
     # 用來測試文章編輯器 & 預覽功能的測試class
 

@@ -108,7 +108,8 @@ def aritcle_content(request, article_id):
             temp_pic = re.findall(r'["]\w*.*["] ', find_main_pic[0]) # 去除前後的 tag
             if temp_pic:
                 article_main_picture = temp_pic[0].strip('"').strip(' ').strip('"')
-                adjust_content = the_article.content.replace(find_main_pic[0][3:],'')
+                # 為了避免第一張圖等於首圖重複顯示,把圖拿掉再回傳
+                adjust_content = the_article.content.replace(find_main_pic[0][3:],'') 
                 article_content =adjust_content
             else: # 萬一找不到圖就用預設圖
                 article_main_picture = the_article.main_picture.url
