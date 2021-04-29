@@ -238,6 +238,7 @@ else:
 
 touch(os.path.join(BASE_DIR, log_path, "info.log"))
 touch(os.path.join(BASE_DIR, log_path, "chatroom_info.log"))
+touch(os.path.join(BASE_DIR, log_path, "account_info.log"))
 
 LOGGING = {
     'version': 1,
@@ -281,8 +282,13 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, log_path, "chatroom_info.log"),  # 日志文件的位置
-            #'maxBytes': 300 * 1024 * 1024,  # 日志大小300M
-            #'backupCount': 10,
+            'formatter': 'verbose',
+            'encoding': 'utf-8'
+        },
+        'account_info': {  # 输出日志
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, log_path, "acccount_info.log"),  # 日志文件的位置
             'formatter': 'verbose',
             'encoding': 'utf-8'
         },
@@ -301,6 +307,11 @@ LOGGING = {
         },
         'chatroom_info': {      # 名为chatroom_info的logger还单独处理
             'handlers': ['chatroom_info','mail_admins'],
+            "propagate": True,
+            'level': 'INFO',
+        },
+        'account_info': {      
+            'handlers': ['account_info'],
             "propagate": True,
             'level': 'INFO',
         },

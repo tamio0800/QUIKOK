@@ -1,6 +1,6 @@
 from django.contrib.auth.models import Permission, User, Group
 from account.models import student_profile, teacher_profile, user_token
-import re
+import re, logging
 from datetime import datetime, timedelta
 
 #測試用
@@ -15,6 +15,11 @@ from datetime import datetime, timedelta
 # 這是因為現在做測試版本每個user都會至少有兩個群組,例如:pilot_test, student
 # 由於測試群組不能看到未開放的頁面,因此會優先檢查
 # 群組權限如果都過最後檢查個人權限,只有個人可以看到的頁面
+
+
+logging.basicConfig(level=logging.NOTSET) #DEBUG
+logger_account = logging.getLogger('account_info')
+
 class auth_check_manager:
     def __init__(self):
         self.user_auth_group = list()
@@ -164,8 +169,9 @@ class auth_check_manager:
         userID = kwargs['userID']
         url = kwargs['url']
         token = kwargs['token']
-        print('check_all_gate...')
-        print(kwargs['userID'],kwargs['url'],kwargs['token'])
+        logger_account.info('啟動權限檢查')
+        logger_account.info(f'接收前端資料:userID: {userID},:url: {url}, token: {token}')
+        
         try:
             if int(userID) >0: # -1目前是訪客
                 self.get_user_group_and_permission_group(userID)
