@@ -288,7 +288,7 @@ LOGGING = {
         'account_info': {  # 输出日志
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, log_path, "acccount_info.log"),  # 日志文件的位置
+            'filename': os.path.join(BASE_DIR, log_path, "account_info.log"),  # 日志文件的位置
             'formatter': 'verbose',
             'encoding': 'utf-8'
         },
