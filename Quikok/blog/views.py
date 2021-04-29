@@ -20,7 +20,9 @@ def _get_all_categories_for_blog(excluded=['Mail',]):
         list(article_info.objects.values_list('category', flat=True).distinct())
     return [_ for _ in all_unique_categories if _ not in excluded]
 
-# Create your views here.
+# 舊格式的文章ID, 或想要沿用舊格式的文章ID
+exclude_articleID = (1,4,5,8,9,10,11,12,13,14,21)
+
 def main_blog(request):
     
     all_unique_categories = _get_all_categories_for_blog()
@@ -42,7 +44,7 @@ def main_blog(request):
             articles['author'] = correspondent_author_object
             articles['title'] = each_article_object.title
 
-            if each_article_object.id in (1,4,5,8,9,10,11,12,13,14,21):    
+            if each_article_object.id in exclude_articleID:    
                 # 由於改主圖儲存的方式成二進位置,為了保留舊的回傳格式, 把要用舊格式回傳的ID另做處理
                 article_main_picture = each_article_object.main_picture.url
             else:
@@ -93,18 +95,21 @@ def aritcle_content(request, article_id):
     all_unique_categories = _get_all_categories_for_blog()
     
 
-    if article_id in (1,4,5,8,9,10,11,12,13,14,21):    
+    if article_id in exclude_articleID:    
         # 由於改主圖儲存的方式成二進位置,為了保留舊的回傳格式, 把要用舊格式回傳的ID另做處理
         article_main_picture = the_article.main_picture.url
         article_content = the_article.content
     else:
         # 我們定義文章的一開頭若有圖檔,就是 main pic, 若無,則表示沒有特別設定,用default的圖
+        article_main_picture = the_article.main_picture.url
+        article_content = the_article.content
         find_main_pic = re.search(r'^<p><img.src=.*>', the_article.content)
         if find_main_pic:
             temp_pic = re.findall(r'["]\w*.*["] ', find_main_pic[0]) # 去除前後的 tag
-            adjust_content = re.findall(r'^<img.*>',find_main_pic)
             if temp_pic:
                 article_main_picture = temp_pic[0].strip('"').strip(' ').strip('"')
+                adjust_content = the_article.content.replace(find_main_pic[0][3:],'')
+                article_content =adjust_content
             else: # 萬一找不到圖就用預設圖
                 article_main_picture = the_article.main_picture.url
         else:
