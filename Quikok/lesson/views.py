@@ -22,7 +22,7 @@ from handy_functions import (check_if_all_variables_are_true, date_string_2_date
                             turn_date_string_into_date_format, 
                             turn_first_datetime_string_into_time_format,
                             return_none_if_the_string_is_empty, bound_number_string,
-                            turn_picture_into_jpeg_format)
+                            turn_picture_into_jpeg_format,clean_files)
 from lesson.models import (lesson_info, lesson_card, lesson_info_for_users_not_signed_up,
                             lesson_sales_sets, lesson_booking_info, lesson_completed_record,
                             lesson_reviews_from_students, student_reviews_from_teachers)
