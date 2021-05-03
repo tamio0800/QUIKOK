@@ -877,8 +877,9 @@ def create_or_edit_a_lesson(request):
 
                         if has_teacher_uploaded_lesson_background_picture:
                             # 有上傳圖片
+                            # 也有可能是之前上傳過圖片,但這次沒有編輯圖片
                             #uploaded_background_picture = request.FILES["background_picture_path"]
-                            # 用上面這種寫法,遇到"前端沒有傳檔案來時"就會直接出錯 (key error)
+                            # 用上面這種寫法,若user沒有編輯圖,"前端沒有傳檔案來時"就會直接出錯 (key error)
                             uploaded_background_picture = request.FILES.get("background_picture_path")
                             if uploaded_background_picture:
                                 fs = FileSystemStorage(location=lesson_folder_path)
