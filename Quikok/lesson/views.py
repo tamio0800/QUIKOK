@@ -877,24 +877,27 @@ def create_or_edit_a_lesson(request):
 
                         if has_teacher_uploaded_lesson_background_picture:
                             # 有上傳圖片
-                            uploaded_background_picture = request.FILES["background_picture_path"]
-                            fs = FileSystemStorage(location=lesson_folder_path)
-                            clean_files(lesson_folder_path, 'lesson_background')  # 刪除舊有的課程背景
-                            file_extension = uploaded_background_picture.name.split('.')[-1]
-                            fs.save(f"customized_lesson_background_original.{file_extension}" , uploaded_background_picture) 
-                            turn_picture_into_jpeg_format(
-                                f"{lesson_folder_path}/customized_lesson_background_original.{file_extension}",
-                                (1110, 300),
-                                f"{lesson_folder_path}/customized_lesson_background.jpeg")
-                            # 這個是for課程詳細資訊頁的呈現
-                            turn_picture_into_jpeg_format(
-                                f"{lesson_folder_path}/customized_lesson_background_original.{file_extension}",
-                                (516, 240),
-                                f"{lesson_folder_path}/customized_lesson_background_for_cards.jpeg", quality=60)
-                            # 這個是for課程小卡的呈現
-                               
-                            lesson_object.background_picture_path = \
-                                f"/{lesson_folder_path}/customized_lesson_background.jpeg"
+                            #uploaded_background_picture = request.FILES["background_picture_path"]
+                            # 用上面這種寫法,遇到"前端沒有傳檔案來時"就會直接出錯 (key error)
+                            uploaded_background_picture = request.FILES.get("background_picture_path")
+                            if uploaded_background_picture:
+                                fs = FileSystemStorage(location=lesson_folder_path)
+                                clean_files(lesson_folder_path, 'lesson_background')  # 刪除舊有的課程背景
+                                file_extension = uploaded_background_picture.name.split('.')[-1]
+                                fs.save(f"customized_lesson_background_original.{file_extension}" , uploaded_background_picture) 
+                                turn_picture_into_jpeg_format(
+                                    f"{lesson_folder_path}/customized_lesson_background_original.{file_extension}",
+                                    (1110, 300),
+                                    f"{lesson_folder_path}/customized_lesson_background.jpeg")
+                                # 這個是for課程詳細資訊頁的呈現
+                                turn_picture_into_jpeg_format(
+                                    f"{lesson_folder_path}/customized_lesson_background_original.{file_extension}",
+                                    (516, 240),
+                                    f"{lesson_folder_path}/customized_lesson_background_for_cards.jpeg", quality=60)
+                                # 這個是for課程小卡的呈現
+                                
+                                lesson_object.background_picture_path = \
+                                    f"/{lesson_folder_path}/customized_lesson_background.jpeg"
 
                         lesson_object.big_title = big_title
                         lesson_object.little_title = little_title
