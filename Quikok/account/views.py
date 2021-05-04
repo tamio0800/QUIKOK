@@ -6,8 +6,7 @@ from .model_tools import user_db_manager, teacher_manager, student_manager, auth
 from django.contrib.auth.models import User
 from account.models import student_review_aggregated_info
 from account.models import teacher_review_aggregated_info
-from account.models import user_token
-from account.models import student_profile, teacher_profile
+from account.models import student_profile, teacher_profile, user_token
 from account.models import specific_available_time, general_available_time, feedback
 from account_finance.models import teacher_refund, student_refund
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
@@ -17,26 +16,21 @@ import pandas as pd
 from chatroom.models import chatroom_info_Mr_Q2user
 from chatroom.chat_tools import chat_room_manager
 from lesson.lesson_tools import *
-import os
+import os, logging, json,shutil
 from .auth_tools import auth_check_manager
 # FOR API
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
-import json
 from django.middleware.csrf import get_token
 from datetime import datetime, timedelta, date as date_function
-import shutil
 from django.core.mail import EmailMessage
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from handy_functions import check_if_all_variables_are_true
-from handy_functions import is_num
-from handy_functions import clean_files
-from handy_functions import date_string_2_dateformat
-from handy_functions import clean_files
-from handy_functions import turn_picture_into_jpeg_format
+from handy_functions import (is_num,clean_files, 
+    date_string_2_dateformat, turn_picture_into_jpeg_format)
 from analytics.signals import object_accessed_signal
 from analytics.utils import get_client_ip
 from account.email_sending import email_manager
@@ -45,6 +39,8 @@ from django.dispatch import receiver
 from threading import Thread
 
 account_email = email_manager()
+logging.basicConfig(level=logging.NOTSET) #DEBUG
+logger_account = logging.getLogger('account_info')
 
 ## 0916改成api的版本,之前的另存成views_old, 之後依據該檔把已設計好的功能寫過來
 ##### 學生區 #####
@@ -587,8 +583,7 @@ def create_a_teacher_user(request):
     if check_if_all_variables_are_true(
         username, password, name, intro, subject_type, mobile,
         tutor_experience, subject_type) and is_male is not None:
-    
-        print('判斷收到老師資料是正常的')
+        logger_account.info('判斷收到老師註冊資料沒有問題')
         # 先檢查有沒有這個username存在，存在的話會return None給obj
         obj = teacher_profile.objects.filter(username=username).first()
         auth_obj = User.objects.filter(username=username).first() 
@@ -638,7 +633,6 @@ def create_a_teacher_user(request):
                 print('收到老師認證資料: ', each_file.name)
                 folder_where_are_uploaded_files_be ='user_upload/teachers/' + user_folder + '/unaproved_cer'
                 fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
-
                 fs.save(each_file.name, each_file)
 
             user_created_object = \
@@ -653,8 +647,8 @@ def create_a_teacher_user(request):
                     is_active = 1,
                 )
             user_created_object.save()
-            print('老師成功建立 User.objects')
-            
+            logger_account.info(f'老師成功建立,{user_created_object}')
+
             teacher_created_object = teacher_profile.objects.create(
                     auth_id = user_created_object.id,
                     username = username,
@@ -687,7 +681,7 @@ def create_a_teacher_user(request):
                     special_exp = special_exp
             )
             teacher_created_object.save()
-            print('成功建立 teacher_profile')
+            logger_account.info('老師成功寫入,teacher_profile')
             # 寄發email通知老師註冊成功
 
             send_email_info = {
@@ -731,8 +725,7 @@ def create_a_teacher_user(request):
                     week = week,
                     time = time
                                 ).save()
-            print('老師成功建立 一般時間')
-
+            logger_account.info('老師成功建立 一般時間')
             # 接下來來建立未來半年的 specific_time 吧
             if len(available_week_time_dictionary.keys()):
                 # 代表用戶有輸入資料
@@ -753,7 +746,7 @@ def create_a_teacher_user(request):
             # 建立老師與system的聊天室
             chat_tool = chat_room_manager()
             chat_tool.create_system2user_chatroom(userID=teacher_object.auth_id, user_type = 'teacher')
-            print('建立老師與Mr.Q 聊天室')
+            logger_account.info('建立老師與Mr.Q 聊天室')
             # 建立group, 現在老師都是測試:3
             user_created_object.groups.add(3)
 
@@ -763,17 +756,18 @@ def create_a_teacher_user(request):
             response['data'] = user_created_object.id
             # 回傳auth_id作為data的變數
         else:
-            print('此帳號已註冊過!')
+            logger_account.info('此帳號已註冊過!')
             response['status'] = 'failed'
             response['errCode'] = '0'
-            response['errMsg'] = 'username taken'# 使用者已註冊
+            response['errMsg'] = '此帳號已註冊'# 使用者已註冊
             response['data'] = None
     else:
         # 資料有問題
         response['status'] = 'failed'
         response['errCode'] = '1'
-        response['errMsg'] = 'wrong data'
+        response['errMsg'] = '收到錯誤的資料'
         response['data'] = None
+        logger_account.info('收到錯誤的資料')
     
     return JsonResponse(response)
 
