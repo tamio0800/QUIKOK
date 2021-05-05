@@ -215,8 +215,10 @@ if DISABLED_EMAIL == False:
     EMAIL_USE_TLS = True  #開啟TLS(傳輸層安全性)
     EMAIL_HOST_USER = 'quikok.taiwan@quikok.com'     # 'edony.ai.tech@gmail.com'  #寄件者電子郵件
     EMAIL_HOST_PASSWORD = 'jamthqadrfcxesdq'  #Gmail應用程式的密碼   
-
-    ADMINS = ['quikok.taiwan@quikok.com'] # log error
+    # 以下是嘗試用 log發email的設定
+    DEFAULT_FROM_EMAIL = EMAIL_FROM = EMAIL_HOST_USER
+    ADMINS = [('quikok','quikok.taiwan@quikok.com')] # sned error log to eamil
+    SERVER_EMAIL = 'quikok.taiwan@quikok.com'
     MANAGERS = ADMINS
 
 # django logging設定
@@ -254,9 +256,11 @@ LOGGING = {
         },  # 日志记录级别+时间日期+模块名称+函数名称+行号+记录消息
     },
     'filters': {
-        'special': {
-            '()': 'Quikok.logging.SpecialFilter',
-            #'foo': 'bar',
+        'require_debug_false': {
+        '()': 'django.utils.log.RequireDebugFalse', # 正式機用
+        },
+        'require_debug_true': {
+        '()': 'django.utils.log.RequireDebugTrue', # 測試用
         },
     },    
     'handlers': {  # 日志处理方法
@@ -273,10 +277,13 @@ LOGGING = {
             'formatter': 'verbose',
             'encoding': 'utf-8'
         },
-        'mail_admins': { #  which emails any ERROR (or higher) message to the site ADMINS
-            'level': 'ERROR',
+        'mail_admins': { #  which emails any ERROR (or higher) message to the site ADMINS # 本功能測試尚未能夠正確發信
+            'level': 'ERROR',#ERROR
             'class': 'django.utils.log.AdminEmailHandler',
-            'filters': ['special']
+            'filters': ['require_debug_false'],
+            #'include_html': False,
+            #'reporter_class': os.path.join(BASE_DIR,'exception_reporter.CustomExceptionReporter')
+            # 上面這個參數是想設定客製的報錯訊息, 但用了會顯示找不到MODULE..先註解起來
         },
         'chatroom_info': {  # 输出日志
             'level': 'INFO',
@@ -303,7 +310,7 @@ LOGGING = {
         "django.request": {        #which emails any ERROR (or higher) message to the site ADMINS
             "handlers": ["mail_admins"],
             "propagate": True,
-            "level": "INFO"
+            "level": "ERROR"
         },
         'chatroom_info': {      # 名为chatroom_info的logger还单独处理
             'handlers': ['chatroom_info','mail_admins'],
@@ -311,7 +318,7 @@ LOGGING = {
             'level': 'INFO',
         },
         'account_info': {      
-            'handlers': ['account_info'],
+            'handlers': ['account_info','mail_admins'],
             "propagate": True,
             'level': 'INFO',
         },

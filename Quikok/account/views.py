@@ -83,111 +83,115 @@ def create_a_student_user(request):
         else:
             is_male = True
         if obj is None and auth_obj is None:
-            ### 長出每個學生相對應資料夾 目前要長的有:放大頭照的資料夾
-            # 將來可能會有成績單或考卷等資料夾
-            #user_folder = username #.replace('@', 'at')
-            # If folder_a was not created, 
-            # os.mkdir(os.path.join('folder_a', 'folder_b')) will result in an error!
-            # and if folder_a was empty, GIT will ignore this folder and remove it from tracked files,
-            # which may cause the error above.
-            if not os.path.isdir('user_upload/students'):
-                os.mkdir(os.path.join('user_upload/students'))
+            try:
+                ### 長出每個學生相對應資料夾 目前要長的有:放大頭照的資料夾
+                # 將來可能會有成績單或考卷等資料夾
+                #user_folder = username #.replace('@', 'at')
+                # If folder_a was not created, 
+                # os.mkdir(os.path.join('folder_a', 'folder_b')) will result in an error!
+                # and if folder_a was empty, GIT will ignore this folder and remove it from tracked files,
+                # which may cause the error above.
+                if not os.path.isdir('user_upload/students'):
+                    os.mkdir(os.path.join('user_upload/students'))
 
-            if os.path.isdir(os.path.join('user_upload/students', username)):
-                # 如果已經有了這個資料夾，就刪除裡面所有項目並且重建
-                shutil.rmtree(os.path.join('user_upload/students', username))
-                print('User Folder Already Existed >> Rebuild It.')
-            os.mkdir(os.path.join('user_upload/students', username))
-            os.mkdir(os.path.join('user_upload/students/'+ username, 'info_folder'))
-            # 存到 user_upload 該使用者的資料夾
+                if os.path.isdir(os.path.join('user_upload/students', username)):
+                    # 如果已經有了這個資料夾，就刪除裡面所有項目並且重建
+                    shutil.rmtree(os.path.join('user_upload/students', username))
+                    print('User Folder Already Existed >> Rebuild It.')
+                os.mkdir(os.path.join('user_upload/students', username))
+                os.mkdir(os.path.join('user_upload/students/'+ username, 'info_folder'))
+                # 存到 user_upload 該使用者的資料夾
 
-            #大頭照           
-            # 如果沒東西 會是空的  user_upload 看前端取甚麼名字 
-            each_file = request.FILES.get("upload_snapshot")
-            if each_file :
-                # print('收到學生大頭照: ', each_file.name)
-                folder_where_are_uploaded_files_be ='user_upload/students/' + username
-                fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
-                file_exten = each_file.name.split('.')[-1]
-                fs.save('thumbnail_original'+'.'+ file_exten , each_file) # 儲存原始的大頭貼照片
-                turn_picture_into_jpeg_format(
-                    f"{folder_where_are_uploaded_files_be}/thumbnail_original.{file_exten}",
-                    (200, 200),
-                    f"{folder_where_are_uploaded_files_be}/thumbnail.jpeg",
+                #大頭照           
+                # 如果沒東西 會是空的  user_upload 看前端取甚麼名字 
+                each_file = request.FILES.get("upload_snapshot")
+                if each_file :
+                    # print('收到學生大頭照: ', each_file.name)
+                    folder_where_are_uploaded_files_be ='user_upload/students/' + username
+                    fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
+                    file_exten = each_file.name.split('.')[-1]
+                    fs.save('thumbnail_original'+'.'+ file_exten , each_file) # 儲存原始的大頭貼照片
+                    turn_picture_into_jpeg_format(
+                        f"{folder_where_are_uploaded_files_be}/thumbnail_original.{file_exten}",
+                        (200, 200),
+                        f"{folder_where_are_uploaded_files_be}/thumbnail.jpeg",
+                        )
+                    # 檔名統一改成thumbnail開頭
+                    thumbnail_dir = '/user_upload/students/' + username + '/thumbnail.jpeg'
+                else:
+                    thumbnail_dir = ''
+                #存入auth
+                user_created_object = \
+                    User.objects.create(
+                        username = username,
+                        password = password,
+                        is_superuser = 0,
+                        first_name = '',
+                        last_name = '',
+                        email = '',
+                        is_staff = 0,
+                        is_active = 1,
                     )
-                # 檔名統一改成thumbnail開頭
-                thumbnail_dir = '/user_upload/students/' + username + '/thumbnail.jpeg'
-            else:
-                thumbnail_dir = ''
-            #存入auth
-            user_created_object = \
-                User.objects.create(
+                # 用create()的寫法是為了知道這個user在auth裡面的id為何
+                user_created_object.save()
+                # print('auth建立')
+                # print('建立新學生資料')
+                new_student = student_profile.objects.create(
+                    auth_id = user_created_object.id,
                     username = username,
                     password = password,
-                    is_superuser = 0,
-                    first_name = '',
-                    last_name = '',
-                    email = '',
-                    is_staff = 0,
-                    is_active = 1,
+                    balance = 0,
+                    withholding_balance = 0,
+                    name = name,
+                    nickname = nickname,
+                    birth_date = birth_date,
+                    is_male = is_male,
+                    intro = '',
+                    role = role,
+                    mobile = mobile,
+                    user_folder = 'user_upload/'+ username,
+                    info_folder = 'user_upload/'+ username+ '/info_folder',
+                    thumbnail_dir = thumbnail_dir ,
+                    update_someone_by_email = update_someone_by_email
                 )
-            # 用create()的寫法是為了知道這個user在auth裡面的id為何
-            user_created_object.save()
-            # print('auth建立')
-            # print('建立新學生資料')
-            new_student = student_profile.objects.create(
-                auth_id = user_created_object.id,
-                username = username,
-                password = password,
-                balance = 0,
-                withholding_balance = 0,
-                name = name,
-                nickname = nickname,
-                birth_date = birth_date,
-                is_male = is_male,
-                intro = '',
-                role = role,
-                mobile = mobile,
-                user_folder = 'user_upload/'+ username,
-                info_folder = 'user_upload/'+ username+ '/info_folder',
-                thumbnail_dir = thumbnail_dir ,
-                update_someone_by_email = update_someone_by_email
-            )
-            new_student.save()
-            # 寄發email通知學生註冊成功
+                new_student.save()
+                # 寄發email通知學生註冊成功
 
-            send_email_info = {
-                        'student_authID' : user_created_object.id,
-                        'student_nickname' : nickname,
-                        'student_email' : username }
-            send_welcom_email_thread = Thread(
-                        target = account_email.send_welcome_email_new_signup_student,
-                        kwargs = send_email_info)
-            send_welcom_email_thread.start()
+                send_email_info = {
+                            'student_authID' : user_created_object.id,
+                            'student_nickname' : nickname,
+                            'student_email' : username }
+                send_welcom_email_thread = Thread(
+                            target = account_email.send_welcome_email_new_signup_student,
+                            kwargs = send_email_info)
+                send_welcom_email_thread.start()
 
-            object_accessed_signal.send(
-                sender='create_a_student_user',
-                auth_id=user_created_object.id,
-                ip_address=get_client_ip(request),
-                url_path=request.META.get('PATH_INFO'),
-                model_name='student_profile',
-                object_name=user_created_object.username,
-                object_id=new_student.id,
-                user_agent=request.META.get('HTTP_USER_AGENT'),
-                action_type='student register',
-                remark=None) # 傳送訊號
-            
-            # 建立學生與system的聊天室
-            chat_tool = chat_room_manager()
-            chat_tool.create_system2user_chatroom(userID=new_student.auth_id, user_type = 'student')
-            # print('建立學生與Mr.Q 聊天室')
-            # 建立group, 現在學生都是測試:4
-            user_created_object.groups.add(4)
-            # 回前端
-            response['status'] = 'success'
-            response['errCode'] = None
-            response['errMsg'] = None
-            #response['data'] = None
+                object_accessed_signal.send(
+                    sender='create_a_student_user',
+                    auth_id=user_created_object.id,
+                    ip_address=get_client_ip(request),
+                    url_path=request.META.get('PATH_INFO'),
+                    model_name='student_profile',
+                    object_name=user_created_object.username,
+                    object_id=new_student.id,
+                    user_agent=request.META.get('HTTP_USER_AGENT'),
+                    action_type='student register',
+                    remark=None) # 傳送訊號
+                
+                # 建立學生與system的聊天室
+                chat_tool = chat_room_manager()
+                chat_tool.create_system2user_chatroom(userID=new_student.auth_id, user_type = 'student')
+                # print('建立學生與Mr.Q 聊天室')
+                # 建立group, 現在學生都是測試:4
+                user_created_object.groups.add(4)
+                # 回前端
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                #response['data'] = None
+
+            except Exception as e:
+                logger_account.error(f"account/views:create student error:{e}", exc_info=True)
 
         else:
             if obj is not None:
@@ -197,12 +201,14 @@ def create_a_student_user(request):
             response['status'] = 'failed'
             response['errCode'] = '0'
             response['errMsg'] = '不好意思，這個信箱已經被註冊囉，請您再選擇一個信箱或是點選「忘記密碼」唷。' # 使用者已註冊
+            
 
     else:
         # 資料傳輸有問題
         response['status'] = 'failed'
         response['errCode'] = '1'
         response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
+        logger_account.error(f"account/views: create student 資料傳輸出錯", exc_info=True)
 
     return JsonResponse(response)
 
@@ -589,171 +595,176 @@ def create_a_teacher_user(request):
 
         # 下面這個條件式>> 皆非(a為空 或是 b為空) >> a跟b都不能為空>> annie0918:應該是兩個都要空才對
         if obj is None and auth_obj is None :
-            print('還沒註冊過,建立 teacher_profile')
-            ### 長出老師相對應資料夾 
-            # 目前要長的有:放一般圖檔的資料夾user_folder(大頭照、可能之後可放宣傳圖)、未認證的資料夾unaproved_cer、
-            # 已認證過的證書aproved_cer、user_info 將來可能可以放考卷檔案夾之類的、課程統一資料夾lessons、
-            
-            if not os.path.isdir('user_upload/teachers'):
-                os.mkdir(os.path.join('user_upload/teachers'))
-            if os.path.isdir(os.path.join('user_upload/teachers', user_folder)):
-                # 如果已經有了這個資料夾，就刪除裡面所有項目並且重建
-                shutil.rmtree(os.path.join('user_upload/teachers', user_folder))
-                print('User Folder Already Existed >> Rebuild It.')
-            os.mkdir(os.path.join('user_upload/teachers', user_folder))
-            os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "unaproved_cer"))
-            os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "aproved_cer"))
-            os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "user_info")) # models裡的info_folder
-            os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "lessons"))
-            print('已幫老師建立5個資料夾')
-            # for迴圈如果沒東西會是空的.  getlist()裡面是看前端的 multiple name
+            try:
+                logger_account.debug('還沒註冊過,建立 teacher_profile')
+                ### 長出老師相對應資料夾 
+                # 目前要長的有:放一般圖檔的資料夾user_folder(大頭照、可能之後可放宣傳圖)、未認證的資料夾unaproved_cer、
+                # 已認證過的證書aproved_cer、user_info 將來可能可以放考卷檔案夾之類的、課程統一資料夾lessons、
+                
+                if not os.path.isdir('user_upload/teachers'):
+                    os.mkdir(os.path.join('user_upload/teachers'))
+                if os.path.isdir(os.path.join('user_upload/teachers', user_folder)):
+                    # 如果已經有了這個資料夾，就刪除裡面所有項目並且重建
+                    shutil.rmtree(os.path.join('user_upload/teachers', user_folder))
+                    print('User Folder Already Existed >> Rebuild It.')
+                os.mkdir(os.path.join('user_upload/teachers', user_folder))
+                os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "unaproved_cer"))
+                os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "aproved_cer"))
+                os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "user_info")) # models裡的info_folder
+                os.mkdir(os.path.join('user_upload/teachers/'+ user_folder, "lessons"))
+                print('已幫老師建立5個資料夾')
+                # for迴圈如果沒東西會是空的.  getlist()裡面是看前端的 multiple name
 
-            if request.FILES.getlist("upload_snapshot"):
-                for each_file in request.FILES.getlist("upload_snapshot"):
-                    print('收到老師大頭照: ', each_file.name)
-                    folder_where_are_uploaded_files_be ='user_upload/teachers/' + user_folder 
+                if request.FILES.getlist("upload_snapshot"):
+                    for each_file in request.FILES.getlist("upload_snapshot"):
+                        print('收到老師大頭照: ', each_file.name)
+                        folder_where_are_uploaded_files_be ='user_upload/teachers/' + user_folder 
+                        fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
+                        file_exten = each_file.name.split('.')[-1]
+                        fs.save('thumbnail_original'+'.'+ file_exten , each_file) # 儲存原始的大頭貼照片
+                        turn_picture_into_jpeg_format(
+                            f"{folder_where_are_uploaded_files_be}/thumbnail_original.{file_exten}",
+                            (200, 200),
+                            f"{folder_where_are_uploaded_files_be}/thumbnail.jpeg",
+                            )
+                        # 檔名統一改成thumbnail開頭
+                        thumbnail_dir = '/user_upload/teachers/' + user_folder + '/thumbnail.jpeg'
+                else:
+                    logger_account.debug('沒收到老師大頭照')
+                    # 可能依照性別使用預設的圖片
+                    thumbnail_dir = ''
+
+                # 放未認證證書的資料夾
+                for each_file in request.FILES.getlist("upload_cer"):
+                    print('收到老師認證資料: ', each_file.name)
+                    folder_where_are_uploaded_files_be ='user_upload/teachers/' + user_folder + '/unaproved_cer'
                     fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
-                    file_exten = each_file.name.split('.')[-1]
-                    fs.save('thumbnail_original'+'.'+ file_exten , each_file) # 儲存原始的大頭貼照片
-                    turn_picture_into_jpeg_format(
-                        f"{folder_where_are_uploaded_files_be}/thumbnail_original.{file_exten}",
-                        (200, 200),
-                        f"{folder_where_are_uploaded_files_be}/thumbnail.jpeg",
-                        )
-                    # 檔名統一改成thumbnail開頭
-                    thumbnail_dir = '/user_upload/teachers/' + user_folder + '/thumbnail.jpeg'
-            else:
-                print('沒收到老師大頭照')
-                # 可能依照性別使用預設的圖片
-                thumbnail_dir = ''
+                    fs.save(each_file.name, each_file)
 
-            # 放未認證證書的資料夾
-            for each_file in request.FILES.getlist("upload_cer"):
-                print('收到老師認證資料: ', each_file.name)
-                folder_where_are_uploaded_files_be ='user_upload/teachers/' + user_folder + '/unaproved_cer'
-                fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
-                fs.save(each_file.name, each_file)
+                user_created_object = \
+                    User.objects.create(
+                        username = username,
+                        password = password,
+                        is_superuser = 0,
+                        first_name = '',
+                        last_name = '',
+                        email = '',
+                        is_staff = 0,
+                        is_active = 1,
+                    )
+                user_created_object.save()
+                logger_account.info(f'老師成功建立,{user_created_object}')
 
-            user_created_object = \
-                User.objects.create(
-                    username = username,
-                    password = password,
-                    is_superuser = 0,
-                    first_name = '',
-                    last_name = '',
-                    email = '',
-                    is_staff = 0,
-                    is_active = 1,
+                teacher_created_object = teacher_profile.objects.create(
+                        auth_id = user_created_object.id,
+                        username = username,
+                        password = password,
+                        balance = 0,
+                        unearned_balance = 0, # 帳戶預進帳金額，改成會計用語
+                        withholding_balance = 0,
+                        name = name,
+                        nickname = nickname,
+                        birth_date = birth_date,
+                        is_male = is_male,
+                        intro = intro,
+                        mobile = mobile,
+                        thumbnail_dir = thumbnail_dir,
+                        user_folder = 'user_upload/'+ user_folder ,
+                        info_folder = 'user_upload/'+ user_folder + '/user_info', 
+                        tutor_experience = tutor_experience,
+                        subject_type = subject_type,
+                        education_1 = education_1, 
+                        education_2 = education_2,
+                        education_3 = education_3 ,
+                        cert_unapproved = 'user_upload/'+ user_folder + '/unaproved_cer',
+                        cert_approved = 'user_upload/'+ user_folder + '/aproved_cer',
+                        id_approved = 0,
+                        education_approved = 0,
+                        work_approved = 0,
+                        other_approved = 0, #其他類別的認證勳章
+                        #occupation = if_false_return_empty_else_do_nothing(occupation), 
+                        company = company,
+                        special_exp = special_exp
                 )
-            user_created_object.save()
-            logger_account.info(f'老師成功建立,{user_created_object}')
+                teacher_created_object.save()
+                logger_account.info('老師成功寫入,teacher_profile')
+                # 寄發email通知老師註冊成功
 
-            teacher_created_object = teacher_profile.objects.create(
-                    auth_id = user_created_object.id,
-                    username = username,
-                    password = password,
-                    balance = 0,
-                    unearned_balance = 0, # 帳戶預進帳金額，改成會計用語
-                    withholding_balance = 0,
-                    name = name,
-                    nickname = nickname,
-                    birth_date = birth_date,
-                    is_male = is_male,
-                    intro = intro,
-                    mobile = mobile,
-                    thumbnail_dir = thumbnail_dir,
-                    user_folder = 'user_upload/'+ user_folder ,
-                    info_folder = 'user_upload/'+ user_folder + '/user_info', 
-                    tutor_experience = tutor_experience,
-                    subject_type = subject_type,
-                    education_1 = education_1, 
-                    education_2 = education_2,
-                    education_3 = education_3 ,
-                    cert_unapproved = 'user_upload/'+ user_folder + '/unaproved_cer',
-                    cert_approved = 'user_upload/'+ user_folder + '/aproved_cer',
-                    id_approved = 0,
-                    education_approved = 0,
-                    work_approved = 0,
-                    other_approved = 0, #其他類別的認證勳章
-                    #occupation = if_false_return_empty_else_do_nothing(occupation), 
-                    company = company,
-                    special_exp = special_exp
-            )
-            teacher_created_object.save()
-            logger_account.info('老師成功寫入,teacher_profile')
-            # 寄發email通知老師註冊成功
+                send_email_info = {
+                            'teacher_authID' : user_created_object.id,
+                            'teacher_nickname' : nickname,
+                            'teacher_email' : username }
+                send_welcom_email_thread = Thread(
+                            target = account_email.send_welcome_email_new_signup_teacher,
+                            kwargs = send_email_info)
+                send_welcom_email_thread.start()
 
-            send_email_info = {
-                        'teacher_authID' : user_created_object.id,
-                        'teacher_nickname' : nickname,
-                        'teacher_email' : username }
-            send_welcom_email_thread = Thread(
-                        target = account_email.send_welcome_email_new_signup_teacher,
-                        kwargs = send_email_info)
-            send_welcom_email_thread.start()
+                object_accessed_signal.send(
+                    sender='create_a_teacher_user',
+                    auth_id=user_created_object.id,
+                    ip_address=get_client_ip(request),
+                    url_path=request.META.get('PATH_INFO'),
+                    model_name='teacher_profile',
+                    object_name=user_created_object.username,
+                    object_id=teacher_created_object.id,
+                    user_agent=request.META.get('HTTP_USER_AGENT'),
+                    action_type='teacher register',
+                    remark=None) # 傳送訊號
 
-            object_accessed_signal.send(
-                sender='create_a_teacher_user',
-                auth_id=user_created_object.id,
-                ip_address=get_client_ip(request),
-                url_path=request.META.get('PATH_INFO'),
-                model_name='teacher_profile',
-                object_name=user_created_object.username,
-                object_id=teacher_created_object.id,
-                user_agent=request.META.get('HTTP_USER_AGENT'),
-                action_type='teacher register',
-                remark=None) # 傳送訊號
+                ## 寫入一般時間table
+                # 因為models設定general_available_time與 teacher_profile 
+                # 的teacher_name有foreignkey的關係
+                # 因此必須用teacher_profile.objects 來建立這邊的teacher_name
+                # (否則無法建立)
+                teacher_object = teacher_profile.objects.get(username=username)
+                general_time = request.POST.get('teacher_general_availabale_time', False)
+                temp_general_time = [_ for _ in general_time.split(';') if len(_) > 0]
+                # print(general_time)
+                available_week_time_dictionary = dict()
+                # 建立一個dict以備晚點 specific time 可以直接call，不用再從 DB query
+                for every_week in temp_general_time:
+                    week, time = every_week.split(':')
+                    available_week_time_dictionary[int(week)] = time
 
-            ## 寫入一般時間table
-            # 因為models設定general_available_time與 teacher_profile 
-            # 的teacher_name有foreignkey的關係
-            # 因此必須用teacher_profile.objects 來建立這邊的teacher_name
-            # (否則無法建立)
-            teacher_object = teacher_profile.objects.get(username=username)
-            general_time = request.POST.get('teacher_general_availabale_time', False)
-            temp_general_time = [_ for _ in general_time.split(';') if len(_) > 0]
-            # print(general_time)
-            available_week_time_dictionary = dict()
-            # 建立一個dict以備晚點 specific time 可以直接call，不用再從 DB query
-            for every_week in temp_general_time:
-                week, time = every_week.split(':')
-                available_week_time_dictionary[int(week)] = time
+                    general_available_time.objects.create(
+                        teacher_model = teacher_object,
+                        week = week,
+                        time = time
+                                    ).save()
+                logger_account.info('老師成功建立 一般時間')
+                # 接下來來建立未來半年的 specific_time 吧
+                if len(available_week_time_dictionary.keys()):
+                    # 代表用戶有輸入資料
+                    today_date = date_function.today()
+                    specific_date_time_list_to_be_updated = \
+                        [
+                            specific_available_time(
+                                teacher_model = teacher_object,
+                                date = today_date + timedelta(days=each_incremental_day),
+                                time = available_week_time_dictionary[(today_date + timedelta(days=each_incremental_day)).weekday()]
+                            )
+                            for each_incremental_day in range(184) if 
+                            ((today_date + timedelta(days=each_incremental_day)).weekday() in available_week_time_dictionary.keys())
+                        ]
+                    specific_available_time.objects.bulk_create(specific_date_time_list_to_be_updated)
+                print('老師成功建立 特定時間')   # 是說這個要什麼時候更新啦QQ
 
-                general_available_time.objects.create(
-                    teacher_model = teacher_object,
-                    week = week,
-                    time = time
-                                ).save()
-            logger_account.info('老師成功建立 一般時間')
-            # 接下來來建立未來半年的 specific_time 吧
-            if len(available_week_time_dictionary.keys()):
-                # 代表用戶有輸入資料
-                today_date = date_function.today()
-                specific_date_time_list_to_be_updated = \
-                    [
-                        specific_available_time(
-                            teacher_model = teacher_object,
-                            date = today_date + timedelta(days=each_incremental_day),
-                            time = available_week_time_dictionary[(today_date + timedelta(days=each_incremental_day)).weekday()]
-                        )
-                        for each_incremental_day in range(184) if 
-                        ((today_date + timedelta(days=each_incremental_day)).weekday() in available_week_time_dictionary.keys())
-                    ]
-                specific_available_time.objects.bulk_create(specific_date_time_list_to_be_updated)
-            print('老師成功建立 特定時間')   # 是說這個要什麼時候更新啦QQ
+                # 建立老師與system的聊天室
+                chat_tool = chat_room_manager()
+                chat_tool.create_system2user_chatroom(userID=teacher_object.auth_id, user_type = 'teacher')
+                logger_account.info('建立老師與Mr.Q 聊天室')
+                # 建立group, 現在老師都是測試:3
+                user_created_object.groups.add(3)
 
-            # 建立老師與system的聊天室
-            chat_tool = chat_room_manager()
-            chat_tool.create_system2user_chatroom(userID=teacher_object.auth_id, user_type = 'teacher')
-            logger_account.info('建立老師與Mr.Q 聊天室')
-            # 建立group, 現在老師都是測試:3
-            user_created_object.groups.add(3)
+                response['status'] = 'success'
+                response['errCode'] = None
+                response['errMsg'] = None
+                response['data'] = user_created_object.id
+                # 回傳auth_id作為data的變數
+            except Exception as e:
+                logger_account.error(f"account/views: create teacher Exception {e}", exc_info=True)
 
-            response['status'] = 'success'
-            response['errCode'] = None
-            response['errMsg'] = None
-            response['data'] = user_created_object.id
-            # 回傳auth_id作為data的變數
+
         else:
             logger_account.info('此帳號已註冊過!')
             response['status'] = 'failed'

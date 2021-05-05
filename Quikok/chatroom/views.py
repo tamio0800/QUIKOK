@@ -20,6 +20,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 logging.basicConfig(level=logging.NOTSET) #DEBUG
 logger_chatroom = logging.getLogger('chatroom_info')
+#email_info_test =logging.getLogger('mail_admins')
 
 # 寄信到edony的email
 chatroom_email_edony_notification = chatroom_email_for_edony()
@@ -34,7 +35,6 @@ def check_if_edony_chatroom_unread():
     if unread_msg != 0:
         chatroom_email_edony_notification.edony_unread_user_msg(unread_msg)
         logger_chatroom.info('chatroom.view 例行檢查，寄出未讀訊息')
-
 scheduler.add_job(check_if_edony_chatroom_unread, 'interval',
     hours = 8, start_date = '2021-04-12 01:01:00')
 logger_chatroom.info('chatroom.view 例行檢查是否有未讀訊息')
@@ -107,8 +107,8 @@ def check_system_chatroom(request):
                 response['errMsg'] = None
                 response['data'] = {'chatroomID':'system'+str(system_chatroom_query.first().id)}
                 return JsonResponse(response)
-        except:
-            logging.error("chatroom/views:check_system_chatroom except error.", exc_info=True)
+        except Exception as e:
+            logging.error(f"chatroom/views:check_system_chatroom except error:{e}", exc_info=True)
             response['status'] = 'failed'
             response['errCode'] = '2'
             response['errMsg'] = '資料庫有問題，如狀況持續麻煩您聯絡客服！'
@@ -196,6 +196,7 @@ def update_user2user_chatroom_msg_is_read(request):
             return JsonResponse(response)
         except Exception as e:
             print(e)
+            logging.error("chatroom/views:update_user2user_chatroom_msg_is_read.Exception:{e}", exc_info=True)
             response['status'] = 'failed'
             response['errCode'] = '1'
             response['errMsg'] = '資料庫有問題，如狀況持續麻煩您聯絡客服！'
