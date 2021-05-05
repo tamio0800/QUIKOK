@@ -183,9 +183,9 @@ class auth_check_manager:
                 response = self.response_to_frontend(0)
                 print('pass auth check')
             else:    # 確認網址屬性
-                print('url屬於哪一類')
                 self.find_auth_page(url)
                 if len(self.auth_page)<0:
+                    logger_account.info(f'權限沒通過, 找不到url分類:userID: {userID},:url: {url}')
                     response = self.response_to_frontend(2)
                 else: #gate1
                     is_public = self.check_url_is_public()
@@ -196,8 +196,10 @@ class auth_check_manager:
                         # gate2
                         is_token_match = self.check_user_token(userID,token)
                         if is_token_match == 0: # 超過時效或沒登入的訪客進入該頁
+                            logger_account.info(f'權限沒通過,超過時效或沒登入的訪客 :userID: {userID},:url: {url}')
                             response = self.response_to_frontend(3)
                         elif is_token_match == 2: #token不合. 被登出、須重登
+                            logger_account.info(f'權限沒通過,token不合,需重登:userID: {userID},:url: {url}')
                             response = self.response_to_frontend(3)    
                         elif is_token_match == 1:
                             # gate3
@@ -208,9 +210,9 @@ class auth_check_manager:
                             elif is_perm_match == 1:
                                 response = self.response_to_frontend(0)
                                 print('pass auth check')
-            print(response)
+            #print(response)
             return(response)
         except Exception as e:
-            print(e)
+            logger_account.error(f'auth_tools 權限error: {e}')
 
 
