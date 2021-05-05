@@ -18,7 +18,7 @@ class object_accessed_info(models.Model):
     model_name = models.CharField(max_length=55, blank=True, null=True)  # App 裡面的 models
     object_name = models.CharField(max_length=55, blank=True, null=True)
     object_id = models.PositiveIntegerField(blank=True, null=True)  #  models 下面的細項
-    user_agent = models.CharField(max_length=200, blank=True, null=True)
+    user_agent = models.CharField(max_length=550, blank=True, null=True)
     action_type = models.CharField(max_length=50, blank=True, null=True)
     remark = models.CharField(max_length=50, blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)

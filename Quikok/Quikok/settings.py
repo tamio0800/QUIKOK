@@ -265,7 +265,7 @@ LOGGING = {
             'class': 'logging.StreamHandler'
         },
         'info': {  # 中输出日志
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, log_path, "info.log"),  # 日志文件的位置
             #'maxBytes': 300 * 1024 * 1024,  # 300M大小
