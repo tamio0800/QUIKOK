@@ -104,7 +104,6 @@ def create_a_student_user(request):
             #大頭照           
             # 如果沒東西 會是空的  user_upload 看前端取甚麼名字 
             each_file = request.FILES.get("upload_snapshot")
-            print(f'xxxxxxx{each_file}')
             if each_file :
                 # print('收到學生大頭照: ', each_file.name)
                 folder_where_are_uploaded_files_be ='user_upload/students/' + username
