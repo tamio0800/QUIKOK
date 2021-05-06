@@ -39,7 +39,7 @@ from lesson.email_sending import lesson_email_manager
 import asyncio
 from asgiref.sync import sync_to_async
 from django.conf import settings
-
+from account.model_tools import teacher_manager
 
 lesson_email_notification = lesson_email_manager()
 

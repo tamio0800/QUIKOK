@@ -243,6 +243,7 @@ class teacher_manager:
             
             self.status = 'success'
             self.data = _data
+            #print(f'查看老師資訊回傳:{self.data}')
             return (self.status, self.errCode, self.errMsg, self.data)
         except Exception as e:
             print(f'return_teacher_profile_for_public_viewing {e}')
