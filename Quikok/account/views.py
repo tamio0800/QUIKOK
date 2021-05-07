@@ -762,7 +762,12 @@ def create_a_teacher_user(request):
                 response['data'] = user_created_object.id
                 # 回傳auth_id作為data的變數
             except Exception as e:
-                logger_account.error(f"account/views: create teacher Exception {e}", exc_info=True)
+                if user_created_object:
+                    logger_account.error(f"account/views: create teacher failed, teacher username:{user_created_object.username} \
+                         Exception {e}", exc_info=True)
+                else:
+                    logger_account.error(f"account/views: create teacher failed, has not create new teacher into User table. \
+                         Exception {e}", exc_info=True)
 
 
         else:
