@@ -304,3 +304,16 @@ class email_for_edony:
             email.fail_silently = False
             email.send()
         
+    #提醒我們有老師申請提款,要處理
+    def send_email_exam_bank_apply_refund_reminder(self, **kwargs):
+        user_authID =  kwargs['user_authID']
+
+        if settings.DISABLED_EMAIL == False:
+            email = EmailMessage(
+                subject = '用戶申請題庫退款通知信',  # 電子郵件標題
+                body = f'用戶authID：{user_authID}，申請退款',
+                from_email=settings.EMAIL_HOST_USER,  # 寄件者
+                to = ['quikok.taiwan@quikok.com']  # 收件者
+            )
+            email.fail_silently = False
+            email.send()
