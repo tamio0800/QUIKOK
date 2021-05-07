@@ -12,5 +12,6 @@ DATABASES = {
         'PORT': '3306',
         'TEST_CHARSET': 'utf8',        
         'TEST_COLLATION': 'utf8_general_ci',
+        'OPTIONS': {'charset':'utf8mb4'},
     }
 }

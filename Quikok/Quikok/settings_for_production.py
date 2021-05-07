@@ -9,6 +9,7 @@ DATABASES = {
         'PASSWORD': '@Annie0800_GaryWx2003_tamiotsiu+#YT#',
         'HOST': '61.222.157.152',
         'PORT': '3306',
+        'OPTIONS': {'charset':'utf8mb4'},
     }
 }
 DEBUG = False
