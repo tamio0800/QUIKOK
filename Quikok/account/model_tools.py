@@ -4,12 +4,15 @@ from chatroom.models import chat_room
 from django.contrib.auth.models import User
 from itertools import product as pdt
 import pandas as pd
-import os, re
+import os, logging, re
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth.hashers import make_password
 from datetime import datetime, timedelta
 
 from lesson.models import lesson_card, lesson_info
+
+
+logger_account = logging.getLogger('account_info')
 
 
 def clean_files(folder_path, key_words):
@@ -243,10 +246,10 @@ class teacher_manager:
             
             self.status = 'success'
             self.data = _data
-            #print(f'查看老師資訊回傳:{self.data}')
+            print(f'查看老師資訊回傳:{self.data}')
             return (self.status, self.errCode, self.errMsg, self.data)
         except Exception as e:
-            print(f'return_teacher_profile_for_public_viewing {e}')
+            logger_account.error(f"return_teacher_profile_for_public_viewing {e}", exc_info=True)
             self.status = 'failed'
             self.errCode = '2'
             self.errMsg = 'Querying Data Failed.'
