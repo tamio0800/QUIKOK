@@ -1228,7 +1228,6 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         self.assertIn('test_math_related', str(response.content, 'utf8'),
         lesson_info.objects.values().filter(little_title='test_math_related'))
         self.assertEqual(str(response.content, 'utf8').count("teacher_thumbnail_path"), 2)
-        # print("XXXXJJJJ", str(response.content, 'utf8'))
 
 class Lesson_Info_Test(TestCase):
 
