@@ -55,8 +55,10 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     # 目前版本用不到本col 如果將來有相關附件，可以儲存在這個資料夾中
     # 這裡還要記得把老師的有空時段連過來
     # is_approved = models.BooleanField(default=False)
-    lesson_attributes = models.TextField(blank = True, default="")  
+    lesson_attributes = models.TextField(blank = True, default="")
     # 這個是放課程的標籤，一開始先人工(老師)給，之後再交給機器學習模型來判斷
+    hidden_lesson_attributes = models.TextField(blank = True, default="")
+    # 將老師給定的標籤，加上我們自己分析課程資訊的結果後，放在這裡面，當作是最終的標籤
     lesson_avg_score = models.FloatField(default = 0.0) # 這個是平均評分，每次評分表一更新這裡也會連動更新
     lesson_reviewed_times = models.IntegerField(default = 0) # 這個是課程被評分過幾次的統計
     created_time = models.DateTimeField(auto_now_add=True)
