@@ -3008,6 +3008,54 @@ class Q_POINTS_WITHDRAWAL_TEST(TestCase):
         self.assertIn('failed', str(response.content, "utf8"))
 
     
+    def test_withdraw_q_points_send_email_remind_edony(self):
+        '''測試老師提領有寄出通知信'''
+        # 先給老師餘額
+        teacher_1 = teacher_profile.objects.get(id=1)
+        teacher_1.balance = 1500
+        teacher_1.save()
+        # 發出退款
+        withdrawal_post_data = {
+            'userID': self.teacher_1.auth_id,
+            'type': 'teacher',
+            'bank_code': '009',
+            'bank_name': '彰化銀行',
+            'bank_account_code': '222540508714',
+            'action': 'withdrawal_after_editting',
+            'amount':1000 # 退款金額
+            }
+        mail.outbox = []
+        response = \
+            self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        # 確認有寄出通知信
+        if settings.DISABLED_EMAIL == False:
+            self.assertEqual(mail.outbox[0].subject, '對帳提醒：用戶申請提款')
+
+    def test_withdraw_q_points_send_email_remind_edony(self):
+        '''測試生提領有寄出通知信'''
+        # 先給餘額
+        student_1 = student_profile.objects.get(id=1)
+        student_1.balance = 1500
+        student_1.save()
+        # 發出退款
+        withdrawal_post_data = {
+            'userID': self.student_1.auth_id,
+            'type': 'student',
+            'bank_code': '009',
+            'bank_name': '彰化銀行',
+            'bank_account_code': '222540508714',
+            'action': 'withdrawal_after_editting',
+            'amount':1000 # 退款金額
+            }
+        mail.outbox = []
+        response = \
+            self.client.post(path='/api/account_finance/withdrawQPoints/', data=withdrawal_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        # 確認有寄出通知信
+        if settings.DISABLED_EMAIL == False:
+            self.assertEqual(mail.outbox[0].subject, '對帳提醒：用戶申請提款')
+
     def test_withdraw_q_points_withdrawal_teacher_and_student_work(self):
         # 測試老師能夠成功發起匯款訊息
         withdrawal_post_data = {
