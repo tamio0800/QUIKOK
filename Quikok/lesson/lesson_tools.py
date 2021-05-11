@@ -1,12 +1,11 @@
 from account.models import teacher_profile, favorite_lessons
-from lesson.models import lesson_info, lesson_card, lesson_reviews_from_students
+from lesson.models import lesson_info
 from django.contrib.auth.models import User
 from django.core.files.storage import FileSystemStorage
 from django.db.models import Avg, Sum
 import shutil
 # 上面兩個用來對資料庫的資訊做處理，用法如下(有null的話要另外處理)
 # model_name.objects.filter().aggregate(Sum('column_name')) >> {'column_name__sum':?}
-import pandas as pd
 import os
 import re
 
@@ -652,5 +651,28 @@ class lesson_card_manager:
     def return_lesson_cards_for_common_users(self, user_auth_id, lesson_ids_in_list):
         pass
     
+'''
+lesson_ids = list(lesson_info.objects.values_list('id', flat=True))
+for each_id in lesson_ids:
+    lesson_obj = lesson_info.objects.filter(id=each_id).first()
+    la = lesson_obj.lesson_attributes
+    if len(la) > 0:
+        la = la.replace('＃', '').replace('　', ' ').replace('#', '').replace('\r', ' ').replace('\n', ' ').split()
+        la.extend(extract_subject_attributes_from_lesson(each_id).split(','))
+    else:
+        la = extract_subject_attributes_from_lesson(each_id).split(',')
+    la = ','.join(sorted(list(set(la))))
+    # print(la)
+    lesson_obj.hidden_lesson_attributes = la
+    lesson_obj.save()
+    print(f"{each_id} 更新完成～")
+
+
+
+'''
+
+
+
+
 
 

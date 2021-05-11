@@ -1187,6 +1187,17 @@ def withdraw_q_points(request):
                             teacher_object.balance -= (withdrawal_amount + txn_fee)
                             teacher_object.save()
 
+                            # 寄email提醒我們老師提款
+                            send_email_info = {
+                                'user_authID' : teacher_auth_id,
+                                'user5_bank_code' : bank_code,
+                                'total_price' : withdrawal_amount}
+
+                            send_email_to_edony = Thread(
+                                target = email_to_edony.send_withdraw_reminder,
+                                kwargs = send_email_info)
+                            send_email_to_edony.start()
+
                             response['status'] = 'success'
                             response['errCode'] = None
                             response['errMsg'] = None
@@ -1259,6 +1270,19 @@ def withdraw_q_points(request):
                             student_object.withholding_balance += (withdrawal_amount + txn_fee)
                             student_object.balance -= (withdrawal_amount + txn_fee)
                             student_object.save()
+
+                            # 寄email提醒我們學生提款
+                            send_email_info = {
+                                'user_authID' : student_auth_id,
+                                'user5_bank_code' : bank_code,
+                                'total_price' : withdrawal_amount}
+
+                            send_email_to_edony = Thread(
+                                target = email_to_edony.send_withdraw_reminder,
+                                kwargs = send_email_info)
+                            send_email_to_edony.start()
+
+
                             response['status'] = 'success'
                             response['errCode'] = None
                             response['errMsg'] = None

@@ -12,7 +12,6 @@ def check_if_all_variables_are_true(*args):
             return False
     return True
 
-
 def sort_dictionaries_in_a_list_by_specific_key(specific_key, followed_by_values_in_list, the_list):
     '''
     假設有一list長這樣：[dict1, dict2, dict3, dict4...]，
@@ -329,25 +328,6 @@ def turn_picture_into_jpeg_format(picture_path, to_size, to_path, quality=70):
     new_pic = original_pic.resize(to_size, Image.ANTIALIAS)
     new_pic.save(to_path, format='JPEG', quality=quality)
     original_pic.close()
-    '''ratio_w = target_w / origin_w
-    ratio_h = target_h / origin_h
-    if ratio_w < ratio_h:
-        # It must be fixed by width
-        resize_width = target_w
-        resize_height = round(ratio_w * origin_h)
-    else:
-        # Fixed by height
-        resize_width = round(ratio_h * origin_w)
-        resize_height = target_h
-    image_resize = origin_pic.resize((resize_width, resize_height), Image.ANTIALIAS)
-    background = Image.new('RGBA', (target_w, target_h), (255, 255, 255, 255))
-    offset = (round((target_w - resize_width) / 2), round((target_h - resize_height) / 2))
-    background.paste(image_resize, offset)
-    new_pic = background.convert('RGB')'''
-    
-
-    
-    #new_pic.close()
 
 
 
