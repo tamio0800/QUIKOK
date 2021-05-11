@@ -1319,6 +1319,29 @@ class Lesson_Info_Related_Functions_Test(TestCase):
                 {set(the_lesson_obj.hidden_lesson_attributes.split(','))}"
         )
 
+        # 編輯課程
+        lesson_post_data['action'] = 'editLesson'
+        lesson_post_data['lessonID'] = the_lesson_obj.id
+        lesson_post_data['lesson_attributes'] = "學科教育,電子",
+        lesson_post_data['big_title'] = "好玩的國語課"
+        response = \
+            client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
+        # 編輯課程成功
+
+        the_lesson_obj = \
+            lesson_info.objects.filter(lesson_title='test_H.L.A._include_L.A.').first()
+
+        # self.fail(set(the_lesson_obj.hidden_lesson_attributes.split(',')))
+        self.assertSetEqual(
+            set(the_lesson_obj.hidden_lesson_attributes.split(',')),
+            set(['學科教育', '電子', '數學', '國文']),
+            f"{set(the_lesson_obj.hidden_lesson_attributes.split(','))} \
+                {set(['學科教育', '電子', '數學', '國文'])}"
+        )
+
+
+
 
 
 

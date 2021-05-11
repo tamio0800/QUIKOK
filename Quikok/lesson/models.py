@@ -364,6 +364,7 @@ def extract_subject_attributes_from_lesson(**kwargs):
     mapping_dict = {
         '英文': ('英語', '英文', '美語', '美式發音', '英式發音', '多益', '托福', '雅思',
             'english', 'ielts', 'tofel', 'toeic'),
+        '國文': ('國文', '國語'),
         '數學': ('數學', '數理', '算數', 'math'),
         '物理': ('物理', '數理'),
         '化學': ('化學', '化工'),
