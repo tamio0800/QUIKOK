@@ -55,8 +55,10 @@ class lesson_info(models.Model): # 0903架構還沒想完整先把確定有的�
     # 目前版本用不到本col 如果將來有相關附件，可以儲存在這個資料夾中
     # 這裡還要記得把老師的有空時段連過來
     # is_approved = models.BooleanField(default=False)
-    lesson_attributes = models.TextField(blank = True, default="")  
+    lesson_attributes = models.TextField(blank = True, default="")
     # 這個是放課程的標籤，一開始先人工(老師)給，之後再交給機器學習模型來判斷
+    hidden_lesson_attributes = models.TextField(blank = True, default="")
+    # 將老師給定的標籤，加上我們自己分析課程資訊的結果後，放在這裡面，當作是最終的標籤，避免讓老師改到
     lesson_avg_score = models.FloatField(default = 0.0) # 這個是平均評分，每次評分表一更新這裡也會連動更新
     lesson_reviewed_times = models.IntegerField(default = 0) # 這個是課程被評分過幾次的統計
     created_time = models.DateTimeField(auto_now_add=True)
@@ -346,15 +348,82 @@ class lesson_info_for_users_not_signed_up(models.Model):
         # 理論上一個老師在這張table只會有一個row的資料，所以這樣寫比較好看
 
 
+
+'''
+下面用來寫一些modles的函式
+'''
+def extract_subject_attributes_from_lesson(**kwargs):
+    '''
+    從lesson_id獲取對應的課程資訊後，將如標題、小標題、內容、說明等等的資訊整合起來，
+    利用人工的方式比對某個課程類別是不是被包含在該課程中；
+    範例如：
+        Input: 2
+        Output: "數學,英文,國文"
+    未來再改用NLP模型判斷。
+    '''
+    mapping_dict = {
+        '英文': ('英語', '英文', '美語', '美式發音', '英式發音', '多益', '托福', '雅思',
+            'english', 'ielts', 'tofel', 'toeic'),
+        '國文': ('國文', '國語'),
+        '數學': ('數學', '數理', '算數', 'math'),
+        '物理': ('物理', '數理'),
+        '化學': ('化學', '化工'),
+        '留學相關': ('ielts', '雅思', 'tofel', '托福', 'sat', 'act', 'ap', 'ib', 'ssat', 'psat', 'ibdp'),
+        '語言教學': ('英文', '外語', '美語', '英語', '韓語', '韓文', '日文', '日語', 
+            '越南文', '越南語', '西班牙語', '西班牙文', '法語', '法文', '德語', '德文'),
+        '學科教育': ('數學', '物理', '國文', '國語', '化學', '理化', '自然', '生物'),
+        '職場技能': ('excel', 'vba', '文書', '行政', '自動化', '禮節', '商務')
+    }  # 都沒有的話就 其他類型
+    # lesson_object = lesson_info.objects.get(id=lesson_id)
+    # 確實有該門課程
+    big_title = kwargs['big_title']
+    little_title = kwargs['little_title']
+    lesson_title = kwargs['lesson_title']
+    highlight_1 = kwargs['highlight_1']
+    highlight_2 = kwargs['highlight_2']
+    highlight_3 = kwargs['highlight_3']
+    lesson_intro = kwargs['lesson_intro']
+    how_does_lesson_go = kwargs['how_does_lesson_go']
+    lesson_remarks = kwargs['lesson_remarks']
+    lesson_attributes = \
+        kwargs['lesson_attributes'].replace('＃', '').replace('　', ' ').replace('#', '').replace('\r', ',').replace('\n', ',')
+    aggregated_string = \
+        big_title + ',' + little_title + ',' + lesson_title + ',' + highlight_1 + \
+        ',' + highlight_2 + ',' + highlight_3 + ',' + lesson_intro + ',' + how_does_lesson_go + \
+        ',' + lesson_remarks + ',' + lesson_attributes
+    aggregated_string = aggregated_string.lower()
+    # print(f"extract_subject_attributes_from_lesson  {aggregated_string}")
+    # 轉成全小寫方便比對
+    mapped_subjects = list()
+    # print(mapping_dict.items())
+    for k, v in mapping_dict.items():
+        for each_v in v:
+            if each_v in aggregated_string:
+                print(k, each_v)
+                mapped_subjects.append(k)
+                break
+    if len(mapped_subjects) == 0:
+        mapped_subjects.append('其他類型')
+    
+    for _ in lesson_attributes.split():
+        if _ not in mapped_subjects:
+            mapped_subjects.append(_)
+
+    return ','.join(sorted(mapped_subjects))
+
+
 '''
 下面用來寫signal監聽特定 TABLES 是否有改動，而進行對應動作的機制
 '''
-
+  
 @receiver(post_save, sender=lesson_info)
-def when_lesson_info_changed_synchronize_lesson_card(sender, instance:lesson_info, created, **kwargs):
+def when_lesson_info_changed(sender, instance:lesson_info, created, **kwargs):
     '''
-    當 lesson_info 這個 table 有新建課程或是編輯課程的動作時，要同步對課程小卡進行更新。
+    1. 當課程新建立或是編輯的時候，重新萃取一下課程的特徵/屬性，並儲存到 hidden_lesson_attributes 欄位。
+    2. 當 lesson_info 這個 table 有新建課程或是編輯課程的動作時，要同步對課程小卡進行更新。
     '''
+
+    # = = = = = = = = 這裡用來執行 同步對課程小卡進行更新 = = = = = = = = 
     first_exp, second_exp, is_first_exp_approved, is_second_exp_approved = \
         get_teacher_s_best_education_and_working_experience(instance.teacher)
 
@@ -399,7 +468,6 @@ def when_lesson_info_changed_synchronize_lesson_card(sender, instance:lesson_inf
         # 代表編輯了一門課程，此時要同步更新課程小卡的資料，只要更新跟課程有關的即可
         # 先找到對應的小卡物件
         lesson_card_objects = lesson_card.objects.get(corresponding_lesson_id=instance.id)
-        
         lesson_card_objects.is_this_lesson_online_or_offline = instance.is_this_lesson_online_or_offline
         lesson_card_objects.big_title = instance.big_title
         lesson_card_objects.little_title = instance.little_title
@@ -419,6 +487,7 @@ def when_lesson_info_changed_synchronize_lesson_card(sender, instance:lesson_inf
         lesson_card_objects.lesson_ranking_score = instance.lesson_ranking_score
         lesson_card_objects.save()
         logging.info(f'Editted lesson_card object after editting a lesson ({instance.lesson_title}).')
+
 
 @receiver(post_save, sender=lesson_completed_record)
 def when_lesson_completed_notification_sent_by_teacher(sender, instance:lesson_completed_record, created, **kwargs):
@@ -592,10 +661,26 @@ def update_teacher_review_aggregated_info(sender, instance:lesson_reviews_from_s
 
 
 @receiver(pre_save, sender=lesson_info)
-def when_lesson_info_changed_synchronize_lesson_sales_sets(sender, instance:lesson_info, **kwargs):
+def when_lesson_info_changed_before_saving(sender, instance:lesson_info, **kwargs):
     '''
     當 lesson_info 這個 table 有新建課程或是編輯課程的動作時，要同步對 lesson_sales_sets 進行更新。    
     '''
+
+    # = = = = = = = = 這裡用來執行 萃取課程特徵/屬性 = = = = = = = = 
+    instance.hidden_lesson_attributes = \
+        extract_subject_attributes_from_lesson(
+            big_title=instance.big_title,
+            little_title=instance.little_title,
+            lesson_title=instance.lesson_title,
+            highlight_1=instance.highlight_1,
+            highlight_2=instance.highlight_2,
+            highlight_3=instance.highlight_3,
+            lesson_intro=instance.lesson_intro,
+            how_does_lesson_go=instance.how_does_lesson_go,
+            lesson_remarks=instance.lesson_remarks,
+            lesson_attributes = instance.lesson_attributes
+        )
+    # = = = = = = = = 這裡用來執行 萃取課程特徵/屬性 = = = = = = = = 
     #if instance.selling_status == 'selling':
         # 先確定該門課程的狀態是販售中再做就好
     if instance.id is None:
@@ -740,6 +825,9 @@ def when_lesson_info_changed_synchronize_lesson_sales_sets(sender, instance:less
                             logging.info(f"sales set created: {shared_columns}")
                             
                         logging.info(f"Discount sets have been established.")
+                else:
+                    # sales sets have not been changed
+                    pass
 
         logging.info(f"Lesson sales sets have been updated after lesson editted ({instance.lesson_title}).")
 
