@@ -12,7 +12,6 @@ def check_if_all_variables_are_true(*args):
             return False
     return True
 
-
 def sort_dictionaries_in_a_list_by_specific_key(specific_key, followed_by_values_in_list, the_list):
     '''
     假設有一list長這樣：[dict1, dict2, dict3, dict4...]，

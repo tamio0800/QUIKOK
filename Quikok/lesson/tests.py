@@ -1077,9 +1077,9 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         except Exception as e:
             print(f'Error:  {e}')
 
-    def test_filter_lessons_by_lesson_attributes(self):
+    def test_filter_lessons_by_hidden_lesson_attributes(self):
         '''
-        測試篩選課程時，能不能從lesson_attributes做比對、篩選
+        測試篩選課程時，能不能從hidden_lesson_attributes做比對、篩選
         '''
         client = Client()
         # 要先建立老師才能做測試
@@ -1204,7 +1204,8 @@ class Lesson_Info_Related_Functions_Test(TestCase):
             client.post(path='/api/lesson/getLessonCardsForCommonUsers/', data=get_lesson_post_data)
         self.assertIn('success', str(response.content, 'utf8'))
         self.assertIn('test_math_related', str(response.content, 'utf8'),
-        lesson_info.objects.values().filter(little_title='test_math_related'))
+            lesson_info.objects.values().filter(little_title='test_math_related'))
+        # self.fail(lesson_info.objects.values().filter(little_title='test_math_related'))
         self.assertEqual(str(response.content, 'utf8').count("teacher_thumbnail_path"), 1)
 
         get_lesson_post_data['filtered_by'] = \
@@ -1214,7 +1215,8 @@ class Lesson_Info_Related_Functions_Test(TestCase):
             client.post(path='/api/lesson/getLessonCardsForCommonUsers/', data=get_lesson_post_data)
         self.assertIn('success', str(response.content, 'utf8'))
         self.assertIn('test_design_related', str(response.content, 'utf8'),
-        lesson_info.objects.values().filter(little_title='test_design_related'))
+            lesson_info.objects.values().filter(little_title='test_design_related'))
+        # self.fail(lesson_info.objects.values().filter(little_title='test_design_related'))
         self.assertEqual(str(response.content, 'utf8').count("teacher_thumbnail_path"), 1)
 
         get_lesson_post_data['filtered_by'] = \

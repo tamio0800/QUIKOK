@@ -651,71 +651,21 @@ class lesson_card_manager:
     def return_lesson_cards_for_common_users(self, user_auth_id, lesson_ids_in_list):
         pass
     
-def extract_subject_attributes_from_lesson(lesson_id):
-    '''
-    從lesson_id獲取對應的課程資訊後，將如標題、小標題、內容、說明等等的資訊整合起來，
-    利用人工的方式比對某個課程類別是不是被包含在該課程中；
-    範例如：
-        Input: 2
-        Output: "數學,英文,國文"
-    未來再改用NLP模型判斷。
-    '''
-    mapping_dict = {
-        '英文': ('英語', '英文', '美語', '美式發音', '英式發音', '多益', '托福', '雅思'),
-        '英文': ('english', 'ielts', 'tofel', 'toeic'),
-        '數學': ('數學', '數理', '算數', 'math'),
-        '物理': ('物理', '數理'),
-        '化學': ('化學', '化工'),
-        '留學相關': ('ielts', '雅思', 'tofel', '托福', 'sat', 'act', 'ap', 'ib', 'ssat', 'psat', 'ibdp'),
-        '語言教學': ('英文', '外語', '美語', '英語', '韓語', '韓文', '日文', '日語', 
-            '越南文', '越南語', '西班牙語', '西班牙文', '法語', '法文', '德語', '德文'),
-        '學科教育': ('數學', '物理', '國文', '國語', '化學', '理化', '自然', '生物'),
-        '職場技能': ('excel', 'vba', '文書', '行政', '自動化', '禮節', '商務')
-    }  # 都沒有的話就 其他類型
-    
-    lesson_object = lesson_info.objects.filter(id=lesson_id).first()
-    if lesson_object is None:
-        return ""
-    else:
-        # 確實有該門課程
-        big_title = lesson_object.big_title
-        little_title = lesson_object.little_title
-        lesson_title = lesson_object.lesson_title
-        highlight_1 = lesson_object.highlight_1
-        highlight_2 = lesson_object.highlight_2
-        highlight_3 = lesson_object.highlight_3
-        lesson_intro = lesson_object.lesson_intro
-        how_does_lesson_go = lesson_object.how_does_lesson_go
-        lesson_remarks = lesson_object.lesson_remarks
-        aggregated_string = \
-            big_title + ',' + little_title + ',' + lesson_title + ',' + highlight_1 + \
-            ',' + highlight_2 + ',' + highlight_3 + ',' + lesson_intro + ',' + how_does_lesson_go + \
-            ',' + lesson_remarks
-        aggregated_string = aggregated_string.lower()
-        # 轉成全小寫方便比對
-        mapped_subjects = list()
-        
-        for k, v in mapping_dict.items():
-            for each_v in v:
-                if each_v in aggregated_string:
-                    mapped_subjects.append(k)
-                    break
-        # 'lesson_attributes': '#日文 #JLPT #日檢 #日文商業會話\r\n#日商'
-        if len(mapped_subjects) == 0:
-            mapped_subjects.append('其他類型')
-        return ','.join(mapped_subjects)
-
 '''
+lesson_ids = list(lesson_info.objects.values_list('id', flat=True))
 for each_id in lesson_ids:
-    lesson_obj = l.objects.filter(id=each_id).first()
+    lesson_obj = lesson_info.objects.filter(id=each_id).first()
     la = lesson_obj.lesson_attributes
     if len(la) > 0:
-        la = la.replace('＃', '').replace('#', '').replace('\r', ' ').replace('\n', ' ').split()
+        la = la.replace('＃', '').replace('　', ' ').replace('#', '').replace('\r', ' ').replace('\n', ' ').split()
         la.extend(extract_subject_attributes_from_lesson(each_id).split(','))
     else:
         la = extract_subject_attributes_from_lesson(each_id).split(',')
-    la = ','.join(list(set(la)))
-    print(la)
+    la = ','.join(sorted(list(set(la))))
+    # print(la)
+    lesson_obj.hidden_lesson_attributes = la
+    lesson_obj.save()
+    print(f"{each_id} 更新完成～")
 
 
 

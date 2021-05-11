@@ -195,18 +195,18 @@ def get_lesson_cards_for_common_users(request):
                 #     ["數學", "物理", "國文"...] 之類的list.
                 for i, each_subject in enumerate(the_lesson_manager.current_filtered_subjects):
                     if i == 0:
-                        query = Q(lesson_attributes__contains=each_subject)
+                        query = Q(hidden_lesson_attributes__contains=each_subject)
                     else:
-                        query.add(Q(lesson_attributes__contains=each_subject), Q.OR)
+                        query.add(Q(hidden_lesson_attributes__contains=each_subject), Q.OR)
                 lesson_info_selling_objects = lesson_info_selling_objects.filter(query)
 
             if the_lesson_manager.current_filtered_target_students is not None:
                 # 篩選老師的家教學生對象
                 for i, each_target_student in enumerate(the_lesson_manager.current_filtered_target_students):
                     if i == 0:
-                        query = Q(lesson_attributes__contains=each_target_student)
+                        query = Q(hidden_lesson_attributes__contains=each_target_student)
                     else:
-                        query.add(Q(lesson_attributes__contains=each_target_student), Q.OR)
+                        query.add(Q(hidden_lesson_attributes__contains=each_target_student), Q.OR)
                 lesson_info_selling_objects = lesson_info_selling_objects.filter(query)
 
             if the_lesson_manager.current_filtered_tutoring_experience is not None:
