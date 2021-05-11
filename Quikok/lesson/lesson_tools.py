@@ -90,15 +90,21 @@ class lesson_manager:
             2: '物理',
             3: '化學',
             4: '留學相關',
-            5: '語言檢定',
+            5: '語言教學',
+            6: '學科教育',
+            7: '術科(高職)',
+            8: '職場技能',
+            9: '其他類型',
         }
     def get_filtered_target_students(self):
         return {
-            0: '國小',
-            1: '國中',
-            2: '高中職',
-            3: '大專院校',
-            4: '社會人士',
+            0: '兒童',
+            1: '國小',
+            2: '國中',
+            3: '高中職',
+            4: '大專院校',
+            5: '社會人士',
+            6: '銀髮族',
         }
     def get_filtered_times(self):
         return {
@@ -136,9 +142,10 @@ class lesson_manager:
         }
 
     def parse_filtered_conditions(self, filtered_by_in_string):
-        # API: filtered_by >>  
-        #   filtered_subjects:0,2,3;filtered_target_students:0,1,2;filtered_tutoring_experience:0,2;'filtered_price_per_hour:200,400 
-        #  若沒有該篩選條件則不show出來，filtered_price_per_hour的部份先低後高，若只有一邊的話會以,high或是low,的形式做呈現。
+        '''
+        這裡會以如此格式當作回傳資料：「filtered_subjects:0,2,3;filtered_target_students:0,1,2;filtered_tutoring_experience:0,2;'filtered_price_per_hour:200,400」,
+        若沒有該篩選條件的話則不show出來，filtered_price_per_hour的部份先低後高，若只有一邊的話會以,high或是low,的形式做呈現。
+        '''
         if len(filtered_by_in_string) == 0:
             # 沒有任何篩選條件
             return False
