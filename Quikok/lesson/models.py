@@ -403,8 +403,12 @@ def extract_subject_attributes_from_lesson(**kwargs):
                 break
     if len(mapped_subjects) == 0:
         mapped_subjects.append('其他類型')
+    
+    for _ in lesson_attributes.split():
+        if _ not in mapped_subjects:
+            mapped_subjects.append(_)
 
-    return ','.join(mapped_subjects)
+    return ','.join(sorted(mapped_subjects))
 
 
 '''
