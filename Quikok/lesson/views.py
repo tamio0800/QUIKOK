@@ -2825,7 +2825,7 @@ def get_student_s_booking_history(request):
 def lesson_completed_notification_from_teacher(request):
     '''
     完課後，老師應該主動向學生發起確認課程時數的要求，以便計算時數；
-    這個API會連帶的建立 lesson_completed_record 資料，並且發送通知給學生(這段還沒做)。
+    這個API會連帶的建立 lesson_completed_record 資料
     接收：{
         token,
         userID: 老師的auth_id
