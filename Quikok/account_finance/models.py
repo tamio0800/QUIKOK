@@ -3,6 +3,7 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from account_finance.email_sending import email_manager
 #from account_finance.email_machine import email_tools
+from account.models import student_profile, teacher_profile
 
 # 購買題庫的紀錄
 class user_purchase_exam_bank_record(models.Model):
@@ -79,7 +80,7 @@ class student_refund(models.Model):
     refund_amount = models.IntegerField() # 學生要退多少錢
     created_time = models.DateTimeField(auto_now_add=True)
     refund_status = models.CharField(max_length = 30, default = 'unpaid')
-    # already_paid, unpaid, cancel...
+    # paid, unpaid, cancel...
     update_time = models.DateTimeField(auto_now=True)
     bank_account_code = models.CharField(max_length=30, default='')
     bank_name = models.CharField(max_length=30, default='')
@@ -215,10 +216,11 @@ class student_remaining_minutes_when_request_refund_each_purchased_lesson_set(mo
 
 
 @receiver(pre_save, sender=student_purchase_record)
-def on_change(sender, instance:student_purchase_record, **kwargs):
+def create_student_remaining_minutes(sender, instance:student_purchase_record, **kwargs):
     if instance.id is None:
         pass  # 建立新資料不需要做什麼事情
     else:
+        print('signal偵測')
         previous = student_purchase_record.objects.get(id=instance.id)
         if previous.payment_status == 'reconciliation' and instance.payment_status == 'paid' :
             from lesson.models import lesson_sales_sets
@@ -226,6 +228,7 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
             # 現在要看看究竟買了多少時數
             the_sales_set = \
                 lesson_sales_sets.objects.get(id=instance.lesson_sales_set_id).sales_set
+            print(f'課程套組:{the_sales_set}')
             if the_sales_set == 'trial':
                 times_of_the_sales_set_in_minutes = 30
             elif the_sales_set == 'no_discount':
@@ -234,7 +237,7 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
                 # 長得類似 \d+:\d+
                 times_of_the_sales_set_in_minutes = \
                     int(the_sales_set.split(':')[0]) * 60
-        
+            print('建立剩餘時數')
             student_remaining_minutes_of_each_purchased_lesson_set.objects.create(
                 student_purchase_record_id = previous.id,
                 student_auth_id = instance.student_auth_id,
@@ -243,7 +246,7 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
                 lesson_sales_set_id = instance.lesson_sales_set_id,
                 available_remaining_minutes = times_of_the_sales_set_in_minutes
             ).save()
-            
+            print('以建立剩餘時數')
             # 如果有用q幣,更改學生的q幣額度及預扣額度
             if previous.purchased_with_q_points != 0 :
                 update_student_balance = email_manager()
@@ -280,3 +283,32 @@ def on_change(sender, instance:student_purchase_record, **kwargs):
                 #teacher_email='TEST',
                 #student_nickname='TEST',
             )
+
+
+@receiver(pre_save, sender=student_refund)
+def update_student_withholding_balance_after_refund(sender, instance:student_refund, **kwargs):
+    if instance.id is None:
+        pass  # 建立新資料不需要做什麼事情
+    else:
+        # 當我們支付學生提領的金額後, 要把該金額從預扣中扣除
+        previous = student_refund.objects.get(id=instance.id)
+        if previous.refund_status == 'unpaid' and instance.refund_status == 'paid' :
+            print('aaaaa')
+            update_student = student_profile.objects.get(auth_id = instance.student_auth_id)
+            update_student.withholding_balance = update_student.withholding_balance - instance.refund_amount
+            update_student.save()
+            print('bbbbb')
+
+@receiver(pre_save, sender=teacher_refund)
+def update_teacher_withholding_balance_after_refund(sender, instance:teacher_refund, **kwargs):
+    if instance.id is None:
+        pass  # 建立新資料不需要做什麼事情
+    else:
+        # 當我們支付學生提領的金額後, 要把該金額從預扣中扣除
+        previous = teacher_refund.objects.get(id=instance.id)
+        if previous.refund_status == 'unpaid' and instance.refund_status == 'paid' :
+            print('aaaaa')
+            update_teacher = teacher_profile.objects.get(auth_id = instance.teacher_auth_id)
+            update_teacher.withholding_balance = update_teacher.withholding_balance - instance.refund_amount
+            update_teacher.save()
+            print('bbbbb')

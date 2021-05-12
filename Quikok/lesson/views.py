@@ -96,6 +96,13 @@ def lessons_main_page(request):
 def get_lesson_cards_for_common_users(request):
     '''
     用以回傳符合條件的課程小卡，呈現給一般的學生/老師瀏覽。
+
+    filtered_by: string // 依照什麼做篩選, >>
+        "filtered_subjects:0,2,3;
+         filtered_target_students:0,1,2;
+         filtered_tutoring_experience:0,2;
+         filtered_price_per_hour:200,400;
+         filtered_lesson_type: 'online/線上', 'offline/實體'"
     '''
     # 20200911 暫時不開發排序、篩選部分
     # 接收：需要多少小卡(int)、排序依據(string)、篩選依據(string)、觀看的用戶
@@ -131,7 +138,7 @@ def get_lesson_cards_for_common_users(request):
         # 收取的資料不正確
         response['status'] = 'failed'
         response['errCode'] = '0'
-        response['errMsg'] = 'Received Arguments Failed'
+        response['errMsg'] = '不好意思，系統發生一點問題，請您聯繫客服，我們會馬上協助您處理的> <'
         response['data'] = None
         return JsonResponse(response)
     else:
@@ -146,7 +153,8 @@ def get_lesson_cards_for_common_users(request):
         _data = []
         lesson_info_selling_objects = lesson_info.objects.filter(selling_status='selling')
         the_lesson_manager = lesson_manager()
-        if_there_was_any_filtering = the_lesson_manager.parse_filtered_conditions(filtered_by)
+        if_there_was_any_filtering = \
+            the_lesson_manager.parse_filtered_conditions(filtered_by)
         
         # 即使沒有設定空閒時間參數或篩選資訊，也只回傳有空閒時段的老師
         
@@ -182,21 +190,23 @@ def get_lesson_cards_for_common_users(request):
                 # 限制鐘點費需要介於(含)最高與最低之間
 
             if the_lesson_manager.current_filtered_subjects is not None:
-                # 篩選老師的課程主題/科目
+                # 用戶有輸入課程主題/科目的篩選條件，此時應該回傳對應的課程小卡回去,
+                # the_lesson_manager.current_filtered_subjects 長得像是：
+                #     ["數學", "物理", "國文"...] 之類的list.
                 for i, each_subject in enumerate(the_lesson_manager.current_filtered_subjects):
                     if i == 0:
-                        query = Q(lesson_attributes__contains=each_subject)
+                        query = Q(hidden_lesson_attributes__contains=each_subject)
                     else:
-                        query.add(Q(lesson_attributes__contains=each_subject), Q.OR)
+                        query.add(Q(hidden_lesson_attributes__contains=each_subject), Q.OR)
                 lesson_info_selling_objects = lesson_info_selling_objects.filter(query)
 
             if the_lesson_manager.current_filtered_target_students is not None:
                 # 篩選老師的家教學生對象
                 for i, each_target_student in enumerate(the_lesson_manager.current_filtered_target_students):
                     if i == 0:
-                        query = Q(lesson_attributes__contains=each_target_student)
+                        query = Q(hidden_lesson_attributes__contains=each_target_student)
                     else:
-                        query.add(Q(lesson_attributes__contains=each_target_student), Q.OR)
+                        query.add(Q(hidden_lesson_attributes__contains=each_target_student), Q.OR)
                 lesson_info_selling_objects = lesson_info_selling_objects.filter(query)
 
             if the_lesson_manager.current_filtered_tutoring_experience is not None:

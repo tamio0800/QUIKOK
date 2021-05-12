@@ -304,3 +304,17 @@ class email_for_edony:
             email.fail_silently = False
             email.send()
         
+    #提醒我們有老師申請提款,要處理
+    def send_withdraw_reminder(self, **kwargs):
+        user_authID =  kwargs['user_authID']
+        user5_bank_code =  kwargs['user5_bank_code']
+        total_price =  kwargs['total_price']
+        if settings.DISABLED_EMAIL == False:
+            email = EmailMessage(
+                subject = '對帳提醒：用戶申請提款',  # 電子郵件標題
+                body = f'用戶authID：{user_authID}，申請退款，銀行帳號：{user5_bank_code}，金額：{total_price}',
+                from_email=settings.EMAIL_HOST_USER,  # 寄件者
+                to = ['quikok.taiwan@quikok.com']  # 收件者
+            )
+            email.fail_silently = False
+            email.send()

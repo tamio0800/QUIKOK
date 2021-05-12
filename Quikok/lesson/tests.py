@@ -34,7 +34,6 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         response = self.client.post(path='/api/lesson/beforeSigningUpCreateOrEditLesson/')
         self.assertEqual(response.status_code, 200)
         
-
     def test_before_signing_up_create_or_edit_a_lesson_received_argument(self):
         # 測試這個函式能不能接受到自訂的「dummy_teacher_id」參數
         self.client = Client()
@@ -52,7 +51,6 @@ class Lesson_Info_Related_Functions_Test(TestCase):
                 'data': 1
             }
         )
-
 
     def test_saving_and_retreiving_data_from_db(self):
         # 測試這個函式能不能將資料寫入資料庫
@@ -86,8 +84,6 @@ class Lesson_Info_Related_Functions_Test(TestCase):
             1, lesson_info_for_users_not_signed_up.objects.values())
 
         self.assertEqual(lesson_info_for_users_not_signed_up.objects.first().discount_price, "10:90")
-
-
 
     def test_saving_data_through_before_signing_up_create_or_edit_a_lesson(self):
         # 測試這個函式能不能通過before_signing_up_create_or_edit_a_lesson函式，
@@ -131,7 +127,6 @@ class Lesson_Info_Related_Functions_Test(TestCase):
                 'data': 1
             }
         )
-
 
     def test_saving_data_through_before_signing_up_create_or_edit_a_lesson_with_self_set_background_picture(self):
         # 測試這個函式能不能通過before_signing_up_create_or_edit_a_lesson函式，
@@ -210,7 +205,6 @@ class Lesson_Info_Related_Functions_Test(TestCase):
                 'data': 1
             }
         )
-
 
     def test_create_and_edit_a_new_lesson(self):
         '''
@@ -298,7 +292,6 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         self.assertIn('success', str(response.content, "utf8"))
         lesson_object = lesson_info.objects.get(lesson_title='20210208_test')
         self.assertEqual('online', lesson_object.is_this_lesson_online_or_offline)
-
 
     def test_lesson_card_syncronized_after_creating_a_lesson(self):
         '''
@@ -434,7 +427,6 @@ class Lesson_Info_Related_Functions_Test(TestCase):
             lesson_card.objects.values()
         )
 
-        
     def test_lesson_card_syncronized_after_editting_a_lesson(self):
         '''
         測試創建課程後、再進行編輯，課程小卡也會同步出現正確的資料
@@ -580,7 +572,6 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         except Exception as e:
             print(f'Error:  {e}')
 
-  
     def test_lesson_card_syncronized_after_editting_teacher_profile(self):
         '''
         測試創建課程後、再編輯老師的個人資料，課程小卡也會同步出現正確的資料
@@ -760,7 +751,6 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         except Exception as e:
             print(f'Error:  {e}')
 
-
     def test_sales_set_update_after_creating_a_lesson(self):
         '''
         測試建立課程後，會不會連動建立方案的資料
@@ -888,7 +878,6 @@ class Lesson_Info_Related_Functions_Test(TestCase):
             shutil.rmtree(f'user_upload/teachers/{test_username}')
         except Exception as e:
             print(f'Error:  {e}')
-
 
     def test_sales_set_update_after_editting_a_lesson(self):
         '''
@@ -1087,6 +1076,273 @@ class Lesson_Info_Related_Functions_Test(TestCase):
             shutil.rmtree(f'user_upload/teachers/{test_username}')
         except Exception as e:
             print(f'Error:  {e}')
+
+    def test_filter_lessons_by_hidden_lesson_attributes(self):
+        '''
+        測試篩選課程時，能不能從hidden_lesson_attributes做比對、篩選
+        '''
+        client = Client()
+        # 要先建立老師才能做測試
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+        test_username = 'test_teacher_0510@test.com'
+        try:
+            shutil.rmtree('user_upload/teachers/' + test_username)
+        except:
+            pass
+        teacher_post_data = {
+            'regEmail': test_username,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;'
+        }
+        response = client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
+
+        # 應該已經建立完成了
+        lesson_post_data = {
+            'userID': teacher_profile.objects.get(username=test_username).auth_id,   # 這是老師的auth_id
+            'action': 'createLesson',
+            'lessonID': 'null',
+            'big_title': 'big_title',
+            'little_title': 'test_math_related',
+            'title_color': '#000000',
+            'background_picture_code': 1,
+            'background_picture_path': '',
+            'lesson_title': 'test',
+            'price_per_hour': 800,
+            'discount_price': '10:90;20:80;30:75;',
+            'selling_status': 'selling',
+            'lesson_has_one_hour_package': 'true',
+            'trial_class_price': 69,
+            'highlight_1': 'test highlight_1',
+            'highlight_2': 'test highlight_2',
+            'highlight_3': 'test highlight_3',
+            'lesson_intro': 'test_lesson_intro',
+            'how_does_lesson_go': 'test_how_does_lesson_go',
+            'target_students': 'test_target_students',
+            'lesson_remarks': 'test_lesson_remarks',
+            'lesson_attributes': "數學,學科教學,學科,學科教育",
+            'syllabus': 'test_syllabus',
+            'lesson_type': 'online'    
+            }
+        response = \
+            client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
+        # 建立完課程了
+
+        # 應該已經建立完成了
+        lesson_post_data = {
+            'userID': teacher_profile.objects.get(username=test_username).auth_id,   # 這是老師的auth_id
+            'action': 'createLesson',
+            'lessonID': 'null',
+            'big_title': 'big_title',
+            'little_title': 'test_design_related',
+            'title_color': '#000000',
+            'background_picture_code': 1,
+            'background_picture_path': '',
+            'lesson_title': 'test',
+            'price_per_hour': 800,
+            'discount_price': '10:90;20:80;30:75;',
+            'selling_status': 'selling',
+            'lesson_has_one_hour_package': 'true',
+            'trial_class_price': 69,
+            'highlight_1': 'test highlight_1',
+            'highlight_2': 'test highlight_2',
+            'highlight_3': 'test highlight_3',
+            'lesson_intro': 'test_lesson_intro',
+            'how_does_lesson_go': 'test_how_does_lesson_go',
+            'target_students': 'test_target_students',
+            'lesson_remarks': 'test_lesson_remarks',
+            'lesson_attributes': "藝術,設計,其他類型,平面設計,知性",
+            'syllabus': 'test_syllabus',
+            'lesson_type': 'online',
+            }
+        response = \
+            client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
+        # 建立完課程了
+
+        get_lesson_post_data = {
+            'qty': -1,
+            'userID': 1,
+            'ordered_by': 'best_sales',
+            'keywords': '',
+            'only_show_ones_favorites': 'False',
+            'only_show_lessons_by_this_teacher_s_auth_id': -1,
+            'filtered_by':'filtered_price_per_hour:0,99999',
+            # filtered_subjects:5,7;
+        }
+        response = \
+            client.post(path='/api/lesson/getLessonCardsForCommonUsers/', data=get_lesson_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
+        # 應該回傳兩門課
+        self.assertEqual(str(response.content, 'utf8').count("teacher_thumbnail_path"), 2)
+
+
+        get_lesson_post_data['filtered_by'] = \
+            'filtered_subjects:1,6;filtered_price_per_hour:0,99999'
+        # 只找數學相關
+        response = \
+            client.post(path='/api/lesson/getLessonCardsForCommonUsers/', data=get_lesson_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
+        self.assertIn('test_math_related', str(response.content, 'utf8'),
+            lesson_info.objects.values().filter(little_title='test_math_related'))
+        # self.fail(lesson_info.objects.values().filter(little_title='test_math_related'))
+        self.assertEqual(str(response.content, 'utf8').count("teacher_thumbnail_path"), 1)
+
+        get_lesson_post_data['filtered_by'] = \
+            'filtered_subjects:9;filtered_price_per_hour:0,99999'
+        # 只找設計相關
+        response = \
+            client.post(path='/api/lesson/getLessonCardsForCommonUsers/', data=get_lesson_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
+        self.assertIn('test_design_related', str(response.content, 'utf8'),
+            lesson_info.objects.values().filter(little_title='test_design_related'))
+        # self.fail(lesson_info.objects.values().filter(little_title='test_design_related'))
+        self.assertEqual(str(response.content, 'utf8').count("teacher_thumbnail_path"), 1)
+
+        get_lesson_post_data['filtered_by'] = \
+            'filtered_subjects:1,9;filtered_price_per_hour:0,99999'
+        # 一起做
+        response = \
+            client.post(path='/api/lesson/getLessonCardsForCommonUsers/', data=get_lesson_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
+        self.assertIn('test_design_related', str(response.content, 'utf8'),
+        lesson_info.objects.values().filter(little_title='test_design_related'))
+        self.assertIn('test_math_related', str(response.content, 'utf8'),
+        lesson_info.objects.values().filter(little_title='test_math_related'))
+        self.assertEqual(str(response.content, 'utf8').count("teacher_thumbnail_path"), 2)
+
+    def test_hidden_lesson_attributes_include_lesson_attributes(self):
+        '''
+        測試H.L.A.在課程新建立、編輯後應該都包含所有L.A.的資料
+        '''
+        client = Client()
+        # 要先建立老師才能做測試
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+        test_username = 'test_teacher_0510@test.com'
+        try:
+            shutil.rmtree('user_upload/teachers/' + test_username)
+        except:
+            pass
+        teacher_post_data = {
+            'regEmail': test_username,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;'
+        }
+        response = client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
+
+        # 應該已經建立完成了
+        lesson_post_data = {
+            'userID': teacher_profile.objects.get(username=test_username).auth_id,   # 這是老師的auth_id
+            'action': 'createLesson',
+            'lessonID': 'null',
+            'big_title': 'big_title',
+            'little_title': 'test_math_related',
+            'title_color': '#000000',
+            'background_picture_code': 1,
+            'background_picture_path': '',
+            'lesson_title': 'test_H.L.A._include_L.A.',
+            'price_per_hour': 800,
+            'discount_price': '10:90;20:80;30:75;',
+            'selling_status': 'selling',
+            'lesson_has_one_hour_package': 'true',
+            'trial_class_price': 69,
+            'highlight_1': 'test highlight_1',
+            'highlight_2': 'test highlight_2',
+            'highlight_3': 'test highlight_3',
+            'lesson_intro': 'test_lesson_intro',
+            'how_does_lesson_go': 'test_how_does_lesson_go',
+            'target_students': 'test_target_students',
+            'lesson_remarks': 'test_lesson_remarks',
+            'lesson_attributes': "數學,學科教學,學科,學科教育",
+            'syllabus': 'test_syllabus',
+            'lesson_type': 'online'    
+            }
+        response = \
+            client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
+        # 建立完課程了
+
+        the_lesson_obj = \
+            lesson_info.objects.filter(lesson_title='test_H.L.A._include_L.A.').first()
+        self.assertNotEqual(the_lesson_obj, None)  # 課程應當存在
+
+        # self.fail(f"{set(the_lesson_obj.lesson_attributes.split(','))} \
+        #     {set(the_lesson_obj.hidden_lesson_attributes.split(','))}")
+        self.assertSetEqual(
+            set(the_lesson_obj.lesson_attributes.split(',')),
+            set(the_lesson_obj.hidden_lesson_attributes.split(',')),
+            f"{set(the_lesson_obj.lesson_attributes.split(','))} \
+                {set(the_lesson_obj.hidden_lesson_attributes.split(','))}"
+        )
+
+        # 編輯課程
+        lesson_post_data['action'] = 'editLesson'
+        lesson_post_data['lessonID'] = the_lesson_obj.id
+        lesson_post_data['lesson_attributes'] = "學科教育,電子",
+        lesson_post_data['big_title'] = "好玩的國語課"
+        response = \
+            client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
+        # 編輯課程成功
+
+        the_lesson_obj = \
+            lesson_info.objects.filter(lesson_title='test_H.L.A._include_L.A.').first()
+
+        # self.fail(set(the_lesson_obj.hidden_lesson_attributes.split(',')))
+        self.assertSetEqual(
+            set(the_lesson_obj.hidden_lesson_attributes.split(',')),
+            set(['學科教育', '電子', '數學', '國文']),
+            f"{set(the_lesson_obj.hidden_lesson_attributes.split(','))} \
+                {set(['學科教育', '電子', '數學', '國文'])}"
+        )
+
+
+
+
 
 
 
