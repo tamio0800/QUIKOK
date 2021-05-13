@@ -152,7 +152,8 @@ class teacher_manager:
             sub_results = list()
             for each_element_set in time_query_set:
                 for each_element in each_element_set.split(','):
-                    sub_results.append(eval(each_element))
+                    if each_element != '47': # 為了避免跨日問題,如果老師有開放時段47也不回傳
+                        sub_results.append(eval(each_element))
             sub_results = list(set(sub_results))
             # print('sub_results', sub_results)
             result[each_auth_id] = sub_results
