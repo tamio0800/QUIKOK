@@ -239,7 +239,8 @@ class teacher_manager:
                 'teaching_history', 'id', 
                 'teacher_of_the_lesson_snapshot',
                 'teacher_of_the_lesson',  'user_folder', 'info_folder',
-                'cert_unapproved', 'date_join',  'cert_approved']
+                'cert_unapproved', 'date_join',  'cert_approved',
+                'name', 'bank_account_code', 'bank_name', 'bank_code']
             
             for each_key, each_value in teacher_profile_object.values()[0].items():
                 if each_key not in exclude_columns:
