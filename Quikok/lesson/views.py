@@ -1415,9 +1415,13 @@ def get_lesson_specific_available_time(request):
                 # show出 >= 今日日期的資料
 
             for each_specific_available_time_object in specific_available_time_objects:
+                
                 the_date = str(each_specific_available_time_object.date)
+                # 為了避免跨日問題,先把時段47拿掉不會回傳
+                time_without47 = each_specific_available_time_object.time.replace(',47','')
                 available_times.append(
-                    f'{the_date}:{each_specific_available_time_object.time};'
+                    f'{the_date}:{time_without47};'
+                    #f'{the_date}:{each_specific_available_time_object.time};'
                 )
 
             inavailable_times = list()
