@@ -152,8 +152,8 @@ class teacher_manager:
             sub_results = list()
             for each_element_set in time_query_set:
                 for each_element in each_element_set.split(','):
-                    if each_element != '47': # 為了避免跨日問題,如果老師有開放時段47也不回傳
-                        sub_results.append(eval(each_element))
+                    #if each_element != '47': # 為了避免跨日問題,如果老師有開放時段47也不回傳
+                    sub_results.append(eval(each_element))
             sub_results = list(set(sub_results))
             # print('sub_results', sub_results)
             result[each_auth_id] = sub_results
@@ -239,7 +239,8 @@ class teacher_manager:
                 'teaching_history', 'id', 
                 'teacher_of_the_lesson_snapshot',
                 'teacher_of_the_lesson',  'user_folder', 'info_folder',
-                'cert_unapproved', 'date_join',  'cert_approved']
+                'cert_unapproved', 'date_join',  'cert_approved',
+                'name', 'bank_account_code', 'bank_name', 'bank_code']
             
             for each_key, each_value in teacher_profile_object.values()[0].items():
                 if each_key not in exclude_columns:

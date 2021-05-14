@@ -237,6 +237,9 @@ class lesson_completed_record(models.Model):
     teacher_auth_id = models.IntegerField()
     student_auth_id = models.IntegerField()
     booking_time_in_minutes = models.IntegerField() # 預估上課時間時數,單位分鐘,是用預約的時間計算的
+    tuition_fee = models.IntegerField(null=True) 
+    # 根據老師宣稱的上課時數計算出來該堂課的費用, 這個費用當雙方都同意時,會撥入老師 balance
+    # 萬一學生不同意時, edony也可以改這格的金額, 並註記到remark
     teacher_declared_start_time = models.DateTimeField()
     # 老師號稱的上課時間,單位是分鐘,10分鐘一跳
     teacher_declared_end_time = models.DateTimeField()
@@ -284,6 +287,8 @@ class lesson_sales_sets(models.Model):
     lesson_id = models.IntegerField()
     teacher_auth_id = models.IntegerField()
     price_per_hour = models.IntegerField()  # 老師原始的鐘點費
+    price_per_10_minutes = models.FloatField(null=True)  
+    # 原始鐘點費除以6,會以這個金額計算完課撥款費用,固定存到小數第5位<由view算
     sales_set = models.CharField(max_length = 20)
     #  試課優惠：'trial'
     #  單堂原價：'no_discount'
@@ -297,7 +302,8 @@ class lesson_sales_sets(models.Model):
     fulfilled_volume = models.IntegerField(default=0)  # 已完成課程的總量
     created_time = models.DateTimeField(auto_now_add=True)
     last_sold_time = models.DateTimeField(auto_now=True)
-    is_open = models.BooleanField(default=True)  
+    is_open = models.BooleanField(default=True)
+
     #是否為目前使用中的方案, 是的話才可選
     def __str__(self):
         return f"課程({self.lesson_id})：{self.sales_set} 方案，總價{self.total_amount_of_the_sales_set}元。 啟用中：{self.is_open}"
