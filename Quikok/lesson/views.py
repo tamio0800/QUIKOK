@@ -1419,7 +1419,7 @@ def get_lesson_specific_available_time(request):
                 available_times.append(
                     f'{the_date}:{each_specific_available_time_object.time};'
                 )
-
+                print(f'{the_date}:{each_specific_available_time_object.time}')
             inavailable_times = list()
             specific_inavailable_time_objects = \
                 specific_available_time.objects.filter(
@@ -2907,6 +2907,9 @@ def lesson_completed_notification_from_teacher(request):
                 
                     teacher_declared_time_in_minutes = \
                         int((teacher_declared_end_time - teacher_declared_start_time).seconds / 60)
+                    lesson_fee_per10_min = lesson_sales_sets.objects.get(id =booking_object.booking_set_id).price_per_10_minutes
+                    teacher_declared_fee = int(teacher_declared_time_in_minutes)/10*lesson_fee_per10_min
+
 
                     new_added_record = lesson_completed_record.objects.create(
                         lesson_booking_info_id = booking_object.id,
@@ -2916,6 +2919,7 @@ def lesson_completed_notification_from_teacher(request):
                         student_auth_id = booking_object.student_auth_id, 
                         booking_time_in_minutes = booking_object.get_booking_time_in_minutes(),
                         # 預估上課時間時數,單位分鐘,是用預約的時間計算的
+                        tuition_fee = teacher_declared_fee,
                         teacher_declared_start_time = teacher_declared_start_time,
                         teacher_declared_end_time = teacher_declared_end_time,
                         teacher_declared_time_in_minutes = teacher_declared_time_in_minutes,

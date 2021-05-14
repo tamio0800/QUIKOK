@@ -199,7 +199,6 @@ class lesson_booking_info(models.Model):
     booking_date_and_time = models.CharField(max_length=400)  
     # Example: 2020-08-21:1,2,3,4; 之類的
     booking_start_datetime = models.DateTimeField()
-    
     booking_status = models.CharField(max_length = 60)  
     # to_be_confirmed  >>  發送預約，但是還未經對方確認 
     # confirmed  >>  發送的預約已經被對方確認
@@ -302,7 +301,7 @@ class lesson_sales_sets(models.Model):
     fulfilled_volume = models.IntegerField(default=0)  # 已完成課程的總量
     created_time = models.DateTimeField(auto_now_add=True)
     last_sold_time = models.DateTimeField(auto_now=True)
-    is_open = models.BooleanField(default=True)
+    is_open = models.BooleanField(default=True) 
 
     #是否為目前使用中的方案, 是的話才可選
     def __str__(self):
@@ -735,7 +734,7 @@ def when_lesson_info_changed_before_saving(sender, instance:lesson_info, **kwarg
                     shared_columns['total_hours_of_the_sales_set'] = 1
                     shared_columns['price_per_hour_after_discount'] = instance.trial_class_price
                     shared_columns['total_amount_of_the_sales_set'] = instance.trial_class_price
-                    
+                    shared_columns['price_per_10_minutes'] = round(int(instance.trial_class_price/3),5) # 試課時間是30分鐘
                     lesson_sales_sets.objects.create(
                         **shared_columns
                     ).save()
@@ -746,6 +745,7 @@ def when_lesson_info_changed_before_saving(sender, instance:lesson_info, **kwarg
                     shared_columns['total_hours_of_the_sales_set'] = 1
                     shared_columns['price_per_hour_after_discount'] = instance.price_per_hour
                     shared_columns['total_amount_of_the_sales_set'] = instance.price_per_hour
+                    shared_columns['price_per_10_minutes'] = round(int(instance.price_per_hour/6,5))# 單堂課時間是30分鐘
 
                     lesson_sales_sets.objects.create(
                         **shared_columns
@@ -760,6 +760,7 @@ def when_lesson_info_changed_before_saving(sender, instance:lesson_info, **kwarg
                         shared_columns['total_hours_of_the_sales_set'] = int(hours)
                         shared_columns['price_per_hour_after_discount'] = round(int(instance.price_per_hour) * int(discount_price) / 100)
                         shared_columns['total_amount_of_the_sales_set'] = round(int(instance.price_per_hour) * int(hours) * int(discount_price) / 100)
+                        shared_columns['price_per_10_minutes'] = round(int(instance.price_per_hour) * int(discount_price) / 100/6, 5) # 取到小數點後第5位
 
                         lesson_sales_sets.objects.create(
                             **shared_columns
@@ -794,6 +795,7 @@ def when_lesson_info_changed_before_saving(sender, instance:lesson_info, **kwarg
                         shared_columns['total_hours_of_the_sales_set'] = 1
                         shared_columns['price_per_hour_after_discount'] = instance.trial_class_price
                         shared_columns['total_amount_of_the_sales_set'] = instance.trial_class_price
+                        shared_columns['price_per_10_minutes'] = instance.trial_class_price
                         
                         lesson_sales_sets.objects.create(
                             **shared_columns

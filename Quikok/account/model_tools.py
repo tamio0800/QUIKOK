@@ -152,8 +152,10 @@ class teacher_manager:
             sub_results = list()
             for each_element_set in time_query_set:
                 for each_element in each_element_set.split(','):
-                    if each_element != '47': # 為了避免跨日問題,如果老師有開放時段47也不回傳
-                        sub_results.append(eval(each_element))
+                    #if each_element in ['47', 47]:
+                    #    pass # 為了避免跨日問題,如果老師有開放時段47也不回傳
+                    #else:
+                    sub_results.append(eval(each_element))
             sub_results = list(set(sub_results))
             # print('sub_results', sub_results)
             result[each_auth_id] = sub_results
@@ -190,8 +192,14 @@ class teacher_manager:
                 # 代表有找到老師的時間，所以也會有 specific_available_time
                 weeks = list(general_available_time.objects.values_list('week', flat=True).filter(teacher_model__auth_id=teacher_auth_id))
                 times = list(general_available_time.objects.values_list('time', flat=True).filter(teacher_model__auth_id=teacher_auth_id))
-            
-                for w, t in zip(weeks, times):
+                times_without47 = list()
+                for time_num in times:
+                    # 不回傳時段 47,所以拿掉.這邊有個可預見的bug,萬一有個week就只有47, 之後還 zip起來, 順序會亂掉
+                    # 但若要處理這問題, 無論是先篩選出只有47時段的week,或是zip完再做都會改動到整個結構, 理論上只選47的機率是應該少之又少
+                    # 在發生這件事之前或許已經把跨日解決了吧
+                    _temp = time_num.replace(',47','')
+                    times_without47.append(_temp)
+                for w, t in zip(weeks, times_without47):
                     if len(t):
                         general_available_time_to_return += \
                             f'{w}:{t};'
