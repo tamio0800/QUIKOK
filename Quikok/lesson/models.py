@@ -515,6 +515,8 @@ def when_lesson_completed_notification_sent_by_teacher(sender, instance:lesson_c
         # 提醒老師要評價學生
         #send_email.send_teacher_rate_student_when_teacher_completed_lesson(
         #    teacher_authID = instance.teacher_auth_id)
+
+
             
 @receiver(pre_save, sender=lesson_booking_info)
 def update_receiving_review_lesson_minutes(sender, instance:lesson_booking_info, **kwargs):

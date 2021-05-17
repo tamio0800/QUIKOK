@@ -3028,8 +3028,8 @@ def lesson_completed_confirmation_from_student(request):
                 # 再來 update 完結 TABLE
                 lesson_completed_object.is_student_confirmed = True
                 lesson_completed_object.save()
-                # 之後還有時數要從remaining那邊扣掉的環節，暫時先不管  >>  現在要來處理了!
 
+                # 接著時數要從remaining那邊扣掉
                 # 先依照是不是試教，來進行開發，因為試教比較簡單，不管時數剛好、超過、或過少，都直接扣掉就是了
                 if lesson_sales_sets.objects.get(id=booking_object.booking_set_id).sales_set == 'trial':
                     # 是試教
@@ -3234,6 +3234,11 @@ def lesson_completed_confirmation_from_student(request):
                         response['errCode'] = None
                         response['errMsg'] = None
                         response['data'] = None
+
+                # 完課了,要撥款給老師
+                teacher_obj = teacher_profile.objects.get(id = lesson_completed_object.teacher_auth_id)
+                teacher_obj.balance += lesson_completed_object.tuition_fee
+                teacher_obj.save()
 
             elif action == 'disagree':
                 # 學生對老師聲稱的時數有意見，先 update 預約 TABLE
