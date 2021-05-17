@@ -734,7 +734,8 @@ def when_lesson_info_changed_before_saving(sender, instance:lesson_info, **kwarg
                     shared_columns['total_hours_of_the_sales_set'] = 1
                     shared_columns['price_per_hour_after_discount'] = instance.trial_class_price
                     shared_columns['total_amount_of_the_sales_set'] = instance.trial_class_price
-                    shared_columns['price_per_10_minutes'] = round(int(instance.trial_class_price/3),5) # 試課時間是30分鐘
+                    # 試課時間是30分鐘,因此除以3,取小數點後第5位
+                    shared_columns['price_per_10_minutes'] = round(int(instance.trial_class_price/3),5) 
                     lesson_sales_sets.objects.create(
                         **shared_columns
                     ).save()
@@ -745,8 +746,8 @@ def when_lesson_info_changed_before_saving(sender, instance:lesson_info, **kwarg
                     shared_columns['total_hours_of_the_sales_set'] = 1
                     shared_columns['price_per_hour_after_discount'] = instance.price_per_hour
                     shared_columns['total_amount_of_the_sales_set'] = instance.price_per_hour
-                    shared_columns['price_per_10_minutes'] = round(int(instance.price_per_hour/6,5))# 單堂課時間是30分鐘
-
+                    # 單堂課時間是60分鐘,因此除以6,取小數點後第5位
+                    shared_columns['price_per_10_minutes'] = round(int(instance.price_per_hour/6,5))
                     lesson_sales_sets.objects.create(
                         **shared_columns
                     ).save()
@@ -758,9 +759,10 @@ def when_lesson_info_changed_before_saving(sender, instance:lesson_info, **kwarg
                         hours, discount_price = each_hours_discount_set.split(':')
                         shared_columns['sales_set'] = each_hours_discount_set
                         shared_columns['total_hours_of_the_sales_set'] = int(hours)
-                        shared_columns['price_per_hour_after_discount'] = round(int(instance.price_per_hour) * int(discount_price) / 100)
-                        shared_columns['total_amount_of_the_sales_set'] = round(int(instance.price_per_hour) * int(hours) * int(discount_price) / 100)
-                        shared_columns['price_per_10_minutes'] = round(int(instance.price_per_hour) * int(discount_price) / 100/6, 5) # 取到小數點後第5位
+                        shared_columns['price_per_hour_after_discount'] = round(int(instance.price_per_hour)* int(discount_price) / 100)
+                        shared_columns['total_amount_of_the_sales_set'] = round(int(instance.price_per_hour)* int(hours)* int(discount_price)/ 100)
+                        # 單堂課時間是60分鐘,因此除以6,取到小數點後第5位
+                        shared_columns['price_per_10_minutes'] = round(int(instance.price_per_hour) * int(discount_price) / 100/6, 5) 
 
                         lesson_sales_sets.objects.create(
                             **shared_columns
@@ -795,12 +797,12 @@ def when_lesson_info_changed_before_saving(sender, instance:lesson_info, **kwarg
                         shared_columns['total_hours_of_the_sales_set'] = 1
                         shared_columns['price_per_hour_after_discount'] = instance.trial_class_price
                         shared_columns['total_amount_of_the_sales_set'] = instance.trial_class_price
-                        shared_columns['price_per_10_minutes'] = instance.trial_class_price
+                        shared_columns['price_per_10_minutes'] = round(int(instance.trial_class_price)/3,5)
+                        # 試課時間是30分鐘,因此除以3,取小數點後第5位
                         
                         lesson_sales_sets.objects.create(
                             **shared_columns
                         ).save()
-                        
                         logging.info(f"Trial sets have been established.")
                     
                     if instance.lesson_has_one_hour_package == True:
@@ -809,7 +811,8 @@ def when_lesson_info_changed_before_saving(sender, instance:lesson_info, **kwarg
                         shared_columns['total_hours_of_the_sales_set'] = 1
                         shared_columns['price_per_hour_after_discount'] = instance.price_per_hour
                         shared_columns['total_amount_of_the_sales_set'] = instance.price_per_hour
-
+                        # 單堂課時間是60分鐘,因此除以6,取小數點後第5位
+                        shared_columns['price_per_10_minutes'] = round(int(instance.price_per_hour)/6,5)
                         lesson_sales_sets.objects.create(
                             **shared_columns
                         ).save()
@@ -826,6 +829,8 @@ def when_lesson_info_changed_before_saving(sender, instance:lesson_info, **kwarg
                             shared_columns['total_hours_of_the_sales_set'] = int(hours)
                             shared_columns['price_per_hour_after_discount'] = round(int(instance.price_per_hour) * int(discount_price) / 100 + 0.00001)
                             shared_columns['total_amount_of_the_sales_set'] = round(int(instance.price_per_hour) * int(hours) * int(discount_price)/ 100 + 0.00001)
+                            # 單堂課時間是60分鐘,因此除以6,取到小數點後第5位
+                            shared_columns['price_per_10_minutes'] = round(int(instance.price_per_hour) * int(discount_price) / 100/6+ 0.00001, 5) 
 
                             lesson_sales_sets.objects.create(
                                 **shared_columns
