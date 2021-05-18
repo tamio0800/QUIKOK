@@ -3,6 +3,7 @@ from django.contrib.auth.models import Group
 from django.urls.conf import path
 from account.models import (student_profile, teacher_profile, feedback,
                             general_available_time,specific_available_time)
+from account.models import invitation_code_detail, user_invitation_code_mapping
 from datetime import datetime, timedelta, date as date_function
 import os, shutil
 from unittest import skip
@@ -17,7 +18,6 @@ from threading import Thread
 # 取消環境變數 DEV_MODE >> unset DEV_MODE
 # python manage.py test account/ --settings=Quikok.settings_for_test
 class Auth_Related_Functions_Test(TestCase):
-
     def setUp(self):
         self.client = Client()        
         Group.objects.bulk_create(
@@ -1339,5 +1339,168 @@ class SPEED_TESTS(TestCase):
 
 
         
+class Invitation_Code_Test(TestCase):
+    '''
+    測試邀請碼機制是否有成功建立的測試
+    '''
+    def setUp(self):
+        self.client = Client()
+        self.first_ic = "thisIsTheFirstIC"
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+        invitation_code_detail.objects.create(
+            invitation_code=self.first_ic,
+            detail="這是一個關於邀請碼的解釋",
+        ).save()
+
+        
+    def tearDown(self):
+        # 刪掉(如果有的話)產生的資料夾
+        try:
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name1)
+        except:
+            pass
+
+    def test_invitation_code_tables_created(self):
+        '''
+        測試邀請碼相關的table已經建立起來了
+        '''
+        invitation_code_detail_cnt = \
+            invitation_code_detail.objects.count()
+        
+        user_invitation_code_mapping_cnt = \
+            user_invitation_code_mapping.objects.count()
+
+        self.assertTrue(invitation_code_detail_cnt >= 0)
+        self.assertTrue(user_invitation_code_mapping_cnt >= 0)
+
+
+    def test_teacher_register_with_invitation_code(self):
+        '''
+        測試老師註冊時帶入註冊碼(非另一用戶邀請)
+        '''
+        self.test_teacher_name1 = 'test_teacher1_user@test.com'
+        test_invitation_code = 'test0800'
+        teacher_post_data = {
+            'regEmail': self.test_teacher_name1,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;',
+            'invitation_code': test_invitation_code,  # 嘗試輸入邀請碼
+        }
+        response = \
+            self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        self.assertIn('success', str(response.content, "utf8"))  # 註冊成功
+        # 確認該老師是否有該邀請碼
+
+        teacher_object = teacher_profile.objects.get(username=self.test_teacher_name1)
+        self.assertEqual(teacher_object.mobile, teacher_post_data['regMobile'])
+
+        self.assertEqual(invitation_code_detail.objects.count(), 1)  # 應該有一筆IC的資料
+
+        teacher_inv_codes = \
+            user_invitation_code_mapping.objects.values_list(
+                'invitation_code', flat=True).filter(auth_id=teacher_object.auth_id)
+        
+        self.assertTrue(
+            teacher_post_data['invitation_code'] in teacher_inv_codes,
+            teacher_inv_codes)
+        self.assertEqual(len(teacher_inv_codes), 1)
+        self.assertEqual(
+            user_invitation_code_mapping.objects.get(auth_id=teacher_object.auth_id).user_type,
+            "teacher"
+        )
+        # 老師的註冊碼應該有被儲存起來
+
+
+    def test_student_register_with_invitation_code(self):
+        '''
+        測試學生註冊時帶入註冊碼(非另一用戶邀請)
+        '''
+        self.test_student_name1 = 'test_student1_user@test.com'
+        test_invitation_code = 'test0800'
+        student_post_data = {
+            'regEmail': self.test_student_name1,
+            'regPwd': '00000000',
+            'regName': 'test_student_name',
+            'regBirth': '1990-12-25',
+            'regGender': 1,
+            'regRole': 'oneself',
+            'regMobile': '0900-111111',
+            'regNotifiemail': "",
+            'invitation_code': test_invitation_code,
+        }
+        response = \
+            self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        self.assertIn('success', str(response.content, "utf8"))  # 註冊成功
+        # 確認該學生是否有該邀請碼
+
+        student_object = student_profile.objects.get(username=self.test_student_name1)
+        self.assertEqual(student_object.mobile, student_post_data['regMobile'])
+        
+        student_inv_codes = \
+            user_invitation_code_mapping.objects.values_list(
+                'invitation_code', flat=True).filter(auth_id=student_object.auth_id)
+        
+        self.assertTrue(
+            student_post_data['invitation_code'] in student_inv_codes,
+            student_inv_codes)
+        self.assertEqual(len(student_inv_codes), 1)
+        # 學生的註冊碼應該有被儲存起來
+
+
+    def test_student_register_with_mandarin_invitation_code(self):
+        '''
+        測試學生註冊時帶入中文註冊碼(非另一用戶邀請)
+        '''
+        self.test_student_name1 = 'test_student1_user@test.com'
+        test_invitation_code = '這是一段可愛的註冊碼'
+        student_post_data = {
+            'regEmail': self.test_student_name1,
+            'regPwd': '00000000',
+            'regName': 'test_student_name',
+            'regBirth': '1990-12-25',
+            'regGender': 1,
+            'regRole': 'oneself',
+            'regMobile': '0900-111111',
+            'regNotifiemail': "",
+            'invitation_code': test_invitation_code,
+        }
+        response = \
+            self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        self.assertIn('success', str(response.content, "utf8"))  # 註冊成功
+        # 確認該學生是否有該邀請碼
+        student_object = student_profile.objects.get(username=self.test_student_name1)
+        self.assertEqual(student_object.mobile, student_post_data['regMobile'])
+        student_inv_codes = \
+            user_invitation_code_mapping.objects.values_list(
+                'invitation_code', flat=True).filter(auth_id=student_object.auth_id)
+        
+        self.assertTrue(
+            student_post_data['invitation_code'] in student_inv_codes,
+            student_inv_codes)
+        self.assertEqual(len(student_inv_codes), 1)
+        # 學生的註冊碼應該有被儲存起來
+
+    
         
 

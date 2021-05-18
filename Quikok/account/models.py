@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import pre_save, post_save
@@ -7,7 +8,6 @@ from handy_functions import get_lesson_s_best_sale, get_teacher_s_best_education
 import logging
 FORMAT = '%(asctime)s %(levelname)s: %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=FORMAT)
-
 
 
 class user_token(models.Model):
@@ -324,6 +324,24 @@ class feedback(models.Model):
     # 可以用來衡量問題回覆、解決的時間長度
     def __str__(self):
         return str(self.id)
+
+
+class invitation_code_detail(models.Model):
+    '''用來記錄每一組I.C.代表什麼意思'''
+    invitation_code = models.CharField(max_length=50, default="", null=True, blank=True)  # 邀請碼
+    detail = models.TextField(default="", null=True, blank=True)  # 邀請碼說明
+    expiration_date = models.DateField(default=datetime(2999,12,31), null=True, blank=True)  # I.C.的有效期限
+    created_time = models.DateTimeField(auto_now=True)
+
+
+class user_invitation_code_mapping(models.Model):
+    '''用來記錄每個用戶身上對應的I.C.'''
+    auth_id = models.IntegerField()  # 用戶的auth_id
+    user_type = models.CharField(max_length=20)
+    invitation_code = models.CharField(max_length=50, default="", null=True, blank=True)  # 邀請碼
+    # invited_by_auth_user_id = models.IntegerField()  # 該用戶的被某auth_id的用戶邀請而來
+    created_time = models.DateTimeField(auto_now=True)
+
 
 '''
 下面用來寫signal監聽特定 TABLES 是否有改動，而進行對應動作的機制
