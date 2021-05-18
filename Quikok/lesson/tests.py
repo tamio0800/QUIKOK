@@ -253,19 +253,18 @@ class Lesson_Info_Related_Functions_Test(TestCase):
 
         lesson_post_data = {
             'userID': teacher_profile.objects.get(username=test_username).auth_id,   # 這是老師的auth_id
-            'lessonID': 'null',
             'action': 'createLesson',
             'big_title': 'big_title',
-            'little_title': 'test',
+            'little_title': 'test_0518',
             'title_color': '#000000',
             'background_picture_code': 1,
             'background_picture_path': '',
-            'lesson_title': '20210208_test',
+            'lesson_title': '20210518test',
             'price_per_hour': 800,
             'lesson_type': 'offline',
             'discount_price': '',
             'selling_status': 'selling',
-            'lesson_has_one_hour_package': True,
+            'lesson_has_one_hour_package': 'true',
             'trial_class_price': 69,
             'highlight_1': 'test',
             'highlight_2': 'test',
@@ -281,7 +280,7 @@ class Lesson_Info_Related_Functions_Test(TestCase):
             self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
         self.assertIn('success', str(response.content, "utf8"))
         self.assertEqual(
-            lesson_post_data['lesson_has_one_hour_package'],
+            lesson_post_data['lesson_has_one_hour_package'] == 'true',
             lesson_info.objects.get(
                 teacher__auth_id=lesson_post_data['userID'],
                 price_per_hour=800,
@@ -307,7 +306,7 @@ class Lesson_Info_Related_Functions_Test(TestCase):
             'lesson_type': 'offline',
             'discount_price': '10:90;20:80;30:75;',
             'selling_status': 'selling',
-            'lesson_has_one_hour_package': True,
+            'lesson_has_one_hour_package': 'true',
             'trial_class_price': 69,
             'highlight_1': 'test',
             'highlight_2': 'test',
@@ -1447,7 +1446,7 @@ class Lesson_Info_Test(TestCase):
             'price_per_hour': self.price_per_hour,
             'discount_price': '10:90;20:80;30:75;',
             'selling_status': 'selling',
-            'lesson_has_one_hour_package': True,
+            'lesson_has_one_hour_package': 'true',
             'trial_class_price': self.trial_class_price,
             'highlight_1': 'test',
             'highlight_2': 'test',
