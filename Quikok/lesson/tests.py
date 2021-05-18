@@ -1472,10 +1472,13 @@ class Lesson_Info_Test(TestCase):
         self.available_date_4 = specific_available_time.objects.filter(id=4).first().date
         self.available_date_5 = specific_available_time.objects.filter(id=5).first().date
     
-    
-
     def test_create_lesson_per10_min_price_produce_correctly(self):
         '''測試每十分鐘的學費是否建立、算對'''
+
+        # 先檢查五個方案是否都有正確建立
+        #self.assertEqual(lesson_sales_sets.objects.all().count(), 5)
+        
+        # 檢查試教的每十分鐘費用
         trial_set_obj = lesson_sales_sets.objects.get(
             lesson_id = 1, sales_set = 'trial')
         lesson_info_obj = lesson_info.objects.get(id=1)

@@ -831,8 +831,8 @@ def when_lesson_info_changed_before_saving(sender, instance:lesson_info, **kwarg
                             hours, discount_price = each_hours_discount_set.split(':')
                             shared_columns['sales_set'] = each_hours_discount_set
                             shared_columns['total_hours_of_the_sales_set'] = int(hours)
-                            shared_columns['price_per_hour_after_discount'] = round(int(instance.price_per_hour) * int(discount_price) / 100 + 0.00001)
-                            shared_columns['total_amount_of_the_sales_set'] = round(int(instance.price_per_hour) * int(hours) * int(discount_price)/ 100 + 0.00001)
+                            shared_columns['price_per_hour_after_discount'] = handy_round(int(instance.price_per_hour) * int(discount_price) / 100, 0)
+                            shared_columns['total_amount_of_the_sales_set'] = handy_round(int(instance.price_per_hour) * int(hours) * int(discount_price)/ 100, 0)
                             # 單堂課時間是60分鐘,因此除以6,取到小數點後第5位
                             shared_columns['price_per_10_minutes'] = handy_round(int(instance.price_per_hour) * int(discount_price) / 100 / 6, 5) 
 
