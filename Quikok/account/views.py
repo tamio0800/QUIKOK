@@ -37,6 +37,7 @@ from account.email_sending import email_manager
 from django.core.signals import request_finished
 from django.dispatch import receiver
 from threading import Thread
+from account.models import user_invitation_code_mapping
 
 account_email = email_manager()
 logging.basicConfig(level=logging.NOTSET) #DEBUG
@@ -66,6 +67,7 @@ def create_a_student_user(request):
     #        return something
     mobile = request.POST.get('regMobile', False)
     update_someone_by_email = request.POST.get('regNotifiemail', False)
+    invitation_code = request.POST.get("invitation_code", False)
 
     # print('接收資料')
     # print('學生名稱:',username, password, name, '生日:',birth_date, '角色:',role,'手機:', mobile,':信箱', update_someone_by_email,is_male)
@@ -155,6 +157,14 @@ def create_a_student_user(request):
                     update_someone_by_email = update_someone_by_email
                 )
                 new_student.save()
+
+                if invitation_code not in ("", False):
+                    # 學生有填入邀請碼
+                    user_invitation_code_mapping.objects.create(
+                        auth_id = user_created_object.id,
+                        user_type = "student",
+                        invitation_code = invitation_code[:50]
+                    ).save()
                 # 寄發email通知學生註冊成功
 
                 send_email_info = {
@@ -579,6 +589,7 @@ def create_a_teacher_user(request):
     # 再用 files system從userupload_files 儲存到相對的位置
     company = request.POST.get('company', False) # 包含職位 occupation資訊
     special_exp = request.POST.get('special_exp', False)
+    invitation_code = request.POST.get('invitation_code', False)
     # 一般開課時間
 
     # print(is_male)
@@ -600,7 +611,6 @@ def create_a_teacher_user(request):
                 ### 長出老師相對應資料夾 
                 # 目前要長的有:放一般圖檔的資料夾user_folder(大頭照、可能之後可放宣傳圖)、未認證的資料夾unaproved_cer、
                 # 已認證過的證書aproved_cer、user_info 將來可能可以放考卷檔案夾之類的、課程統一資料夾lessons、
-                
                 if not os.path.isdir('user_upload/teachers'):
                     os.mkdir(os.path.join('user_upload/teachers'))
                 if os.path.isdir(os.path.join('user_upload/teachers', user_folder)):
@@ -640,7 +650,6 @@ def create_a_teacher_user(request):
                     folder_where_are_uploaded_files_be ='user_upload/teachers/' + user_folder + '/unaproved_cer'
                     fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
                     fs.save(each_file.name, each_file)
-
 
                 user_created_object = \
                     User.objects.create(
@@ -689,6 +698,15 @@ def create_a_teacher_user(request):
                 )
                 teacher_created_object.save()
                 logger_account.info('老師成功寫入,teacher_profile')
+
+                if invitation_code not in ("", False):
+                    # 老師有填入邀請碼
+                    user_invitation_code_mapping.objects.create(
+                        auth_id = user_created_object.id,
+                        user_type = "teacher",
+                        invitation_code = invitation_code[:50]
+                    ).save()
+
                 # 寄發email通知老師註冊成功
 
                 send_email_info = {
