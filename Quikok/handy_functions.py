@@ -330,4 +330,12 @@ def turn_picture_into_jpeg_format(picture_path, to_size, to_path, quality=70):
     original_pic.close()
 
 
+def handy_round_to_int(origin_number):
+    '''因為python中，四捨五入0.5會變成0，故寫一個不會造成這個結果的方法的方法'''
+    if origin_number > 0:
+        return round(origin_number + 0.0001)
+    elif origin_number < 0:
+        return round(origin_number - 0.0001)
+    else:
+        return 0
 

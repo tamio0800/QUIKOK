@@ -3,6 +3,7 @@ from datetime import datetime
 from unittest.case import skip
 from handy_functions import turn_first_datetime_string_into_time_format
 from handy_functions import turn_picture_into_jpeg_format
+from handy_functions import handy_round_to_int
 from PIL import Image
 import os
 
@@ -120,6 +121,23 @@ class TEST_HANDY(unittest.TestCase):
         for _ in os.listdir(the_path):
             if _.endswith('jpeg') == False:
                 os.unlink(f"{the_path}/{_}")
+
+    def test_handy_round_to_int(self):
+        '''測試自己寫的四捨五入至整數位成功'''
+
+        self.assertEqual(handy_round_to_int(4.5), 5)
+        self.assertEqual(handy_round_to_int(0.01), 0)
+        self.assertEqual(handy_round_to_int(0.5), 1)
+        self.assertEqual(handy_round_to_int(1.5), 2)
+        self.assertEqual(handy_round_to_int(2.5), 3)
+        self.assertEqual(handy_round_to_int(10/3), 3)
+        
+        self.assertEqual(handy_round_to_int(-1.2), -1)
+        self.assertEqual(handy_round_to_int(-0.5), -1)
+
+        self.assertEqual(handy_round_to_int(0), 0)
+
+
 
 
             
