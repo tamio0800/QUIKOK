@@ -1456,9 +1456,7 @@ class Invitation_Code_Test(TestCase):
 
         student_object = student_profile.objects.get(username=self.test_student_name1)
         self.assertEqual(student_object.mobile, student_post_data['regMobile'])
-
-        self.assertEqual(invitation_code_detail.objects.count(), 1)  # 應該有一筆IC的資料
-
+        
         student_inv_codes = \
             user_invitation_code_mapping.objects.values_list(
                 'invitation_code', flat=True).filter(auth_id=student_object.auth_id)
@@ -1469,5 +1467,40 @@ class Invitation_Code_Test(TestCase):
         self.assertEqual(len(student_inv_codes), 1)
         # 學生的註冊碼應該有被儲存起來
 
+
+    def test_student_register_with_mandarin_invitation_code(self):
+        '''
+        測試學生註冊時帶入中文註冊碼(非另一用戶邀請)
+        '''
+        self.test_student_name1 = 'test_student1_user@test.com'
+        test_invitation_code = '這是一段可愛的註冊碼'
+        student_post_data = {
+            'regEmail': self.test_student_name1,
+            'regPwd': '00000000',
+            'regName': 'test_student_name',
+            'regBirth': '1990-12-25',
+            'regGender': 1,
+            'regRole': 'oneself',
+            'regMobile': '0900-111111',
+            'regNotifiemail': "",
+            'invitation_code': test_invitation_code,
+        }
+        response = \
+            self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        self.assertIn('success', str(response.content, "utf8"))  # 註冊成功
+        # 確認該學生是否有該邀請碼
+        student_object = student_profile.objects.get(username=self.test_student_name1)
+        self.assertEqual(student_object.mobile, student_post_data['regMobile'])
+        student_inv_codes = \
+            user_invitation_code_mapping.objects.values_list(
+                'invitation_code', flat=True).filter(auth_id=student_object.auth_id)
+        
+        self.assertTrue(
+            student_post_data['invitation_code'] in student_inv_codes,
+            student_inv_codes)
+        self.assertEqual(len(student_inv_codes), 1)
+        # 學生的註冊碼應該有被儲存起來
+
+    
         
 
