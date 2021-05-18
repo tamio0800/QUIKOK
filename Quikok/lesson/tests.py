@@ -1429,19 +1429,26 @@ class Lesson_Info_Test(TestCase):
         self.available_date_4 = specific_available_time.objects.filter(id=4).first().date
         self.available_date_5 = specific_available_time.objects.filter(id=5).first().date
     
-    
-
     def test_create_lesson_per10_min_price_produce_correctly(self):
         '''測試每十分鐘的學費是否建立、算對'''
+
+        # 先檢查五個方案是否都有正確建立
+        #self.assertEqual(lesson_sales_sets.objects.all().count(), 5)
+        
+        # 檢查試教的每十分鐘費用
         trial_set_obj = lesson_sales_sets.objects.get(
             lesson_id = 1, sales_set = 'trial')
         lesson_info_obj = lesson_info.objects.get(id=1)
         self.assertEqual(trial_set_obj.price_per_10_minutes, self.trial_class_price/3)
         print(lesson_sales_sets.objects.all())
-        one_lesson_set_obj = lesson_sales_sets.objects.get(
-            lesson_id = 1, sales_set = 'no_discount')
-        self.assertEqual(one_lesson_set_obj.price_per_10_minutes, self.price_per_hour/6)
-
+        # 檢查單堂課的每十分鐘費用
+        #one_lesson_set_obj = lesson_sales_sets.objects.get(
+        #    lesson_id = 1, sales_set = 'no_discount')
+        #self.assertEqual(one_lesson_set_obj.price_per_10_minutes, self.price_per_hour/6)
+        # 選一個 set來檢查每十分鐘, 選 20:80 的 set
+        set_lesson_set_obj = lesson_sales_sets.objects.get(
+            lesson_id = 1, sales_set = '20:80')
+        self.assertEqual(set_lesson_set_obj.price_per_10_minutes, self.price_per_hour*0.8/6)
     @skip
     def test_if_return_lesson_details_for_browsing_works(self):
         

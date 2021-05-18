@@ -2,6 +2,11 @@ from datetime import date, datetime
 import os
 from PIL import Image
 
+
+def price_round(number, digits):
+     # digit 不要小於第五位
+    return round(number + 0.00001, digits)
+
 def check_if_all_variables_are_true(*args):
     '''
     確認所有變數皆不為否
