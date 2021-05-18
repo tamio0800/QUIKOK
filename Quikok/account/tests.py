@@ -1344,7 +1344,8 @@ class Invitation_Code_Test(TestCase):
     測試邀請碼機制是否有成功建立的測試
     '''
     def setUp(self):
-        self.client = Client()        
+        self.client = Client()
+        self.first_ic = "thisIsTheFirstIC"
         Group.objects.bulk_create(
             [
                 Group(name='test_student'),
@@ -1354,6 +1355,11 @@ class Invitation_Code_Test(TestCase):
                 Group(name='edony')
             ]
         )
+        invitation_code_detail.objects.create(
+            invitation_code=self.first_ic,
+            detail="這是一個關於邀請碼的解釋",
+        ).save()
+
         
     def tearDown(self):
         # 刪掉(如果有的話)產生的資料夾
@@ -1366,43 +1372,50 @@ class Invitation_Code_Test(TestCase):
         '''
         測試邀請碼相關的table已經建立起來了
         '''
-        invitation_code_detail_obj = \
-            invitation_code_detail.objects.first()
+        invitation_code_detail_cnt = \
+            invitation_code_detail.objects.count()
         
-        user_invitation_code_mapping_obj = \
-            user_invitation_code_mapping.objects.first()
+        user_invitation_code_mapping_cnt = \
+            user_invitation_code_mapping.objects.count()
 
-        self.assertIsNone(invitation_code_detail_obj)
-        self.assertIsNone(user_invitation_code_mapping_obj)
+        self.assertTrue(invitation_code_detail_cnt >= 0)
+        self.assertTrue(user_invitation_code_mapping_cnt >= 0)
 
 
+    def test_teacher_register_with_invitation_code(self):
+        '''
+        測試老師註冊時帶入註冊碼(非另一用戶邀請)
+        '''
+        self.test_teacher_name1 = 'test_teacher1_user@test.com'
+        test_invitation_code = 'test0800'
+        teacher_post_data = {
+            'regEmail': self.test_teacher_name1,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;',
+            'invitation_code': test_invitation_code,  # 嘗試輸入邀請碼
+        }
+        response = \
+            self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        self.assertIn('success', str(response.content, "utf8"))  # 註冊成功
+        # 確認該老師是否有該邀請碼
 
-    # def test_teacher_register_with_invitation_code(self):
-    #     '''
-    #     測試老師註冊時帶入註冊碼
-    #     '''
-    #     self.test_teacher_name1 = 'test_teacher1_user@test.com'
-    #     teacher_post_data = {
-    #         'regEmail': self.test_teacher_name1,
-    #         'regPwd': '00000000',
-    #         'regName': 'test_name',
-    #         'regNickname': 'test_nickname',
-    #         'regBirth': '2000-01-01',
-    #         'regGender': '0',
-    #         'intro': 'test_intro',
-    #         'regMobile': '0912-345678',
-    #         'tutor_experience': '一年以下',
-    #         'subject_type': 'test_subject',
-    #         'education_1': 'education_1_test',
-    #         'education_2': 'education_2_test',
-    #         'education_3': 'education_3_test',
-    #         'company': 'test_company',
-    #         'special_exp': 'test_special_exp',
-    #         'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;',
-    #         'invitation_code': 'test0800',  # 嘗試輸入邀請碼
-    #     }
-    #     response = \
-    #         self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
-    #     self.assertIn('success', str(response.content, "utf8"))  # 註冊成功
-    #     # 確認該老師是否有
+        teacher_object = teacher_profile.objects.get(username=self.test_teacher_name1)
+        self.assertEqual(teacher_object.mobile, teacher_post_data['regMobile'])
+
+        self.assertEqual(invitation_code_detail.objects.count(), 1)  # 應該有一筆IC的資料
+
+        
 
