@@ -1443,7 +1443,7 @@ def get_lesson_specific_available_time(request):
                     f'{the_date}:{time_without47};'
                     #f'{the_date}:{each_specific_available_time_object.time};'
                 )
-
+                print(f'{the_date}:{each_specific_available_time_object.time}')
             inavailable_times = list()
             specific_inavailable_time_objects = \
                 specific_available_time.objects.filter(
@@ -2931,6 +2931,26 @@ def lesson_completed_notification_from_teacher(request):
                 
                     teacher_declared_time_in_minutes = \
                         int((teacher_declared_end_time - teacher_declared_start_time).seconds / 60)
+                    complete_set_obj = lesson_sales_sets.objects.get(id =booking_object.booking_set_id)
+                    lesson_fee_per10_min = complete_set_obj.price_per_10_minutes
+                    # 課程費用,如果是試教課程則為固定費用, 其他課程費用才會增加
+                    if complete_set_obj.sales_set == 'trial':
+                        teacher_declared_fee = complete_set_obj.total_amount_of_the_sales_set
+                    else:   
+                        # 如果老師宣稱的時數>學生剩的時數,那fee最多也只能給到學生所剩時數的範圍,
+                        # 以避免老師拿到大於學生付出的學費
+                        # 首先若老師宣稱的時數小於或等於原本預約的時數, 不會有超付的問題,可以直接計算學費
+                        if teacher_declared_time_in_minutes <= booking_object.get_booking_time_in_minutes():
+                            teacher_declared_fee = int(teacher_declared_time_in_minutes)/10*lesson_fee_per10_min
+                        else: # 檢查宣稱時數與預約的差額,是否大於剩餘時數
+                            extra_time = int(teacher_declared_time_in_minutes) - booking_object.get_booking_time_in_minutes()
+                            # 剩餘時間還夠,那就直接計算
+                            if booking_object.remaining_minutes > extra_time:
+                                teacher_declared_fee = int(teacher_declared_time_in_minutes)/10*lesson_fee_per10_min
+                            else:
+                                # 不夠扣時: 原本book的時數+剩餘時數/10*每十分鐘費用
+                                total_left_minutes= booking_object.get_booking_time_in_minutes() + booking_object.remaining_minutes
+                                teacher_declared_fee = total_left_minutes/10*lesson_fee_per10_min
 
                     new_added_record = lesson_completed_record.objects.create(
                         lesson_booking_info_id = booking_object.id,
@@ -2940,6 +2960,7 @@ def lesson_completed_notification_from_teacher(request):
                         student_auth_id = booking_object.student_auth_id, 
                         booking_time_in_minutes = booking_object.get_booking_time_in_minutes(),
                         # 預估上課時間時數,單位分鐘,是用預約的時間計算的
+                        tuition_fee = teacher_declared_fee,
                         teacher_declared_start_time = teacher_declared_start_time,
                         teacher_declared_end_time = teacher_declared_end_time,
                         teacher_declared_time_in_minutes = teacher_declared_time_in_minutes,
@@ -3044,8 +3065,8 @@ def lesson_completed_confirmation_from_student(request):
                 # 再來 update 完結 TABLE
                 lesson_completed_object.is_student_confirmed = True
                 lesson_completed_object.save()
-                # 之後還有時數要從remaining那邊扣掉的環節，暫時先不管  >>  現在要來處理了!
 
+                # 接著時數要從remaining那邊扣掉
                 # 先依照是不是試教，來進行開發，因為試教比較簡單，不管時數剛好、超過、或過少，都直接扣掉就是了
                 if lesson_sales_sets.objects.get(id=booking_object.booking_set_id).sales_set == 'trial':
                     # 是試教
@@ -3250,6 +3271,11 @@ def lesson_completed_confirmation_from_student(request):
                         response['errCode'] = None
                         response['errMsg'] = None
                         response['data'] = None
+
+                # 完課了,要撥款給老師
+                teacher_obj = teacher_profile.objects.get(id = lesson_completed_object.teacher_auth_id)
+                teacher_obj.balance += lesson_completed_object.tuition_fee
+                teacher_obj.save()
 
             elif action == 'disagree':
                 # 學生對老師聲稱的時數有意見，先 update 預約 TABLE

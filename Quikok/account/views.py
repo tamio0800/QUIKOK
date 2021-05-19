@@ -774,6 +774,7 @@ def create_a_teacher_user(request):
                 logger_account.info('建立老師與Mr.Q 聊天室')
                 # 建立group, 現在老師都是測試:3
                 user_created_object.groups.add(3)
+                logger_account.info('建立老師群組:3')
 
                 response['status'] = 'success'
                 response['errCode'] = None
