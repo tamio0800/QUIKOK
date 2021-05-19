@@ -255,6 +255,47 @@ class Lesson_Info_Related_Functions_Test(TestCase):
 
         lesson_post_data = {
             'userID': teacher_profile.objects.get(username=test_username).auth_id,   # 這是老師的auth_id
+            'action': 'createLesson',
+            'big_title': 'big_title',
+            'little_title': 'test_0518',
+            'title_color': '#000000',
+            'background_picture_code': 1,
+            'background_picture_path': '',
+            'lesson_title': '20210518test',
+            'price_per_hour': 800,
+            'lesson_type': 'offline',
+            'discount_price': '',
+            'selling_status': 'selling',
+            'lesson_has_one_hour_package': 'true',
+            'trial_class_price': 69,
+            'highlight_1': 'test',
+            'highlight_2': 'test',
+            'highlight_3': 'test',
+            'lesson_intro': 'test',
+            'how_does_lesson_go': 'test',
+            'target_students': 'test',
+            'lesson_remarks': 'test',
+            'syllabus': 'test',
+            'lesson_attributes': 'test'      
+            }  # 開設課程，只有一個單堂課方案
+        response = \
+            self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+        self.assertIn('success', str(response.content, "utf8"))
+        self.assertEqual(
+            lesson_post_data['lesson_has_one_hour_package'] == 'true',
+            lesson_info.objects.get(
+                teacher__auth_id=lesson_post_data['userID'],
+                price_per_hour=800,
+                lesson_attributes=lesson_post_data['lesson_attributes']).lesson_has_one_hour_package,
+            lesson_info.objects.values().get(
+                teacher__auth_id=lesson_post_data['userID'],
+                price_per_hour=800,
+                lesson_attributes=lesson_post_data['lesson_attributes'])
+        )
+
+
+        lesson_post_data = {
+            'userID': teacher_profile.objects.get(username=test_username).auth_id,   # 這是老師的auth_id
             'lessonID': 'null',
             'action': 'createLesson',
             'big_title': 'big_title',
@@ -267,7 +308,7 @@ class Lesson_Info_Related_Functions_Test(TestCase):
             'lesson_type': 'offline',
             'discount_price': '10:90;20:80;30:75;',
             'selling_status': 'selling',
-            'lesson_has_one_hour_package': True,
+            'lesson_has_one_hour_package': 'true',
             'trial_class_price': 69,
             'highlight_1': 'test',
             'highlight_2': 'test',
@@ -284,6 +325,9 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         self.assertIn('success', str(response.content, "utf8"))
         lesson_object = lesson_info.objects.get(lesson_title='20210208_test')
         self.assertEqual('offline', lesson_object.is_this_lesson_online_or_offline)
+
+
+
 
         lesson_post_data['action'] = 'editLesson'
         lesson_post_data['lesson_type'] = 'online'
@@ -1438,8 +1482,7 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         # 應該回傳2門課
         self.assertEqual(str(response.content, 'utf8').count("teacher_thumbnail_path"), 2)
 
-
-
+# python3 manage.py test lesson.tests.Lesson_Info_Test --settings=Quikok.settings_for_test
 
 class Lesson_Info_Test(TestCase):
 
@@ -1486,6 +1529,9 @@ class Lesson_Info_Test(TestCase):
             'regNotifiemail': ''
         }
         self.client.post(path='/api/account/signupStudent/', data=student_post_data)
+        
+        self.price_per_hour = 600
+        self.trial_class_price = 240
         # 建立課程
         lesson_post_data = {
             'userID': teacher_profile.objects.get(username=self.test_username).auth_id,   # 這是老師的auth_id
@@ -1496,11 +1542,11 @@ class Lesson_Info_Test(TestCase):
             'background_picture_code': 1,
             'background_picture_path': '',
             'lesson_title': 'test',
-            'price_per_hour': 800,
+            'price_per_hour': self.price_per_hour,
             'discount_price': '10:90;20:80;30:75;',
             'selling_status': 'selling',
-            'lesson_has_one_hour_package': True,
-            'trial_class_price': 69,
+            'lesson_has_one_hour_package': 'true',
+            'trial_class_price': self.trial_class_price,
             'highlight_1': 'test',
             'highlight_2': 'test',
             'highlight_3': 'test',
@@ -1509,9 +1555,13 @@ class Lesson_Info_Test(TestCase):
             'target_students': 'test',
             'lesson_remarks': 'test',
             'syllabus': 'test',
-            'lesson_attributes': 'test'      
+            'lesson_attributes': 'test',
+            'lesson_type': 'online'     
             }
-        self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+        response = \
+            self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
+        self.assertEqual(lesson_info.objects.all().count(), 1)
 
         # 先取得兩個可預約日期，避免hard coded未來出錯
         # 時段我都設1,2,3,4,5，所以只要在其中就ok
@@ -1521,15 +1571,29 @@ class Lesson_Info_Test(TestCase):
         self.available_date_4 = specific_available_time.objects.filter(id=4).first().date
         self.available_date_5 = specific_available_time.objects.filter(id=5).first().date
     
-    
-    def tearDown(self):
-        # 刪掉(如果有的話)產生的資料夾
-        try:
-            shutil.rmtree('user_upload/students/' + self.test_student_name)
-            shutil.rmtree('user_upload/teachers/' + self.test_username)
-        except:
-            pass
+    def test_create_lesson_per10_min_price_produce_correctly(self):
+        '''測試每十分鐘的學費是否建立、算對'''
 
+        # 先檢查五個方案是否都有正確建立
+        #self.assertEqual(lesson_sales_sets.objects.all().count(), 5)
+        
+        # 檢查試教的每十分鐘費用
+        trial_set_obj = lesson_sales_sets.objects.get(
+            lesson_id = 1, sales_set = 'trial')
+        lesson_info_obj = lesson_info.objects.get(id=1)
+        self.assertEqual(trial_set_obj.price_per_10_minutes, self.trial_class_price/3)
+        print(lesson_sales_sets.objects.all())
+        # 檢查單堂課的每十分鐘費用
+        #one_lesson_set_obj = lesson_sales_sets.objects.get(
+        #    lesson_id = 1, sales_set = 'no_discount')
+        #self.assertEqual(one_lesson_set_obj.price_per_10_minutes, self.price_per_hour/6)
+        # 選一個 set來檢查每十分鐘, 選 20:80 的 set
+        set_lesson_set_obj = lesson_sales_sets.objects.get(
+            lesson_id = 1, sales_set = '20:80')
+        self.assertEqual(set_lesson_set_obj.price_per_10_minutes, self.price_per_hour*0.8/6)
+    
+    
+    
     @skip
     def test_if_return_lesson_details_for_browsing_works(self):
         
@@ -1544,6 +1608,15 @@ class Lesson_Info_Test(TestCase):
         self.assertIn('success', str(response.content, 'utf8'), str(response.content, 'utf8'))
         self.assertIn(teacher_profile.objects.first().nickname, str(response.content, 'utf8'))
         
+
+    def tearDown(self):
+        # 刪掉(如果有的話)產生的資料夾
+        try:
+            shutil.rmtree('user_upload/students/' + self.test_student_name)
+            shutil.rmtree('user_upload/teachers/' + self.test_username)
+        except:
+            pass
+
 
 class Lesson_Booking_Related_Functions_Test(TestCase):
 
@@ -5700,6 +5773,35 @@ class CLASS_FINISHED_TEST(TestCase):
             }
         self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
 
+        lesson_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,   # 這是老師1的auth_id
+            'action': 'createLesson',
+            'big_title': 'big_title',
+            'little_title': 'test1111',
+            'title_color': '#000000',
+            'background_picture_code': 1,
+            'background_picture_path': '',
+            'lesson_title': 'test11111',
+            'price_per_hour': 600,
+            'discount_price': '10:90;20:80',
+            'selling_status': 'selling',
+            'lesson_has_one_hour_package': 'true',
+            'trial_class_price': 240,
+            'highlight_1': 'test',
+            'highlight_2': 'test',
+            'highlight_3': 'test',
+            'lesson_intro': 'test',
+            'how_does_lesson_go': 'test',
+            'target_students': 'test',
+            'lesson_remarks': 'test',
+            'syllabus': 'test',
+            'lesson_attributes': 'test',
+            'lesson_type': 'online'    
+            }
+        self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+
+
+
         # 先取得兩個可預約日期，避免hard coded未來出錯
         # 時段我都設1,2,3,4,5，所以只要在其中就ok
         self.available_date_1_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=1)).first().date
@@ -7177,6 +7279,8 @@ class CLASS_FINISHED_TEST(TestCase):
             ),
             student_remaining_minutes_of_each_purchased_lesson_set.objects.values()
         )
+
+
 
 
 class REVIEWS_TESTS(TestCase):

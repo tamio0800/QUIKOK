@@ -16,7 +16,7 @@ import threading
 from threading import Thread
 # 設定環境變數 DEV_MODE 為true >>  export DEV_MODE=true
 # 取消環境變數 DEV_MODE >> unset DEV_MODE
-# python manage.py test account/ --settings=Quikok.settings_for_test
+# python3 manage.py test account/ --settings=Quikok.settings_for_test
 class Auth_Related_Functions_Test(TestCase):
     def setUp(self):
         self.client = Client()        
