@@ -2916,9 +2916,21 @@ def lesson_completed_notification_from_teacher(request):
                     # 課程費用,如果是試教課程則為固定費用, 其他課程費用才會增加
                     if complete_set_obj.sales_set == 'trial':
                         teacher_declared_fee = complete_set_obj.total_amount_of_the_sales_set
-                    else:    
-                        teacher_declared_fee = int(teacher_declared_time_in_minutes)/10*lesson_fee_per10_min
-
+                    else:   
+                        # 如果老師宣稱的時數>學生剩的時數,那fee最多也只能給到學生所剩時數的範圍,
+                        # 以避免老師拿到大於學生付出的學費
+                        # 首先若老師宣稱的時數小於或等於原本預約的時數, 不會有超付的問題,可以直接計算學費
+                        if teacher_declared_time_in_minutes <= booking_object.get_booking_time_in_minutes():
+                            teacher_declared_fee = int(teacher_declared_time_in_minutes)/10*lesson_fee_per10_min
+                        else: # 檢查宣稱時數與預約的差額,是否大於剩餘時數
+                            extra_time = int(teacher_declared_time_in_minutes) - booking_object.get_booking_time_in_minutes()
+                            # 剩餘時間還夠,那就直接計算
+                            if booking_object.remaining_minutes > extra_time:
+                                teacher_declared_fee = int(teacher_declared_time_in_minutes)/10*lesson_fee_per10_min
+                            else:
+                                # 不夠扣時: 原本book的時數+剩餘時數/10*每十分鐘費用
+                                total_left_minutes= booking_object.get_booking_time_in_minutes() + booking_object.remaining_minutes
+                                teacher_declared_fee = total_left_minutes/10*lesson_fee_per10_min
 
                     new_added_record = lesson_completed_record.objects.create(
                         lesson_booking_info_id = booking_object.id,
