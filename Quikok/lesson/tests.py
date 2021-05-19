@@ -1449,6 +1449,12 @@ class Lesson_Info_Test(TestCase):
         set_lesson_set_obj = lesson_sales_sets.objects.get(
             lesson_id = 1, sales_set = '20:80')
         self.assertEqual(set_lesson_set_obj.price_per_10_minutes, self.price_per_hour*0.8/6)
+    
+    
+    
+    
+    
+    
     @skip
     def test_if_return_lesson_details_for_browsing_works(self):
         
@@ -5629,6 +5635,35 @@ class CLASS_FINISHED_TEST(TestCase):
             }
         self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
 
+        lesson_post_data = {
+            'userID': teacher_profile.objects.get(id=1).auth_id,   # 這是老師1的auth_id
+            'action': 'createLesson',
+            'big_title': 'big_title',
+            'little_title': 'test1111',
+            'title_color': '#000000',
+            'background_picture_code': 1,
+            'background_picture_path': '',
+            'lesson_title': 'test11111',
+            'price_per_hour': 600,
+            'discount_price': '10:90;20:80',
+            'selling_status': 'selling',
+            'lesson_has_one_hour_package': 'true',
+            'trial_class_price': 240,
+            'highlight_1': 'test',
+            'highlight_2': 'test',
+            'highlight_3': 'test',
+            'lesson_intro': 'test',
+            'how_does_lesson_go': 'test',
+            'target_students': 'test',
+            'lesson_remarks': 'test',
+            'syllabus': 'test',
+            'lesson_attributes': 'test',
+            'lesson_type': 'online'    
+            }
+        self.client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+
+
+
         # 先取得兩個可預約日期，避免hard coded未來出錯
         # 時段我都設1,2,3,4,5，所以只要在其中就ok
         self.available_date_1_t1 = specific_available_time.objects.filter(teacher_model=teacher_profile.objects.get(id=1)).first().date
@@ -7106,6 +7141,8 @@ class CLASS_FINISHED_TEST(TestCase):
             ),
             student_remaining_minutes_of_each_purchased_lesson_set.objects.values()
         )
+
+
 
 
 class REVIEWS_TESTS(TestCase):
