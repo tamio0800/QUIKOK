@@ -316,38 +316,58 @@ def get_lesson_cards_for_common_users(request):
         #            _data))
         
         if len(keywords) > 0:
-            seaman = sea_man()
+            keywords_as_list = keywords.strip().split()  # 將關鍵字以空格拆開
+            # seaman = sea_man()
             #the_lesson_info = lesson_info()
             '''['teacher__nickname', 'teacher__name', 'intro', 'subject_type',
                     'education_1', 'education_2', 'education_3', 'company', 'special_exp',
                     'big_title', 'little_title', 'lesson_title', 'highlight_1', 'highlight_2', 'highlight_3',
                     'how_does_lesson_go', 'target_students', 'lesson_remarks', 'syllabus',
                     'lesson_attributes']'''
-            matched_lesson_ids = \
-                seaman.get_model_key_value_where_a_is_in_its_specific_columns(
-                    keywords, 
-                    ['big_title', 'little_title', 'lesson_title', 'highlight_1', 'highlight_2', 'highlight_3',
-                    'how_does_lesson_go', 'target_students', 'lesson_remarks', 'syllabus', 'lesson_attributes'],
-                    'id',
-                    lesson_info_selling_objects
+            matched_lesson_ids = list()  # 創建一個list儲放符合條件的課程
+            for each_keyword in keywords_as_list:
+                temp_lesson_objects = lesson_info_selling_objects.filter(
+                    Q(hidden_lesson_attributes__contains=each_keyword) |
+                    Q(teacher__nickname__contains=each_keyword) |
+                    Q(big_title__contains=each_keyword) |
+                    Q(little_title__contains=each_keyword) |
+                    Q(lesson_title__contains=each_keyword) |
+                    Q(teacher__education_1__contains=each_keyword) |
+                    Q(teacher__education_2__contains=each_keyword) |
+                    Q(teacher__company__contains=each_keyword) |
+                    Q(teacher__special_exp__contains=each_keyword)
                 )
-            for each_dict in _data:
-                if each_dict['lessonID'] not in matched_lesson_ids:
-                    _data.remove(each_dict)
-            #print(len(_data))
-        if len(ordered_by) > 0:
-            the_lesson_card_manager = lesson_card_manager()
-            sorted_lesson_ids = the_lesson_card_manager.sort_lessons_id_by(
-                [_['lessonID'] for _ in _data],
-                ordered_by)
-            _data = sort_dictionaries_in_a_list_by_specific_key(
-                'lessonID', 
-                sorted_lesson_ids,
-                _data)
-        else:
-            #_data = \
-            #    sorted(_data, key=lambda x: x['lesson_ranking_score'], reverse=True)
-            pass
+                # print(f"XXHHXXH {each_keyword}, {temp_lesson_objects.values_list('id', flat=True)}")
+                matched_lesson_ids.extend(temp_lesson_objects.values_list('id', flat=True))
+            matched_lesson_ids = list(set(matched_lesson_ids))
+            # matched_lesson_ids = \
+            #     seaman.get_model_key_value_where_a_is_in_its_specific_columns(
+            #         keywords, 
+            #         ['big_title', 'little_title', 'lesson_title', 'highlight_1', 'highlight_2', 'highlight_3',
+            #         'how_does_lesson_go', 'target_students', 'lesson_remarks', 'syllabus', 'lesson_attributes'],
+            #         'id',
+            #         lesson_info_selling_objects
+            #     )
+            # print(f"XXHHXXH1 {len(_data)}  {type(_data)}")
+            # for each_dict in _data:
+            #     print(f"XXHHXXH2 {each_dict}, {each_dict['lessonID']}, {matched_lesson_ids}")
+            #     if each_dict['lessonID'] not in matched_lesson_ids:
+            #         _data.remove(each_dict)
+            _data = [each_dict for each_dict in _data if each_dict['lessonID'] in matched_lesson_ids]
+        if len(_data):
+            if len(ordered_by) > 0:
+                the_lesson_card_manager = lesson_card_manager()
+                sorted_lesson_ids = the_lesson_card_manager.sort_lessons_id_by(
+                    [_['lessonID'] for _ in _data],
+                    ordered_by)
+                _data = sort_dictionaries_in_a_list_by_specific_key(
+                    'lessonID', 
+                    sorted_lesson_ids,
+                    _data)
+            else:
+                #_data = \
+                #    sorted(_data, key=lambda x: x['lesson_ranking_score'], reverse=True)
+                pass
         
         response['status'] = 'success'
         response['errCode'] = None

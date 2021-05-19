@@ -26,6 +26,17 @@ from django.core import mail
 
 class Lesson_Info_Related_Functions_Test(TestCase):
  
+    def setUp(self):
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+
     @skip  # 2021.02.08 因為搶先開課成效不彰，先不維護了
     def test_before_signing_up_create_or_edit_a_lesson_exist(self):
         # 測試這個函式是否存在，並且應該回傳status='success', errCode=None, errMsg=None
@@ -211,15 +222,6 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         測試課程可以成功的被建立及編輯
         '''
         # 要先建立老師才能做測試
-        Group.objects.bulk_create(
-            [
-                Group(name='test_student'),
-                Group(name='test_teacher'),
-                Group(name='formal_teacher'),
-                Group(name='formal_student'),
-                Group(name='edony')
-            ]
-        )
 
         test_username = 'test201218_teacher_user@test.com'
         try:
@@ -300,16 +302,6 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         self.client = Client()
 
         # 要先建立老師才能做測試
-        Group.objects.bulk_create(
-            [
-                Group(name='test_student'),
-                Group(name='test_teacher'),
-                Group(name='formal_teacher'),
-                Group(name='formal_student'),
-                Group(name='edony')
-            ]
-        )
-
         test_username = 'test201218_teacher_user@test.com'
         try:
             shutil.rmtree('user_upload/teachers/' + test_username)
@@ -434,16 +426,6 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         self.client = Client()
 
         # 要先建立老師才能做測試
-        Group.objects.bulk_create(
-            [
-                Group(name='test_student'),
-                Group(name='test_teacher'),
-                Group(name='formal_teacher'),
-                Group(name='formal_student'),
-                Group(name='edony')
-            ]
-        )
-
         test_username = 'test201218_teacher_user@test.com'
         try:
             shutil.rmtree('user_upload/teachers/' + test_username)
@@ -579,16 +561,6 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         self.client = Client()
 
         # 要先建立老師才能做測試
-        Group.objects.bulk_create(
-            [
-                Group(name='test_student'),
-                Group(name='test_teacher'),
-                Group(name='formal_teacher'),
-                Group(name='formal_student'),
-                Group(name='edony')
-            ]
-        )
-
         test_username = 'test201218_teacher_user@test.com'
         try:
             shutil.rmtree('user_upload/teachers/' + test_username)
@@ -757,16 +729,6 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         '''
         self.client = Client()
         # 要先建立老師才能做測試
-        Group.objects.bulk_create(
-            [
-                Group(name='test_student'),
-                Group(name='test_teacher'),
-                Group(name='formal_teacher'),
-                Group(name='formal_student'),
-                Group(name='edony')
-            ]
-        )
-
         test_username = 'test201218_teacher_user@test.com'
         try:
             shutil.rmtree('user_upload/teachers/' + test_username)
@@ -885,15 +847,6 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         '''
         client = Client()
         # 要先建立老師才能做測試
-        Group.objects.bulk_create(
-            [
-                Group(name='test_student'),
-                Group(name='test_teacher'),
-                Group(name='formal_teacher'),
-                Group(name='formal_student'),
-                Group(name='edony')
-            ]
-        )
         test_username = 'test_teacher_user@test.com'
         try:
             shutil.rmtree('user_upload/teachers/' + test_username)
@@ -1083,15 +1036,6 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         '''
         client = Client()
         # 要先建立老師才能做測試
-        Group.objects.bulk_create(
-            [
-                Group(name='test_student'),
-                Group(name='test_teacher'),
-                Group(name='formal_teacher'),
-                Group(name='formal_student'),
-                Group(name='edony')
-            ]
-        )
         test_username = 'test_teacher_0510@test.com'
         try:
             shutil.rmtree('user_upload/teachers/' + test_username)
@@ -1239,15 +1183,7 @@ class Lesson_Info_Related_Functions_Test(TestCase):
         '''
         client = Client()
         # 要先建立老師才能做測試
-        Group.objects.bulk_create(
-            [
-                Group(name='test_student'),
-                Group(name='test_teacher'),
-                Group(name='formal_teacher'),
-                Group(name='formal_student'),
-                Group(name='edony')
-            ]
-        )
+
         test_username = 'test_teacher_0510@test.com'
         try:
             shutil.rmtree('user_upload/teachers/' + test_username)
@@ -1340,8 +1276,167 @@ class Lesson_Info_Related_Functions_Test(TestCase):
                 {set(['學科教育', '電子', '數學', '國文'])}"
         )
 
+    def test_search_lessons_by_HLA(self):
+        '''
+        測試搜尋課程時，能不能從hidden_lesson_attributes外，連同姓名、課程名字做比對、篩選
+        '''
+        client = Client()
+        # 要先建立老師才能做測試
+        test_username = 'test_teacher_0518@test.com'
+        try:
+            shutil.rmtree('user_upload/teachers/' + test_username)
+        except:
+            pass
+        teacher_post_data = {
+            'regEmail': test_username,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': '測試的老師名字',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;'
+        }
+        response = client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
 
+        # 應該已經建立完成了
+        lesson_post_data = {
+            'userID': teacher_profile.objects.get(username=test_username).auth_id,   # 這是老師的auth_id
+            'action': 'createLesson',
+            'lessonID': 'null',
+            'big_title': '應該是數學',
+            'little_title': '搞不好就是數學',
+            'title_color': '#000000',
+            'background_picture_code': 1,
+            'background_picture_path': '',
+            'lesson_title': '一門小巧的課程',
+            'price_per_hour': 800,
+            'discount_price': '10:90;20:80;30:75;',
+            'selling_status': 'selling',
+            'lesson_has_one_hour_package': 'true',
+            'trial_class_price': 69,
+            'highlight_1': 'test highlight_1',
+            'highlight_2': 'test highlight_2',
+            'highlight_3': 'test highlight_3',
+            'lesson_intro': 'test_lesson_intro',
+            'how_does_lesson_go': 'test_how_does_lesson_go',
+            'target_students': 'test_target_students',
+            'lesson_remarks': 'test_lesson_remarks',
+            'lesson_attributes': "數學,學科教學,學科,學科教育",
+            'syllabus': 'test_syllabus',
+            'lesson_type': 'online'    
+            }
+        response = \
+            client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
+        # 建立完課程了，再來建立第二門課
 
+        lesson_post_data = {
+            'userID': teacher_profile.objects.get(username=test_username).auth_id,   # 這是老師的auth_id
+            'action': 'createLesson',
+            'lessonID': 'null',
+            'big_title': '或許真的是國文',
+            'little_title': '可能是國文',
+            'title_color': '#000000',
+            'background_picture_code': 1,
+            'background_picture_path': '',
+            'lesson_title': '一門龐大的課程',
+            'price_per_hour': 650,
+            'discount_price': '10:90;20:80;30:75;',
+            'selling_status': 'selling',
+            'lesson_has_one_hour_package': 'true',
+            'trial_class_price': 69,
+            'highlight_1': 'test highlight_1',
+            'highlight_2': 'test highlight_2',
+            'highlight_3': 'test highlight_3',
+            'lesson_intro': 'test_lesson_intro',
+            'how_does_lesson_go': 'test_how_does_lesson_go',
+            'target_students': 'test_target_students',
+            'lesson_remarks': 'test_lesson_remarks',
+            'lesson_attributes': "#國文 #名師授課",
+            'syllabus': 'test_syllabus',
+            'lesson_type': 'online'    
+            }
+        response = \
+            client.post(path='/api/lesson/createOrEditLesson/', data=lesson_post_data)
+
+        the_lesson_obj = \
+            lesson_info.objects.filter(lesson_title=lesson_post_data['lesson_title']).first()
+        self.assertNotEqual(the_lesson_obj, None)  # 課程應當存在
+
+        get_lesson_post_data = {
+            'qty': -1,
+            'userID': 1,
+            'ordered_by': 'best_sales',
+            'keywords': '火箭科學',
+            'only_show_ones_favorites': 'False',
+            'only_show_lessons_by_this_teacher_s_auth_id': -1,
+            'filtered_by':'filtered_price_per_hour:0,99999',
+        }
+        response = \
+            client.post(path='/api/lesson/getLessonCardsForCommonUsers/', data=get_lesson_post_data)
+        self.assertIn('success', str(response.content, 'utf8'))
+        # 應該回傳0門課
+        self.assertEqual(str(response.content, 'utf8').count("teacher_thumbnail_path"), 0,
+            str(response.content, 'utf8'))
+
+        get_lesson_post_data['keywords'] = '數學'
+        response = \
+            client.post(path='/api/lesson/getLessonCardsForCommonUsers/', data=get_lesson_post_data)
+        # 應該回傳1門課
+        self.assertEqual(str(response.content, 'utf8').count("teacher_thumbnail_path"), 1)
+
+        get_lesson_post_data['keywords'] = '一門小巧的課程'
+        response = \
+            client.post(path='/api/lesson/getLessonCardsForCommonUsers/', data=get_lesson_post_data)
+        # 應該回傳1門課
+        self.assertEqual(str(response.content, 'utf8').count("teacher_thumbnail_path"), 1,
+            lesson_info.objects.values().filter(lesson_title__contains=get_lesson_post_data['keywords']))
+
+        get_lesson_post_data['keywords'] = '一門小巧'
+        response = \
+            client.post(path='/api/lesson/getLessonCardsForCommonUsers/', data=get_lesson_post_data)
+        # 應該回傳1門課
+        self.assertEqual(str(response.content, 'utf8').count("teacher_thumbnail_path"), 1)
+
+        get_lesson_post_data['keywords'] = teacher_post_data['regNickname']
+        response = \
+            client.post(path='/api/lesson/getLessonCardsForCommonUsers/', data=get_lesson_post_data)
+        # 應該回傳2門課
+        self.assertEqual(str(response.content, 'utf8').count("teacher_thumbnail_path"), 2)
+
+        get_lesson_post_data['keywords'] = "一門龐大的"
+        response = \
+            client.post(path='/api/lesson/getLessonCardsForCommonUsers/', data=get_lesson_post_data)
+        # 應該回傳1門課
+        self.assertEqual(str(response.content, 'utf8').count("teacher_thumbnail_path"), 1)
+
+        get_lesson_post_data['keywords'] = "名師"
+        response = \
+            client.post(path='/api/lesson/getLessonCardsForCommonUsers/', data=get_lesson_post_data)
+        # 應該回傳1門課
+        self.assertEqual(str(response.content, 'utf8').count("teacher_thumbnail_path"), 1)
+
+        get_lesson_post_data['keywords'] = "一門"
+        response = \
+            client.post(path='/api/lesson/getLessonCardsForCommonUsers/', data=get_lesson_post_data)
+        # 應該回傳2門課
+        self.assertEqual(str(response.content, 'utf8').count("teacher_thumbnail_path"), 2)
+
+        get_lesson_post_data['keywords'] = "數學 國文"
+        response = \
+            client.post(path='/api/lesson/getLessonCardsForCommonUsers/', data=get_lesson_post_data)
+        # 應該回傳2門課
+        self.assertEqual(str(response.content, 'utf8').count("teacher_thumbnail_path"), 2)
 
 
 
