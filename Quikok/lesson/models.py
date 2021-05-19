@@ -3,8 +3,8 @@ from account.models import teacher_profile, student_profile
 from datetime import timedelta, date as date_function
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
-from handy_functions import get_lesson_s_best_sale, get_teacher_s_best_education_and_working_experience
-from handy_functions import handy_round
+from handy_functions import (get_lesson_s_best_sale, get_teacher_s_best_education_and_working_experience,
+                                handy_round)
 
 import logging
 FORMAT = '%(asctime)s %(levelname)s: %(message)s'

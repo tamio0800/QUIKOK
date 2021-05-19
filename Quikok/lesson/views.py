@@ -2911,8 +2911,13 @@ def lesson_completed_notification_from_teacher(request):
                 
                     teacher_declared_time_in_minutes = \
                         int((teacher_declared_end_time - teacher_declared_start_time).seconds / 60)
-                    lesson_fee_per10_min = lesson_sales_sets.objects.get(id =booking_object.booking_set_id).price_per_10_minutes
-                    teacher_declared_fee = int(teacher_declared_time_in_minutes)/10*lesson_fee_per10_min
+                    complete_set_obj = lesson_sales_sets.objects.get(id =booking_object.booking_set_id)
+                    lesson_fee_per10_min = complete_set_obj.price_per_10_minutes
+                    # 課程費用,如果是試教課程則為固定費用, 其他課程費用才會增加
+                    if complete_set_obj.sales_set == 'trial':
+                        teacher_declared_fee = complete_set_obj.total_amount_of_the_sales_set
+                    else:    
+                        teacher_declared_fee = int(teacher_declared_time_in_minutes)/10*lesson_fee_per10_min
 
 
                     new_added_record = lesson_completed_record.objects.create(

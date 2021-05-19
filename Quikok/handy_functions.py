@@ -4,7 +4,7 @@ from PIL import Image
 
 
 def price_round(number, digits):
-     # digit 不要小於第五位
+    '''digit 不要小於第五位'''
     return round(number + 0.00001, digits)
 
 def check_if_all_variables_are_true(*args):
@@ -336,7 +336,9 @@ def turn_picture_into_jpeg_format(picture_path, to_size, to_path, quality=70):
 
 
 def handy_round(origin_number, digits=0):
-    '''因為python中，四捨五入0.5會變成0，故寫一個不會造成這個結果的方法'''
+    '''
+    因為python中，四捨五入0.5會變成0，故寫一個不會造成這個結果的方法
+    '''
     modification = 1 / 10**(digits+2)
     if origin_number > 0:
         return round(origin_number + modification, digits)
