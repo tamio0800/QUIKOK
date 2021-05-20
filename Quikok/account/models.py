@@ -216,6 +216,13 @@ class teacher_profile(models.Model):
     special_exp = models.TextField(blank=True, null=True)  # 其他經歷或特殊專長
     all_lesson_score_mean = models.FloatField(default=0.0)  # 全部課程分數平均
     total_number_of_remark = models.IntegerField(default=0) # 評分筆數
+    upload_picture_1_location = models.TextField(default="", blank=True, null=True)
+    upload_picture_2_location = models.TextField(default="", blank=True, null=True)
+    upload_picture_3_location = models.TextField(default="", blank=True, null=True)
+    upload_picture_4_location = models.TextField(default="", blank=True, null=True)
+    upload_picture_5_location = models.TextField(default="", blank=True, null=True)
+    youtube_video_url = models.TextField(default="", blank=True, null=True)
+    
     def __str__(self):
         return self.username
 
