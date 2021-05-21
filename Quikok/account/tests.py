@@ -204,18 +204,23 @@ class Teacher_Profile_Test_setup(TestCase):
             'education_3': 'education_3_test',
             'company': 'test_company',
             'special_exp': 'test_special_exp',
-            'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;'
+            'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;',
+            'youtube_video_url' : 'https://www.youtube.com/watch?v=OSxfx9p5bfI'
         }
+        teacher_post_data['upload_picture_1'] = SimpleUploadedFile(name='test_1.jpg', 
+                    content=open('test_folder/test_file/test_1.jpg', 'rb').read(), content_type='image/jpg')
+        teacher_post_data['upload_picture_2'] = SimpleUploadedFile(name='test_2.jpg', 
+                    content=open('test_folder/test_file/test_2.jpg', 'rb').read(), content_type='image/jpg')
+        teacher_post_data['upload_picture_3'] = SimpleUploadedFile(name='test_3.jpg', 
+                    content=open('test_folder/test_file/test_2.jpg', 'rb').read(), content_type='image/jpg')
+        # 上傳三張圖片
         self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
-        self.assertEqual(teacher_profile.objects.all().count(),1)
-        # 建立老師
 
-    def tearDown(self):
-        # 刪掉(如果有的話)產生的資料夾
-        try:
-            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name1)
-        except:
-            pass
+        # 確認有建立
+        self.assertEqual(teacher_profile.objects.all().count(),1)
+        self.assertEqual(teacher_profile.objects.get(id=1).upload_picture_4_location, '')
+
+
 
     def test_teacher_sighup_upload_info_pic(self):
         '''測次當老師註冊時, 上傳5張額度的圖片(非大頭照)的情況
@@ -287,7 +292,32 @@ class Teacher_Profile_Test_setup(TestCase):
             shutil.rmtree('user_upload/teachers/' + 'test_teacher2@test.com')
         except:
             pass
-
+    
+    @skip
+    def test_return_teacher_profile_for_public_pic_and_url(self):
+        '''當老師有上傳圖片時,要返回資料,公開頁的資訊'''
+        pass
+        t_obj = teacher_profile.objects.get(id=1)
+        
+    @skip
+    def test_return_teacher_profile_for_self_looking_pic_and_url(self):
+        '''當老師有上傳圖片時,要返回資料,給自己看的資訊'''
+        pass
+    @skip
+    def test_teacher_edit_profile_for_upload_pic_and_url(self):
+        '''當老師在會員中心編輯資料、新上傳圖片'''
+        pass
+    @skip
+    def test_teacher_edit_profile_for_delete_pic_and_url(self):
+        '''當老師在會員中心編輯資料、刪除原本上傳的圖片'''
+        pass
+    
+    def tearDown(self):
+        # 刪掉(如果有的話)產生的資料夾
+        try:
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name1)
+        except:
+            pass
 
 class Teacher_Profile_Test(TestCase):
 

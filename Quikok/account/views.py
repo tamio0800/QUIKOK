@@ -599,7 +599,7 @@ def create_a_teacher_user(request):
     print('收到老師註冊資料')
     if check_if_all_variables_are_true(
         username, password, name, intro, subject_type, mobile,
-        tutor_experience, subject_type, video_url) and is_male is not None:
+        tutor_experience, subject_type) and is_male is not None:
         logger_account.info('判斷收到老師註冊資料沒有問題')
         # 先檢查有沒有這個username存在，存在的話會return None給obj
         obj = teacher_profile.objects.filter(username=username).first()
@@ -725,6 +725,10 @@ def create_a_teacher_user(request):
                 else:
                     upload_picture_5 = ''
 
+                if not video_url:
+                    video_url = ''
+
+
                 user_created_object = \
                     User.objects.create(
                         username = username,
@@ -846,7 +850,7 @@ def create_a_teacher_user(request):
                             ((today_date + timedelta(days=each_incremental_day)).weekday() in available_week_time_dictionary.keys())
                         ]
                     specific_available_time.objects.bulk_create(specific_date_time_list_to_be_updated)
-                print('老師成功建立 特定時間')   # 是說這個要什麼時候更新啦QQ
+                print('老師成功建立 特定時間')   
 
                 # 建立老師與system的聊天室
                 chat_tool = chat_room_manager()

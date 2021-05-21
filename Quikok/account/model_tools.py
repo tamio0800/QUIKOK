@@ -209,12 +209,11 @@ class teacher_manager:
                     if len(t):
                         specific_available_time_to_return += \
                             f'{d}:{t};'
-
-            print('回傳給前端的一般時間:')
-            print(general_available_time_to_return)
-            print('回傳給前端的確切時間:')
-            print(specific_available_time_to_return)
-            print(specific_available_time.objects.values())
+            
+            logger_account.debug(f'回傳給前端的一般時間:{general_available_time_to_return}')
+            logger_account.debug(f'回傳給前端的確切時間:{specific_available_time_to_return}')
+            
+            #print(specific_available_time.objects.values())
 
             _data['general_available_time'] = general_available_time_to_return
             _data['specific_available_time'] = specific_available_time_to_return
@@ -224,7 +223,7 @@ class teacher_manager:
             self.data = _data
             return (self.status, self.errCode, self.errMsg, self.data)
         except Exception as e:
-            print(f'return_teacher_profile_for_oneself_viewing {e}')
+            logger_account.error(f'model_tools,return_teacher_profile_for_oneself_viewing Exception {e}')
             self.status = 'failed'
             self.errCode = '2'
             self.errMsg = 'Querying Data Failed.'
@@ -254,7 +253,7 @@ class teacher_manager:
             
             self.status = 'success'
             self.data = _data
-            print(f'查看老師資訊回傳:{self.data}')
+            logger_account.debug(f'查看老師資訊回傳:{self.data}')
             return (self.status, self.errCode, self.errMsg, self.data)
         except Exception as e:
             logger_account.error(f"return_teacher_profile_for_public_viewing {e}", exc_info=True)
