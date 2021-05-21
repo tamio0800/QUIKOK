@@ -590,6 +590,7 @@ def create_a_teacher_user(request):
     company = request.POST.get('company', False) # 包含職位 occupation資訊
     special_exp = request.POST.get('special_exp', False)
     invitation_code = request.POST.get('invitation_code', False)
+    video_url =  request.POST.get('video_url', False)
     # 一般開課時間
 
     # print(is_male)
@@ -598,7 +599,7 @@ def create_a_teacher_user(request):
     print('收到老師註冊資料')
     if check_if_all_variables_are_true(
         username, password, name, intro, subject_type, mobile,
-        tutor_experience, subject_type) and is_male is not None:
+        tutor_experience, subject_type, video_url) and is_male is not None:
         logger_account.info('判斷收到老師註冊資料沒有問題')
         # 先檢查有沒有這個username存在，存在的話會return None給obj
         obj = teacher_profile.objects.filter(username=username).first()
@@ -772,7 +773,8 @@ def create_a_teacher_user(request):
                         upload_picture_2_location = upload_picture_2,
                         upload_picture_3_location = upload_picture_3,
                         upload_picture_4_location = upload_picture_4,
-                        upload_picture_5_location = upload_picture_5
+                        upload_picture_5_location = upload_picture_5,
+                        youtube_video_url = video_url
                 )
                 teacher_created_object.save()
                 logger_account.info('老師成功寫入,teacher_profile')
