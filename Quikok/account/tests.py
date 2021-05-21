@@ -207,6 +207,7 @@ class Teacher_Profile_Test_setup(TestCase):
             'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;'
         }
         self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        self.assertEqual(teacher_profile.objects.all().count(),1)
         # 建立老師
 
     def tearDown(self):
@@ -286,6 +287,8 @@ class Teacher_Profile_Test_setup(TestCase):
             shutil.rmtree('user_upload/teachers/' + 'test_teacher2@test.com')
         except:
             pass
+
+
 class Teacher_Profile_Test(TestCase):
 
     def test_create_teacher_receive_can_mkdir(self):
