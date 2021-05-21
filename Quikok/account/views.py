@@ -625,9 +625,10 @@ def create_a_teacher_user(request):
                 print('已幫老師建立5個資料夾')
                 # for迴圈如果沒東西會是空的.  getlist()裡面是看前端的 multiple name
 
+
                 if request.FILES.getlist("upload_snapshot"):
                     for each_file in request.FILES.getlist("upload_snapshot"):
-                        print('收到老師大頭照: ', each_file.name)
+                        logger_account.debug(f'收到老師大頭照: {each_file.name}')
                         folder_where_are_uploaded_files_be ='user_upload/teachers/' + user_folder 
                         fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
                         file_exten = each_file.name.split('.')[-1]
@@ -646,10 +647,82 @@ def create_a_teacher_user(request):
 
                 # 放未認證證書的資料夾
                 for each_file in request.FILES.getlist("upload_cer"):
-                    print('收到老師認證資料: ', each_file.name)
+                    logger_account.debug(f'收到老師認證資料: {each_file.name}')
                     folder_where_are_uploaded_files_be ='user_upload/teachers/' + user_folder + '/unaproved_cer'
                     fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
                     fs.save(each_file.name, each_file)
+
+
+                # 收取老師上傳的圖片,如果有的話,存路徑到 table、圖檔傳到對應的資料夾
+                folder_path = f'user_upload/teachers/{user_folder}/user_info'
+                fs = FileSystemStorage(location=folder_path)
+                
+                upload_file1 = request.FILES.get("upload_picture_1")
+                upload_file2 = request.FILES.get("upload_picture_2")
+                upload_file3 = request.FILES.get("upload_picture_3")
+                upload_file4 = request.FILES.get("upload_picture_4")
+                upload_file5 = request.FILES.get("upload_picture_5")
+
+                if upload_file1:
+                    fs.save(upload_file1.name, upload_file1)
+                    new_file_name = (upload_file1.name).split('.')[0]
+                    turn_picture_into_jpeg_format(
+                        f"{folder_path}/{upload_file1.name}",
+                        (600, 600),
+                        f"{folder_path}/{new_file_name}.jpeg",
+                    )
+                    upload_picture_1 = f'/{folder_path}/{new_file_name}.jpeg'
+                
+                else:
+                    upload_picture_1 = ''
+                
+                if upload_file2:
+                    fs.save(upload_file2.name, upload_file2)
+                    new_file_name = (upload_file2.name).split('.')[0]
+                    turn_picture_into_jpeg_format(
+                        f"{folder_path}/{upload_file2.name}",
+                        (600, 600),
+                        f"{folder_path}/{new_file_name}.jpeg",
+                    )
+                    upload_picture_2 = f'/{folder_path}/{new_file_name}.jpeg'
+                else:
+                    upload_picture_2 = ''
+
+                if upload_file3:
+                    fs.save(upload_file3.name, upload_file3)
+                    new_file_name = (upload_file3.name).split('.')[0]
+                    turn_picture_into_jpeg_format(
+                        f"{folder_path}/{upload_file3.name}",
+                        (600, 600),
+                        f"{folder_path}/{new_file_name}.jpeg",
+                    )
+                    upload_picture_3 = f'/{folder_path}/{new_file_name}.jpeg'
+                else:
+                    upload_picture_3 = ''
+
+                if upload_file4:
+                    fs.save(upload_file4.name, upload_file4)
+                    new_file_name = (upload_file4.name).split('.')[0]
+                    turn_picture_into_jpeg_format(
+                        f"{folder_path}/{upload_file4.name}",
+                        (600, 600),
+                        f"{folder_path}/{new_file_name}.jpeg",
+                    )
+                    upload_picture_4 = f'/{folder_path}/{new_file_name}.jpeg'
+                else:
+                    upload_picture_4 = ''
+
+                if upload_file5:   
+                    fs.save(upload_file5.name, upload_file5)
+                    new_file_name = (upload_file5.name).split('.')[0]
+                    turn_picture_into_jpeg_format(
+                        f"{folder_path}/{upload_file5.name}",
+                        (600, 600),
+                        f"{folder_path}/{new_file_name}.jpeg",
+                    )
+                    upload_picture_5 = f'/{folder_path}/{new_file_name}.jpeg'         
+                else:
+                    upload_picture_5 = ''
 
                 user_created_object = \
                     User.objects.create(
@@ -694,7 +767,12 @@ def create_a_teacher_user(request):
                         other_approved = 0, #其他類別的認證勳章
                         #occupation = if_false_return_empty_else_do_nothing(occupation), 
                         company = company,
-                        special_exp = special_exp
+                        special_exp = special_exp,
+                        upload_picture_1_location = upload_picture_1,
+                        upload_picture_2_location = upload_picture_2,
+                        upload_picture_3_location = upload_picture_3,
+                        upload_picture_4_location = upload_picture_4,
+                        upload_picture_5_location = upload_picture_5
                 )
                 teacher_created_object.save()
                 logger_account.info('老師成功寫入,teacher_profile')

@@ -14,6 +14,7 @@ from django.conf import settings
 import asyncio
 import threading
 from threading import Thread
+from django.core.files.uploadedfile import SimpleUploadedFile
 # 設定環境變數 DEV_MODE 為true >>  export DEV_MODE=true
 # 取消環境變數 DEV_MODE >> unset DEV_MODE
 # python3 manage.py test account/ --settings=Quikok.settings_for_test
@@ -170,6 +171,121 @@ class Auth_Related_Functions_Test(TestCase):
         self.assertEqual('99999999', student_profile.objects.get(id=1).password)
 
 
+class Teacher_Profile_Test_setup(TestCase):
+    ''' 這個測試是新版的老師測試，舊的版本沒有先setup資料做測試，
+        為了增加測試效益而新增這個class
+    '''
+
+    def setUp(self):
+        self.client = Client()        
+        Group.objects.bulk_create(
+            [
+                Group(name='test_student'),
+                Group(name='test_teacher'),
+                Group(name='formal_teacher'),
+                Group(name='formal_student'),
+                Group(name='edony')
+            ]
+        )
+        self.test_teacher_name1 = 'test_teacher1_user@test.com'
+        teacher_post_data = {
+            'regEmail': self.test_teacher_name1,
+            'regPwd': '00000000',
+            'regName': 'test_name',
+            'regNickname': 'test_nickname',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;'
+        }
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        # 建立老師
+
+    def tearDown(self):
+        # 刪掉(如果有的話)產生的資料夾
+        try:
+            shutil.rmtree('user_upload/teachers/' + self.test_teacher_name1)
+        except:
+            pass
+
+    def test_teacher_sighup_upload_info_pic(self):
+        '''測次當老師註冊時, 上傳5張額度的圖片(非大頭照)的情況
+            1. 檔案是否正確地被傳到老師資料夾中
+            2. teacher profile 的路徑是否正確
+        '''
+        
+        teacher_post_data = {
+            'regEmail': 'test_teacher2@test.com',
+            'regPwd': '00000000',
+            'regName': 'teacher2',
+            'regNickname': 'nick_teacher2',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;',
+            
+        }
+
+        teacher_post_data['upload_picture_1'] = SimpleUploadedFile(name='test_1.jpg', 
+                    content=open('test_folder/test_file/test_1.jpg', 'rb').read(), content_type='image/jpg')
+        teacher_post_data['upload_picture_2'] = SimpleUploadedFile(name='test_2.jpg', 
+                    content=open('test_folder/test_file/test_2.jpg', 'rb').read(), content_type='image/jpg')
+        teacher_post_data['upload_picture_3'] = SimpleUploadedFile(name='test_3.jpg', 
+                    content=open('test_folder/test_file/test_3.jpg', 'rb').read(), content_type='image/jpg')
+        teacher_post_data['upload_picture_4'] = SimpleUploadedFile(name='test_4.jpg', 
+                    content=open('test_folder/test_file/test_4.jpg', 'rb').read(), content_type='image/jpg')
+        teacher_post_data['upload_picture_5'] = SimpleUploadedFile(name='test_5.jpg', 
+                    content=open('test_folder/test_file/test_5.jpg', 'rb').read(), content_type='image/jpg')
+        
+        # 用這個寫法的話好像不能一次 測試五張圖所以捨棄改用上面的做法
+        #with open('test_folder/test_file/test_1.jpg','rb') as test_pic :
+            # had to include 'rb' when opening the image
+        #    teacher_post_data['upload_picture_1'] = test_pic
+        #    self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
+        # 建立老師,看看目的資料夾是否有出現該檔案?
+        self.assertEqual(os.path.isfile('user_upload/teachers/test_teacher2@test.com/user_info/test_1.jpg'), True)
+        self.assertEqual(os.path.isfile('user_upload/teachers/test_teacher2@test.com/user_info/test_1.jpeg'), True)
+        # 除了1以外其他測試 轉化過的 jpeg就好
+        self.assertEqual(os.path.isfile('user_upload/teachers/test_teacher2@test.com/user_info/test_2.jpeg'), True)
+        self.assertEqual(os.path.isfile('user_upload/teachers/test_teacher2@test.com/user_info/test_3.jpeg'), True)
+        self.assertEqual(os.path.isfile('user_upload/teachers/test_teacher2@test.com/user_info/test_4.jpeg'), True)
+        self.assertEqual(os.path.isfile('user_upload/teachers/test_teacher2@test.com/user_info/test_5.jpeg'), True)
+        # 檢查路徑是否正確寫入老師資料
+        teacher_obj = teacher_profile.objects.get(username = 'test_teacher2@test.com')
+        self.assertEqual(teacher_obj.upload_picture_1_location, 
+            '/user_upload/teachers/test_teacher2@test.com/user_info/test_1.jpeg')
+        self.assertEqual(teacher_obj.upload_picture_2_location, 
+            '/user_upload/teachers/test_teacher2@test.com/user_info/test_2.jpeg')
+        self.assertEqual(teacher_obj.upload_picture_3_location, 
+            '/user_upload/teachers/test_teacher2@test.com/user_info/test_3.jpeg')
+        self.assertEqual(teacher_obj.upload_picture_4_location, 
+            '/user_upload/teachers/test_teacher2@test.com/user_info/test_4.jpeg')
+        self.assertEqual(teacher_obj.upload_picture_5_location, 
+            '/user_upload/teachers/test_teacher2@test.com/user_info/test_5.jpeg')
+
+
+        # 測試結束,把老師的資料夾砍掉
+        try:
+            shutil.rmtree('user_upload/teachers/' + 'test_teacher2@test.com')
+        except:
+            pass
 class Teacher_Profile_Test(TestCase):
 
     def test_create_teacher_receive_can_mkdir(self):
