@@ -187,7 +187,7 @@ class Teacher_Profile_Test_setup(TestCase):
                 Group(name='edony')
             ]
         )
-        self.test_teacher_name1 = 'test_teacher1_user@test.com'
+        self.test_teacher_name1 = 'test_teacher1@quikok.com'
         teacher_post_data = {
             'regEmail': self.test_teacher_name1,
             'regPwd': '00000000',
@@ -293,24 +293,46 @@ class Teacher_Profile_Test_setup(TestCase):
         except:
             pass
     
-    @skip
+    
     def test_return_teacher_profile_for_public_pic_and_url(self):
-        '''當老師有上傳圖片時,要返回資料,公開頁的資訊'''
-        pass
-        t_obj = teacher_profile.objects.get(id=1)
+        '''測試返回資料是否包含圖片跟影片連結,公開頁的資訊'''
         
-    @skip
+        get_data = {'userID':1, 'type': 'teacher'}
+
+        response = self.client.get(path='/api/account/returnTeacherProfileForPublicViewing/', 
+            data= get_data)
+
+        self.assertIn('success', str(response.content, "utf8"))
+        # 確認有回傳圖片
+        self.assertIn('/user_upload/teachers/test_teacher1@quikok.com/user_info/test_1.jpeg', 
+            str(response.content, "utf8"))
+        # 確認有回傳影片連結
+        self.assertIn('youtube_video_url', 
+            str(response.content, "utf8"))
+
+    
     def test_return_teacher_profile_for_self_looking_pic_and_url(self):
-        '''當老師有上傳圖片時,要返回資料,給自己看的資訊'''
-        pass
+        '''測試返回資料是否包含圖片跟影片連結,給老師自己看的資訊'''
+        
+        get_data = {'userID':1, 'type': 'teacher'}
+
+        response = self.client.get(path= '/api/account/returnTeacherProfileForOneselfViewing/',
+            data= get_data)
+        # 確認有回傳圖片
+        self.assertIn('/user_upload/teachers/test_teacher1@quikok.com/user_info/test_1.jpeg', 
+            str(response.content, "utf8"))
+        # 確認有回傳影片連結
+        self.assertIn('youtube_video_url', 
+            str(response.content, "utf8"))
+
     @skip
     def test_teacher_edit_profile_for_upload_pic_and_url(self):
         '''當老師在會員中心編輯資料、新上傳圖片'''
-        pass
+        
     @skip
     def test_teacher_edit_profile_for_delete_pic_and_url(self):
         '''當老師在會員中心編輯資料、刪除原本上傳的圖片'''
-        pass
+        
     
     def tearDown(self):
         # 刪掉(如果有的話)產生的資料夾
