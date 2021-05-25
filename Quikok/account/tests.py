@@ -327,7 +327,7 @@ class Teacher_Profile_Test_setup(TestCase):
             str(response.content, "utf8"))
 
     
-    def test_teacher_edit_profile_for_upload_pic_and_url(self):
+    def test_teacher_edit_profile_for_upload_pic(self):
         '''當老師在會員中心編輯資料、新上傳圖片
             老師1在 setup的時候上傳了1,2,3張圖,4,5是空的,
             所以新上傳4,5後,確認有填入路徑
@@ -368,7 +368,7 @@ class Teacher_Profile_Test_setup(TestCase):
             f'/user_upload/teachers/{self.test_teacher_name1}/user_info/test_5.jpeg')
 
 
-    def test_teacher_edit_profile_for_delete_pic_and_url(self):
+    def test_teacher_edit_profile_for_delete_pic(self):
         ''' 測試當老師在會員中心編輯資料、刪除原本上傳的圖片. 
             老師1在 setup的時候上傳了1,2,3張圖,4,5是空的,
             本測試上傳圖片4號(test_4)到upload_picture_3_location,並檢查loc_3 是否正確改成4號圖片
@@ -410,7 +410,37 @@ class Teacher_Profile_Test_setup(TestCase):
         self.assertEqual(teacher_obj.upload_picture_3_location,
             f'/user_upload/teachers/{self.test_teacher_name1}/user_info/test_4.jpeg')
 
+    def test_teacher_edit_profile_for_delete_url(self):
+        '''測試老師1從原本有youtube改成沒有是否成功'''
 
+        post_data = {
+            'userID':1,
+            'type':'teacher',
+            'regEmail': self.test_teacher_name1,
+            'regPwd': '00000000',
+            'regName': 'teacher2',
+            'regNickname': 'nick_teacher2',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;', 
+            'youtube_video_url' : ''
+        }
+        header = {'HTTP_Authorization':'test 1234'}
+        
+        response = self.client.post(path='/api/account/editTeacherProfile/', data = post_data,**header)
+        self.assertIn('success', str(response.content, 'utf8'))
+
+        teacher_obj = teacher_profile.objects.get(id=1)
+        self.assertEqual(teacher_obj.youtube_video_url, '')
 
     def tearDown(self):
         # 刪掉(如果有的話)產生的資料夾
