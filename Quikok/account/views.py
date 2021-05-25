@@ -394,6 +394,8 @@ def edit_teacher_profile(request):
         teacher_obj.special_exp = special_exp
         if video_url:
             teacher_obj.youtube_video_url = video_url
+        else:
+            teacher_obj.youtube_video_url = ''
 
         if user_thumbnail:
             # 老師有傳新大頭照
@@ -673,7 +675,7 @@ def create_a_teacher_user(request):
     company = request.POST.get('company', False) # 包含職位 occupation資訊
     special_exp = request.POST.get('special_exp', False)
     invitation_code = request.POST.get('invitation_code', False)
-    video_url =  request.POST.get('video_url', False)
+    video_url =  request.POST.get('youtube_video_url', False)
     # 一般開課時間
 
     # print(is_male)
