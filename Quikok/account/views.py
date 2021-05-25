@@ -325,7 +325,8 @@ def edit_teacher_profile(request):
     company = request.POST.get('company', False)
     special_exp = request.POST.get('special_exp', False)
     teacher_general_availabale_time = request.POST.get('teacher_general_availabale_time', False)
-    video_url =  request.POST.get('video_url', False)
+    video_url =  request.POST.get('youtube_video_url', False)
+    print(f'vvvv{video_url}')
     # 確認有收到這些資料
     if not check_if_all_variables_are_true(
         auth_id, nickname, intro, mobile, tutor_experience, subject_type,
