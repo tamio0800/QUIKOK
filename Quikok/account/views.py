@@ -325,7 +325,7 @@ def edit_teacher_profile(request):
     company = request.POST.get('company', False)
     special_exp = request.POST.get('special_exp', False)
     teacher_general_availabale_time = request.POST.get('teacher_general_availabale_time', False)
-
+    video_url =  request.POST.get('video_url', False)
     # 確認有收到這些資料
     if not check_if_all_variables_are_true(
         auth_id, nickname, intro, mobile, tutor_experience, subject_type,
@@ -339,10 +339,10 @@ def edit_teacher_profile(request):
     user_certifications = request.FILES.getlist('upload_cer')
 
     # 接著來更新資料庫吧
-    the_teacher_info_object = \
+    teacher_obj = \
         teacher_profile.objects.filter(auth_id=auth_id).first()
     
-    if the_teacher_info_object is None:
+    if teacher_obj is None:
         response['status'] = 'failed'
         response['errCode'] = '1'
         response['errMsg'] = '不好意思，系統好像出了點問題，請您告訴我們一聲並且稍後再試試看> <'
@@ -360,7 +360,7 @@ def edit_teacher_profile(request):
                 if len(time):
                     available_week_time_dictionary[int(week)] = time
                     general_available_time.objects.create(
-                        teacher_model=the_teacher_info_object,
+                        teacher_model= teacher_obj,
                         week=week,
                         time=time).save()
         # print(f'available_week_time_dictionary  {available_week_time_dictionary}')
@@ -372,7 +372,7 @@ def edit_teacher_profile(request):
             specific_date_time_list_to_be_updated = \
                 [
                     specific_available_time(
-                        teacher_model = the_teacher_info_object,
+                        teacher_model = teacher_obj,
                         date = today_date + timedelta(days=each_incremental_day),
                         time = available_week_time_dictionary[(today_date + timedelta(days=each_incremental_day)).weekday()]
                     )
@@ -381,20 +381,22 @@ def edit_teacher_profile(request):
                 ]
             specific_available_time.objects.bulk_create(specific_date_time_list_to_be_updated)
 
-        the_teacher_info_object.nickname = nickname
-        the_teacher_info_object.intro = intro
-        the_teacher_info_object.mobile = mobile
-        the_teacher_info_object.tutor_experience = tutor_experience
-        the_teacher_info_object.subject_type = subject_type
-        the_teacher_info_object.education_1 = education_1
-        the_teacher_info_object.education_2 = education_2
-        the_teacher_info_object.education_3 = education_3
-        the_teacher_info_object.company = company
-        the_teacher_info_object.special_exp = special_exp
+        teacher_obj.nickname = nickname
+        teacher_obj.intro = intro
+        teacher_obj.mobile = mobile
+        teacher_obj.tutor_experience = tutor_experience
+        teacher_obj.subject_type = subject_type
+        teacher_obj.education_1 = education_1
+        teacher_obj.education_2 = education_2
+        teacher_obj.education_3 = education_3
+        teacher_obj.company = company
+        teacher_obj.special_exp = special_exp
+        if video_url:
+            teacher_obj.youtube_video_url = video_url
 
         if user_thumbnail:
             # 老師有傳新大頭照
-            folder_where_are_uploaded_files_be ='user_upload/teachers/' + the_teacher_info_object.username
+            folder_where_are_uploaded_files_be ='user_upload/teachers/' + teacher_obj.username
             clean_files(folder_where_are_uploaded_files_be, 'thumbnail')  # 刪除舊有的資料
             fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
             file_exten = user_thumbnail.name.split('.')[-1]
@@ -404,21 +406,95 @@ def edit_teacher_profile(request):
                 (200, 200),
                 f"{folder_where_are_uploaded_files_be}/thumbnail.jpeg")
             # 檔名統一改成thumbnail開頭
-            the_teacher_info_object.thumbnail_dir = \
+            teacher_obj.thumbnail_dir = \
                 f'/{folder_where_are_uploaded_files_be}/thumbnail.jpeg'
 
         is_new_certification_uploaded = False
         for each_file in user_certifications:
             # 老師有傳新認證資料
-            folder_where_are_uploaded_files_be ='user_upload/teachers/' + the_teacher_info_object.username + '/unaproved_cer'
+            folder_where_are_uploaded_files_be ='user_upload/teachers/' + teacher_obj.username + '/unaproved_cer'
             fs = FileSystemStorage(location=folder_where_are_uploaded_files_be)
             fs.save(each_file.name, each_file)
             is_new_certification_uploaded = True
         
         if is_new_certification_uploaded:
-            the_teacher_info_object.is_approved = False
+            teacher_obj.is_approved = False
 
-        the_teacher_info_object.save()  # 儲存資料
+        # 如果老師可上傳的五張圖片有更動
+                # 收取老師上傳的圖片,如果有的話,存路徑到 table、圖檔傳到對應的資料夾
+        folder_path = f'user_upload/teachers/{teacher_obj.username}/user_info'
+        fs = FileSystemStorage(location=folder_path)
+        
+        upload_file1 = request.FILES.get("upload_picture_1")
+        upload_file2 = request.FILES.get("upload_picture_2")
+        upload_file3 = request.FILES.get("upload_picture_3")
+        upload_file4 = request.FILES.get("upload_picture_4")
+        upload_file5 = request.FILES.get("upload_picture_5")
+
+        if upload_file1:
+            fs.save(upload_file1.name, upload_file1)
+            new_file_name = (upload_file1.name).split('.')[0]
+            turn_picture_into_jpeg_format(
+                f"{folder_path}/{upload_file1.name}",
+                (600, 600),
+                f"{folder_path}/{new_file_name}.jpeg",
+            )
+            teacher_obj.upload_picture_1_location = f'/{folder_path}/{new_file_name}.jpeg'
+        
+        else:
+            teacher_obj.upload_picture_1_location = ''
+        
+        if upload_file2:
+            fs.save(upload_file2.name, upload_file2)
+            new_file_name = (upload_file2.name).split('.')[0]
+            turn_picture_into_jpeg_format(
+                f"{folder_path}/{upload_file2.name}",
+                (600, 600),
+                f"{folder_path}/{new_file_name}.jpeg",
+            )
+            teacher_obj.upload_picture_2_location = f'/{folder_path}/{new_file_name}.jpeg'
+        else:
+            teacher_obj.upload_picture_2_location = ''
+
+        if upload_file3:
+            fs.save(upload_file3.name, upload_file3)
+            new_file_name = (upload_file3.name).split('.')[0]
+            turn_picture_into_jpeg_format(
+                f"{folder_path}/{upload_file3.name}",
+                (600, 600),
+                f"{folder_path}/{new_file_name}.jpeg",
+            )
+            teacher_obj.upload_picture_3_location = f'/{folder_path}/{new_file_name}.jpeg'
+        else:
+            teacher_obj.upload_picture_3_location = ''
+
+        if upload_file4:
+            fs.save(upload_file4.name, upload_file4)
+            new_file_name = (upload_file4.name).split('.')[0]
+            turn_picture_into_jpeg_format(
+                f"{folder_path}/{upload_file4.name}",
+                (600, 600),
+                f"{folder_path}/{new_file_name}.jpeg",
+            )
+            teacher_obj.upload_picture_4_location = f'/{folder_path}/{new_file_name}.jpeg'
+        else:
+            teacher_obj.upload_picture_4_location = ''
+
+        if upload_file5:
+            print('收到5號圖')
+            fs.save(upload_file5.name, upload_file5)
+            new_file_name = (upload_file5.name).split('.')[0]
+            turn_picture_into_jpeg_format(
+                f"{folder_path}/{upload_file5.name}",
+                (600, 600),
+                f"{folder_path}/{new_file_name}.jpeg",
+            )
+            teacher_obj.upload_picture_5_location = f'/{folder_path}/{new_file_name}.jpeg'         
+            print('aaaa')
+        else:
+            teacher_obj.upload_picture_5_location = ''
+
+        teacher_obj.save()  # 儲存資料
 
         # ================更新課程小卡================
         # 2021.02.09  >>  改用signal做
