@@ -432,6 +432,12 @@ def edit_teacher_profile(request):
         upload_file5 = request.FILES.get("upload_picture_5")
 
         if upload_file1:
+            # 首先檢查 upload_1有沒有舊圖,若有則刪除
+            #old_pic_1_path = teacher_obj.upload_picture_1_location
+            #if os.path.isdir(teacher_obj.upload_picture_1_location):
+                # 如果已經有了這個資料夾，就刪除裡面所有項目並且重建
+            #    os.remove('user_upload/teachers', user_folder))
+
             fs.save(upload_file1.name, upload_file1)
             new_file_name = (upload_file1.name).split('.')[0]
             turn_picture_into_jpeg_format(
