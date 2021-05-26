@@ -326,6 +326,8 @@ def edit_teacher_profile(request):
     special_exp = request.POST.get('special_exp', False)
     teacher_general_availabale_time = request.POST.get('teacher_general_availabale_time', False)
     video_url =  request.POST.get('youtube_video_url', False)
+    edit_picture_num = request.POST.get('edit_picture_num', False)
+
     print(f'vvvv{video_url}')
     # 確認有收到這些資料
     if not check_if_all_variables_are_true(
@@ -422,24 +424,111 @@ def edit_teacher_profile(request):
         
         if is_new_certification_uploaded:
             teacher_obj.is_approved = False
+        
+        # 五張圖片有編輯的情況. 若沒編輯,len('')=2
+        print(f'edit_picture_num: {edit_picture_num}')
+        if edit_picture_num and len(edit_picture_num) >0:
+            # 存檔路徑
+            folder_path = f'user_upload/teachers/{teacher_obj.username}/user_info'
+            fs = FileSystemStorage(location=folder_path)
+            # 有編輯(刪除或新增)的圖片編號,目前只有1~5 格式: '1,3'
+            if len(edit_picture_num) >1: # 如果只有1張圖被更改:len('1')=1
+                edit_pic_num_list = edit_picture_num.split(',')
+            else:
+                edit_pic_num_list = [edit_picture_num]
+            old_teacher_pic_path_list = [
+                teacher_obj.upload_picture_1_location, #位置0
+                teacher_obj.upload_picture_2_location,
+                teacher_obj.upload_picture_3_location,
+                teacher_obj.upload_picture_4_location,
+                teacher_obj.upload_picture_5_location
+                ]
+            # 要更新db中圖片路徑的字典,格式: {num : path}
+            # 這樣做是因為 teacher_obj.upload_picture_5_location中間的數字沒辦法寫成變數
+            # 只好把key, value存起來之後再做 teacher_obj.upload_picture_xx_location 的更新
+            new_teacher_pic_path_dict = dict()
+            # num 圖片編號 1~5
+            for num in edit_pic_num_list:
+                edit_file = request.FILES.get(f"upload_picture_{num}_location")
+                print(f'get edit_file{edit_file}')
+                if edit_file: 
+                    # 修改,包括新增原本沒有的圖
+                    
+                        # 先刪除舊圖
+                        # 位置從0開始所以編號要-1
+                        old_pic_path = old_teacher_pic_path_list[int(num)-1]
+                        file_name = old_pic_path.split('/')[-1]
+                        # 一般來說user上傳一張圖,經壓縮與改成jpeg程序另存新檔後,
+                        # 同一張圖會有兩個檔案, 兩個都要刪除,所以把檔名跟附檔名拆開,用檔名刪
+                        file_name_without_exten = file_name.split('.')[0]
+                        clean_files(folder_path ,file_name_without_exten)
+                        # 儲存這次改的圖
+                        fs.save(edit_file.name, edit_file)
+                        file_name_without_exten = (edit_file.name).split('.')[0]
+                        turn_picture_into_jpeg_format(
+                            f"{folder_path}/{edit_file.name}",
+                            (600, 600),
+                            f"{folder_path}/{file_name_without_exten}.jpeg",
+                        )
+                        new_teacher_pic_path_dict[num] = f'/{folder_path}/{file_name_without_exten}.jpeg'
 
+                else: # 刪除(原本有圖的情況)
+                    print('delete')
+                    # 位置從0開始所以編號要-1
+                    old_pic_path = old_teacher_pic_path_list[int(num)-1]
+                    file_name = old_pic_path.split('/')[-1]
+                    # 一般來說user上傳一張圖,經壓縮與改成jpeg程序另存新檔後,
+                    # 同一張圖會有兩個檔案, 兩個都要刪除,所以把檔名跟附檔名拆開,用檔名刪
+                    file_name_without_exten = file_name.split('.')[0]
+                    clean_files(folder_path ,file_name_without_exten)
+
+                    new_teacher_pic_path_dict[num] = ''
+            
+            # 更新 teacher_obj.upload_picture_xx_location 
+            for pic_num_key in new_teacher_pic_path_dict.keys():
+                if pic_num_key == '1':
+                    teacher_obj.upload_picture_1_location = new_teacher_pic_path_dict[pic_num_key]
+                elif pic_num_key == '2':
+                    teacher_obj.upload_picture_2_location = new_teacher_pic_path_dict[pic_num_key]
+                elif pic_num_key == '3':
+                    teacher_obj.upload_picture_3_location = new_teacher_pic_path_dict[pic_num_key]
+                elif pic_num_key == '4':
+                    teacher_obj.upload_picture_4_location = new_teacher_pic_path_dict[pic_num_key]
+                elif pic_num_key == '5':
+                    teacher_obj.upload_picture_5_location = new_teacher_pic_path_dict[pic_num_key]
+                else:
+                    pass
+
+        teacher_obj.save()  # 儲存資料
+
+        '''
         # 如果老師可上傳的五張圖片有更動
                 # 收取老師上傳的圖片,如果有的話,存路徑到 table、圖檔傳到對應的資料夾
         folder_path = f'user_upload/teachers/{teacher_obj.username}/user_info'
         fs = FileSystemStorage(location=folder_path)
+
+        #for upload_pic in ['upload_picture_1','upload_picture_2_location','upload_picture_3_location',
+        #    'upload_picture_4_location', 'upload_picture_5_location']:
+        #    pic_file = request.FILES.get(upload_pic)
+        #    if pic_file:
         
-        upload_file1 = request.FILES.get("upload_picture_1")
-        upload_file2 = request.FILES.get("upload_picture_2")
-        upload_file3 = request.FILES.get("upload_picture_3")
-        upload_file4 = request.FILES.get("upload_picture_4")
-        upload_file5 = request.FILES.get("upload_picture_5")
+        upload_file1 = request.FILES.get("upload_picture_1_location")
+        print('bbbbbbbbb')
+        print(upload_file1)
+        
+        upload_file2 = request.FILES.get("upload_picture_2_location")
+        upload_file3 = request.FILES.get("upload_picture_3_location")
+        upload_file4 = request.FILES.get("upload_picture_4_location")
+        upload_file5 = request.FILES.get("upload_picture_5_location")
 
         if upload_file1:
             # 首先檢查 upload_1有沒有舊圖,若有則刪除
-            #old_pic_1_path = teacher_obj.upload_picture_1_location
-            #if os.path.isdir(teacher_obj.upload_picture_1_location):
-                # 如果已經有了這個資料夾，就刪除裡面所有項目並且重建
-            #    os.remove('user_upload/teachers', user_folder))
+            old_pic_1_path = teacher_obj.upload_picture_1_location[1:]
+            
+            if os.path.isfile(old_pic_1_path):
+                # 如果原檔還在要刪除
+                os.remove(old_pic_1_path)
+                print('刪除')
 
             fs.save(upload_file1.name, upload_file1)
             new_file_name = (upload_file1.name).split('.')[0]
@@ -451,6 +540,13 @@ def edit_teacher_profile(request):
             teacher_obj.upload_picture_1_location = f'/{folder_path}/{new_file_name}.jpeg'
         
         else:
+            print('zz')
+            old_pic_1_path = teacher_obj.upload_picture_1_location[1:]
+            if os.path.isfile(old_pic_1_path):
+            #if len(old_pic_1_path)>0:
+                #old_pic_1_path = old_pic_1_path[1:] #
+                # 如果已經有了這個資料夾，就刪除裡面所有項目並且重建
+                os.remove(old_pic_1_path)
             teacher_obj.upload_picture_1_location = ''
         
         if upload_file2:
@@ -502,8 +598,8 @@ def edit_teacher_profile(request):
             print('aaaa')
         else:
             teacher_obj.upload_picture_5_location = ''
-
-        teacher_obj.save()  # 儲存資料
+        '''
+        #teacher_obj.save()  # 儲存資料
 
         # ================更新課程小卡================
         # 2021.02.09  >>  改用signal做
@@ -743,11 +839,11 @@ def create_a_teacher_user(request):
                 folder_path = f'user_upload/teachers/{user_folder}/user_info'
                 fs = FileSystemStorage(location=folder_path)
                 
-                upload_file1 = request.FILES.get("upload_picture_1")
-                upload_file2 = request.FILES.get("upload_picture_2")
-                upload_file3 = request.FILES.get("upload_picture_3")
-                upload_file4 = request.FILES.get("upload_picture_4")
-                upload_file5 = request.FILES.get("upload_picture_5")
+                upload_file1 = request.FILES.get("upload_picture_1_location")
+                upload_file2 = request.FILES.get("upload_picture_2_location")
+                upload_file3 = request.FILES.get("upload_picture_3_location")
+                upload_file4 = request.FILES.get("upload_picture_4_location")
+                upload_file5 = request.FILES.get("upload_picture_5_location")
 
                 if upload_file1:
                     fs.save(upload_file1.name, upload_file1)

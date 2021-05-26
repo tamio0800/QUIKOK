@@ -171,6 +171,7 @@ class Auth_Related_Functions_Test(TestCase):
         self.assertEqual('99999999', student_profile.objects.get(id=1).password)
 
 
+#python3 manage.py test account.tests.Teacher_Profile_Test_setup --settings=Quikok.settings_for_test
 class Teacher_Profile_Test_setup(TestCase):
     ''' 這個測試是新版的老師測試，
         新版指的是2021.5月增加了老師可以上傳五張圖片、youtube連結兩個部分，
@@ -208,11 +209,11 @@ class Teacher_Profile_Test_setup(TestCase):
             'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;',
             'youtube_video_url' : 'https://www.youtube.com/watch?v=OSxfx9p5bfI'
         }
-        teacher_post_data['upload_picture_1'] = SimpleUploadedFile(name='test_1.jpg', 
+        teacher_post_data['upload_picture_1_location'] = SimpleUploadedFile(name='test_1.jpg', 
                     content=open('test_folder/test_file/test_1.jpg', 'rb').read(), content_type='image/jpg')
-        teacher_post_data['upload_picture_2'] = SimpleUploadedFile(name='test_2.jpg', 
+        teacher_post_data['upload_picture_2_location'] = SimpleUploadedFile(name='test_2.jpg', 
                     content=open('test_folder/test_file/test_2.jpg', 'rb').read(), content_type='image/jpg')
-        teacher_post_data['upload_picture_3'] = SimpleUploadedFile(name='test_3.jpg', 
+        teacher_post_data['upload_picture_3_location'] = SimpleUploadedFile(name='test_3.jpg', 
                     content=open('test_folder/test_file/test_2.jpg', 'rb').read(), content_type='image/jpg')
         # 上傳三張圖片
         self.client.post(path='/api/account/signupTeacher/', data=teacher_post_data)
@@ -249,15 +250,15 @@ class Teacher_Profile_Test_setup(TestCase):
             'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;', 
         }
 
-        teacher_post_data['upload_picture_1'] = SimpleUploadedFile(name='test_1.jpg', 
+        teacher_post_data['upload_picture_1_location'] = SimpleUploadedFile(name='test_1.jpg', 
                     content=open('test_folder/test_file/test_1.jpg', 'rb').read(), content_type='image/jpg')
-        teacher_post_data['upload_picture_2'] = SimpleUploadedFile(name='test_2.jpg', 
+        teacher_post_data['upload_picture_2_location'] = SimpleUploadedFile(name='test_2.jpg', 
                     content=open('test_folder/test_file/test_2.jpg', 'rb').read(), content_type='image/jpg')
-        teacher_post_data['upload_picture_3'] = SimpleUploadedFile(name='test_3.jpg', 
+        teacher_post_data['upload_picture_3_location'] = SimpleUploadedFile(name='test_3.jpg', 
                     content=open('test_folder/test_file/test_3.jpg', 'rb').read(), content_type='image/jpg')
-        teacher_post_data['upload_picture_4'] = SimpleUploadedFile(name='test_4.jpg', 
+        teacher_post_data['upload_picture_4_location'] = SimpleUploadedFile(name='test_4.jpg', 
                     content=open('test_folder/test_file/test_4.jpg', 'rb').read(), content_type='image/jpg')
-        teacher_post_data['upload_picture_5'] = SimpleUploadedFile(name='test_5.jpg', 
+        teacher_post_data['upload_picture_5_location'] = SimpleUploadedFile(name='test_5.jpg', 
                     content=open('test_folder/test_file/test_5.jpg', 'rb').read(), content_type='image/jpg')
         
         # 用這個寫法的話好像不能一次測試五張圖所以捨棄改用上面的做法
@@ -351,12 +352,13 @@ class Teacher_Profile_Test_setup(TestCase):
             'company': 'test_company',
             'special_exp': 'test_special_exp',
             'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;', 
+            'edit_picture_num':'4,5'
         }
         header = {'HTTP_Authorization':'test 1234'}
         # 以下是新上傳的圖片
-        post_data['upload_picture_4'] = SimpleUploadedFile(name='test_4.jpg', 
+        post_data['upload_picture_4_location'] = SimpleUploadedFile(name='test_4.jpg', 
                     content=open('test_folder/test_file/test_4.jpg', 'rb').read(), content_type='image/jpg')
-        post_data['upload_picture_5'] = SimpleUploadedFile(name='test_5.jpg', 
+        post_data['upload_picture_5_location'] = SimpleUploadedFile(name='test_5.jpg', 
                     content=open('test_folder/test_file/test_5.jpg', 'rb').read(), content_type='image/jpg')
         
 
@@ -368,12 +370,55 @@ class Teacher_Profile_Test_setup(TestCase):
             f'/user_upload/teachers/{self.test_teacher_name1}/user_info/test_5.jpeg')
 
 
-    def test_teacher_edit_profile_for_delete_pic(self):
-        ''' 測試當老師在會員中心編輯資料、刪除原本上傳的圖片. 
+    def test_teacher_edit_profile_for_change_pic(self):
+        ''' 測試當老師在會員中心編輯資料、改掉原本上傳的圖片. 
             老師1在 setup的時候上傳了1,2,3張圖,4,5是空的,
             本測試上傳圖片4號(test_4)到upload_picture_3_location,並檢查loc_3 是否正確改成4號圖片
         '''
 
+        # 確定一下老師1的圖片5是'', 以免 setup被改而有上傳5號圖片
+        teacher_obj = teacher_profile.objects.get(id=1)
+        self.assertEqual(teacher_obj.upload_picture_5_location, '')
+       
+        post_data = {
+            'userID':1,
+            'type':'teacher',
+            'regEmail': self.test_teacher_name1,
+            'regPwd': '00000000',
+            'regName': 'teacher2',
+            'regNickname': 'nick_teacher2',
+            'regBirth': '2000-01-01',
+            'regGender': '0',
+            'intro': 'test_intro',
+            'regMobile': '0912-345678',
+            'tutor_experience': '一年以下',
+            'subject_type': 'test_subject',
+            'education_1': 'education_1_test',
+            'education_2': 'education_2_test',
+            'education_3': 'education_3_test',
+            'company': 'test_company',
+            'special_exp': 'test_special_exp',
+            'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;', 
+            'edit_picture_num':'3'
+        }
+        header = {'HTTP_Authorization':'test 1234'}
+        # 以下是新上傳的圖片
+        post_data['upload_picture_3_location'] = SimpleUploadedFile(name='test_4.jpg', 
+                    content=open('test_folder/test_file/test_4.jpg', 'rb').read(), content_type='image/jpg')
+        
+        response = self.client.post(path='/api/account/editTeacherProfile/', data = post_data,**header)
+        self.assertIn('success', str(response.content, 'utf8'))
+        # 檢查老師1的db是否有改
+        teacher_obj = teacher_profile.objects.get(id=1)
+        self.assertEqual(teacher_obj.upload_picture_3_location,
+            f'/user_upload/teachers/{self.test_teacher_name1}/user_info/test_4.jpeg')
+        
+    def test_teacher_edit_profile_for_delete_pic(self):
+        ''' 測試當老師在會員中心編輯資料、刪除原本上傳的圖片. 
+            老師1在 setup的時候上傳了1,2,3張圖,
+            測試把1刪掉, path跟圖檔
+        '''
+        print('測試刪除圖片')
         # 確定一下老師1的圖片5是'', 以免 setup被改而有上傳5號圖片
         teacher_obj = teacher_profile.objects.get(id=1)
         self.assertEqual(teacher_obj.upload_picture_5_location, '')
@@ -397,18 +442,26 @@ class Teacher_Profile_Test_setup(TestCase):
             'company': 'test_company',
             'special_exp': 'test_special_exp',
             'teacher_general_availabale_time': '0:1,2,3,4,5;1:1,2,3,4,5;4:1,2,3,4,5;', 
+            'edit_picture_num':'1'
         }
         header = {'HTTP_Authorization':'test 1234'}
-        # 以下是新上傳的圖片
-        post_data['upload_picture_3'] = SimpleUploadedFile(name='test_4.jpg', 
-                    content=open('test_folder/test_file/test_4.jpg', 'rb').read(), content_type='image/jpg')
-        
+       # 測試前端傳空白表示刪除
+        post_data['upload_picture_1_location'] = ''
+
+        # 確認老師1的資料夾路徑內本來有檔案
+        teacher_obj = teacher_profile.objects.get(id=1)
+        file_path = teacher_obj.upload_picture_1_location[1:]
+        self.assertEqual(os.path.isfile(file_path), True)
+
         response = self.client.post(path='/api/account/editTeacherProfile/', data = post_data,**header)
         self.assertIn('success', str(response.content, 'utf8'))
-        # 檢查老師1的db是否有改
+        # 檢查老師1的圖片1路徑已經刪除
         teacher_obj = teacher_profile.objects.get(id=1)
-        self.assertEqual(teacher_obj.upload_picture_3_location,
-            f'/user_upload/teachers/{self.test_teacher_name1}/user_info/test_4.jpeg')
+        self.assertEqual(teacher_obj.upload_picture_1_location, '')
+        # 確認老師1的資料夾路徑內沒有該檔案
+        self.assertEqual(os.path.isfile(file_path), False)
+
+
 
     def test_teacher_edit_profile_for_delete_url(self):
         '''測試老師1從原本有youtube改成沒有是否成功'''
