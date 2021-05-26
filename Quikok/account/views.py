@@ -425,7 +425,7 @@ def edit_teacher_profile(request):
         if is_new_certification_uploaded:
             teacher_obj.is_approved = False
         
-        # 五張圖片有編輯的情況. 若沒編輯,len('')=2
+        # 五張圖片有編輯的情況. 若沒編輯,len('')=0
         logger_account.debug(f'edit_picture_num: {edit_picture_num}')
         if edit_picture_num and len(edit_picture_num) >0:
             # 存檔路徑
@@ -474,8 +474,7 @@ def edit_teacher_profile(request):
                         new_teacher_pic_path_dict[num] = f'/{folder_path}/{file_name_without_exten}.jpeg'
                         logger_account.debug('teacher pic: db路徑更新')
 
-                else: # 刪除(原本有圖的情況)
-                    
+                else: # getfile = none
                     # 位置從0開始所以編號要-1
                     old_pic_path = old_teacher_pic_path_list[int(num)-1]
                     # 如果原本有圖才需要刪除, 原本就沒圖就不用動作
@@ -488,7 +487,7 @@ def edit_teacher_profile(request):
                         clean_files(folder_path ,file_name_without_exten)
 
                         new_teacher_pic_path_dict[num] = ''
-                    else:
+                    else:# 刪除(沒有圖的情況)
                         logger_account.debug('teacher 沒加沒刪 pic')
                         pass
             

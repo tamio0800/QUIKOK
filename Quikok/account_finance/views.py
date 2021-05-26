@@ -247,7 +247,7 @@ def storage_order(request):
                 # 為了之後要從最高金額的訂單開始抵扣，要把每筆訂單的金額先暫存
                 amount_in_orders_list = list()
                 use_q_discount = True
-                print(f'通過q幣檢查')
+                logging.debug(f'通過q幣檢查')
 
         else:
             use_q_discount = False
