@@ -40,6 +40,7 @@ from threading import Thread
 from account.models import user_invitation_code_mapping
 
 account_email = email_manager()
+the_teacher_manager = teacher_manager()
 logging.basicConfig(level=logging.NOTSET) #DEBUG
 logger_account = logging.getLogger('account_info')
 
@@ -398,6 +399,9 @@ def edit_teacher_profile(request):
             teacher_obj.youtube_video_url = video_url
         else:
             teacher_obj.youtube_video_url = ''
+        
+        # 先檢查老師都有資料夾,以免存檔出錯
+        the_teacher_manager.check_teacher_folder(teacher_obj.username)
 
         if user_thumbnail:
             # 老師有傳新大頭照
@@ -985,7 +989,7 @@ def create_a_teacher_user(request):
 def return_teacher_s_profile_for_oneself_viewing(request):
     response = dict()
     teacher_auth_id = request.GET.get('userID', False)
-    the_teacher_manager = teacher_manager()
+    
 
     if teacher_auth_id == False:
         response['status'] = 'failed'
@@ -1004,7 +1008,6 @@ def return_teacher_s_profile_for_oneself_viewing(request):
 def return_teacher_s_profile_for_public_viewing(request):
     response = dict()
     teacher_auth_id = request.GET.get('userID', False)
-    the_teacher_manager = teacher_manager()
     
     if teacher_auth_id == False:
         response['status'] = 'failed'

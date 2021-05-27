@@ -23,7 +23,7 @@ from datetime import datetime
 # 取消環境變數 DEV_MODE >> unset DEV_MODE
 # python3 manage.py test account_finance/ --settings=Quikok.settings_for_test
 
-#python3 manage.py test account_finance.tests.test_exam_bank --settings=Quikok.settings_for_test
+# python3 manage.py test account_finance.tests.test_exam_bank --settings=Quikok.settings_for_test
 class test_exam_bank(TestCase):
     def setUp(self):
         self.client =  Client()        

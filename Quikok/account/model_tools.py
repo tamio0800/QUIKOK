@@ -159,25 +159,58 @@ class teacher_manager:
             result[each_auth_id] = sub_results
         return result
 
+
+    def check_teacher_folder(self,teacher_username):
+        '''
+            確認老師都有長出目前所需要的資料夾，若未長出則須重建
+            目前要長的有:放一般圖檔的資料夾user_folder(大頭照、可能之後可放宣傳圖)、未認證的資料夾unaproved_cer、
+            已認證過的證書aproved_cer、user_info 將來可能可以放考卷檔案夾之類的、課程統一資料夾lessons、
+        ''' 
+        # 老師個人資料夾
+        if os.path.isdir(f'user_upload/teachers/{teacher_username}') is False:
+            os.mkdir(f'user_upload/teachers/{teacher_username}')
+            logger_account.info(f'建立老師個人資料夾')
+        # 尚未人工審核通過的資料夾
+        if os.path.isdir(f'user_upload/teachers/{teacher_username}/unaproved_cer') is False:
+            os.mkdir(f'user_upload/teachers/{teacher_username}/unaproved_cer')
+            logger_account.debug(f'建立老師 unaproved_cer資料夾')
+        # 已通過人工審核通過的資料夾
+        if os.path.isdir(f'user_upload/teachers/{teacher_username}/aproved_cer') is False:
+            logger_account.debug(f'建立老師 aproved_cer資料夾')
+            os.mkdir(f'user_upload/teachers/{teacher_username}/aproved_cer')
+            
+        # 個人上傳圖片的資料夾
+        if os.path.isdir(f'user_upload/teachers/{teacher_username}/user_info') is False:
+            os.mkdir(f'user_upload/teachers/{teacher_username}/user_info')
+            logger_account.debug(f'建立老師 user_info 資料夾')
+        # 放課程資訊的資料夾
+        if os.path.isdir(f'user_upload/teachers/{teacher_username}/lessons') is False:
+            os.mkdir(f'user_upload/teachers/{teacher_username}/lessons')
+            logger_account.debug(f'建立老師 lessons資料夾')
+
+
     #  老師個人資訊編輯頁(自己看自己)
     #  特定時間第一版先不做 10/27
     def return_teacher_profile_for_oneself_viewing(self, teacher_auth_id):
-        # 老師編輯個人資料
-        teacher_profile_object = teacher_profile.objects.filter(auth_id=teacher_auth_id)
+        ''' 老師編輯個人資料時，他自己看到的資訊 '''
+        teacher_profile_set = teacher_profile.objects.filter(auth_id=teacher_auth_id)
 
-        if teacher_profile_object.first() is None:
+        if teacher_profile_set.first() is None:
             self.status = 'failed'
             self.errCode = '1'
             self.errMsg = 'Found No Teacher.'
             return (self.status, self.errCode, self.errMsg, self.data)
         try:
+            teacher_username = teacher_profile_set.first().username
+            print(teacher_username)
+            self.check_teacher_folder(str(teacher_username))
             _data = dict()
             # 不需要看到的欄位
             exclude_columns = [
                 'teaching_history', 'id', 'teacher_of_the_lesson_snapshot',
                 'teacher_of_the_lesson', 'password', 'user_folder', 'info_folder',
                 'cert_unapproved', 'date_join', 'auth_id', 'cert_approved']
-            for each_key, each_value in teacher_profile_object.values()[0].items():
+            for each_key, each_value in teacher_profile_set.values()[0].items():
                 if each_key not in exclude_columns:
                     _data[each_key] = each_value
             # 一般時間
@@ -228,16 +261,19 @@ class teacher_manager:
             self.errCode = '2'
             self.errMsg = 'Querying Data Failed.'
             return (self.status, self.errCode, self.errMsg, self.data)
-    #老師個人資訊公開頁
+    
     
     def return_teacher_profile_for_public_viewing(self, teacher_auth_id):
-        teacher_profile_object = teacher_profile.objects.filter(auth_id=teacher_auth_id)
-        if teacher_profile_object.first() is None:
+        ''' 老師個人資訊公開頁 '''
+        teacher_profile_set = teacher_profile.objects.filter(auth_id=teacher_auth_id)
+        teacher_obj = teacher_profile_set.first()
+        if teacher_obj is None:
             self.status = 'failed'
             self.errCode = '1'
             self.errMsg = 'Found No Teacher.'
             return (self.status, self.errCode, self.errMsg, self.data)
         try:
+            self.check_teacher_folder(teacher_obj.username)
             _data = dict()
             exclude_columns = [
                 'auth_id','username','password','balance', 'withholding_balance',
@@ -247,7 +283,7 @@ class teacher_manager:
                 'cert_unapproved', 'date_join',  'cert_approved',
                 'name', 'bank_account_code', 'bank_name', 'bank_code']
             
-            for each_key, each_value in teacher_profile_object.values()[0].items():
+            for each_key, each_value in teacher_profile_set.values()[0].items():
                 if each_key not in exclude_columns:
                     _data[each_key] = each_value 
             
