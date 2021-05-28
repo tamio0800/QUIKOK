@@ -209,7 +209,6 @@ def storage_order(request):
     st = time()
     response = dict()
     try:
-        
         user_ID = request.POST.get('userID', False)
         total_order_list = request.POST.get('total_order', False)
         total_q_discount = request.POST.get('total_q_discount', False)
@@ -380,7 +379,6 @@ def storage_order(request):
                         price = exam_bank_set_obj.selling_price,
                         purchased_with_money = exam_bank_set_obj.selling_price
                     )
-                   
                 else:
                     response = {'status':'failed',
                                 'errCode': 9,
@@ -398,6 +396,14 @@ def storage_order(request):
         # 如果通過上面的迴圈沒有 return failed,    
         # 進入這個迴圈用來把訂單寫入資料庫
         # 首先處理如果有用q point的情況
+        #####新的寫法##
+        ## 先直接寫入小訂單,不管價格(折扣或Q幣)
+
+        ##接著再建立大訂單
+
+
+
+        #########
         order_use_q_discount_index_list = list()# 如果沒有用q, 就是一個空list
         q_discount_can_use = int(total_q_discount) # 可使用的q幣,會隨著每張訂單減少
         if use_q_discount == True:

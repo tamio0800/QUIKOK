@@ -36,7 +36,7 @@ class user_purchase_exam_bank_record(models.Model):
         verbose_name_plural = '題庫預購紀錄'
         ordering = ['-updated_time']
 
-# 學生購買紀錄
+# 學生購買紀錄 (小訂單)
 class student_purchase_record(models.Model):
     student_auth_id = models.IntegerField()
     teacher_auth_id = models.IntegerField()
@@ -67,6 +67,37 @@ class student_purchase_record(models.Model):
         verbose_name = '學生購買課程紀錄'
         verbose_name_plural = '學生購買課程紀錄'
         ordering = ['-updated_time']
+
+# 學生一次購買哪些小訂單的紀錄(大訂單)
+class student_whole_purchase_record(models.Model):
+    student_auth_id = models.IntegerField()
+    total_price = models.IntegerField()
+
+    
+    final_total_price = models.IntegerField() # total
+
+    updated_time = models.DateTimeField(auto_now=True)
+    created_time = models.DateTimeField(auto_now_add=True) 
+    
+    def __str__(self):
+        return str(self.id)
+
+    class Meta:
+        verbose_name = '學生購買課程紀錄'
+        verbose_name_plural = '學生購買課程紀錄'
+        ordering = ['-updated_time']
+
+
+
+# 行銷組合
+class marketing_mix_content(models.Model):
+    '''行銷組合,預計種類: 折數類(ex:9折)、折抵金額類(ex:500元券)'''
+    # 
+    discount_percentage = models.IntegerField(blank=True, null=True)
+    
+    updated_time = models.DateTimeField(auto_now=True)
+    created_time = models.DateTimeField(auto_now_add=True) 
+
 
 
 # 學生退款紀錄
