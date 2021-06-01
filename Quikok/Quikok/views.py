@@ -28,13 +28,24 @@ scheduler = BackgroundScheduler()
 
 # st = time()
 # 每8小時執行一次
+def check_if_edony_chatroom_unread_change_lock_file_name():
+    '''
+    定時改檔名用, 為了避免 gunicorn workers重複計時而導致的重複寄信,使用建立 lock檔來控制
+    '''
+    pass 
 def check_if_edony_chatroom_unread():
-    '''檢查我們是否有未讀、有的話寄信提醒，每間隔24小時執行一次, 只設定起始時間'''
-    if settings.DISABLED_EMAIL == False:
-        unread_msg = chat_history_Mr_Q2user.objects.filter(system_is_read = 0,user_is_read =1).count()
-        if unread_msg != 0:
-            chatroom_email_edony_notification.edony_unread_user_msg(unread_msg)
-            logger_chatroom.info('chatroom 例行檢查，寄出未讀訊息')
+    '''檢查我們是否有未讀、有的話寄信提醒，每間隔24小時執行一次, 只設定起始時間
+        為了避免 gunicorn workers重複計時而導致的重複寄信,使用建立 lock檔來控制
+    '''
+    if os.path.isdir('timer_lock_flag/check_if_edony_chatroom_unread_unlock'):
+        if settings.DISABLED_EMAIL == False:
+            unread_msg = chat_history_Mr_Q2user.objects.filter(system_is_read = 0,user_is_read =1).count()
+            if unread_msg != 0:
+                chatroom_email_edony_notification.edony_unread_user_msg(unread_msg)
+                logger_chatroom.info('chatroom 例行檢查，寄出未讀訊息')
+                # 寄信後鎖住
+                os.rename('timer_lock_flag/check_if_edony_chatroom_unread_unlock',
+                    'timer_lock_flag/check_if_edony_chatroom_unread_lock')
 
 
 # 以下是寄信給客人提醒的部分，將來或許可記錄寄信時間，
@@ -83,7 +94,7 @@ scheduler.add_job(check_if_edony_chatroom_unread, 'interval',
 logger_chatroom.info('chatroom.view 例行檢查edony是否有未讀訊息')
     # hours = 24
    #,end_date = '2021-02-02 10:31:00' seconds, minutes, hours
-
+'''
 # 寄給客人的每24小時檢查
 scheduler.add_job(check_if_teacher_chatroom_unread, 'interval',
     hours = 24, start_date = '2021-04-12 11:00:00')
@@ -92,7 +103,7 @@ logger_chatroom.info('chatroom.view 例行檢查老師是否有未讀訊息')
 scheduler.add_job(check_if_student_chatroom_unread, 'interval',
     hours = 24, start_date = '2021-04-12 11:00:00')
 logger_chatroom.info('chatroom.view 例行檢查老師是否有未讀訊息')
-
+'''
 scheduler.start()
 
 
