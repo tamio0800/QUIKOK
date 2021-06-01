@@ -1,6 +1,7 @@
 from django.test import TestCase,Client
 from chatroom.models import (chatroom_info_user2user, chatroom_info_Mr_Q2user, 
                 chat_history_user2user, chat_history_Mr_Q2user)
+from chatroom.email_sending import chatroom_email_manager
 from chatroom.consumers import ChatConsumer
 from django.contrib.auth.models import User, Group
 from channels.testing import WebsocketCommunicator
@@ -13,6 +14,8 @@ import json
 from unittest import skip
 from account.models import teacher_profile, student_profile
 from django.db.models import Q
+from django.conf import settings
+from django.core import mail
 #python3 manage.py test chatroom/ --settings=Quikok.settings_for_test
 '''注意！第一個auth=1 在程式邏輯中會被用來當"system"聊天室！'''
 class test_chat_tools(TestCase):
@@ -137,6 +140,32 @@ class test_chat_tools(TestCase):
         except:
             pass
 
+
+
+class test_email_timing_reminder(TestCase):
+    '''測試放在主app的聊天室定時寄信提醒email格式是否正確'''
+    
+    def test_check_email_student_chatroom_unread_work(self):
+        if settings.DISABLED_EMAIL == False:
+            mail.outbox =[]
+            email = chatroom_email_manager()
+            email.email_student_chatroom_unread(
+                student_authID = 1,
+                student_nickname = 'test' ,
+                student_email = 'test@email.com'
+            )
+            self.assertEqual(mail.outbox[0].subject, 'Quikok!開課 提醒您，聊天室有未讀訊息！')
+
+    def test_check_email_teacher_chatroom_unread_work(self):
+        if settings.DISABLED_EMAIL == False:
+            mail.outbox =[]
+            email = chatroom_email_manager()
+            email.email_teacher_chatroom_unread(
+                teacher_authID = 1,
+                teacher_nickname = 'test' ,
+                teacher_email = 'test@email.com'
+            )
+            self.assertEqual(mail.outbox[0].subject, 'Quikok!開課 提醒您，聊天室有未讀訊息！')
 @skip
 class test_websocket_consumer(TestCase):
     def setUp(self):

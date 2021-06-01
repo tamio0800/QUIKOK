@@ -15,40 +15,11 @@ from django.http import JsonResponse
 from django.middleware.csrf import get_token
 from datetime import datetime, timedelta
 import shutil, logging, json
-from chatroom.email_sending import chatroom_email_for_edony
-from apscheduler.schedulers.background import BackgroundScheduler
-
 
 logging.basicConfig(level=logging.NOTSET) #DEBUG
 logger_chatroom = logging.getLogger('chatroom_info')
 #email_info_test =logging.getLogger('mail_admins')
 
-# 寄信到edony的email
-chatroom_email_edony_notification = chatroom_email_for_edony()
-'''
-# 例項化
-scheduler = BackgroundScheduler()
-# 每間隔24小時執行一次, 只設定起始時間
-# st = time()
-
-def check_if_edony_chatroom_unread():
-    unread_msg = chat_history_Mr_Q2user.objects.filter(system_is_read = 0,user_is_read =1).count()
-    if unread_msg != 0:
-        chatroom_email_edony_notification.edony_unread_user_msg(unread_msg)
-        logger_chatroom.info('chatroom.view 例行檢查，寄出未讀訊息')
-
-def check_if_teacher_chatroom_unread():
-    teacher_profile.objects.all()
-    unread_msg = chat_history_user2user.objects.filter(teacher_is_read = 0)
-
-
-scheduler.add_job(check_if_edony_chatroom_unread, 'interval',
-    hours = 8, start_date = '2021-04-12 01:01:00')
-logger_chatroom.info('chatroom.view 例行檢查是否有未讀訊息')
-    # hours = 24
-   #,end_date = '2021-02-02 10:31:00' seconds, minutes, hours
-scheduler.start()
-'''
 
 # 確認聊天室是否存在、不存在的話建立聊天室
 @require_http_methods(['POST'])
