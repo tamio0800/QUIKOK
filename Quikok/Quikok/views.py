@@ -79,18 +79,18 @@ def check_if_student_chatroom_unread():
 
 # 寄給edony的每 8小時檢查
 scheduler.add_job(check_if_edony_chatroom_unread, 'interval',
-    minutes = 2, start_date = '2021-04-12 01:00:00')
+    hours = 8, start_date = '2021-04-12 01:00:00')
 logger_chatroom.info('chatroom.view 例行檢查edony是否有未讀訊息')
     # hours = 24
    #,end_date = '2021-02-02 10:31:00' seconds, minutes, hours
 
 # 寄給客人的每24小時檢查
 scheduler.add_job(check_if_teacher_chatroom_unread, 'interval',
-    minutes = 2, start_date = '2021-04-12 11:00:00')
+    hours = 24, start_date = '2021-04-12 11:00:00')
 logger_chatroom.info('chatroom.view 例行檢查老師是否有未讀訊息')
 
 scheduler.add_job(check_if_student_chatroom_unread, 'interval',
-    minutes = 2, start_date = '2021-04-12 11:00:00')
+    hours = 24, start_date = '2021-04-12 11:00:00')
 logger_chatroom.info('chatroom.view 例行檢查老師是否有未讀訊息')
 
 scheduler.start()
