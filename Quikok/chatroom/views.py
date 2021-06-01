@@ -2,7 +2,8 @@ from django.shortcuts import render
 from django.contrib.auth.models import User
 from django.shortcuts import render
 from django.db.models import Q
-from .models import (Messages, chat_room, chatroom_info_Mr_Q2user,chat_history_Mr_Q2user)
+from .models import (Messages, chat_room, chatroom_info_Mr_Q2user,
+                    chat_history_Mr_Q2user, chat_history_user2user)
 from .chat_tools import chat_room_manager
 from account.models import student_profile, teacher_profile
 from django.utils.decorators import method_decorator
@@ -24,7 +25,7 @@ logger_chatroom = logging.getLogger('chatroom_info')
 
 # 寄信到edony的email
 chatroom_email_edony_notification = chatroom_email_for_edony()
-
+'''
 # 例項化
 scheduler = BackgroundScheduler()
 # 每間隔24小時執行一次, 只設定起始時間
@@ -35,12 +36,19 @@ def check_if_edony_chatroom_unread():
     if unread_msg != 0:
         chatroom_email_edony_notification.edony_unread_user_msg(unread_msg)
         logger_chatroom.info('chatroom.view 例行檢查，寄出未讀訊息')
+
+def check_if_teacher_chatroom_unread():
+    teacher_profile.objects.all()
+    unread_msg = chat_history_user2user.objects.filter(teacher_is_read = 0)
+
+
 scheduler.add_job(check_if_edony_chatroom_unread, 'interval',
     hours = 8, start_date = '2021-04-12 01:01:00')
 logger_chatroom.info('chatroom.view 例行檢查是否有未讀訊息')
     # hours = 24
    #,end_date = '2021-02-02 10:31:00' seconds, minutes, hours
 scheduler.start()
+'''
 
 # 確認聊天室是否存在、不存在的話建立聊天室
 @require_http_methods(['POST'])
