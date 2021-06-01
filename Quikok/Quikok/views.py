@@ -39,11 +39,13 @@ def check_if_teacher_chatroom_unread():
     # 首先列出所有的老師
     all_teacher = teacher_profile.objects.all()
     for teacher in all_teacher:
-        # 1,2,3,4,5 系統測試帳號不用特別檢查聊天室
+        # 1,2,3,4,5 系統測試帳號, 正式機不用特別檢查聊天室
         if teacher.id not in [1]: 
             # 檢查是否有未讀訊息, 若有就寄信通知
-            unread_msg = chat_history_user2user.objects.filter(id = teacher.id ,teacher_is_read = 0).exists()
+            unread_msg = chat_history_user2user.objects.filter(teacher_auth_id = teacher.id ,teacher_is_read = 0).exists()
             if unread_msg :
+                logger_chatroom.info('chatroom.view 例行檢查老師有未讀訊息,發送email')
+                print(teacher.id, teacher.nickname, teacher.username )
                 chatroom_user_notification.email_teacher_chatroom_unread(
                     teacher_authID = teacher.id,
                     teacher_nickname = teacher.nickname ,
@@ -60,6 +62,7 @@ logger_chatroom.info('chatroom.view 例行檢查edony是否有未讀訊息')
 # 寄給客人的每24小時檢查
 scheduler.add_job(check_if_teacher_chatroom_unread, 'interval',
     minutes = 2, start_date = '2021-04-12 11:00:00')
+logger_chatroom.info('chatroom.view 例行檢查老師是否有未讀訊息')
 
 scheduler.start()
 

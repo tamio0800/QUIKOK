@@ -12,8 +12,8 @@ class chatroom_email_manager:
     def __init__(self):
         # 管理emai主題以及要渲染的html
         self.email_pattern = {
-            '學生聊天室未讀通知': os.path.join(settings.BASE_DIR,'account/templates/account/student_send_sign_up_success.html'),
-            '老師聊天室未讀通知': os.path.join(settings.BASE_DIR,'account/templates/account/teacher_send_sign_up_success.html')
+            '學生聊天室未讀通知': os.path.join(settings.BASE_DIR,'chatroom/templates/chatroom/student_unread_messages.html'),
+            '老師聊天室未讀通知': os.path.join(settings.BASE_DIR,'chatroom/templates/chatroom/teacher_unread_messages.html')
         }
 
 
@@ -59,25 +59,27 @@ class chatroom_email_manager:
         user_email = kwargs['teacher_email']
 
         if False not in [user_authID, user_nickname, user_email]:
+            print(user_authID, user_nickname, user_email)
             try:
                 pattern_html = self.email_pattern['老師聊天室未讀通知']
+                print(pattern_html)
                 suit_pattern = get_template(pattern_html)
                 email_context = {
                     'user_nickname': user_nickname
                 }
                 email_body = suit_pattern.render(email_context)
 
-                if settings.DISABLED_EMAIL == False:
-                    if settings.DEV_MODE == False:
-                        email = EmailMessage(
-                            subject = 'Quikok!開課 提醒您，聊天室有未讀訊息！',  # 電子郵件標題
-                            body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
-                            from_email= settings.EMAIL_HOST_USER,  # 寄件者
-                            to =  [user_email]  # 收件者　quikok.taiwan@quikok.com
-                        ) 
-                        email.fail_silently = False
-                        email.content_subtype = 'html'
-                        email.send()
+                #if settings.DISABLED_EMAIL == False:
+                    #if settings.DEV_MODE == False:
+                email = EmailMessage(
+                    subject = 'Quikok!開課 提醒您，聊天室有未讀訊息！',  # 電子郵件標題
+                    body = email_body, #strip_tags(email_body), #這寫法可以直接把HTML TAG去掉並呈現HTML的排版
+                    from_email= settings.EMAIL_HOST_USER,  # 寄件者
+                    to =  [user_email]  # 收件者　quikok.taiwan@quikok.com
+                ) 
+                email.fail_silently = False
+                email.content_subtype = 'html'
+                email.send()
                 return True
 
             except Exception as e:
